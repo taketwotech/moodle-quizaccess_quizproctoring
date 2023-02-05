@@ -1,8 +1,7 @@
 /**
  * JavaScript class for quiz protection
  *
- * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -11,15 +10,17 @@ function($, str, ModalFactory) {
     var init = function() {
         var formid = "#responseform";
         var isvalid = false;
+        var hasinput = false;
         $(formid).submit( function(e){
             $("#responseform .answer input").each(function () {
+                hasinput = true;
                 if ($(this).is(':checked')) {
                     isvalid = true;
                     return;
                 }
             });
 
-            if (!isvalid) {
+            if (hasinput && !isvalid) {
                 e.preventDefault();
                 ModalFactory.create({
                     body: str.get_string('selectanswer', 'quizaccess_quizproctoring'),

@@ -2,7 +2,7 @@
 
 /**
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @subpackage backup-moodle2
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

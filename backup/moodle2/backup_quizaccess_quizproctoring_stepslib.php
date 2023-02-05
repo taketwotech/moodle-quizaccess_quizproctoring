@@ -5,7 +5,7 @@
  * Define all the backup steps that will be used by the backup_pdfviewer_activity_task
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,7 +28,7 @@ class backup_quizaccess_quizproctoring_activity_structure_step extends backup_ac
         // Define sources
         $quizaccess_quizproctoring->set_source_table('quizaccess_quizproctoring', array('id' => backup::VAR_ACTIVITYID));
 
-        // Return the root element (quizaccess_proctoring), wrapped into standard activity structure
+        // Return the root element (quizaccess_quizproctoring), wrapped into standard activity structure
         return $this->prepare_activity_structure($quizaccess_quizproctoring);
 
     }

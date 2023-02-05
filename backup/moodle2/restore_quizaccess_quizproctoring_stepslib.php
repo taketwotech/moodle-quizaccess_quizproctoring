@@ -2,7 +2,7 @@
 
 /**
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @subpackage backup-moodle2
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -37,7 +37,7 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
         // See MDL-9367.
 
         // insert the quizaccess proctoring record
-        $newitemid = $DB->insert_record('quizaccess_proctoring', $data);
+        $newitemid = $DB->insert_record('quizaccess_quizproctoring', $data);
         // immediately after inserting "activity" record, call this
         $this->apply_activity_instance($newitemid);
     }

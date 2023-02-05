@@ -1,9 +1,9 @@
 <?php
 /**
- * Implementaton of the quizaccess_proctoring plugin.
+ * Implementaton of the quizaccess_quizproctoring plugin.
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -46,7 +46,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $SESSION, $DB, $USER;
         $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_proctoring_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id,'deleted' => 0, 'status'=> '' ))) {
+        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id,'deleted' => 0, 'status'=> '' ))) {
             return false;
         } else {
             return true;
@@ -57,7 +57,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             MoodleQuickForm $mform, $attemptid) {
         global $PAGE,$DB;
 
-        $proctoringdata = $DB->get_record('quizaccess_proctoring', array('quizid' => $this->quiz->id));
+        $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid]);
     
         $mform->addElement('static', 'proctoringmessage', '',
@@ -135,19 +135,19 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $record->attemptid = $attemptid;
         // We probably have an entry already in DB.
         $file = file_get_draft_area_info($user_identity);
-        if ($rc = $DB->get_record('quizaccess_proctoring_data', array('userid' => $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
+        if ($rc = $DB->get_record('quizaccess_proctor_data', array('userid' => $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
             $context = context_module::instance($cmid);
             $rc->user_identity = $user_identity;
             $rc->image_status = 'M';
             if ($file['filecount'] > 0) {
-                $DB->update_record('quizaccess_proctoring_data', $rc);
+                $DB->update_record('quizaccess_proctor_data', $rc);
                 file_save_draft_area_files($user_identity, $context->id, 'quizaccess_quizproctoring', 'identity' , $rc->id);
             } else {
                 $errors['user_identity'] = get_string('useridentityerror', 'quizaccess_quizproctoring');
             }
 
         } else if ($file['filecount'] > 0) {
-            $id = $DB->insert_record('quizaccess_proctoring_data', $record);
+            $id = $DB->insert_record('quizaccess_proctor_data', $record);
             $context = context_module::instance($cmid);
             file_save_draft_area_files($user_identity, $context->id,'quizaccess_quizproctoring', 'identity' , $id);
         } else {
@@ -170,7 +170,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         return true;
     }
 
-    public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
+    public static function add_settings_form_fields(
+            mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
         global $CFG;
                 
         // Allow to enable the access rule only if the Mobile services are enabled.
@@ -221,7 +222,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         
         $interval = required_param('time_interval',PARAM_INT);
         if (empty($quiz->enableproctoring)) {
-            $DB->delete_records('quizaccess_proctoring', array('quizid' => $quiz->id));
+            $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
@@ -233,9 +234,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             if (isset($quiz->quiz_sku) && $quiz->quiz_sku) {
                 $record->quiz_sku = $quiz->quiz_sku;
             }
-            $DB->insert_record('quizaccess_proctoring', $record);
+            $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
-            $DB->delete_records('quizaccess_proctoring', array('quizid' => $quiz->id));
+            $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
@@ -247,19 +248,19 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             if (isset($quiz->quiz_sku) && $quiz->quiz_sku) {
                 $record->quiz_sku = $quiz->quiz_sku;
             }
-            $DB->insert_record('quizaccess_proctoring', $record);
+            $DB->insert_record('quizaccess_quizproctoring', $record);
         }
     }
 
     public static function delete_settings($quiz) {
         global $DB;
-        $DB->delete_records('quizaccess_proctoring', array('quizid' => $quiz->id));
+        $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
     }
     
     public static function get_settings_sql($quizid) {
         return array(
             'enableproctoring,time_interval,triggeresamail,warning_threshold,ci_test_id,quiz_sku,proctoringvideo_link',
-            'LEFT JOIN {quizaccess_proctoring} proctoring ON proctoring.quizid = quiz.id',
+            'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             array());
     }
 

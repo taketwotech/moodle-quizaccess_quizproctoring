@@ -1,8 +1,8 @@
 <?php
 /**
- * Privacy Subsystem implementation for quizaccess_proctoring.
+ * Privacy Subsystem implementation for quizaccess_quizproctoring.
  *
- * @package    quizaccess_proctoring
+ * @package    quizaccess_quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -12,7 +12,7 @@ namespace quizaccess_quizproctoring\privacy;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Privacy Subsystem for quizaccess_proctoring implementing null_provider.
+ * Privacy Subsystem for quizaccess_quizproctoring implementing null_provider.
  *
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

@@ -3,7 +3,7 @@
  * AJAX call to save image file and make it part of moodle file
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -23,14 +23,17 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     print_error('invalidcoursemodule');
 }
 
+$course = $DB->get_record('course', array("id" => $cm->course), '*', MUST_EXIST);
+require_login($course);
 $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
 $target = '';
 if (!$mainimage) {
     // If it is not main image, get the main image data and compare
-    if ($mainentry = $DB->get_record('quizaccess_proctoring_data', array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M' ,'attemptid' => $attemptid))) {
+    if ($mainentry = $DB->get_record('quizaccess_proctor_data', array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M' ,'attemptid' => $attemptid))) {
         $target = $mainentry->userimg;
     }
 }
+
 //validate image
 \quizaccess_quizproctoring\aws\camera::init();
 if ($target !== '') {
@@ -39,48 +42,48 @@ if ($target !== '') {
 } else {
     $validate = \quizaccess_quizproctoring\aws\camera::validate($data);
 }
-
 switch ($validate) {
-    case QUIZACCESS_PROCTORING_NOFACEDETECTED:
+    case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_PROCTORING_NOFACEDETECTED);
+            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
-            print_error(QUIZACCESS_PROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
+            print_error(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
-    case QUIZACCESS_PROCTORING_MULTIFACESDETECTED:
+    case QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_PROCTORING_MULTIFACESDETECTED);
+            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
         } else {
-            print_error(QUIZACCESS_PROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
+            print_error(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
-    case QUIZACCESS_PROCTORING_FACESNOTMATCHED:
+    case QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_PROCTORING_FACESNOTMATCHED);
+            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
         } else {
-            print_error(QUIZACCESS_PROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
+            print_error(QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
         }
         break;
-    case QUIZACCESS_PROCTORING_EYESNOTOPENED:
+    case QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_PROCTORING_EYESNOTOPENED);
+            //storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED);
         } else {
-            print_error(QUIZACCESS_PROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
+            print_error(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
         }
         break;
-    case QUIZACCESS_PROCTORING_FACEMASKDETECTED:
+    case QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_PROCTORING_FACEMASKDETECTED);
+            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
         } else {
-            print_error(QUIZACCESS_PROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
+            print_error(QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     default:
-        //Store only if main image and validation successful during attempt
-        storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage);
-        break;
-        
+        //Store only if main image
+        if ($mainimage) {
+            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage);
+        }
+         break;
 }
 echo json_encode(array('status' => 'true'));
 die();

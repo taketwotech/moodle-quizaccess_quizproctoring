@@ -3,7 +3,7 @@
  * API methods from AWS rekognition to detect camera pictures
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -36,8 +36,8 @@ class camera {
      */
     public static function init() {
         global $CFG;
-        self::$amazon_api_key = $CFG->quizaccess_proctoring_aws_key;
-        self::$amazon_api_secret = $CFG->quizaccess_proctoring_aws_secret;
+        self::$amazon_api_key = $CFG->quizaccess_quizproctoring_aws_key;
+        self::$amazon_api_secret = $CFG->quizaccess_quizproctoring_aws_secret;
         self::$client = new \Aws\Rekognition\RekognitionClient([
             'version' => AWS_VERSION,
             'region' => AWS_REGION,
@@ -60,15 +60,15 @@ class camera {
         if (isset($result["FaceDetails"]) && count($result["FaceDetails"]) > 0) {
             $count = count($result["FaceDetails"]);
             if ($count  > 1) {
-                return QUIZACCESS_PROCTORING_MULTIFACESDETECTED;
+                return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
             } else if ($count == 1) {
                 $eyesOpen = $result['FaceDetails'][0]['EyesOpen']['Value'];
                 if (!$eyesOpen) {
-                    return QUIZACCESS_PROCTORING_EYESNOTOPENED;
+                    return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
                 } else if ($target !== '') {
                     $compareresult = self::compare_faces($source, $target);
-                    if (!$compareresult || $compareresult < QUIZACCESS_PROCTORING_FACEMATCHTHRESHOLD) {
-                        return QUIZACCESS_PROCTORING_FACESNOTMATCHED;
+                    if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLD) {
+                        return QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED;
                     } else {
                         return self::check_protective_equipment($source);
                     }
@@ -79,7 +79,7 @@ class camera {
                 return null;
             }
         } else {
-            return QUIZACCESS_PROCTORING_NOFACEDETECTED;
+            return QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED;
         }
     }
 
@@ -96,12 +96,7 @@ class camera {
             ],
             'Attributes' => ['ALL']
         ]);
-
         return $result;
-        if (isset($result["FaceDetails"]) && count($result["FaceDetails"]) > 0) {
-            return count($result["FaceDetails"]);
-        }
-        return false;
     }
 
     /** 
@@ -128,17 +123,17 @@ class camera {
     public static function check_protective_equipment($source) {
         $res_protective_equipment = self::detect_protective_equipment($source);
         if (isset($res_protective_equipment["Persons"]) && count($res_protective_equipment["Persons"]) > 0) {
-            $persons_count = count($res_protective_equipment["Persons"]);
-            if ($persons_count > 1) {
-                return QUIZACCESS_PROCTORING_MULTIFACESDETECTED;
-            } else {
-                $bodyParts = $res_protective_equipment['Persons'][0]['BodyParts'];
-                foreach ($bodyParts as $bodyPart) {
-                    if ($bodyPart['Name'] == 'FACE') {
-                        if (empty($bodyPart['EquipmentDetections'])) {
-                            return null;
-                        } else {
-                            return QUIZACCESS_PROCTORING_FACEMASKDETECTED;
+            $persons = $res_protective_equipment["Persons"];
+            foreach ($persons as $person) {
+                $bodyParts = $person['BodyParts'];
+                if (!empty($bodyParts)) {
+                    foreach ($bodyParts as $bodyPart) {
+                        if ($bodyPart['Name'] == 'FACE') {
+                            if (empty($bodyPart['EquipmentDetections'])) {
+                                return null;
+                            } else {
+                                return QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED;
+                            }
                         }
                     }
                 }
@@ -153,7 +148,7 @@ class camera {
                 'Bytes' => $source
             ],
             'SummarizationAttributes' => [
-                'MinConfidence' => QUIZACCESS_PROCTORING_FACEMASKTHRESHOLD,
+                'MinConfidence' => QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD,
                 'RequiredEquipmentTypes' => [
                     'FACE_COVER'
                 ]
