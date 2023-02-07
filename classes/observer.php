@@ -49,7 +49,7 @@ class observer {
         $eventdata = $event->get_data();
         if ($quizid = $eventdata['other']['quizid']) {
             if ($DB->record_exists('quizaccess_proctoring', array('quizid' => $quizid, 'enableproctoring' => 1))){
-                camera_task_start($eventdata['contextinstanceid'], $eventdata['objectid'], $quizid); 
+                quizaccess_quizproctoring_camera_task_start($eventdata['contextinstanceid'], $eventdata['objectid'], $quizid); 
             }
         }
     }
