@@ -36,8 +36,8 @@ class camera {
      */
     public static function init() {
         global $CFG;
-        self::$amazon_api_key = $CFG->quizaccess_proctoring_aws_key;
-        self::$amazon_api_secret = $CFG->quizaccess_proctoring_aws_secret;
+        self::$amazon_api_key = get_config('quizaccess_quizproctoring', 'aws_key');
+        self::$amazon_api_secret = get_config('quizaccess_quizproctoring','aws_secret');
         self::$client = new \Aws\Rekognition\RekognitionClient([
             'version' => AWS_VERSION,
             'region' => AWS_REGION,

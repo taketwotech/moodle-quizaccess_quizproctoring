@@ -182,7 +182,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval','quizaccess_quizproctoring'),
                 array("5"=>"5 seconds","10"=>"10 seconds","15"=>"15 seconds","20"=>"20 seconds","30"=>"30 seconds","60"=>"1 minute","120" => "2 minutes","180" => "3 minutes","240" => "4 minutes","300"=>"5 minutes","600" => "10 minutes","900" => "15 minutes"));
        // $mform->addHelpButton('interval', 'interval', 'quiz');
-        $mform->setDefault('time_interval', $CFG->quizaccess_quizproctoring_img_check_time);
+        $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring','img_check_time'));
 
         $thresholds = array();
         for ($i = 0; $i <= 20; $i++) {
