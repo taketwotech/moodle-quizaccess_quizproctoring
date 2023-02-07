@@ -115,7 +115,12 @@ function($, str, ModalFactory) {
     var init = function(cmid, mainimage, verifyduringattempt = false, attemptid=null,setinterval=300) {
         if (verifyduringattempt) {
             $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
-            $('<video>').attr({id: 'video', width: '280', height: '240', autoplay: 'autoplay'}).appendTo('body');
+            $('<video>').attr({
+                id:'video',
+                class:'quizaccess_quizproctoring-video',
+                width:'280',
+                height:'240',
+                autoplay:'autoplay'}).appendTo('body');
             var camera = new Camera(cmid, mainimage, attemptid);
             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
         } else {
