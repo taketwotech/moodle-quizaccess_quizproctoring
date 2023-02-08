@@ -131,9 +131,9 @@ function storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status=''){
             if ($status) {
                 $left = $quizaccess_proctoring->warning_threshold - count($error_records);
                 if ($left == 1) {
-                    $left = $left . ' warning';
+                    $left = $left . get_string('warning', 'quizaccess_quizproctoring');
                 } else {
-                    $left = $left . ' warnings';
+                    $left = $left . get_string('warnings', 'quizaccess_quizproctoring');
                 }
                 $error_string = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
             }
