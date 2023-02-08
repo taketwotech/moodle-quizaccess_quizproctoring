@@ -52,7 +52,7 @@ define('QUIZACCESS_PROCTORING_COMPLETION_FAILED', 'completionfailed');
     send_stored_file($file, 0, 0, $forcedownload, $options);
 }
 
-function camera_task_start($cmid, $attemptid, $quizid) {
+function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER;
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
@@ -65,7 +65,7 @@ function camera_task_start($cmid, $attemptid, $quizid) {
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/quiz_protection', 'init');
 }
 
-function storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status=''){
+function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status=''){
     global $USER, $DB;
 
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
