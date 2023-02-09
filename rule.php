@@ -182,7 +182,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval','quizaccess_quizproctoring'),
                 array("5"=> get_string('fiveseconds', 'quizaccess_quizproctoring'),"10" => get_string('tenseconds', 'quizaccess_quizproctoring'),"15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),"20"=>get_string('twentyseconds', 'quizaccess_quizproctoring'),"30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),"60"=> get_string('oneminute', 'quizaccess_quizproctoring'),"120" => get_string('twominutes', 'quizaccess_quizproctoring'),"180" => get_string('threeminutes', 'quizaccess_quizproctoring'),"240" => get_string('fourminutes', 'quizaccess_quizproctoring'),"300"=>get_string('fiveminutes', 'quizaccess_quizproctoring'),"600" => get_string('tenminutes', 'quizaccess_quizproctoring'),"900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
        // $mform->addHelpButton('interval', 'interval', 'quiz');
-        $mform->setDefault('time_interval', $CFG->quizaccess_quizproctoring_img_check_time);
+        $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring','img_check_time'));
 
         $thresholds = array();
         for ($i = 0; $i <= 20; $i++) {
