@@ -45,21 +45,21 @@ if ($target !== '') {
 switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
         }
@@ -73,7 +73,7 @@ switch ($validate) {
         break;
     case QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED:
         if (!$mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
         }
@@ -81,7 +81,7 @@ switch ($validate) {
     default:
         //Store only if main image
         if ($mainimage) {
-            storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage);
         }
          break;
 }

@@ -44,12 +44,12 @@ class observer {
      * @param $event stdClass
      * @return null
      */
-    public static function start_camera_and_validate($event){
+    public static function quizproctoring_start_camera($event){
         global $DB, $CFG;
         $eventdata = $event->get_data();
         if ($quizid = $eventdata['other']['quizid']) {
             if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $quizid, 'enableproctoring' => 1))){
-                camera_task_start($eventdata['contextinstanceid'], $eventdata['objectid'], $quizid); 
+                quizproctoring_camera_task($eventdata['contextinstanceid'], $eventdata['objectid'], $quizid);
             }
         }
     }
@@ -60,7 +60,7 @@ class observer {
      * @param $event stdClass
      * @return null
      */
-    public static function proctoring_image_delete($event){
+    public static function quizproctoring_image_delete($event){
         global $DB,$CFG;
         $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where attemptid=?",array($event->objectid));
     }
