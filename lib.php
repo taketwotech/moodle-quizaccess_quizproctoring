@@ -65,7 +65,7 @@ function camera_task_start($cmid, $attemptid, $quizid) {
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/quiz_protection', 'init');
 }
 
-function storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status=''){
+function storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status='') {
     global $USER, $DB, $COURSE;
 
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
@@ -132,25 +132,25 @@ function storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status=''){
                 $left = $quizaccess_quizproctoring->warning_threshold - count($error_records);
                 if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
                     if ($left == 1) {
-                        $left = $left . ' avertissement';
+                        $left = $left .get_string('avertissement', 'quizaccess_quizproctoring');
                     } else {
-                        $left = $left . ' avertissements';
+                        $left = $left .get_string('avertissements', 'quizaccess_quizproctoring');
                     }
                 } else {
-                     if ($left == 1) {
-                        $left = $left . ' warning';
+                    if ($left == 1) {
+                        $left = $left . get_string('warning', 'quizaccess_quizproctoring');
                     } else {
-                        $left = $left . ' warnings';
-                    }
+                       $left = $left . get_string('warnings', 'quizaccess_quizproctoring');
+                     }
                 }
-
                 $error_string = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
-            }
-        }
+           }
 
-        if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
-            print_error($status, 'quizaccess_quizproctoring', '', $error_string);
-            die();
+
+            if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+                print_error($status, 'quizaccess_quizproctoring', '', $error_string);
+                die();
+            }
         }
     }
 }

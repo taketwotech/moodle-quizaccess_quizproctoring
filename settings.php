@@ -28,8 +28,8 @@ if ($hassiteconfig && !empty($USER->id)) {
         '',
         PARAM_TEXT));
 
-    $settings->add(new admin_setting_configselect('quizaccess_quizproctoring_img_check_time', 
+    $settings->add(new admin_setting_configselect('quizaccess_quizproctoring_img_check_time',
         get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), 
         get_string('help_timeinterval', 'quizaccess_quizproctoring'), 5,
-        array(1 => '1 minute', 5 => '5 minutes', 10 => '10 minutes')));
+        array(1 => get_string('oneminute', 'quizaccess_quizproctoring'), 5 => get_string('fiveminutes', 'quizaccess_quizproctoring'), 10 => get_string('tenminutes', 'quizaccess_quizproctoring'))));
 }

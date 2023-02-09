@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for the quizaccess_quizproctoring plugin.
+ * Strings for the quizaccess_proctoring plugin.
  *
  * @package    quizaccess
- * @subpackage quizproctoring
+ * @subpackage proctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -66,3 +66,17 @@ $string['quizsku_help'] = 'SKU code from the Magento Site for the quiz product.'
 $string['proctoring_videolink'] = "Quiz proctoring video link";
 $string['proctoringlink'] = 'Proctoring video link';
 $string['proctoringlink_help'] = "Please add video link for demovideo of quiz proctoring.";
+$string['oneminute'] = '1 minute';
+$string['fiveminutes'] = '5 minutes';
+$string['tenminutes'] = '10 minutes';
+$string['fiveseconds'] = '5 seconds';
+$string['tenseconds'] = '10 seconds';
+$string['fiftenseconds'] = '15 seconds';
+$string['twentyseconds'] = '20 seconds';
+$string['thirtyseconds'] = '30 seconds';
+$string['twominutes'] = '2 minutes';
+$string['threeminutes'] = '3 minutes';
+$string['fourminutes'] = '4 minutes';
+$string['fiftenminutes'] = '15 minutes';
+$string['warning'] = ' warning';
+$string['warnings'] = ' warnings';

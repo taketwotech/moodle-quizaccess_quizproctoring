@@ -66,3 +66,5 @@ $string['quizsku_help'] = "Code SKU du site Magento pour le produit de quiz.";
 $string['proctoring_videolink'] = "Lien vidéo de surveillance du quiz";
 $string['proctoringlink'] = "Lien vidéo de surveillance";
 $string['proctoringlink_help'] = "Veuillez ajouter un lien vidéo pour la vidéo de démonstration de la surveillance du quiz.";
+$string['avertissement'] = ' avertissement';
+$string['avertissements'] = ' avertissements';

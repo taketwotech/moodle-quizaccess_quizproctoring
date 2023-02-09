@@ -170,8 +170,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         return true;
     }
 
-    public static function add_settings_form_fields(
-            mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
+    public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
         global $CFG;
                 
         // Allow to enable the access rule only if the Mobile services are enabled.
@@ -181,7 +180,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         // time interval set for proctoring image.
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval','quizaccess_quizproctoring'),
-                array("5"=>"5 seconds","10"=>"10 seconds","15"=>"15 seconds","20"=>"20 seconds","30"=>"30 seconds","60"=>"1 minute","120" => "2 minutes","180" => "3 minutes","240" => "4 minutes","300"=>"5 minutes","600" => "10 minutes","900" => "15 minutes"));
+                array("5"=> get_string('fiveseconds', 'quizaccess_quizproctoring'),"10" => get_string('tenseconds', 'quizaccess_quizproctoring'),"15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),"20"=>get_string('twentyseconds', 'quizaccess_quizproctoring'),"30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),"60"=> get_string('oneminute', 'quizaccess_quizproctoring'),"120" => get_string('twominutes', 'quizaccess_quizproctoring'),"180" => get_string('threeminutes', 'quizaccess_quizproctoring'),"240" => get_string('fourminutes', 'quizaccess_quizproctoring'),"300"=>get_string('fiveminutes', 'quizaccess_quizproctoring'),"600" => get_string('tenminutes', 'quizaccess_quizproctoring'),"900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
        // $mform->addHelpButton('interval', 'interval', 'quiz');
         $mform->setDefault('time_interval', $CFG->quizaccess_quizproctoring_img_check_time);
 
