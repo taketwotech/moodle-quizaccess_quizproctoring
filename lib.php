@@ -129,26 +129,21 @@ function storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status='') {
             }
 
             if ($status) {
-                  $left = $quizaccess_quizproctoring->warning_threshold - count($error_records);
-                  if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
-                      if ($left == 1) {
-                          $left = $left . ' avertissement';
-                      } else {
-                          $left = $left . ' avertissements';
-                      }
-                  if ($left == 1) {
-                      $left = $left . get_string('warning', 'quizaccess_quizproctoring');
-                  } else {
-                       if ($left == 1) {
-                          $left = $left . ' warning';
-                      } else {
-                          $left = $left . ' warnings';
-                      }
+                $left = $quizaccess_quizproctoring->warning_threshold - count($error_records);
+                if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
+                    if ($left == 1) {
+                        $left = $left .get_string('avertissement', 'quizaccess_quizproctoring');
+                    } else {
+                        $left = $left .get_string('avertissements', 'quizaccess_quizproctoring');
+                    }
+                } else {
+                    if ($left == 1) {
+                        $left = $left . get_string('warning', 'quizaccess_quizproctoring');
+                    } else {
                        $left = $left . get_string('warnings', 'quizaccess_quizproctoring');
                      }
-
-                     $error_string = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
-              }
+                }
+                $error_string = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
            }
 
 
