@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Defines backup_quizaccess_proctoring_subplugin class
+ * Defines backup_quizaccess_quizproctoring_subplugin class
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @category   backup
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,7 +26,7 @@ class backup_quizaccess_quizproctoring_subplugin extends backup_subplugin {
     }
 
     /**
-     * Defines a backup step to store the instance data in the quizaccess_proctoring.xml file
+     * Defines a backup step to store the instance data in the quizaccess_quizproctoring.xml file
      */
     protected function define_attempt_subplugin_structure() {
             $this->add_step(new backup_quizaccess_quizproctoring_activity_structure_step('quizaccess_quizproctoring_structure', 'quizaccess_quizproctoring.xml'));

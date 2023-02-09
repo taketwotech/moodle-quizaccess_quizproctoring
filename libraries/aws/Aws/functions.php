@@ -322,15 +322,7 @@ function guzzle_major_version()
         return $cache;
     }
 
-    if (defined('\GuzzleHttp\ClientInterface::VERSION')) {
-        $version = (string) ClientInterface::VERSION;
-        if ($version[0] === '6') {
-            return $cache = 6;
-        }
-        if ($version[0] === '5') {
-            return $cache = 5;
-        }
-    } elseif (defined('\GuzzleHttp\ClientInterface::MAJOR_VERSION')) {
+    if (defined('\GuzzleHttp\ClientInterface::MAJOR_VERSION')) {
         return $cache = ClientInterface::MAJOR_VERSION;
     }
 

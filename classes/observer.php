@@ -18,7 +18,7 @@
  * Proctoring observers.
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -32,7 +32,7 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  * Proctoring observers class.
  *
  * @package    quizaccess
- * @subpackage proctoring
+ * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -48,7 +48,7 @@ class observer {
         global $DB, $CFG;
         $eventdata = $event->get_data();
         if ($quizid = $eventdata['other']['quizid']) {
-            if ($DB->record_exists('quizaccess_proctoring', array('quizid' => $quizid, 'enableproctoring' => 1))){
+            if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $quizid, 'enableproctoring' => 1))){
                 camera_task_start($eventdata['contextinstanceid'], $eventdata['objectid'], $quizid); 
             }
         }
@@ -62,6 +62,6 @@ class observer {
      */
     public static function proctoring_image_delete($event){
         global $DB,$CFG;
-        $proctoringdata = $DB->execute("update {quizaccess_proctoring_data} set deleted = 1 where attemptid=?",array($event->objectid));
+        $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where attemptid=?",array($event->objectid));
     }
 }
