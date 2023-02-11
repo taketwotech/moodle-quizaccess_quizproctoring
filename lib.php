@@ -116,8 +116,8 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
 
         $error_string = '';
         if (isset($quizaccess_quizproctoring->warning_threshold) && $quizaccess_quizproctoring->warning_threshold != 0) {
-            $inParams = array('param1' => QUIZACCESS_PROCTORING_NOFACEDETECTED, 'param2' => QUIZACCESS_PROCTORING_MULTIFACESDETECTED, 'param3' => QUIZACCESS_PROCTORING_FACESNOTMATCHED, 'param4' => QUIZACCESS_PROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
-            $sql = "SELECT * from {quizaccess_proctoring_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
+            $inParams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
             $error_records = $DB->get_records_sql($sql, $inParams);
 
             if (count($error_records) >= $quizaccess_quizproctoring->warning_threshold) {

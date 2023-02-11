@@ -133,7 +133,7 @@ function default_user_agent()
     static $defaultAgent = '';
 
     if (!$defaultAgent) {
-        $defaultAgent = 'GuzzleHttp/' . Client::MAJOR_VERSION;
+        $defaultAgent = 'GuzzleHttp/' .  '6.5.5';
         if (extension_loaded('curl') && function_exists('curl_version')) {
             $defaultAgent .= ' curl/' . \curl_version()['version'];
         }
