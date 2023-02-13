@@ -11,8 +11,8 @@ function($, str, ModalFactory) {
         var formid = "#responseform";
         var isvalid = false;
         var hasinput = false;
-        $(formid).submit( function(e){
-            $("#responseform .answer input").each(function () {
+        $(formid).submit( function(e) {
+            $("#responseform .answer input").each(function (){
                 hasinput = true;
                 if ($(this).is(':checked')) {
                     isvalid = true;

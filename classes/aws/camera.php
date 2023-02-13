@@ -1,8 +1,23 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * API methods from AWS rekognition to detect camera pictures
  *
- * @package    quizaccess
+ * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -20,38 +35,45 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/libraries/aws/
 /**
  * API exposed by AWS, to be used by camera images.
  *
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
  * @copyright 2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 class camera {
-    private static $amazon_api_key = null;
-    private static $amazon_api_secret = null;
+    private static $amazonapikey = null;
+    private static $amazonapisecret = null;
     private static $client = null;
 
     /**
      * Initialize key and token
      *
-     * @return null 
+     * @return null
      */
     public static function init() {
         global $CFG;
-        self::$amazon_api_key = get_config('quizaccess_quizproctoring', 'aws_key');
-        self::$amazon_api_secret = get_config('quizaccess_quizproctoring','aws_secret');
+        // Amazonapikey set amazon api key.
+        self::$amazonapikey = get_config('quizaccess_quizproctoring', 'aws_key');
+        // Amazonapisecret set amazon api secret key.
+        self::$amazonapisecret = get_config('quizaccess_quizproctoring','aws_secret');
+        // Client set credentials with key and secret.
         self::$client = new \Aws\Rekognition\RekognitionClient([
             'version' => AWS_VERSION,
             'region' => AWS_REGION,
             'credentials' => [
-                'key' => self::$amazon_api_key,
-                'secret' => self::$amazon_api_secret
+                'key' => self::$amazonapikey,
+                'secret' => self::$amazonapisecret
             ]
         ]);
-    }    
+    }
 
     /**
      * Validate the image captured
      *
-     * @return null 
+     * @param $source data
+     * @param $target not required
+     * @return null
      */
     public static function validate($source, $target = '') {
         global $CFG;
@@ -59,11 +81,11 @@ class camera {
 
         if (isset($result["FaceDetails"]) && count($result["FaceDetails"]) > 0) {
             $count = count($result["FaceDetails"]);
-            if ($count  > 1) {
+            if ($count > 1) {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
             } else if ($count == 1) {
-                $eyesOpen = $result['FaceDetails'][0]['EyesOpen']['Value'];
-                if (!$eyesOpen) {
+                $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
+                if (!$eyesopen) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
                 } else if ($target !== '') {
                     $compareresult = self::compare_faces($source, $target);
@@ -83,10 +105,10 @@ class camera {
         }
     }
 
-    /** 
+    /**
      * Detect faces in an image
      *
-     * @param $source
+     * @param $source data
      * @return bool|int
      */
     public static function detect_faces($source) {
@@ -99,10 +121,10 @@ class camera {
         return $result;
     }
 
-    /** 
+    /**
      * Compare faces in source and target image
      *
-     * @param $source
+     * @param $source data
      * @return bool|int
      */
     public static function compare_faces($source, $target) {
@@ -120,16 +142,22 @@ class camera {
         return false;
     }
 
+    /**
+     * Equipment check in an image
+     *
+     * @param $source
+     * @return bool|int
+     */
     public static function check_protective_equipment($source) {
-        $res_protective_equipment = self::detect_protective_equipment($source);
-        if (isset($res_protective_equipment["Persons"]) && count($res_protective_equipment["Persons"]) > 0) {
-            $persons = $res_protective_equipment["Persons"];
+        $resprotectiveequipment = self::detect_protective_equipment($source);
+        if (isset($resprotectiveequipment["Persons"]) && count($resprotectiveequipment["Persons"]) > 0) {
+            $persons = $resprotectiveequipment["Persons"];
             foreach ($persons as $person) {
-                $bodyParts = $person['BodyParts'];
-                if (!empty($bodyParts)) {
-                    foreach ($bodyParts as $bodyPart) {
-                        if ($bodyPart['Name'] == 'FACE') {
-                            if (empty($bodyPart['EquipmentDetections'])) {
+                $bodyparts = $person['BodyParts'];
+                if (!empty($bodyparts)) {
+                    foreach ($bodyparts as $bodypart) {
+                        if ($bodypart['Name'] == 'FACE') {
+                            if (empty($bodypart['EquipmentDetections'])) {
                                 return null;
                             } else {
                                 return QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED;
@@ -142,6 +170,12 @@ class camera {
         return null;
     }
 
+    /**
+     * Equipment check in an image with face cover
+     *
+     * @param $source
+     * @return bool|int
+     */
     public static function detect_protective_equipment($source) {
         $result = self::$client->detectProtectiveEquipment([
             'Image' => [
