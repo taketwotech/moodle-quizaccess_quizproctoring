@@ -17,7 +17,7 @@
 /**
  * Strings for the quizaccess_proctoring plugin.
  *
- * @package    quizaccess
+ * @package    quizaccess_quizproctoring
  * @subpackage proctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

@@ -17,7 +17,7 @@
 /**
  * Proctoring upgrade file.
  *
- * @package    quizaccess
+ * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -48,7 +48,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Proctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2020092406, 'quizaccess', 'quizproctoring');
     }
-    
+
     if ($oldversion < 2020092407) {
 
         // Define field triggeresamail to be added to quizaccess_quizproctoring.
@@ -74,7 +74,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-
 
         // Define field status to be added to quizaccess_proctor_data.
         $table = new xmldb_table('quizaccess_proctor_data');
@@ -158,9 +157,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2021060401, 'quizaccess', 'quizproctoring');
 
     }
-
-
-
 
     return true;
 }

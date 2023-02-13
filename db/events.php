@@ -17,7 +17,7 @@
 /**
  * Proctoring events file.
  *
- * @package    quizaccess
+ * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$observers = array(   
+$observers = array(
     array(
         'eventname' => '\mod_quiz\event\attempt_viewed',
         'callback'  => '\quizaccess_quizproctoring\observer::quizproctoring_start_camera'

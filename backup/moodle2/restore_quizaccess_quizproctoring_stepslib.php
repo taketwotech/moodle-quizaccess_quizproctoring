@@ -1,7 +1,21 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    quizaccess
+ * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
  * @subpackage backup-moodle2
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
@@ -17,28 +31,34 @@
  */
 class restore_quizaccess_quizproctoring_activity_structure_step extends restore_activity_structure_step {
 
+    /**
+     * Define structure
+     */
     protected function define_structure() {
 
         $paths = array();
         $paths[] = new restore_path_element('quizaccess_quizproctoring', '/activity/quizaccess_quizproctoring');
 
-        // Return the paths wrapped into standard activity structure
+        // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
     }
+
+     /**
+     * Define structure
+     */
 
     protected function process_quizaccess_quizproctoring($data) {
         global $DB;
 
         $data = (object)$data;
         $oldid = $data->id;
-       
-        //$data->course = $this->get_courseid();
+
         // Any changes to the list of dates that needs to be rolled should be same during course restore and course reset.
         // See MDL-9367.
 
-        // insert the quizaccess proctoring record
+        // Insert the quizaccess proctoring record.
         $newitemid = $DB->insert_record('quizaccess_quizproctoring', $data);
-        // immediately after inserting "activity" record, call this
+        // Immediately after inserting "activity" record, call this.
         $this->apply_activity_instance($newitemid);
     }
 

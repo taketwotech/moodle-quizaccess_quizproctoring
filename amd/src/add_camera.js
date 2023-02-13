@@ -7,7 +7,7 @@
  */
 define(['jquery', 'core/str', 'core/modal_factory'],
 function($, str, ModalFactory) {
-    var Camera = function(cmid, mainimage=false, attemptid=null) {
+    var Camera = function(cmid, mainimage = false, attemptid = null) {
         var docElement = $(document);
         this.video = document.getElementById(this.videoid);
         this.canvas = document.getElementById(this.canvasid);
@@ -15,7 +15,7 @@ function($, str, ModalFactory) {
         this.mainimage = mainimage;
         this.attemptid = attemptid;
         docElement.on('popup', this.showpopup.bind(this));
-        setTimeout(navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        setTimeout(navigator.mediaDevices.getUserMedia({video: true, audio: false})
             .then(function(stream) {
                 if (this.video) {
                   this.video.srcObject = stream;
@@ -23,7 +23,7 @@ function($, str, ModalFactory) {
                 }
             })
         .catch(function() {
-            //console.log(err);
+            // Console.log(err);
         }), 10000);
     };
     /** @type Tag element contain video. */
@@ -50,23 +50,23 @@ function($, str, ModalFactory) {
     Camera.prototype.attemptid = false;
 
     Camera.prototype.takepicture = function() {
-        //console.log('takepicture function');
+        // Console.log('takepicture function');
         var context = this.canvas.getContext('2d');
         context.drawImage(this.video, 0, 0, this.width, this.height);
         var data = this.canvas.toDataURL('image/png');
-        $('#'+this.videoid).hide();
-        $('#'+this.takepictureid).hide();
-        $('#'+this.canvasid).show();
-        $('#'+this.retakeid).show();
+        $('#' + this.videoid).hide();
+        $('#' + this.takepictureid).hide();
+        $('#' + this.canvasid).show();
+        $('#' + this.retakeid).show();
         $("input[name='userimg']").val(data);
         $("#id_submitbutton").prop("disabled", true);
         $.ajax({
-            url : M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-            method : 'POST',
-            data : {imgBase64: data, cmid: this.cmid,attemptid: this.attemptid, mainimage: this.mainimage},
-            success : function(response) {
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+            method: 'POST',
+            data: {imgBase64: data, cmid: this.cmid,attemptid: this.attemptid, mainimage: this.mainimage},
+            success: function(response) {
                 if (response && response.errorcode) {
-                    //console.log(response.errorcode);
+                    // Console.log(response.errorcode);
                     $("input[name='userimg']").val('');
                     $(document).trigger('popup', response.error);
                 } else {
@@ -76,17 +76,17 @@ function($, str, ModalFactory) {
         });
     };
     Camera.prototype.proctoringimage = function() {
-        //console.log(this.cmid);
+        // Console.log(this.cmid);
         var context = this.canvas.getContext('2d');
         context.drawImage(this.video, 0, 0, this.width, this.height);
         var data = this.canvas.toDataURL('image/png');
         $.ajax({
-            url : M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-            method : 'POST',
-            data : {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid,mainimage: this.mainimage},
-            success : function(response){
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+            method: 'POST',
+            data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
+            success: function(response) {
                 if (response && response.errorcode) {
-                   // console.log(response.errorcode);
+                   // Console.log(response.errorcode);
                     $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
@@ -100,10 +100,10 @@ function($, str, ModalFactory) {
 
     Camera.prototype.retake = function() {
         $("input[name='userimg']").val('');
-        $('#'+this.videoid).show(this.cmid);
-        $('#'+this.takepictureid).show();
-        $('#'+this.canvasid).hide();
-        $('#'+this.retakeid).hide();
+        $('#' + this.videoid).show(this.cmid);
+        $('#' + this.takepictureid).show();
+        $('#' + this.canvasid).hide();
+        $('#' + this.retakeid).hide();
     };
     Camera.prototype.showpopup = function(event, message) {
         ModalFactory.create({
@@ -112,7 +112,7 @@ function($, str, ModalFactory) {
             modal.show();
         });
     };
-    var init = function(cmid, mainimage, verifyduringattempt = false, attemptid=null,setinterval=300) {
+    var init = function(cmid, mainimage, verifyduringattempt = false, attemptid = null, setinterval = 300) {
         if (verifyduringattempt) {
             $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
             $('<video>').attr({
@@ -126,16 +126,16 @@ function($, str, ModalFactory) {
         } else {
             var camera = new Camera(cmid, mainimage, attemptid);
             // Take picture on button click
-            $('#'+camera.takepictureid).on('click', function(e) {
+            $('#' + camera.takepictureid).on('click', function(e) {
                 e.preventDefault();
                 camera.takepicture();
             });
             // Show video again when retake
-            $('#'+camera.retakeid).on('click', function(e) {
+            $('#' + camera.retakeid).on('click', function(e) {
                 e.preventDefault();
                 camera.retake();
             });
-            $("#id_submitbutton").on('click', function(e){
+            $("#id_submitbutton").on('click', function(e) {
                 if ($("input[name='userimg']").val() == "") {
                     e.preventDefault();
                     ModalFactory.create({
