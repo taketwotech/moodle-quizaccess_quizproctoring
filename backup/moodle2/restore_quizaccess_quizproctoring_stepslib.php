@@ -15,9 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ *
+ * Define all the backup steps that will be used by the backup_pdfviewer_activity_task
+ *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @subpackage backup-moodle2
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -44,8 +46,8 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
     }
 
      /**
-     * Define structure
-     */
+      * Define structure
+      */
 
     protected function process_quizaccess_quizproctoring($data) {
         global $DB;

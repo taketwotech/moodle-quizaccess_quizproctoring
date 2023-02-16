@@ -38,11 +38,10 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  */
 class observer {
 
-    /**
-     * Receive a hook when quiz attempt is viewed and start the camera
+     /**
+     * handle quiz attempt started.
      *
-     * @param $event stdClass
-     * @return null
+     * @return void
      */
     public static function quizproctoring_start_camera($event) {
         global $DB, $CFG;
@@ -57,8 +56,7 @@ class observer {
     /**
      * Receive a hook when quiz attempt is deleted and update record for proctoring in our DB
      *
-     * @param $event stdClass
-     * @return null
+     * @return void
      */
     public static function quizproctoring_image_delete($event) {
         global $DB, $CFG;

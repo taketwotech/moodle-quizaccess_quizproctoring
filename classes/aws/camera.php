@@ -41,9 +41,15 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/libraries/aws/
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Provides all the functions for aws call
+ */
 class camera {
+    // Amazonapikey null.
     private static $amazonapikey = null;
+    // Amazonapisecret null.
     private static $amazonapisecret = null;
+    // Client null.
     private static $client = null;
 
     /**
@@ -56,7 +62,7 @@ class camera {
         // Amazonapikey set amazon api key.
         self::$amazonapikey = get_config('quizaccess_quizproctoring', 'aws_key');
         // Amazonapisecret set amazon api secret key.
-        self::$amazonapisecret = get_config('quizaccess_quizproctoring','aws_secret');
+        self::$amazonapisecret = get_config('quizaccess_quizproctoring', 'aws_secret');
         // Client set credentials with key and secret.
         self::$client = new \Aws\Rekognition\RekognitionClient([
             'version' => AWS_VERSION,
@@ -71,9 +77,7 @@ class camera {
     /**
      * Validate the image captured
      *
-     * @param $source data
-     * @param $target not required
-     * @return null
+     * @return void
      */
     public static function validate($source, $target = '') {
         global $CFG;
@@ -108,7 +112,6 @@ class camera {
     /**
      * Detect faces in an image
      *
-     * @param $source data
      * @return bool|int
      */
     public static function detect_faces($source) {
@@ -124,7 +127,6 @@ class camera {
     /**
      * Compare faces in source and target image
      *
-     * @param $source data
      * @return bool|int
      */
     public static function compare_faces($source, $target) {
@@ -145,7 +147,6 @@ class camera {
     /**
      * Equipment check in an image
      *
-     * @param $source
      * @return bool|int
      */
     public static function check_protective_equipment($source) {
@@ -173,7 +174,6 @@ class camera {
     /**
      * Equipment check in an image with face cover
      *
-     * @param $source
      * @return bool|int
      */
     public static function detect_protective_equipment($source) {

@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 $observers = array(
     array(
         'eventname' => '\mod_quiz\event\attempt_viewed',
-        'callback'  => '\quizaccess_quizproctoring\observer::quizproctoring_start_camera'
+        'callback' => '\quizaccess_quizproctoring\observer::quizproctoring_start_camera'
     ),
     array(
         'eventname' => '\mod_quiz\event\attempt_deleted',

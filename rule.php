@@ -37,13 +37,13 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
  */
 class quizaccess_quizproctoring extends quiz_access_rule_base {
 
-   /**
-     * Given an ID of an instance of this module,
-     * this function will permanently delete the instance.
-     * and any data that depends on it.
-     *
-     * @param int $id the id of the quiz to delete.
-     */
+    /**
+    * Given an ID of an instance of this module,
+    * this function will permanently delete the instance.
+    * and any data that depends on it.
+    *
+    * @param int $id the id of the quiz to delete.
+    */
     public static function make(quiz $quizobj, $timenow, $canignoretimelimits) {
 
         if (!$quizobj->get_quiz()->enableproctoring) {
@@ -93,14 +93,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         // Video tag.
         $html = html_writer::start_tag('div', array('id' => 'fitem_id_user_video', 'class' => 'form-group row fitem videohtml'));
         $html .= html_writer::div('', 'col-md-3');
-        $videotag   = html_writer::tag('video', '', array('id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay'));
+        $videotag = html_writer::tag('video', '', array('id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay'));
         $html .= html_writer::div($videotag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         // Canvas tag.
-        $html  .= html_writer::start_tag('div', array('id' => 'fitem_id_user_canvas', 'class' => 'form-group row fitem videohtml'));
+        $html .= html_writer::start_tag('div', array('id' => 'fitem_id_user_canvas', 'class' => 'form-group row fitem videohtml'));
         $html .= html_writer::div('', 'col-md-3');
-        $canvastag   = html_writer::tag('canvas', '', array('id' => 'canvas', 'width' => '320', 'height' => '240', 'class' => 'hidden'));
+        $canvastag = html_writer::tag('canvas', '', array('id' => 'canvas', 'width' => '320', 'height' => '240', 'class' => 'hidden'));
         $html .= html_writer::div($canvastag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
@@ -127,7 +127,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity', 'quizaccess_quizproctoring'), null, $filemanageroptions);
         $mform->addRule('user_identity', null, 'required', null, 'client');
 
-        //Video button
+        // Video button.
         if ($proctoringdata->proctoringvideo_link) {
 
             $html = html_writer::start_tag('div', array('id' => 'fitem_id_user_demovideo', 'class' => 'form-group row fitem'));
@@ -170,7 +170,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         } else if ($file['filecount'] > 0) {
             $id = $DB->insert_record('quizaccess_proctor_data', $record);
             $context = context_module::instance($cmid);
-            file_save_draft_area_files($useridentity, $context->id,'quizaccess_quizproctoring', 'identity' , $id);
+            file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
         } else {
             $errors['user_identity'] = get_string('useridentityerror', 'quizaccess_quizproctoring');
         }
@@ -201,7 +201,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         // Time interval set for proctoring image.
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
-                array("5" => get_string('fiveseconds', 'quizaccess_quizproctoring'), "10" => get_string('tenseconds', 'quizaccess_quizproctoring'), "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'), "20"=>get_string('twentyseconds', 'quizaccess_quizproctoring'), "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'), "60" => get_string('oneminute', 'quizaccess_quizproctoring'), "120" => get_string('twominutes', 'quizaccess_quizproctoring'), "180" => get_string('threeminutes', 'quizaccess_quizproctoring'), "240" => get_string('fourminutes', 'quizaccess_quizproctoring'), "300"=>get_string('fiveminutes', 'quizaccess_quizproctoring'), "600" => get_string('tenminutes', 'quizaccess_quizproctoring'), "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
+                array("5" => get_string('fiveseconds', 'quizaccess_quizproctoring'), "10" => get_string('tenseconds', 'quizaccess_quizproctoring'), "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'), "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'), "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'), "60" => get_string('oneminute', 'quizaccess_quizproctoring'), 
+                    "120" => get_string('twominutes', 'quizaccess_quizproctoring'), "180" => get_string('threeminutes', 'quizaccess_quizproctoring'), "240" => get_string('fourminutes', 'quizaccess_quizproctoring'), "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'), "600" => get_string('tenminutes', 'quizaccess_quizproctoring'), "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
         // ...$mform->addHelpButton('interval', 'interval', 'quiz');
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
 
