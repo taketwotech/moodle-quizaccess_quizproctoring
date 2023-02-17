@@ -38,8 +38,6 @@ define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 /**
  * Serves the quizaccess proctoring files.
  *
- * @package  quizaccess_quizproctoring
- * @category files
  * @param stdClass $course course object
  * @param stdClass $cm course module object
  * @param stdClass $context context object
@@ -70,9 +68,9 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
 /**
  * Camera start on page
  *
- * @param $cmid course module id
- * @param $attemptid attempt id
- * @param $quizid quiz id
+ * @param int $cmid course module id
+ * @param int $attemptid attempt id
+ * @param int $quizid quiz id
  */
 
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
@@ -91,8 +89,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
 /**
  * Proctoring images store
  *
- * @package  quizaccess_quizproctoring
- * @category files
  * @param $data user image in base64
  * @param int $cmid course module id
  * @param int $attemptid attempt id

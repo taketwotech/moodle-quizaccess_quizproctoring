@@ -38,12 +38,15 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
 class quizaccess_quizproctoring extends quiz_access_rule_base {
 
     /**
-    * Given an ID of an instance of this module,
-    * this function will permanently delete the instance.
-    * and any data that depends on it.
-    *
-    * @param int $id the id of the quiz to delete.
-    */
+     * * Information, such as might be shown on the quiz view page, relating to this restriction.
+     * There is no obligation to return anything. If it is not appropriate to tell students
+     * about this rule, then just return ''.
+     *
+     * @param int $timenow
+     * @param bool $canignoretimelimits
+     *
+     * @return quiz_access_rule_base|quizaccess_proctoring|null
+     */
     public static function make(quiz $quizobj, $timenow, $canignoretimelimits) {
 
         if (!$quizobj->get_quiz()->enableproctoring) {
@@ -51,6 +54,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         }
         return new self($quizobj, $timenow);
     }
+
+    /**
+     * Get topmost script path.
+     *
+     * @return string
+     *
+     * @throws coding_exception
+     */
 
     public function prevent_access() {
         if (!$this->check_proctoring()) {
