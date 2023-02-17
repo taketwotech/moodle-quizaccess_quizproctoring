@@ -16,7 +16,7 @@
 
 /**
  *
- * Define all the backup steps that will be used by the backup_pdfviewer_activity_task
+ * Define all the backup steps that will be used by the restore_quizaccess_quizproctoring_activity_task
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
