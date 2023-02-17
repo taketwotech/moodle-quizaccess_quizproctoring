@@ -59,10 +59,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * Get topmost script path.
      *
      * @return string
-     *
-     * @throws coding_exception
      */
-
     public function prevent_access() {
         if (!$this->check_proctoring()) {
             return get_string('proctoringerror', 'quizaccess_quizproctoring');
@@ -71,6 +68,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         }
     }
 
+    /**
+     * Get description
+     *
+     * @return String
+     */
     public function description() {
         return get_string('proctoringnotice', 'quizaccess_quizproctoring');
     }
@@ -79,13 +81,21 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $SESSION, $DB, $USER;
         $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
+        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id
+            , 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
             return false;
         } else {
             return true;
         }
     }
 
+    /**
+     * Preflight heck form
+     *
+     * @param stdClass $quizform
+     * @return String
+     *
+     */
     public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
         global $PAGE, $DB;
@@ -104,14 +114,16 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         // Video tag.
         $html = html_writer::start_tag('div', array('id' => 'fitem_id_user_video', 'class' => 'form-group row fitem videohtml'));
         $html .= html_writer::div('', 'col-md-3');
-        $videotag = html_writer::tag('video', '', array('id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay'));
+        $videotag = html_writer::tag('video', '', array('id' => 'video', 'width' => '320'
+            , 'height' => '240', 'autoplay' => 'autoplay'));
         $html .= html_writer::div($videotag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         // Canvas tag.
         $html .= html_writer::start_tag('div', array('id' => 'fitem_id_user_canvas', 'class' => 'form-group row fitem videohtml'));
         $html .= html_writer::div('', 'col-md-3');
-        $canvastag = html_writer::tag('canvas', '', array('id' => 'canvas', 'width' => '320', 'height' => '240', 'class' => 'hidden'));
+        $canvastag = html_writer::tag('canvas', '', array('id' => 'canvas', 'width' => '320',
+         'height' => '240', 'class' => 'hidden'));
         $html .= html_writer::div($canvastag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
@@ -135,7 +147,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('hidden', 'userimg');
         $mform->setType('userimg', PARAM_TEXT);
         $mform->addElement('html', $html);
-        $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity', 'quizaccess_quizproctoring'), null, $filemanageroptions);
+        $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
+         'quizaccess_quizproctoring'), null, $filemanageroptions);
         $mform->addRule('user_identity', null, 'required', null, 'client');
 
         // Video button.
@@ -153,6 +166,15 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
     }
 
+    /**
+     * Valid preflight check
+     *
+     * @param array $data
+     * @param string $files
+     * @param string $errors
+     * @param int $attemptid
+     * @return String
+     */
     public function validate_preflight_check($data, $files, $errors, $attemptid) {
         global $USER, $DB, $CFG;
         $useridentity = $data['user_identity'];
@@ -167,7 +189,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $record->attemptid = $attemptid;
         // We probably have an entry already in DB.
         $file = file_get_draft_area_info($useridentity);
-        if ($rc = $DB->get_record('quizaccess_proctor_data', array('userid' => $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
+        if ($rc = $DB->get_record('quizaccess_proctor_data', array('userid' =>
+            $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
             $context = context_module::instance($cmid);
             $rc->user_identity = $useridentity;
             $rc->image_status = 'M';
@@ -188,6 +211,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         return $errors;
     }
 
+    /**
+     * Notify preflight check
+     *
+     * @param int $attemptid
+     * @return null
+     */
     public function notify_preflight_check_passed($attemptid) {
         global $SESSION;
         $SESSION->proctoringcheckedquizzes[$this->quiz->id] = true;
@@ -202,6 +231,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         return true;
     }
 
+    /**
+     * Add settings form fields
+     *
+     * @param stdClass $quizform
+     * @param stdClass $mform
+     */
     public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
         global $CFG;
 
@@ -226,7 +261,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             }
         }
         // Allow admin to setup warnings threshold.
-        $mform->addElement('select', 'warning_threshold', get_string('warning_threshold', 'quizaccess_quizproctoring'), $thresholds);
+        $mform->addElement('select', 'warning_threshold', get_string('warning_threshold',
+         'quizaccess_quizproctoring'), $thresholds);
         $mform->addHelpButton('warning_threshold', 'warning_threshold', 'quizaccess_quizproctoring');
         $mform->setDefault('warning_threshold', 0);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
@@ -249,6 +285,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
     }
 
+    /**
+     * Save settings
+     *
+     * @param stdClass $quiz
+     */
     public static function save_settings($quiz) {
         global $DB;
 
@@ -284,11 +325,22 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         }
     }
 
+    /**
+     * Delete settings
+     *
+     * @param stdClass $quiz
+     */
     public static function delete_settings($quiz) {
         global $DB;
         $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
     }
 
+    /**
+     * Settings sql
+     *
+     * @param int $quizid
+     * @return string
+     */
     public static function get_settings_sql($quizid) {
         return array(
             'enableproctoring,time_interval,triggeresamail,warning_threshold,ci_test_id,quiz_sku,proctoringvideo_link',
@@ -296,6 +348,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             array());
     }
 
+    /**
+     * Current time attempt finished
+     *
+     */
     public function current_attempt_finished() {
         global $SESSION;
         // Clear the flag in the session that says that the user has already.

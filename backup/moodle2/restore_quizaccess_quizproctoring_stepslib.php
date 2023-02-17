@@ -45,10 +45,11 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
         return $this->prepare_activity_structure($paths);
     }
 
-     /**
-      * Define structure
-      */
-
+    /**
+     * Any changes to the list of dates that needs to be rolled
+     *
+     * @param array $data
+     */
     protected function process_quizaccess_quizproctoring($data) {
         global $DB;
 
@@ -64,8 +65,11 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
         $this->apply_activity_instance($newitemid);
     }
 
+    /**
+     * Add quizaccess proctoring related files
+     */
     protected function after_execute() {
-        // Add quizaccess proctoring related files, no need to match by itemname (just internally handled context)
+        // Add quizaccess proctoring related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('quizaccess_quizproctoring', 'intro', null);
     }
 }

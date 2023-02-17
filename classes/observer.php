@@ -41,6 +41,7 @@ class observer {
      /**
      * handle quiz attempt started.
      *
+     * @param stdClass $event
      * @return void
      */
     public static function quizproctoring_start_camera($event) {
@@ -56,10 +57,12 @@ class observer {
     /**
      * Receive a hook when quiz attempt is deleted and update record for proctoring in our DB
      *
+     * @param stdClass $event
      * @return void
      */
     public static function quizproctoring_image_delete($event) {
         global $DB, $CFG;
-        $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where attemptid=?", array($event->objectid));
+        $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where
+         attemptid=?", array($event->objectid));
     }
 }

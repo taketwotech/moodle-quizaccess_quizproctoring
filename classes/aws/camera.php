@@ -77,7 +77,9 @@ class camera {
     /**
      * Validate the image captured
      *
-     * @return void
+     * @param Longtext $source data
+     * @param Longtext $target data
+     * @return string
      */
     public static function validate($source, $target = '') {
         global $CFG;
@@ -110,9 +112,10 @@ class camera {
     }
 
     /**
-     * Detect faces in an image
+     * Detect faces
      *
-     * @return bool|int
+     * @param Longtext $source data
+     * @return string
      */
     public static function detect_faces($source) {
         $result = self::$client->detectFaces([
@@ -125,9 +128,11 @@ class camera {
     }
 
     /**
-     * Compare faces in source and target image
+     * Compare faces
      *
-     * @return bool|int
+     * @param Longtext $source data
+     * @param Longtext $target data
+     * @return string
      */
     public static function compare_faces($source, $target) {
         $result = self::$client->CompareFaces([
@@ -145,9 +150,10 @@ class camera {
     }
 
     /**
-     * Equipment check in an image
+     * Check protective equipment
      *
-     * @return bool|int
+     * @param Longtext $source data
+     * @return null
      */
     public static function check_protective_equipment($source) {
         $resprotectiveequipment = self::detect_protective_equipment($source);
@@ -172,9 +178,10 @@ class camera {
     }
 
     /**
-     * Equipment check in an image with face cover
+     * Dectect  protective equipment
      *
-     * @return bool|int
+     * @param Longtext $source data
+     * @return string
      */
     public static function detect_protective_equipment($source) {
         $result = self::$client->detectProtectiveEquipment([
