@@ -42,7 +42,8 @@ $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
 $target = '';
 if (!$mainimage) {
     // If it is not main image, get the main image data and compare.
-    if ($mainentry = $DB->get_record('quizaccess_proctor_data', array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M', 'attemptid' => $attemptid))) {
+    if ($mainentry = $DB->get_record('quizaccess_proctor_data',
+        array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M', 'attemptid' => $attemptid))) {
         $target = $mainentry->userimg;
     }
 }
@@ -58,21 +59,23 @@ if ($target !== '') {
 switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage,QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+            $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
+            quizproctoring_storeimage($img, $cmid, $attemptid,
+            $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
         }
@@ -84,7 +87,8 @@ switch ($validate) {
         break;
     case QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+            $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
         } else {
             print_error(QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
         }

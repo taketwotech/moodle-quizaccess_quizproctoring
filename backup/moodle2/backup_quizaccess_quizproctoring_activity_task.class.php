@@ -43,6 +43,7 @@ class backup_quizaccess_quizproctoring_subplugin extends backup_subplugin {
      * Defines a backup step to store the instance data in the quizaccess_quizproctoring.xml file
      */
     protected function define_attempt_subplugin_structure() {
-            $this->add_step(new backup_quizaccess_quizproctoring_activity_structure_step('quizaccess_quizproctoring_structure', 'quizaccess_quizproctoring.xml'));
+            $this->add_step(new backup_quizaccess_quizproctoring_activity_structure_step('quizaccess_quizproctoring_structure',
+                'quizaccess_quizproctoring.xml'));
     }
 }

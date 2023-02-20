@@ -15,15 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ *
+ * Define all the backup steps that will be used by the restore_quizaccess_quizproctoring_activity_structure_step
+ *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @subpackage backup-moodle2
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 /**
- * Define all the restore steps that will be used by the restore_pdfviewer_activity_task
+ * Define all the restore steps that will be used by the restore_quizaccess_quizproctoring_activity_structure_step
  */
 
 /**
@@ -43,10 +45,11 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
         return $this->prepare_activity_structure($paths);
     }
 
-     /**
-     * Define structure
+    /**
+     * Any changes to the list of dates that needs to be rolled
+     *
+     * @param array $data
      */
-
     protected function process_quizaccess_quizproctoring($data) {
         global $DB;
 
@@ -62,8 +65,11 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
         $this->apply_activity_instance($newitemid);
     }
 
+    /**
+     * Add quizaccess proctoring related files
+     */
     protected function after_execute() {
-        // Add quizaccess proctoring related files, no need to match by itemname (just internally handled context)
+        // Add quizaccess proctoring related files, no need to match by itemname (just internally handled context).
         $this->add_related_files('quizaccess_quizproctoring', 'intro', null);
     }
 }
