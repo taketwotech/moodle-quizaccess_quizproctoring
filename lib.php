@@ -22,7 +22,7 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
+require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
 define('QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED', 'nofacedetected');
@@ -38,8 +38,6 @@ define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 /**
  * Serves the quizaccess proctoring files.
  *
- * @package  quizaccess_quizproctoring
- * @category files
  * @param stdClass $course course object
  * @param stdClass $cm course module object
  * @param stdClass $context context object
@@ -70,9 +68,9 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
 /**
  * Camera start on page
  *
- * @param $cmid course module id
- * @param $attemptid attempt id
- * @param $quizid quiz id
+ * @param int $cmid course module id
+ * @param int $attemptid attempt id
+ * @param int $quizid quiz id
  */
 
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
@@ -89,10 +87,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
 }
 
 /**
- * Proctoring images store 
+ * Proctoring images store
  *
- * @package  quizaccess_quizproctoring
- * @category files
  * @param $data user image in base64
  * @param int $cmid course module id
  * @param int $attemptid attempt id
@@ -122,8 +118,8 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->timecreated = time();
     $record->timemodified = time();
     $record->userimg = $data;
-    $record->attemptid  = $attemptid;
-    $record->status  = $status;
+    $record->attemptid = $attemptid;
+    $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
 
     $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
@@ -134,10 +130,10 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $fileinfo = array(
         'contextid' => $context->id,
         'component' => 'quizaccess_quizproctoring',
-        'filearea'  => 'cameraimages',
-        'itemid'    => $id,
-        'filepath'  => '/',
-        'filename'  => $attemptid . "_" . $USER->id . '_myimage.png');
+        'filearea' => 'cameraimages',
+        'itemid' => $id,
+        'filepath' => '/',
+        'filename' => $attemptid . "_" . $USER->id . '_myimage.png');
     $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
             $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
     if ($file) {
@@ -151,8 +147,10 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
 
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
-            $inparams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
-            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
+            $inparams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
+             'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status 
+            IN (:param1,:param2,:param3,:param4)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
@@ -176,11 +174,10 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                         $left = $left . get_string('warning', 'quizaccess_quizproctoring');
                     } else {
                         $left = $left . get_string('warnings', 'quizaccess_quizproctoring');
-                     }
+                    }
                 }
                 $errorstring = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
-           }
-
+            }
 
             if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
                 print_error($status, 'quizaccess_quizproctoring', '', $errorstring);

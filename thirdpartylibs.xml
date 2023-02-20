@@ -39,4 +39,12 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+
+    <library>
+        <location>libraries/aws/aws-autoloader.php</location>
+        <name>aws-autoloader</name>
+        <version>1.0.1</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
 </libraries>
