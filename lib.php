@@ -47,7 +47,6 @@ define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
  * @param array $options additional options affecting the file serving
  * @return bool false if file not found, does not return if found - justsend the file
  */
-
 function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload,
     array $options=array()) {
     global $DB;
@@ -72,7 +71,6 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
  */
-
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER;
     // Update main image attempt id as soon as user landed on attemp page.
@@ -95,7 +93,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $quizid quiz id
  * @param $mainimage main iamge
  */
-
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status='') {
     global $USER, $DB, $COURSE;
 
@@ -147,9 +144,11 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
 
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
-            $inparams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
-             'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
-            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status 
+            $inparams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
+                'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
+                'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
+                'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status
             IN (:param1,:param2,:param3,:param4)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 

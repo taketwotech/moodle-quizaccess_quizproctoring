@@ -39,11 +39,11 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 class observer {
 
      /**
-     * handle quiz attempt started.
-     *
-     * @param stdClass $event
-     * @return void
-     */
+      * handle quiz attempt started.
+      *
+      * @param stdClass $event
+      * @return void
+      */
     public static function quizproctoring_start_camera($event) {
         global $DB, $CFG;
         $eventdata = $event->get_data();
