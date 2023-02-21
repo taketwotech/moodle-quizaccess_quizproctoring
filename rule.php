@@ -42,8 +42,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * There is no obligation to return anything. If it is not appropriate to tell students
      * about this rule, then just return ''.
      *
-     * @param int $timenow
-     * @param bool $canignoretimelimits
+     * @param stdClass $quizobj quiz object
+     * @param int $timenow current time
+     * @param bool $canignoretimelimits ignore time limits
      *
      * @return quiz_access_rule_base|quizaccess_proctoring|null
      */
@@ -77,6 +78,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         return get_string('proctoringnotice', 'quizaccess_quizproctoring');
     }
 
+    /**
+     * Preflight required form
+     *
+     * @param int $attemptid attempt id
+     * @return bool TRUE|FALSE
+     *
+     */
     public function is_preflight_check_required($attemptid) {
         global $SESSION, $DB, $USER;
         $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
@@ -90,9 +98,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     }
 
     /**
-     * Preflight heck form
+     * Preflight check form
      *
-     * @param stdClass $quizform
+     * @param stdClass $quizform quiz form
+     * @param stdClass $mform mform
+     * @param int $attemptid attempt id
      * @return String
      *
      */
@@ -234,8 +244,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     /**
      * Add settings form fields
      *
-     * @param stdClass $quizform
-     * @param stdClass $mform
+     * @param stdClass $quizform quizform
+     * @param stdClass $mform moodle quicl form
      */
     public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
         global $CFG;
@@ -247,8 +257,18 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         // Time interval set for proctoring image.
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
-                array("5" => get_string('fiveseconds', 'quizaccess_quizproctoring'), "10" => get_string('tenseconds', 'quizaccess_quizproctoring'), "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'), "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'), "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'), "60" => get_string('oneminute', 'quizaccess_quizproctoring'), 
-                    "120" => get_string('twominutes', 'quizaccess_quizproctoring'), "180" => get_string('threeminutes', 'quizaccess_quizproctoring'), "240" => get_string('fourminutes', 'quizaccess_quizproctoring'), "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'), "600" => get_string('tenminutes', 'quizaccess_quizproctoring'), "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
+                array("5" => get_string('fiveseconds', 'quizaccess_quizproctoring'),
+                    "10" => get_string('tenseconds', 'quizaccess_quizproctoring'),
+                    "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
+                    "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'),
+                    "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
+                    "60" => get_string('oneminute', 'quizaccess_quizproctoring'),
+                    "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
+                    "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
+                    "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
+                    "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
+                    "600" => get_string('tenminutes', 'quizaccess_quizproctoring'),
+                    "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
         // ...$mform->addHelpButton('interval', 'interval', 'quiz');
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
 
