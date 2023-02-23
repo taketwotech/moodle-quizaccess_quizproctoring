@@ -108,31 +108,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
-        global $PAGE, $DB, $USER;
-
-        $isadmin = is_siteadmin($USER);
+        global $PAGE, $DB;
 
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid]);
 
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('requireproctoringmessage', 'quizaccess_quizproctoring'));
-
-        $mform->addElement('hidden','aws_key');        
-        $mform->setType('aws_key', PARAM_ALPHANUM);
-        $mform->setDefault('aws_key', get_config('quizaccess_quizproctoring', 'aws_key'));
-
-        $mform->addElement('hidden','aws_secret');        
-        $mform->setType('aws_secret', PARAM_ALPHANUM);
-        $mform->setDefault('aws_secret', get_config('quizaccess_quizproctoring', 'aws_secret'));  
-
-        if($isadmin){
-            $mform->addElement('hidden','isadmin');
-            $mform->setDefault('isadmin',1); 
-        }else{
-            $mform->addElement('hidden','isadmin');
-            $mform->setDefault('isadmin', 0);
-        }             
 
         $filemanageroptions = array();
         $filemanageroptions['accepted_types'] = '*';
