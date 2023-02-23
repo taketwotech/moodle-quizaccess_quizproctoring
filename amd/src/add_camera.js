@@ -146,13 +146,14 @@ function($, str, ModalFactory) {
                 }
                 if(($("input[name='aws_key']").val() == "") || ($("input[name='aws_secret']").val() == "")){
                     e.preventDefault();
+                    let warningaws;
                     if($("input[name='isadmin']").val() == 1){
-                        $warningaws = str.get_string('warningaws', 'quizaccess_quizproctoring');                    
+                        warningaws = str.get_string('warningaws', 'quizaccess_quizproctoring');                    
                     }else{
-                        $warningaws = str. get_string('warningawsstudent', 'quizaccess_quizproctoring');                        
+                        warningaws = str. get_string('warningawsstudent', 'quizaccess_quizproctoring');                        
                     } 
                     ModalFactory.create({
-                        body: $warningaws,
+                        body: warningaws,
                     }).then(function(modal) {
                         modal.show();
                     });                       
