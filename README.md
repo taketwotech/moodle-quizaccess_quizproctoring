@@ -1,7 +1,9 @@
 # Quiz accessrule proctoring
 **To install this plugin, please follow below steps:**
-1. Download source code and copy quizproctoring folder in mod/quiz/accessrule/
-2. Login from admin and upgrade.
+1. Download source code.
+2. Rename the folder From  moodle-quizaccess_quizproctoring   to   quizproctoring.
+3. Copy quizproctoring folder into mod/quiz/accessrule/.
+4. Login from admin and upgrade.
 
 **Follow below steps to define AWS API and Secret key:**
 1. Login from admin
