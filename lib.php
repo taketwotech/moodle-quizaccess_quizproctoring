@@ -81,7 +81,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$cmid, false, true, $attemptid, $interval->time_interval]);
-    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/quiz_protection', 'init');
 }
 
 /**
