@@ -49,21 +49,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2020092406, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2020092407) {
-
-        // Define field triggeresamail to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('triggeresamail', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'time_interval');
-
-        // Conditionally launch add field triggeresamail.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Proctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2020092407, 'quizaccess', 'quizproctoring');
-    }
-
     if ($oldversion < 2020092408) {
 
         // Define field warning_threshold to be added to quizaccess_quizproctoring.
@@ -86,36 +71,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Proctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2020092408, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2020092409) {
-
-        // Define field ci_test_id to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('ci_test_id', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'warning_threshold');
-
-        // Conditionally launch add field ci_test_id.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Proctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2020092409, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2020092410) {
-
-        // Define field quiz_sku to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('quiz_sku', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'ci_test_id');
-
-        // Conditionally launch add field quiz_sku.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Proctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2020092410, 'quizaccess', 'quizproctoring');
     }
 
     if ($oldversion < 2021060400) {
