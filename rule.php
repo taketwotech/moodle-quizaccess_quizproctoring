@@ -66,10 +66,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $isadmin = is_siteadmin($USER);
         $aws_key = get_config('quizaccess_quizproctoring', 'aws_key');
         $aws_secret = get_config('quizaccess_quizproctoring', 'aws_secret');
-        
+        $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
+        $url = $url->out();
+       
         if(empty($aws_key) || empty($aws_secret)){
             if($isadmin){    
-                return get_string('warningaws', 'quizaccess_quizproctoring');
+                return get_string('warningaws', 'quizaccess_quizproctoring',$url);
             }else{               
                 return get_string('warningawsstudent', 'quizaccess_quizproctoring');
             }
