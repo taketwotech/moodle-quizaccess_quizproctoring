@@ -288,7 +288,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');    
+        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring'); 
     }
 
     /**
