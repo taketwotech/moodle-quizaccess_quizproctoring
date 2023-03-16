@@ -129,7 +129,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid]);
 
         $mform->addElement('static', 'proctoringmessage', '',
-                get_string('requireproctoringmessage', 'quizaccess_quizproctoring'));          
+                get_string('requireproctoringmessage', 'quizaccess_quizproctoring'));
 
         $filemanageroptions = array();
         $filemanageroptions['accepted_types'] = '*';
