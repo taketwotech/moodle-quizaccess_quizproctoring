@@ -158,5 +158,38 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
     }
 
+     if ($oldversion < 2023031600) {
+
+        // Define field triggeresamail to be dropped from quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('triggeresamail');
+
+        // Conditionally launch drop field triggeresamail.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Define field ci_test_id to be dropped from quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('ci_test_id');
+
+        // Conditionally launch drop field ci_test_id.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Define field quiz_sku to be dropped from quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('quiz_sku');
+
+        // Conditionally launch drop field quiz_sku.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2023031600, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }
