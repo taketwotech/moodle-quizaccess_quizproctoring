@@ -80,3 +80,5 @@ $string['fourminutes'] = '4 minutes';
 $string['fiftenminutes'] = '15 minutes';
 $string['warning'] = ' warning';
 $string['warnings'] = ' warnings';
+$string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
+$string['warningawsstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
