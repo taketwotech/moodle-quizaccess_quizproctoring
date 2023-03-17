@@ -302,22 +302,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->setDefault('warning_threshold', 0);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
-        // -------------------------------------------------------------------------------
-        $mform->addElement('header', 'orderlinesettings', get_string('orderlinesettings', 'quizaccess_quizproctoring'));
-
-        // Allow admin to setup this trigger only once.
-        $mform->addElement('selectyesno', 'triggeresamail', get_string('triggeresamail', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('triggeresamail', 'triggeresamail', 'quizaccess_quizproctoring');
-        $mform->setDefault('triggeresamail', 0);
-
-        $mform->addElement('text', 'ci_test_id', get_string('citestid', 'quizaccess_quizproctoring'), array('size' => '32'));
-        $mform->addHelpButton('ci_test_id', 'citestid', 'quizaccess_quizproctoring');
-
-        $mform->addElement('text', 'quiz_sku', get_string('quizsku', 'quizaccess_quizproctoring'), array('size' => '32'));
-        $mform->addHelpButton('quiz_sku', 'quizsku', 'quizaccess_quizproctoring');
-
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
+        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring'); 
     }
 
     /**
