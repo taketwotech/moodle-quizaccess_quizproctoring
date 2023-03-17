@@ -320,28 +320,18 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
-            $record->triggeresamail = empty($quiz->triggeresamail) ? 0 : 1;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
-            $record->ci_test_id = isset($quiz->ci_test_id) ? $quiz->ci_test_id : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
-            if (isset($quiz->quiz_sku) && $quiz->quiz_sku) {
-                $record->quiz_sku = $quiz->quiz_sku;
-            }
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
             $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
-            $record->triggeresamail = empty($quiz->triggeresamail) ? 0 : 1;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
-            $record->ci_test_id = isset($quiz->ci_test_id) ? $quiz->ci_test_id : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
-            if (isset($quiz->quiz_sku) && $quiz->quiz_sku) {
-                $record->quiz_sku = $quiz->quiz_sku;
-            }
             $DB->insert_record('quizaccess_quizproctoring', $record);
         }
     }
@@ -364,7 +354,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function get_settings_sql($quizid) {
         return array(
-            'enableproctoring,time_interval,triggeresamail,warning_threshold,ci_test_id,quiz_sku,proctoringvideo_link',
+            'enableproctoring,time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             array());
     }
