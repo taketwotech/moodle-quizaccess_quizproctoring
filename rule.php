@@ -287,22 +287,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->setDefault('warning_threshold', 0);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
-        // -------------------------------------------------------------------------------
-        $mform->addElement('header', 'orderlinesettings', get_string('orderlinesettings', 'quizaccess_quizproctoring'));
-
-        // Allow admin to setup this trigger only once.
-        $mform->addElement('selectyesno', 'triggeresamail', get_string('triggeresamail', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('triggeresamail', 'triggeresamail', 'quizaccess_quizproctoring');
-        $mform->setDefault('triggeresamail', 0);
-
-        $mform->addElement('text', 'ci_test_id', get_string('citestid', 'quizaccess_quizproctoring'), array('size' => '32'));
-        $mform->addHelpButton('ci_test_id', 'citestid', 'quizaccess_quizproctoring');
-
-        $mform->addElement('text', 'quiz_sku', get_string('quizsku', 'quizaccess_quizproctoring'), array('size' => '32'));
-        $mform->addHelpButton('quiz_sku', 'quizsku', 'quizaccess_quizproctoring');
-
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
+        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring'); 
     }
 
     /**
@@ -319,28 +305,18 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
-            $record->triggeresamail = empty($quiz->triggeresamail) ? 0 : 1;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
-            $record->ci_test_id = isset($quiz->ci_test_id) ? $quiz->ci_test_id : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
-            if (isset($quiz->quiz_sku) && $quiz->quiz_sku) {
-                $record->quiz_sku = $quiz->quiz_sku;
-            }
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
             $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
-            $record->triggeresamail = empty($quiz->triggeresamail) ? 0 : 1;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
-            $record->ci_test_id = isset($quiz->ci_test_id) ? $quiz->ci_test_id : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
-            if (isset($quiz->quiz_sku) && $quiz->quiz_sku) {
-                $record->quiz_sku = $quiz->quiz_sku;
-            }
             $DB->insert_record('quizaccess_quizproctoring', $record);
         }
     }
@@ -363,7 +339,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function get_settings_sql($quizid) {
         return array(
-            'enableproctoring,time_interval,triggeresamail,warning_threshold,ci_test_id,quiz_sku,proctoringvideo_link',
+            'enableproctoring,time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             array());
     }
