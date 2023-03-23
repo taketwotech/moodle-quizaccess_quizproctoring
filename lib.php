@@ -181,6 +181,9 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 print_error($status, 'quizaccess_quizproctoring', '', $errorstring);
                 die();
             }
+        } else if ($quizaccessquizproctoring->warning_threshold == 0) {
+            print_error($status, 'quizaccess_quizproctoring', '', $status);
+            die();
         }
     }
 }
