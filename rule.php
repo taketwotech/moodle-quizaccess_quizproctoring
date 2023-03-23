@@ -273,18 +273,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
 
         $thresholds = array();
-        for ($i = 0; $i <= 20; $i++) {
-            if ($i == 0) {
-                $thresholds[$i] = 'Unlimited';
-            } else {
+        for ($i = 1; $i <= 20; $i++) {
                 $thresholds[$i] = $i;
-            }
         }
         // Allow admin to setup warnings threshold.
         $mform->addElement('select', 'warning_threshold', get_string('warning_threshold',
          'quizaccess_quizproctoring'), $thresholds);
         $mform->addHelpButton('warning_threshold', 'warning_threshold', 'quizaccess_quizproctoring');
-        $mform->setDefault('warning_threshold', 0);
+        $mform->setDefault('warning_threshold', 20);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
