@@ -182,7 +182,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 die();
             }
         } else if ($quizaccessquizproctoring->warning_threshold == 0) {
-            print_error($status, 'quizaccess_quizproctoring', '', $status);
+            print_error($status, 'quizaccess_quizproctoring', '', '');
             die();
         }
     }
