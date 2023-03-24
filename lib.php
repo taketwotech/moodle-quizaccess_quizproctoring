@@ -77,7 +77,11 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id, 'quizid' => $quizid, 'image_status' => 'M', 'attemptid' => 0))) {
         $proctoreddata->attemptid = $attemptid;
+        $proctoreddata->userimg =  $attemptid . "_" . $USER->id . '_image.png';
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
+        $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+        file_put_contents($tmpdir . $attemptid . "_" . $USER->id . '_image.png', $data); 
+        @unlink($tmpdir . "0_" . $USER->id . '_image.png');
     }
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$cmid, false, true, $attemptid, $interval->time_interval]);
@@ -105,6 +109,8 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             $DB->delete_records('quizaccess_proctor_data', array('id' => $qpd->id));
         }
     }
+    
+    $imagename = $attemptid . "_" . $USER->id . '_image.png';
 
     $record = new stdClass();
     $record->userid = $user->id;
@@ -113,14 +119,19 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->aws_response = 'aws';
     $record->timecreated = time();
     $record->timemodified = time();
-    $record->userimg = $data;
+    $record->userimg = $imagename;
     $record->attemptid = $attemptid;
     $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
-
+    if($status != ''){
+        $imagename = $id. "_" . $attemptid . "_" . $USER->id . '_image.png';
+        $proctoreddata = $DB->get_record('quizaccess_proctor_data', array('id' => $id));
+        $proctoreddata->userimg = $imagename;
+        $DB->update_record('quizaccess_proctor_data', $proctoreddata);
+    }
     $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-    file_put_contents($tmpdir . 'myimage.png', $data);
-    $fs = get_file_storage();
+    file_put_contents($tmpdir . $imagename, $data);
+    /*$fs = get_file_storage();
     // Prepare file record object.
     $context = context_module::instance($cmid);
     $fileinfo = array(
@@ -136,7 +147,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
         $file->delete();
     }
     $fs->create_file_from_pathname($fileinfo, $tmpdir . 'myimage.png');
-    @unlink($tmpdir . 'myimage.png');
+    @unlink($tmpdir . 'myimage.png'); */
 
     if ( !$mainimage ) {
         $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
