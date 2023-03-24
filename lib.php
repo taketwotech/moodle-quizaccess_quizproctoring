@@ -131,23 +131,6 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     }
     $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
     file_put_contents($tmpdir . $imagename, $data);
-    /*$fs = get_file_storage();
-    // Prepare file record object.
-    $context = context_module::instance($cmid);
-    $fileinfo = array(
-        'contextid' => $context->id,
-        'component' => 'quizaccess_quizproctoring',
-        'filearea' => 'cameraimages',
-        'itemid' => $id,
-        'filepath' => '/',
-        'filename' => $attemptid . "_" . $USER->id . '_myimage.png');
-    $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
-            $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
-    if ($file) {
-        $file->delete();
-    }
-    $fs->create_file_from_pathname($fileinfo, $tmpdir . 'myimage.png');
-    @unlink($tmpdir . 'myimage.png'); */
 
     if ( !$mainimage ) {
         $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
