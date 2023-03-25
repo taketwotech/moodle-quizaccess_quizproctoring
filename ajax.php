@@ -44,7 +44,10 @@ if (!$mainimage) {
     // If it is not main image, get the main image data and compare.
     if ($mainentry = $DB->get_record('quizaccess_proctor_data',
         array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M', 'attemptid' => $attemptid))) {
-        $target = file_get_contents("$CFG->dataroot.'/temp/quizaccess_quizproctoring/captured/'.$mainentry->userimg");
+        $context = context_module::instance($cmid);
+        $fs = get_file_storage();
+        $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', '$mainentry->userimg');
+        $target = file_get_contents($f1);
     }
 }
 
