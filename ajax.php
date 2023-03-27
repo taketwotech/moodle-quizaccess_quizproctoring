@@ -46,8 +46,8 @@ if (!$mainimage) {
         array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M', 'attemptid' => $attemptid))) {
         $context = context_module::instance($cmid);
         $fs = get_file_storage();
-        $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', '$mainentry->userimg');
-        $target = file_get_contents($f1);
+        $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
+        $target = $f1->get_content();
     }
 }
 
