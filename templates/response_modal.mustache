@@ -1,0 +1,13 @@
+{{< core/modal }}
+    {{$title}}{{/title}}
+    {{$body}}
+        <div class="text-center">
+            <h5 class="imgheading"></h5>
+            <img class="userimg">
+        </div>
+    {{/body}}
+    {{$footer}}
+        <button type="button" class="btn btn-secondary" data-action="previous" disabled>{{#str}} previous {{/str}}</button>
+        <button type="button" class="btn btn-secondary" data-action="next" >{{#str}} next {{/str}}</button>
+    {{/footer}}
+{{/ core/modal }}

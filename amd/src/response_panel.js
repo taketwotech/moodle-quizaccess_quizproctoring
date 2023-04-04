@@ -216,23 +216,26 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
             window.location.reload();
         });
     };
-    var init = function() {
+    var init = function(attemptid = null,quizid = null,userid = null) {
         var docElement = $(document);
-        docElement.ready(function () {alert('hi');
+        docElement.ready(function () {
             let btn = document.createElement("button");
-            btn.innerHTML = "Proctering Images";
-            btn.type = "submit";
-            btn.name = "formBtn";
-          document.getElementById("page-content").appendChild(btn);
-        });
-         
+            btn.innerHTML = "Proctering Images";            
+            btn.setAttribute("type", "button");
+            btn.setAttribute("value", "proctoringimage");
+            btn.setAttribute("class", "proctoringimage");
+            btn.setAttribute("data-attemptid", attemptid);            
+            btn.setAttribute("data-quizid", quizid);
+            btn.setAttribute("data-userid", userid);
+            document.getElementById("page-content").appendChild(btn);          
+        });         
         docElement.on('click', 'button.proctoringimage', function(e){
             e.preventDefault();
             var quizid = $(this).data('quizid');
             var userid = $(this).data('userid');
             var attemptid = $(this).data('attemptid');
             $.ajax({
-                url: M.cfg.wwwroot + '/mod/quiz/report/overview/ajax.php',
+                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
                 data: {
                     attemptid: $(this).data('attemptid'),
                     userid: $(this).data('userid'),
@@ -259,10 +262,10 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
             });
         });
 
-        docElement.on('click', 'button.proctoridentity', function(e){
+       /* docElement.on('click', 'button.proctoridentity', function(e){
             e.preventDefault();
             $.ajax({
-                url: M.cfg.wwwroot + '/mod/quiz/report/overview/proctoridentity.php',
+                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoridentity.php',
                 data: {
                     attemptid: $(this).data('attemptid'),
                     userid: $(this).data('userid'),
@@ -284,7 +287,7 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
                     }
                 }
             });
-        });
+        });*/
 
     };
 

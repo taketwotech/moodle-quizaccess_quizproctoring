@@ -359,8 +359,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
     public function setup_attempt_page($page) {
         global $PAGE;
-        $attemptid = required_param('attempt', PARAM_INT);        
+        $attemptid = required_param('attempt', PARAM_INT);  
+        $cmid      = optional_param('cmid', null, PARAM_INT);        
+        $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
+        $quiz = $attemptobj->get_quiz();
+        $userid = $attemptobj->get_userid();                
         // Do nothing by default.
-       $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init');
+       $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init',[$attemptid,$quiz->id,$userid]);
     }
 }
