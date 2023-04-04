@@ -1,0 +1,294 @@
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Javascript controller for the "Grading" panel at the right of the page.
+ *
+ * @module     mod_questionnaire/response_panel
+ * @package    mod_questionnaire
+ * @class      ResponsePanel
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+define(['jquery','core/modal_factory','quizaccess_quizproctoring/modal_response', 'core/modal_events', 'core/notification'],
+function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
+
+    /**
+     * ResponsePanel class.
+     *
+     * @class GradingPanel
+     * @param {String} selector The selector for the page region containing the user navigation.
+     */
+    var ResponsePanel = function(responses) {
+        this.responses = responses;
+        this.registerEventListeners();
+    };
+
+    ResponsePanel.prototype.qid = null;
+    ResponsePanel.prototype.rid = null;
+    ResponsePanel.prototype.sec = null;
+    ResponsePanel.prototype.courseid = null;
+    ResponsePanel.prototype.responses = Array();
+    ResponsePanel.prototype.index = 0;
+    ResponsePanel.prototype.quizid = 0;
+    ResponsePanel.prototype.attemptid = 0;
+    ResponsePanel.prototype.userid = 0;
+    ResponsePanel.prototype.currentpage = 1;
+    ResponsePanel.prototype.firstPage = 1;
+    ResponsePanel.prototype.lastPage = 0;
+    ResponsePanel.prototype.tempindex = 0;
+    ResponsePanel.prototype.prevpage = 0;
+    ResponsePanel.prototype.temarrayprev = Array();
+    ResponsePanel.prototype.temarraynext = Array();
+    /**
+     * Register event listeners for the grade panel.
+     *
+     * @method registerEventListeners
+     */
+    ResponsePanel.prototype.registerEventListeners = function() {
+        var docElement = $(document);
+        docElement.on('next', this._getNextUser.bind(this));
+        docElement.on('prev', this._getPreviousUser.bind(this));
+    };
+
+    /**
+     * Reset buttons method
+     */
+    ResponsePanel.prototype._reset = function() {
+        if (this.responses.length) {
+            var isFirst = this.index === 0;
+            var isLast  = this.responses.length === this.index + 1;
+            if (isFirst) {
+                if (this.firstPage == this.currentpage) {
+                    $('[data-action="previous"]').prop("disabled", "disabled");
+                } else {
+                    $('[data-action="previous"]').prop("disabled", false);
+                }
+                $('[data-action="next"]').prop("disabled", false);
+            } else if (isLast) {
+                if (this.currentpage == this.lastpage) {
+                    $('[data-action="next"]').prop("disabled", "disabled");
+                } else {
+                    $('[data-action="next"]').prop("disabled", false);
+                }
+                $('[data-action="previous"]').prop("disabled", false);
+            } else {
+                $('[data-action="previous"]').prop("disabled", false);
+                $('[data-action="next"]').prop("disabled", false);
+            }
+        }
+    };
+
+    /**
+     * First page settings
+     *
+     */
+     ResponsePanel.prototype._isFirstPage = function() {
+        var insidethid = this;
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/report/overview/ajax.php',
+            data: {
+                attemptid: this.attemptid,
+                userid: this.userid,
+                quizid: this.quizid,
+                currentpage: (this.currentpage - 2)
+            },
+            dataType: 'json',
+            success : function(response) {
+                var images = JSON.parse(JSON.stringify(response));
+                insidethid.temarrayprev = images;
+                insidethid.prevpage = 1;
+            }
+        });
+     };
+
+     /**
+      * Last page settings
+      *
+      */
+    ResponsePanel.prototype._isLastPage = function() {
+        var insidethid = this;
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/report/overview/ajax.php',
+            data: {
+                attemptid: this.attemptid,
+                userid: this.userid,
+                quizid: this.quizid,
+                currentpage: this.currentpage
+            },
+            dataType: 'json',
+            success : function(response) {
+                var images = JSON.parse(JSON.stringify(response));
+                insidethid.temarraynext = images;
+                if (images[0]) {
+                    insidethid.tempindex = 1;
+                }
+            }
+        });
+    };
+
+    /**
+     * Get next user to process
+     *
+     * @method _getNextUser
+     */
+    ResponsePanel.prototype._getNextUser = function() {
+        if (this.tempindex) {
+            this.index = -1;
+            this.responses = this.temarraynext;
+            this.currentpage += 1;
+        }
+        this.tempindex = 0;
+        this.prevpage = 0;
+        this.index += 1;
+        this._reset();
+        var res = this.responses[this.index];
+        if (res) {
+            $(".imgheading").html(res.title);
+            $(".userimg").attr("src",res.img);
+        }
+        var isFirst = this.index === 0;
+        if (isFirst) {
+            this._isFirstPage();
+        }
+        var isLast  = this.responses.length === this.index + 1;
+        if (isLast) {
+            this._isLastPage();
+        }
+
+    };
+
+    /**
+     * Get previous user to process
+     *
+     * @method _getNextUser
+     */
+    ResponsePanel.prototype._getPreviousUser = function() {
+        if (this.tempindex) {
+            this.index = 18;
+        } else {
+            this.index -= 1;
+        }
+
+        if (this.prevpage) {
+            this.index = 19;
+            this.responses = this.temarrayprev;
+            this.currentpage -= 1;
+        }
+        this.prevpage = 0;
+        this.tempindex = 0;
+        this._reset();
+        var res = this.responses[this.index];
+        if (res) {
+            $(".imgheading").html(res.title);
+            $(".userimg").attr("src",res.img);
+        }
+        var isFirst = this.index === 0;
+        if (isFirst) {
+            this._isFirstPage();
+        }
+
+        var isLast  = this.responses.length === this.index + 1;
+        if (isLast) {
+            this._isLastPage();
+        }
+
+    };
+
+    /**
+     * Comfirm user's response
+     *
+     * @method _rejectResponse
+     */
+    ResponsePanel.prototype._rejectResponse = function() {
+        this._rejectResponseEntry(this.qid, this.rid).then(function() {
+            window.location.reload();
+        });
+    };
+    var init = function() {
+        var docElement = $(document);
+        docElement.ready(function () {alert('hi');
+            let btn = document.createElement("button");
+            btn.innerHTML = "Proctering Images";
+            btn.type = "submit";
+            btn.name = "formBtn";
+          document.getElementById("page-content").appendChild(btn);
+        });
+         
+        docElement.on('click', 'button.proctoringimage', function(e){
+            e.preventDefault();
+            var quizid = $(this).data('quizid');
+            var userid = $(this).data('userid');
+            var attemptid = $(this).data('attemptid');
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/quiz/report/overview/ajax.php',
+                data: {
+                    attemptid: $(this).data('attemptid'),
+                    userid: $(this).data('userid'),
+                    quizid: $(this).data('quizid')
+                },
+                dataType: 'json',
+                success : function(response) {
+                    var images = JSON.parse(JSON.stringify(response));
+                    var rp = new ResponsePanel(images);
+                    rp.quizid = quizid;
+                    rp.userid = userid;
+                    rp.attemptid = attemptid;
+                    rp.lastpage = rp.responses[rp.index].totalpage;
+                    ModalFactory.create({
+                        type: ModalResponse.TYPE,
+                    }).then(function(modal) {
+                        modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                        modal.setTitle('User Images');
+                        modal.show();
+                        $(".imgheading").html(rp.responses[rp.index].title);
+                        $(".userimg").attr("src",rp.responses[rp.index].img);
+                    });
+                }
+            });
+        });
+
+        docElement.on('click', 'button.proctoridentity', function(e){
+            e.preventDefault();
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/quiz/report/overview/proctoridentity.php',
+                data: {
+                    attemptid: $(this).data('attemptid'),
+                    userid: $(this).data('userid'),
+                    quizid: $(this).data('quizid')
+                },
+                dataType: 'json',
+                success : function(response) {
+                    var response = JSON.parse(JSON.stringify(response));
+                    if (response.success) {
+                        window.open(response.url, "_blank");
+                    } else {
+                        ModalFactory.create({
+                            type: ModalFactory.types.DEFAULT,
+                            body: response.message,
+                        }).then(function(modal) {
+                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                            modal.show();
+                        });
+                    }
+                }
+            });
+        });
+
+    };
+
+    return {
+        init: init
+    };
+});

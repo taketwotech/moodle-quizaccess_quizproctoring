@@ -356,4 +356,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             unset($SESSION->proctoringcheckedquizzes[$this->quiz->id]);
         }
     }
+
+    public function setup_attempt_page($page) {
+        global $PAGE;
+        $attemptid = required_param('attempt', PARAM_INT);        
+        // Do nothing by default.
+       $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init');
+    }
 }
