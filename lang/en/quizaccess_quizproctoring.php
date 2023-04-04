@@ -79,3 +79,4 @@ $string['proctoring_image_show_help'] = 'If set, Proctering Image Show in review
 $string['mainimage'] = 'Main Image';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
 $string['warningawsstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
+$string['quizproctoring:quizproctoringreport'] = 'Quiz proctoring user report';
