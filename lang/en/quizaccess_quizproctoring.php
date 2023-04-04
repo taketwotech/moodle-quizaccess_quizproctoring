@@ -74,3 +74,4 @@ $string['fourminutes'] = '4 minutes';
 $string['fiftenminutes'] = '15 minutes';
 $string['warning'] = ' warning';
 $string['warnings'] = ' warnings';
+$string['quizproctoring:quizproctoringreport'] = 'Quiz proctoring user report';
