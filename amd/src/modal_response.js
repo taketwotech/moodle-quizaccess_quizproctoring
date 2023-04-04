@@ -24,7 +24,7 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
             }
         };
 
-        ModalResponse.TYPE = 'quiz_quizproctoring-response';
+        ModalResponse.TYPE = 'quizaccess_quizproctoring-response';
         ModalResponse.prototype = Object.create(Modal.prototype);
         ModalResponse.prototype.constructor = ModalResponse;
 
@@ -51,7 +51,7 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
         // Automatically register with the modal registry the first time this module is imported so that you can create modals
         // of this type using the modal factory.
         if (!registered) {
-            ModalRegistry.register(ModalResponse.TYPE, ModalResponse, 'quiz_quizproctoring/response_modal');
+            ModalRegistry.register(ModalResponse.TYPE, ModalResponse, 'quizaccess_quizproctoring/response_modal');
             registered = true;
         }
 

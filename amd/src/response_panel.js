@@ -97,7 +97,7 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
      ResponsePanel.prototype._isFirstPage = function() {
         var insidethid = this;
         $.ajax({
-            url: M.cfg.wwwroot + '/mod/quiz/report/overview/ajax.php',
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
             data: {
                 attemptid: this.attemptid,
                 userid: this.userid,
@@ -120,7 +120,7 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
     ResponsePanel.prototype._isLastPage = function() {
         var insidethid = this;
         $.ajax({
-            url: M.cfg.wwwroot + '/mod/quiz/report/overview/ajax.php',
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
             data: {
                 attemptid: this.attemptid,
                 userid: this.userid,

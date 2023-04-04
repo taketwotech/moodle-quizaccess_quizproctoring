@@ -26,7 +26,8 @@ $currentpage = optional_param('currentpage', 0 ,PARAM_INT);
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
         $target = $f1->get_content();
-        array_push($imgarray, array('title' => $img->image_status == 'M' ? 'Main Image' : get_string($img->status, 'quizaccess_proctoring', '') , 'img' => $target, 'totalpage' => $countrecord));
+        $tdata = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $target));
+        array_push($imgarray, array('title' => $img->image_status == 'M' ? 'Main Image' : get_string($img->status, 'quizaccess_proctoring', '') , 'img' => $tdata, 'totalpage' => $countrecord));
     }
 
     echo json_encode($imgarray);
