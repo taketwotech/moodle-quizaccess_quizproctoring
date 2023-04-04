@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Proctoring events file.
+ * Proctoring access file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -26,17 +26,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$observers = array(
-    array(
-        'eventname' => '\mod_quiz\event\attempt_viewed',
-        'callback' => '\quizaccess_quizproctoring\observer::quizproctoring_start_camera'
-    ),
-    array(
-        'eventname' => '\mod_quiz\event\attempt_deleted',
-        'callback' => '\quizaccess_quizproctoring\observer::quizproctoring_image_delete',
-    ),
-    array(
-        'eventname' => '\mod_quiz\event\attempt_reviewed',
-        'callback'  => '\quizaccess_quizproctoring\observer::user_proctoringreport_show',
+$capabilities = array(
+
+    'mod/quiz/accessrule/quizproctoring:quizproctoringreport' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'teacher' => CAP_ALLOW,
+        )
     )
 );
