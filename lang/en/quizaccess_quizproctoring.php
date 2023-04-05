@@ -74,5 +74,8 @@ $string['fourminutes'] = '4 minutes';
 $string['fiftenminutes'] = '15 minutes';
 $string['warning'] = ' warning';
 $string['warnings'] = ' warnings';
+$string['proctoring_image_show'] = 'Proctering Image Show';
+$string['proctoring_image_show_help'] = 'If set, Proctering Image Show in review attempt.';
+$string['mainimage'] = 'Main Image';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
 $string['warningawsstudent'] = 'The quiz is not properly configured. Please contact site administrator.';

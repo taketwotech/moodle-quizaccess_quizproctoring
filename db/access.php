@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Proctoring access file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -23,10 +23,16 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023031606;
-$plugin->requires = 2019111200;
-$plugin->release = 'v4.1-r5';
-$plugin->maturity = 'MATURITY_RC';
-$plugin->component = 'quizaccess_quizproctoring';
+$capabilities = array(
+
+    'mod/quiz/accessrule/quizproctoring:quizproctoringreport' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'teacher' => CAP_ALLOW,
+        )
+    )
+);
