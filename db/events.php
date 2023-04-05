@@ -34,9 +34,5 @@ $observers = array(
     array(
         'eventname' => '\mod_quiz\event\attempt_deleted',
         'callback' => '\quizaccess_quizproctoring\observer::quizproctoring_image_delete',
-    ),
-    array(
-        'eventname' => '\mod_quiz\event\attempt_reviewed',
-        'callback'  => '\quizaccess_quizproctoring\observer::user_proctoringreport_show',
     )
 );

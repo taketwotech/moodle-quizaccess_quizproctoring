@@ -14,22 +14,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Javascript controller for the "Grading" panel at the right of the page.
+ * Javascript controller for the "Grading" panel at the right of the page
  *
- * @module     mod_questionnaire/response_panel
- * @package    mod_questionnaire
- * @class      ResponsePanel
+ * @subpackage quizproctoring
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery','core/modal_factory','quizaccess_quizproctoring/modal_response', 'core/modal_events', 'core/notification'],
-function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
+define(['jquery','core/modal_factory','quizaccess_quizproctoring/modal_response', 'core/modal_events'],
+function($, ModalFactory, ModalResponse, ModalEvents) {
 
-    /**
-     * ResponsePanel class.
-     *
-     * @class GradingPanel
-     * @param {String} selector The selector for the page region containing the user navigation.
-     */
     var ResponsePanel = function(responses) {
         this.responses = responses;
         this.registerEventListeners();
@@ -220,16 +213,16 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
         var docElement = $(document);
         docElement.ready(function () {
             let btn = document.createElement("button");
-            btn.innerHTML = "Proctering Images";            
+            btn.innerHTML = "Proctoring Images";
             btn.setAttribute("type", "button");
             btn.setAttribute("value", "proctoringimage");
-            btn.setAttribute("class", "proctoringimage");
-            btn.setAttribute("data-attemptid", attemptid);            
+            btn.setAttribute("class", "proctoringimage btn btn-primary");
+            btn.setAttribute("data-attemptid", attemptid);
             btn.setAttribute("data-quizid", quizid);
             btn.setAttribute("data-userid", userid);
-            document.getElementById("page-content").appendChild(btn);          
-        });         
-        docElement.on('click', 'button.proctoringimage', function(e){
+            document.getElementById("page-content").prepend(btn);
+        });
+        docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
             var quizid = $(this).data('quizid');
             var userid = $(this).data('userid');
@@ -261,34 +254,6 @@ function($, ModalFactory, ModalResponse, ModalEvents, Notification) {
                 }
             });
         });
-
-       /* docElement.on('click', 'button.proctoridentity', function(e){
-            e.preventDefault();
-            $.ajax({
-                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoridentity.php',
-                data: {
-                    attemptid: $(this).data('attemptid'),
-                    userid: $(this).data('userid'),
-                    quizid: $(this).data('quizid')
-                },
-                dataType: 'json',
-                success : function(response) {
-                    var response = JSON.parse(JSON.stringify(response));
-                    if (response.success) {
-                        window.open(response.url, "_blank");
-                    } else {
-                        ModalFactory.create({
-                            type: ModalFactory.types.DEFAULT,
-                            body: response.message,
-                        }).then(function(modal) {
-                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                            modal.show();
-                        });
-                    }
-                }
-            });
-        });*/
-
     };
 
     return {

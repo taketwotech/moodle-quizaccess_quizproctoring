@@ -65,30 +65,4 @@ class observer {
         $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where
          attemptid=?", array($event->objectid));
     }
-
-    /**
-     * Receive a hook when quiz review and add js for show proctoring report
-     *
-     * @param stdClass $event
-     * @return void
-     */
-    public static function user_proctoringreport_show($event) {
-        global $DB, $PAGE;
-        $quizid = $event->other['quizid'];
-        $userid = $event->relateduserid;
-        $attemptid = $event->objectid;
-        $cmid = $event->contextinstanceid;
-        $context = get_context_instance(CONTEXT_MODULE, $cmid);
-        $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
-        if (has_capability('mod/quiz/accessrule/quizproctoring:quizproctoringreport', $context)) {
-            $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
-            $usermages = $DB->get_records('quizaccess_proctor_data',  array('quizid' => $quizid, 'userid' => $userid));
-
-            if ($quizinfo && ($proctoringimageshow == 1)) {
-                if (count($usermages) > 0) {
-                    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$quizid, $attemptid, $userid]);
-                }
-            }
-        }
-    }
 }

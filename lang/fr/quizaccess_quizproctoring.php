@@ -62,3 +62,4 @@ $string['proctoringlink'] = "Lien vidéo de surveillance";
 $string['proctoringlink_help'] = "Veuillez ajouter un lien vidéo pour la vidéo de démonstration de la surveillance du quiz.";
 $string['avertissement'] = ' avertissement';
 $string['avertissements'] = ' avertissements';
+$string['mainimage'] = 'Image principale';

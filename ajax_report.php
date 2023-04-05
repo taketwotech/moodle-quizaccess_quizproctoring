@@ -21,14 +21,15 @@ $currentpage = optional_param('currentpage', 0 ,PARAM_INT);
         $countrecord = ceil(count($countrecord) / 20);
     }
     foreach($getImages as $img) {
-        $quizobj = \quiz::create($img->quizid, $img->userid);
-        $context = $quizobj->get_context();
-        $fs = get_file_storage();
-        $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
-        $target = $f1->get_content();
-        $tdata = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $target));
-        array_push($imgarray, array('title' => $img->image_status == 'M' ? 'Main Image' : get_string($img->status, 'quizaccess_proctoring', '') , 'img' => $tdata, 'totalpage' => $countrecord));
+        if (strlen($img->userimg) < 40) {
+            $quizobj = \quiz::create($img->quizid, $img->userid);
+            $context = $quizobj->get_context();
+            $fs = get_file_storage();
+            $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
+            $target = $f1->get_content();
+        } else {
+            $target = $img->userimg;
+        }
+        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') , 'img' => $target, 'totalpage' => $countrecord));
     }
-
-    echo json_encode($imgarray);
-
+echo json_encode($imgarray);

@@ -358,13 +358,26 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     }
 
     public function setup_attempt_page($page) {
-        global $PAGE;
-        $attemptid = required_param('attempt', PARAM_INT);  
-        $cmid      = optional_param('cmid', null, PARAM_INT);        
-        $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
-        $quiz = $attemptobj->get_quiz();
-        $userid = $attemptobj->get_userid();                
-        // Do nothing by default.
-       $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init',[$attemptid,$quiz->id,$userid]);
+        global $PAGE, $DB;
+        $url = $PAGE->url;
+        $urlname = pathinfo($url, PATHINFO_FILENAME);
+        if ($urlname == 'review') {
+            $attemptid = required_param('attempt', PARAM_INT);
+            $cmid      = optional_param('cmid', null, PARAM_INT);
+            $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
+            $quiz = $attemptobj->get_quiz();
+            $userid = $attemptobj->get_userid();
+            $context = context_module::instance($quiz->cmid);
+            $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
+            if (has_capability('mod/quiz/accessrule/quizproctoring:quizproctoringreport', $context)) {
+                $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
+                $usermages = $DB->get_records('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid));
+                if ($quizinfo && ($proctoringimageshow == 1)) {
+                    if (count($usermages) > 0) {
+                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$attemptid, $quiz->id, $userid]);
+                    }
+                }
+            }
+        }
     }
 }

@@ -76,3 +76,4 @@ $string['warning'] = ' warning';
 $string['warnings'] = ' warnings';
 $string['proctoring_image_show'] = 'Proctering Image Show';
 $string['proctoring_image_show_help'] = 'If set, Proctering Image Show in review attempt.';
+$string['mainimage'] = 'Main Image';
