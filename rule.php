@@ -285,6 +285,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
         // ...$mform->addHelpButton('interval', 'interval', 'quiz');
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
+        $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
         $thresholds = array();
         for ($i = 0; $i <= 20; $i++) {
