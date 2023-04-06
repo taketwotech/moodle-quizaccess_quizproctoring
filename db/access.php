@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = array(
 
-    'mod/quiz/accessrule/quizproctoring:quizproctoringreport' => array(
+    'quizaccess/quizproctoring:quizproctoringreport' => array(
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => array(
