@@ -174,7 +174,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('html', $html);
         $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
          'quizaccess_quizproctoring'), null, $filemanageroptions);
-        $mform->addRule('user_identity', null, 'required', null, 'client');
 
         // Video button.
         if ($proctoringdata->proctoringvideo_link) {
@@ -217,21 +216,21 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         if ($rc = $DB->get_record('quizaccess_proctor_data', array('userid' =>
             $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
             $context = context_module::instance($cmid);
-            $rc->user_identity = $useridentity;
             $rc->image_status = 'M';
             if ($file['filecount'] > 0) {
+                $rc->user_identity = $useridentity;
                 $DB->update_record('quizaccess_proctor_data', $rc);
                 file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity', $rc->id);
-            } else {
-                $errors['user_identity'] = get_string('useridentityerror', 'quizaccess_quizproctoring');
+            }else{
+                $DB->update_record('quizaccess_proctor_data', $rc);
             }
 
-        } else if ($file['filecount'] > 0) {
-            $id = $DB->insert_record('quizaccess_proctor_data', $record);
-            $context = context_module::instance($cmid);
-            file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
         } else {
-            $errors['user_identity'] = get_string('useridentityerror', 'quizaccess_quizproctoring');
+            $id = $DB->insert_record('quizaccess_proctor_data', $record);
+            if ($file['filecount'] > 0){
+                $context = context_module::instance($cmid);
+                file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
+            }
         }
         return $errors;
     }
