@@ -221,7 +221,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             btn.setAttribute("data-quizid", quizid);
             btn.setAttribute("data-userid", userid);
             document.getElementById("page-content").prepend(btn);
-            if(useridentity != 0){
+            if(useridentity){
                 let btnidentity = document.createElement("button");
                 btnidentity.innerHTML = "Proctoring Identity";
                 btnidentity.setAttribute("type", "button");
