@@ -386,7 +386,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
                 $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
-                $usermages = $DB->get_records('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid));
+                $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if (count($usermages) > 0) {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
