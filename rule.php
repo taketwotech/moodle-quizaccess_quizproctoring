@@ -384,7 +384,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $userid = $attemptobj->get_userid();
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
-            if (has_capability('mod/quiz/accessrule/quizproctoring:quizproctoringreport', $context)) {
+            if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
                 $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
                 $usermages = $DB->get_records('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
