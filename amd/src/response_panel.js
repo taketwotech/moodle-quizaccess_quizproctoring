@@ -209,7 +209,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             window.location.reload();
         });
     };
-    var init = function(attemptid = null,quizid = null,userid = null) {
+    var init = function(attemptid = null,quizid = null,userid = null,useridentity = null) {
         var docElement = $(document);
         docElement.ready(function () {
             let btn = document.createElement("button");
@@ -221,6 +221,17 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             btn.setAttribute("data-quizid", quizid);
             btn.setAttribute("data-userid", userid);
             document.getElementById("page-content").prepend(btn);
+            if(useridentity != 0){
+                let btnidentity = document.createElement("button");
+                btnidentity.innerHTML = "Proctoring Identity";
+                btnidentity.setAttribute("type", "button");
+                btnidentity.setAttribute("value", "proctoridentity");
+                btnidentity.setAttribute("class", "proctoridentity btn btn-primary");
+                btnidentity.setAttribute("data-attemptid", attemptid);
+                btnidentity.setAttribute("data-quizid", quizid);
+                btnidentity.setAttribute("data-userid", userid);                
+                document.getElementById("page-content").prepend(btnidentity);
+            }
         });
         docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
@@ -251,6 +262,32 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                         $(".imgheading").html(rp.responses[rp.index].title);
                         $(".userimg").attr("src",rp.responses[rp.index].img);
                     });
+                }
+            });
+        });
+        docElement.on('click', 'button.proctoridentity', function(e){
+            e.preventDefault();
+            $.ajax({
+                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoridentity.php',
+                data: {
+                    attemptid: $(this).data('attemptid'),
+                    userid: $(this).data('userid'),
+                    quizid: $(this).data('quizid')
+                },
+                dataType: 'json',
+                success : function(response) {
+                    var response = JSON.parse(JSON.stringify(response));
+                    if (response.success) {
+                        window.open(response.url, "_blank");
+                    } else {
+                        ModalFactory.create({
+                            type: ModalFactory.types.DEFAULT,
+                            body: response.message,
+                        }).then(function(modal) {
+                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                            modal.show();
+                        });
+                    }
                 }
             });
         });
