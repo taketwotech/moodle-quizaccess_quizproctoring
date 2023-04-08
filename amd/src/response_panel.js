@@ -261,6 +261,9 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                         modal.show();
                         $(".imgheading").html(rp.responses[rp.index].title);
                         $(".userimg").attr("src",rp.responses[rp.index].img);
+                        if(rp.responses[rp.index].total == 1){
+                            $('[data-action="next"]').prop("disabled", "disabled");
+                        }
                     });
                 }
             });
