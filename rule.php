@@ -390,6 +390,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if (count($usermages) > 0) {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
+                        $PAGE->requires->string_for_js('noimageswarning', 'quizaccess_quizproctoring');
                     }
                 }
             }

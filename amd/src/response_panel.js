@@ -221,7 +221,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             btn.setAttribute("data-quizid", quizid);
             btn.setAttribute("data-userid", userid);
             document.getElementById("page-content").prepend(btn);
-            if(useridentity){
+            if(useridentity && useridentity != 0){
                 let btnidentity = document.createElement("button");
                 btnidentity.innerHTML = "Proctoring Identity";
                 btnidentity.setAttribute("type", "button");
@@ -248,23 +248,34 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                 dataType: 'json',
                 success : function(response) {
                     var images = JSON.parse(JSON.stringify(response));
-                    var rp = new ResponsePanel(images);
-                    rp.quizid = quizid;
-                    rp.userid = userid;
-                    rp.attemptid = attemptid;
-                    rp.lastpage = rp.responses[rp.index].totalpage;
-                    ModalFactory.create({
-                        type: ModalResponse.TYPE,
-                    }).then(function(modal) {
-                        modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                        modal.setTitle('User Images');
-                        modal.show();
-                        $(".imgheading").html(rp.responses[rp.index].title);
-                        $(".userimg").attr("src",rp.responses[rp.index].img);
-                        if(rp.responses[rp.index].total == 1){
-                            $('[data-action="next"]').prop("disabled", "disabled");
-                        }
-                    });
+                    if(images.length > 0){                     
+                        var rp = new ResponsePanel(images);
+                        rp.quizid = quizid;
+                        rp.userid = userid;
+                        rp.attemptid = attemptid;
+                        rp.lastpage = rp.responses[rp.index].totalpage;
+                        ModalFactory.create({
+                            type: ModalResponse.TYPE,
+                        }).then(function(modal) {
+                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                            modal.setTitle('User Images');
+                            modal.show();
+                            $(".imgheading").html(rp.responses[rp.index].title);
+                            $(".userimg").attr("src",rp.responses[rp.index].img);
+                            if(rp.responses[rp.index].total == 1){
+                                $('[data-action="next"]').prop("disabled", "disabled");
+                            }
+                        });
+                    }else{
+                        message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
+                        ModalFactory.create({
+                            type: ModalFactory.types.DEFAULT,
+                            body: message,
+                        }).then(function(modal) {
+                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                            modal.show();
+                        });                    
+                    }
                 }
             });
         });
