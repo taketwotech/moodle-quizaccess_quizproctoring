@@ -213,7 +213,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
         var docElement = $(document);
         docElement.ready(function () {
             let btn = document.createElement("button");
-            btn.innerHTML = "Proctoring Images";
+            btn.innerHTML = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
             btn.setAttribute("type", "button");
             btn.setAttribute("value", "proctoringimage");
             btn.setAttribute("class", "proctoringimage btn btn-primary");
@@ -223,7 +223,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             document.getElementById("page-content").prepend(btn);
             if(useridentity && useridentity != 0){
                 let btnidentity = document.createElement("button");
-                btnidentity.innerHTML = "Proctoring Identity";
+                btnidentity.innerHTML = M.util.get_string('proctoringidentity', 'quizaccess_quizproctoring');
                 btnidentity.setAttribute("type", "button");
                 btnidentity.setAttribute("value", "proctoridentity");
                 btnidentity.setAttribute("class", "proctoridentity btn btn-primary");

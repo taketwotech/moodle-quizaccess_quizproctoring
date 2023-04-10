@@ -372,6 +372,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         }
     }
 
+    /**
+     * Sets up the attempt (review or summary) page with any properties required
+     * by the access rules.
+     *
+     * @param moodle_page $page the page object to initialise.
+     */
     public function setup_attempt_page($page) {
         global $PAGE, $DB;
         $url = $PAGE->url;
@@ -389,8 +395,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if (count($usermages) > 0) {
-                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
-                        $PAGE->requires->string_for_js('noimageswarning', 'quizaccess_quizproctoring');
+                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init', [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
+                        $PAGE->requires->strings_for_js(array('noimageswarning','proctoringimages', 'proctoringidentity'), 'quizaccess_quizproctoring');
                     }
                 }
             }
