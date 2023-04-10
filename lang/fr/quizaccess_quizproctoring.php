@@ -64,3 +64,4 @@ $string['avertissement'] = ' avertissement';
 $string['avertissements'] = ' avertissements';
 $string['mainimage'] = 'Image principale';
 $string['quizproctoring:quizproctoringreport'] = 'Bouton Afficher les images de surveillance';
+$string['noimageswarning'] = 'Aucun avertissement détecté';

@@ -81,3 +81,4 @@ $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to
 $string['warningawsstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
 $string['quizproctoring:quizproctoringreport'] = 'View proctoring images button';
 $string['noimages'] = 'No images';
+$string['noimageswarning'] = 'No Warnings Detected';
