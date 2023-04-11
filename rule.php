@@ -174,7 +174,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('html', $html);
         $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
          'quizaccess_quizproctoring'), null, $filemanageroptions);
-        $mform->addRule('user_identity', null, 'required', null, 'client');
 
         // Video button.
         if ($proctoringdata->proctoringvideo_link) {
@@ -217,21 +216,21 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         if ($rc = $DB->get_record('quizaccess_proctor_data', array('userid' =>
             $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
             $context = context_module::instance($cmid);
-            $rc->user_identity = $useridentity;
             $rc->image_status = 'M';
             if ($file['filecount'] > 0) {
+                $rc->user_identity = $useridentity;
                 $DB->update_record('quizaccess_proctor_data', $rc);
                 file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity', $rc->id);
-            } else {
-                $errors['user_identity'] = get_string('useridentityerror', 'quizaccess_quizproctoring');
+            }else{
+                $DB->update_record('quizaccess_proctor_data', $rc);
             }
 
-        } else if ($file['filecount'] > 0) {
-            $id = $DB->insert_record('quizaccess_proctor_data', $record);
-            $context = context_module::instance($cmid);
-            file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
         } else {
-            $errors['user_identity'] = get_string('useridentityerror', 'quizaccess_quizproctoring');
+            $id = $DB->insert_record('quizaccess_proctor_data', $record);
+            if ($file['filecount'] > 0){
+                $context = context_module::instance($cmid);
+                file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
+            }
         }
         return $errors;
     }
@@ -286,6 +285,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
         // ...$mform->addHelpButton('interval', 'interval', 'quiz');
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
+        $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
         $thresholds = array();
         for ($i = 0; $i <= 20; $i++) {
@@ -384,12 +384,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $userid = $attemptobj->get_userid();
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
-            if (has_capability('mod/quiz/accessrule/quizproctoring:quizproctoringreport', $context)) {
+            if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
                 $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
-                $usermages = $DB->get_records('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid));
+                $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if (count($usermages) > 0) {
-                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$attemptid, $quiz->id, $userid]);
+                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel','init', [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
+                        $PAGE->requires->string_for_js('noimageswarning', 'quizaccess_quizproctoring');
                     }
                 }
             }

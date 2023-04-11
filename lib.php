@@ -58,7 +58,7 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
 
     $fs = get_file_storage();
     $fullpath = "/$context->id/quizaccess_quizproctoring/$filearea/$itemid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) || $file->is_directory()) {
+    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
         return false;
     }
     send_stored_file($file, 0, 0, $forcedownload, $options);

@@ -16,11 +16,11 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
             Modal.call(this, root);
 
             if (!this.getFooter().find(SELECTORS.PREVIOUS_BUTTON).length) {
-                 Notification.exception({ message: 'No previous button found' });
+                 Notification.exception({message: 'No previous button found'});
             }
 
             if (!this.getFooter().find(SELECTORS.NEXT_BUTTON).length) {
-                Notification.exception({ message: 'No next button found' });
+                Notification.exception({message: 'No next button found'});
             }
         };
 
@@ -36,13 +36,11 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
         ModalResponse.prototype.registerEventListeners = function() {
             // Apply parent event listeners.
             Modal.prototype.registerEventListeners.call(this);
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.PREVIOUS_BUTTON, function(e, data) {
-                console.log(data);
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.PREVIOUS_BUTTON, function(e) {
                 $(document).trigger('prev');
                 e.preventDefault();
             }.bind(this));
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.NEXT_BUTTON, function(e, data) {
-                console.log(data);
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.NEXT_BUTTON, function(e) {
                 $(document).trigger('next');
                 e.preventDefault();
             }.bind(this));
