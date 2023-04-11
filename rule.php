@@ -221,13 +221,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $rc->user_identity = $useridentity;
                 $DB->update_record('quizaccess_proctor_data', $rc);
                 file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity', $rc->id);
-            }else{
+            } else {
                 $DB->update_record('quizaccess_proctor_data', $rc);
             }
 
         } else {
             $id = $DB->insert_record('quizaccess_proctor_data', $record);
-            if ($file['filecount'] > 0){
+            if ($file['filecount'] > 0) {
                 $context = context_module::instance($cmid);
                 file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
             }
