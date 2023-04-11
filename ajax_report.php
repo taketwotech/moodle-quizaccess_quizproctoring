@@ -1,5 +1,27 @@
 <?php 
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * AJAX call to show proctor images on review attempt page
+ *
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
@@ -7,8 +29,6 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-$changestatus = optional_param('changestatus', false, PARAM_BOOL);
-$status = optional_param('status', '', PARAM_TEXT);
 $currentpage = optional_param('currentpage', 0 ,PARAM_INT);
 
 if ($currentpage) {
