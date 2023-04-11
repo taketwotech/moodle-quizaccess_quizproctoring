@@ -36,11 +36,11 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
         ModalResponse.prototype.registerEventListeners = function() {
             // Apply parent event listeners.
             Modal.prototype.registerEventListeners.call(this);
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.PREVIOUS_BUTTON, function(e, data) {                
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.PREVIOUS_BUTTON, function(e) {
                 $(document).trigger('prev');
                 e.preventDefault();
             }.bind(this));
-            this.getModal().on(CustomEvents.events.activate, SELECTORS.NEXT_BUTTON, function(e, data) {                
+            this.getModal().on(CustomEvents.events.activate, SELECTORS.NEXT_BUTTON, function(e) {
                 $(document).trigger('next');
                 e.preventDefault();
             }.bind(this));
