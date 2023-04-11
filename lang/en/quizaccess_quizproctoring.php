@@ -82,3 +82,5 @@ $string['warningawsstudent'] = 'The quiz is not properly configured. Please cont
 $string['quizproctoring:quizproctoringreport'] = 'View proctoring images button';
 $string['noimages'] = 'No images';
 $string['noimageswarning'] = 'No Warnings Detected';
+$string['proctoringimages'] = 'Proctoring Images';
+$string['proctoringidentity'] = 'Proctoring Identity';
