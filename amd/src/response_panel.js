@@ -20,7 +20,7 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery','core/modal_factory','quizaccess_quizproctoring/modal_response', 'core/modal_events'],
+define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response', 'core/modal_events'],
 function($, ModalFactory, ModalResponse, ModalEvents) {
 
     var ResponsePanel = function(responses) {
@@ -61,7 +61,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
     ResponsePanel.prototype._reset = function() {
         if (this.responses.length) {
             var isFirst = this.index === 0;
-            var isLast  = this.responses.length === this.index + 1;
+            var isLast = this.responses.length === this.index + 1;
             if (isFirst) {
                 if (this.firstPage == this.currentpage) {
                     $('[data-action="previous"]').prop("disabled", "disabled");
@@ -98,7 +98,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                 currentpage: (this.currentpage - 2)
             },
             dataType: 'json',
-            success : function(response) {
+            success: function(response) {
                 var images = JSON.parse(JSON.stringify(response));
                 insidethid.temarrayprev = images;
                 insidethid.prevpage = 1;
@@ -121,7 +121,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                 currentpage: this.currentpage
             },
             dataType: 'json',
-            success : function(response) {
+            success: function(response) {
                 var images = JSON.parse(JSON.stringify(response));
                 insidethid.temarraynext = images;
                 if (images[0]) {
@@ -149,13 +149,13 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
         var res = this.responses[this.index];
         if (res) {
             $(".imgheading").html(res.title);
-            $(".userimg").attr("src",res.img);
+            $(".userimg").attr("src", res.img);
         }
         var isFirst = this.index === 0;
         if (isFirst) {
             this._isFirstPage();
         }
-        var isLast  = this.responses.length === this.index + 1;
+        var isLast = this.responses.length === this.index + 1;
         if (isLast) {
             this._isLastPage();
         }
@@ -185,14 +185,14 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
         var res = this.responses[this.index];
         if (res) {
             $(".imgheading").html(res.title);
-            $(".userimg").attr("src",res.img);
+            $(".userimg").attr("src", res.img);
         }
         var isFirst = this.index === 0;
         if (isFirst) {
             this._isFirstPage();
         }
 
-        var isLast  = this.responses.length === this.index + 1;
+        var isLast = this.responses.length === this.index + 1;
         if (isLast) {
             this._isLastPage();
         }
@@ -209,9 +209,9 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             window.location.reload();
         });
     };
-    var init = function(attemptid = null,quizid = null,userid = null,useridentity = null) {
+    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null) {
         var docElement = $(document);
-        docElement.ready(function () {
+        docElement.ready(function() {
             let btn = document.createElement("button");
             btn.innerHTML = "Proctoring Images";
             btn.setAttribute("type", "button");
@@ -221,7 +221,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
             btn.setAttribute("data-quizid", quizid);
             btn.setAttribute("data-userid", userid);
             document.getElementById("page-content").prepend(btn);
-            if(useridentity && useridentity != 0){
+            if (useridentity && useridentity != 0) {
                 let btnidentity = document.createElement("button");
                 btnidentity.innerHTML = "Proctoring Identity";
                 btnidentity.setAttribute("type", "button");
@@ -229,7 +229,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                 btnidentity.setAttribute("class", "proctoridentity btn btn-primary");
                 btnidentity.setAttribute("data-attemptid", attemptid);
                 btnidentity.setAttribute("data-quizid", quizid);
-                btnidentity.setAttribute("data-userid", userid);                
+                btnidentity.setAttribute("data-userid", userid);
                 document.getElementById("page-content").prepend(btnidentity);
             }
         });
@@ -246,9 +246,9 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                     quizid: $(this).data('quizid')
                 },
                 dataType: 'json',
-                success : function(response) {
+                success: function(response) {
                     var images = JSON.parse(JSON.stringify(response));
-                    if(images.length > 0){                     
+                    if (images.length > 0) {
                         var rp = new ResponsePanel(images);
                         rp.quizid = quizid;
                         rp.userid = userid;
@@ -261,25 +261,25 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                             modal.setTitle('User Images');
                             modal.show();
                             $(".imgheading").html(rp.responses[rp.index].title);
-                            $(".userimg").attr("src",rp.responses[rp.index].img);
-                            if(rp.responses[rp.index].total == 1){
+                            $(".userimg").attr("src", rp.responses[rp.index].img);
+                            if (rp.responses[rp.index].total == 1) {
                                 $('[data-action="next"]').prop("disabled", "disabled");
                             }
                         });
-                    }else{
-                        message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
+                    } else {
+                        var message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
                         ModalFactory.create({
                             type: ModalFactory.types.DEFAULT,
                             body: message,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.show();
-                        });                    
+                        });
                     }
                 }
             });
         });
-        docElement.on('click', 'button.proctoridentity', function(e){
+        docElement.on('click', 'button.proctoridentity', function(e) {
             e.preventDefault();
             $.ajax({
                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoridentity.php',
@@ -289,14 +289,14 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                     quizid: $(this).data('quizid')
                 },
                 dataType: 'json',
-                success : function(response) {
-                    var response = JSON.parse(JSON.stringify(response));
-                    if (response.success) {
-                        window.open(response.url, "_blank");
+                success: function(response) {
+                    var residentity = JSON.parse(JSON.stringify(response));
+                    if (residentity.success) {
+                        window.open(residentity.url, "_blank");
                     } else {
                         ModalFactory.create({
                             type: ModalFactory.types.DEFAULT,
-                            body: response.message,
+                            body: residentity.message,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.show();
