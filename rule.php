@@ -64,15 +64,15 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public function prevent_access() {
         global $USER;
         $isadmin = is_siteadmin($USER);
-        $aws_key = get_config('quizaccess_quizproctoring', 'aws_key');
-        $aws_secret = get_config('quizaccess_quizproctoring', 'aws_secret');
+        $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
+        $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');
         $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
         $url = $url->out();
        
-        if(empty($aws_key) || empty($aws_secret)){
-            if($isadmin){    
-                return get_string('warningaws', 'quizaccess_quizproctoring',$url);
-            }else{               
+        if (empty($awskey) || empty($awssecret)) {
+            if ($isadmin) {
+                return get_string('warningaws', 'quizaccess_quizproctoring', $url);
+            } else {               
                 return get_string('warningawsstudent', 'quizaccess_quizproctoring');
             }
         }
@@ -99,15 +99,15 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * @param int $attemptid attempt id
      * @return bool TRUE|FALSE
      *
-     */  
+     */
     public function is_preflight_check_required($attemptid) {
         global $SESSION, $DB, $USER;
         $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status'=> '' ))) {
-             if ($attemptid) {
+        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
+            if ($attemptid) {
                 return false;
-            } else {
+             } else {
                 return true;
             }
         } else {
@@ -285,8 +285,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
                     "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
                     "600" => get_string('tenminutes', 'quizaccess_quizproctoring'),
-                    "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
-        // ...$mform->addHelpButton('interval', 'interval', 'quiz');
+                    "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));        
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
@@ -306,7 +305,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring'); 
+        $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
     }
 
     /**
