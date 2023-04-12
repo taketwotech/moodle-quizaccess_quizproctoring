@@ -64,7 +64,7 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
 
     $fs = get_file_storage();
     $file = $fs->get_file($context->id, 'quizaccess_quizproctoring', $filearea, $itemid, $filepath, $filename);
-    if (!$file) {    
+    if (!$file) {
         return false;
     }
     send_stored_file($file, 0, 0, $forcedownload, $options);

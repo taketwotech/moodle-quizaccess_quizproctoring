@@ -67,12 +67,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
         $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');
         $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
-        $url = $url->out();
-       
+        $url = $url->out();       
         if (empty($awskey) || empty($awssecret)) {
             if ($isadmin) {
                 return get_string('warningaws', 'quizaccess_quizproctoring', $url);
-            } else {               
+            } else {
                 return get_string('warningawsstudent', 'quizaccess_quizproctoring');
             }
         }
@@ -107,7 +106,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
             if ($attemptid) {
                 return false;
-             } else {
+            } else {
                 return true;
             }
         } else {
