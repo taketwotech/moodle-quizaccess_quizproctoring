@@ -1,4 +1,4 @@
-<?php 
+<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -29,22 +29,22 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-$currentpage = optional_param('currentpage', 0 ,PARAM_INT);
+$currentpage = optional_param('currentpage', 0 , PARAM_INT);
 
 if ($currentpage) {
     $offset = $currentpage * 20;
-    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 " ;
-    $getImages = $DB->get_records_sql($sql, null, $offset , 20);
+    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    $getimages = $DB->get_records_sql($sql, null, $offset , 20);
 
-    $imgarray= array();
-    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 " ;
+    $imgarray = array();
+    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
 
     if ($countrecord) {
         $countrecord = ceil(count($countrecord) / 20);
     }
-    foreach($getImages as $img) {
-       if (strlen($img->userimg) < 40) {
+    foreach ($getimages as $img) {
+        if (strlen($img->userimg) < 40) {
             $quizobj = \quiz::create($img->quizid, $img->userid);
             $context = $quizobj->get_context();
             $fs = get_file_storage();
@@ -58,16 +58,16 @@ if ($currentpage) {
     echo json_encode($imgarray);
 
 } else {
-    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 " ;
-    $getImages = $DB->get_records_sql($sql, null, '' , 20);
-    $imgarray= array();
-    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 " ;
+    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    $getimages = $DB->get_records_sql($sql, null, '' , 20);
+    $imgarray = array();
+    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
     $totalrecord = count($countrecord);
     if ($countrecord) {
         $countrecord = ceil(count($countrecord) / 20);
     }
-    foreach($getImages as $img) {
+    foreach ($getimages as $img) {
         if (strlen($img->userimg) < 40) {
             $quizobj = \quiz::create($img->quizid, $img->userid);
             $context = $quizobj->get_context();
@@ -80,4 +80,4 @@ if ($currentpage) {
         array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') , 'img' => $target, 'totalpage' => $countrecord, 'total' => $totalrecord));
     }
     echo json_encode($imgarray);
-}  
+}

@@ -158,7 +158,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
     }
 
-     if ($oldversion < 2023031600) {
+    if ($oldversion < 2023031600) {
 
         // Define field triggeresamail to be dropped from quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');

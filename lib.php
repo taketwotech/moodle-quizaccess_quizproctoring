@@ -51,14 +51,20 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
     array $options=array()) {
     global $DB;
     $itemid = array_shift($args);
-    $relativepath = implode('/', $args);
+    $filename = array_pop($args);
+
+    if (!$args) {
+        $filepath = '/';
+    } else {
+        $filepath = '/' . implode('/', $args) . '/';
+    }
     if (!$data = $DB->get_record("quizaccess_proctor_data", array('id' => $itemid)) && $filearea == 'identity') {
         return false;
     }
 
     $fs = get_file_storage();
-    $fullpath = "/$context->id/quizaccess_quizproctoring/$filearea/$itemid/$relativepath";
-    if (!$file = $fs->get_file_by_hash(sha1($fullpath)) or $file->is_directory()) {
+    $file = $fs->get_file($context->id, 'quizaccess_quizproctoring', $filearea, $itemid, $filepath, $filename);
+    if (!$file) {
         return false;
     }
     send_stored_file($file, 0, 0, $forcedownload, $options);
@@ -77,7 +83,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id, 'quizid' => $quizid, 'image_status' => 'M', 'attemptid' => 0))) {
         $proctoreddata->attemptid = $attemptid;
-        $DB->update_record('quizaccess_proctor_data', $proctoreddata);       
+        $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$cmid, false, true, $attemptid, $interval->time_interval]);
@@ -105,7 +111,6 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             $DB->delete_records('quizaccess_proctor_data', array('id' => $qpd->id));
         }
     }
-    
     $imagename = $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
 
     $record = new stdClass();
@@ -119,7 +124,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->attemptid = $attemptid;
     $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
-    if($status != ''){
+    if ($status != '') {
         $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
         $proctoreddata = $DB->get_record('quizaccess_proctor_data', array('id' => $id));
         $proctoreddata->userimg = $imagename;
@@ -154,8 +159,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
                 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
                 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'userid' => $user->id, 'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'A');
-            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status
-            IN (:param1,:param2,:param3,:param4)";
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {

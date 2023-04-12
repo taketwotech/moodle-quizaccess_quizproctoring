@@ -1,4 +1,4 @@
-<?php 
+<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -31,7 +31,7 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
 $url = '';
-if($proctoringimage = $DB->get_record("quizaccess_proctor_data", array('attemptid' => $attemptid, 'userid'=> $userid, 'quizid' => $quizid, 'image_status' => 'M'))) {
+if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", array('attemptid' => $attemptid, 'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'))) {
     $quizobj = \quiz::create($quizid, $userid);
     $context = $quizobj->get_context();
     $fs = get_file_storage();
