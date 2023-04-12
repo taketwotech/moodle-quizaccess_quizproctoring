@@ -99,14 +99,17 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * @param int $attemptid attempt id
      * @return bool TRUE|FALSE
      *
-     */
+     */  
     public function is_preflight_check_required($attemptid) {
         global $SESSION, $DB, $USER;
         $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id
-            , 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
-            return false;
+        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status'=> '' ))) {
+             if ($attemptid) {
+                return false;
+            } else {
+                return true;
+            }
         } else {
             return true;
         }
