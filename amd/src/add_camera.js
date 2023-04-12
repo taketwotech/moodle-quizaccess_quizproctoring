@@ -63,7 +63,7 @@ function($, str, ModalFactory) {
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
-            data: {imgBase64: data, cmid: this.cmid,attemptid: this.attemptid, mainimage: this.mainimage},
+            data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
             success: function(response) {
                 if (response && response.errorcode) {
                     // Console.log(response.errorcode);
@@ -116,11 +116,11 @@ function($, str, ModalFactory) {
         if (verifyduringattempt) {
             $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
             $('<video>').attr({
-                id:'video',
-                class:'quizaccess_quizproctoring-video',
-                width:'280',
-                height:'240',
-                autoplay:'autoplay'}).appendTo('body');
+                id: 'video',
+                class: 'quizaccess_quizproctoring-video',
+                width: '280',
+                height: '240',
+                autoplay: 'autoplay'}).appendTo('body');
             var camera = new Camera(cmid, mainimage, attemptid);
             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
         } else {
