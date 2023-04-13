@@ -22,7 +22,6 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
@@ -82,13 +81,13 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER;
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
-    if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id, 
+    if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id,
         'quizid' => $quizid, 'image_status' => 'M', 'attemptid' => 0))) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
-    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', 
+    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
         [$cmid, false, true, $attemptid, $interval->time_interval]);
 }
 
@@ -107,11 +106,11 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
     // We are all good, store the image.
     if ( $mainimage ) {
-        if ($qpd = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id, 
+        if ($qpd = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id,
             'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'M' ))) {
             $DB->delete_records('quizaccess_proctor_data', array('id' => $qpd->id));
         }
-        if ($qpd = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id, 
+        if ($qpd = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id,
             'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
             $DB->delete_records('quizaccess_proctor_data', array('id' => $qpd->id));
         }
@@ -163,10 +162,11 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             $inparams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
                 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
                 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
-                'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 
-                'userid' => $user->id, 'quizid' => $quizid, 
+                'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
+                'userid' => $user->id, 'quizid' => $quizid,
                 'attemptid' => $attemptid, 'image_status' => 'A');
-            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
+            quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {

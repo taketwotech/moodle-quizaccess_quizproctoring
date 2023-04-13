@@ -31,14 +31,16 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
 $url = '';
-if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", array('attemptid' => $attemptid, 'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'))) {
+if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", array('attemptid' => $attemptid,
+    'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'))) {
     $quizobj = \quiz::create($quizid, $userid);
     $context = $quizobj->get_context();
     $fs = get_file_storage();
     $files = $fs->get_area_files($context->id, 'quizaccess_quizproctoring', 'identity', $proctoringimage->id);
     foreach ($files as $file) {
         $filename = $file->get_filename();
-        $url = moodle_url::make_file_url('/pluginfile.php', '/'.$file->get_contextid().'/quizaccess_quizproctoring/identity/'.$file->get_itemid().'/'.$filename);
+        $url = moodle_url::make_file_url('/pluginfile.php',
+            '/'.$file->get_contextid().'/quizaccess_quizproctoring/identity/'.$file->get_itemid().'/'.$filename);
     }
 
     if ($url) {

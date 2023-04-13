@@ -67,7 +67,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
         $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');
         $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
-        $url = $url->out();       
+        $url = $url->out();
         if (empty($awskey) || empty($awssecret)) {
             if ($isadmin) {
                 return get_string('warningaws', 'quizaccess_quizproctoring', $url);
@@ -103,7 +103,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $SESSION, $DB, $USER;
         $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id, 'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
+        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id,
+            'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
             if ($attemptid) {
                 return false;
             } else {
@@ -284,7 +285,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
                     "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
                     "600" => get_string('tenminutes', 'quizaccess_quizproctoring'),
-                    "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));        
+                    "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
@@ -393,11 +394,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
                 $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
-                $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id, 'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
+                $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id,
+                    'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if (count($usermages) > 0) {
-                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init', [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
-                        $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages', 'proctoringidentity'), 'quizaccess_quizproctoring');
+                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
+                            [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
+                        $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
+                            'proctoringidentity'), 'quizaccess_quizproctoring');
                     }
                 }
             }
