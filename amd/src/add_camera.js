@@ -110,21 +110,21 @@ function($, str, ModalFactory) {
             body: message,
         }).then(function(modal) {
             modal.show();
+            return modal;
         });
     };
     var init = function(cmid, mainimage, verifyduringattempt = false, attemptid = null, setinterval = 300) {
+        var camera = new Camera(cmid, mainimage, attemptid);
         if (verifyduringattempt) {
             $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
             $('<video>').attr({
-                id: 'video',
-                class: 'quizaccess_quizproctoring-video',
-                width: '280',
-                height: '240',
-                autoplay: 'autoplay'}).appendTo('body');
-            var camera = new Camera(cmid, mainimage, attemptid);
+                'id': 'video',
+                'class': 'quizaccess_quizproctoring-video',
+                'width': '280',
+                'height': '240',
+                'autoplay': 'autoplay'}).appendTo('body');            
             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
-        } else {
-            var camera = new Camera(cmid, mainimage, attemptid);
+        } else {            
             // Take picture on button click
             $('#' + camera.takepictureid).on('click', function(e) {
                 e.preventDefault();
@@ -142,6 +142,7 @@ function($, str, ModalFactory) {
                         body: str.get_string('clickpicture', 'quizaccess_quizproctoring'),
                     }).then(function(modal) {
                         modal.show();
+                        return modal;
                     });
                 }
             });
