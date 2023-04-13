@@ -254,7 +254,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                         rp.userid = userid;
                         rp.attemptid = attemptid;
                         rp.lastpage = rp.responses[rp.index].totalpage;
-                        ModalFactory.create({
+                        return ModalFactory.create({
                             type: ModalResponse.TYPE,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
@@ -265,15 +265,17 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                             if (rp.responses[rp.index].total == 1) {
                                 $('[data-action="next"]').prop("disabled", "disabled");
                             }
+                            return null;
                         });
                     } else {
                         var message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
-                        ModalFactory.create({
+                        return ModalFactory.create({
                             type: ModalFactory.types.DEFAULT,
                             body: message,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.show();
+                            return null;
                         });
                     }
                 }
@@ -294,12 +296,13 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                     if (residentity.success) {
                         window.open(residentity.url, "_blank");
                     } else {
-                        ModalFactory.create({
+                        return ModalFactory.create({
                             type: ModalFactory.types.DEFAULT,
                             body: residentity.message,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.show();
+                            return null;
                         });
                     }
                 }
