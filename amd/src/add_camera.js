@@ -110,11 +110,11 @@ function($, str, ModalFactory) {
             body: message,
         }).then(function(modal) {
             modal.show();
-            return modal;
+             return;
         });
     };
     var init = function(cmid, mainimage, verifyduringattempt = false, attemptid = null, setinterval = 300) {
-        var camera = new Camera(cmid, mainimage, attemptid);
+        var camera;
         if (verifyduringattempt) {
             $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
             $('<video>').attr({
@@ -122,9 +122,11 @@ function($, str, ModalFactory) {
                 'class': 'quizaccess_quizproctoring-video',
                 'width': '280',
                 'height': '240',
-                'autoplay': 'autoplay'}).appendTo('body');            
+                'autoplay': 'autoplay'}).appendTo('body');
+            camera = new Camera(cmid, mainimage, attemptid);
             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
-        } else {            
+        } else {
+            camera = new Camera(cmid, mainimage, attemptid);
             // Take picture on button click
             $('#' + camera.takepictureid).on('click', function(e) {
                 e.preventDefault();
@@ -142,7 +144,7 @@ function($, str, ModalFactory) {
                         body: str.get_string('clickpicture', 'quizaccess_quizproctoring'),
                     }).then(function(modal) {
                         modal.show();
-                        return modal;
+                        return;
                     });
                 }
             });
