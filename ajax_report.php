@@ -33,11 +33,13 @@ $currentpage = optional_param('currentpage', 0 , PARAM_INT);
 
 if ($currentpage) {
     $offset = $currentpage * 20;
-    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
     $getimages = $DB->get_records_sql($sql, null, $offset , 20);
 
     $imgarray = array();
-    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
 
     if ($countrecord) {
@@ -53,15 +55,18 @@ if ($currentpage) {
         } else {
             $target = $img->userimg;
         }
-        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') , 'img' => $target, 'totalpage' => $countrecord));
+        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') ,
+            'img' => $target, 'totalpage' => $countrecord));
     }
     echo json_encode($imgarray);
 
 } else {
-    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
     $getimages = $DB->get_records_sql($sql, null, '' , 20);
     $imgarray = array();
-    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M') AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
     $totalrecord = count($countrecord);
     if ($countrecord) {
@@ -77,7 +82,8 @@ if ($currentpage) {
         } else {
             $target = $img->userimg;
         }
-        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') , 'img' => $target, 'totalpage' => $countrecord, 'total' => $totalrecord));
+        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') ,
+            'img' => $target, 'totalpage' => $countrecord, 'total' => $totalrecord));
     }
     echo json_encode($imgarray);
 }

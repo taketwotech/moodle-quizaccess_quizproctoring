@@ -27,8 +27,9 @@ defined('MOODLE_INTERNAL') || die;
 
 if ($hassiteconfig && !empty($USER->id)) {
 
-    // Mangeto Mapping Settings
-    $settings = new admin_settingpage('modsettingsquizcatproctoring', get_string('pluginname', 'quizaccess_quizproctoring'), 'moodle/site:config');
+    // Mangeto Mapping Settings.
+    $settings = new admin_settingpage('modsettingsquizcatproctoring',
+        get_string('pluginname', 'quizaccess_quizproctoring'), 'moodle/site:config');
 
     $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/aws_key',
         get_string('awskey', 'quizaccess_quizproctoring'),
@@ -46,8 +47,10 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
         get_string('help_timeinterval', 'quizaccess_quizproctoring'), 5,
         array(1 => get_string('oneminute', 'quizaccess_quizproctoring'),
-         5 => get_string('fiveminutes', 'quizaccess_quizproctoring'), 10 => get_string('tenminutes', 'quizaccess_quizproctoring'))));
+         5 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
+         10 => get_string('tenminutes', 'quizaccess_quizproctoring'))));
 
-    $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show', get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
+    $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
+        get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
         get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 0));
 }

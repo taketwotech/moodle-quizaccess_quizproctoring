@@ -166,7 +166,8 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 'userid' => $user->id, 'quizid' => $quizid,
                 'attemptid' => $attemptid, 'image_status' => 'A');
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
-            quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status AND status IN (:param1,:param2,:param3,:param4)";
+            quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
+            AND status IN (:param1,:param2,:param3,:param4)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
