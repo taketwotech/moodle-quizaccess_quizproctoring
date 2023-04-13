@@ -106,7 +106,7 @@ function($, str, ModalFactory) {
         $('#' + this.retakeid).hide();
     };
     Camera.prototype.showpopup = function(event, message) {
-        ModalFactory.create({
+        return ModalFactory.create({
             body: message,
         }).then(function(modal) {
             modal.show();
@@ -140,7 +140,7 @@ function($, str, ModalFactory) {
             $("#id_submitbutton").on('click', function(e) {
                 if ($("input[name='userimg']").val() == "") {
                     e.preventDefault();
-                    ModalFactory.create({
+                    return ModalFactory.create({
                         body: str.get_string('clickpicture', 'quizaccess_quizproctoring'),
                     }).then(function(modal) {
                         modal.show();
