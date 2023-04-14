@@ -42,7 +42,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * There is no obligation to return anything. If it is not appropriate to tell students
      * about this rule, then just return ''.
      *
-     * @param stdClass $quizobj quiz object
+     * @param quiz $quizobj quiz object
      * @param int $timenow current time
      * @param bool $canignoretimelimits ignore time limits
      *
@@ -118,8 +118,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     /**
      * Preflight check form
      *
-     * @param stdClass $quizform quiz form
-     * @param stdClass $mform mform
+     * @param mod_quiz_preflight_check_form $quizform quiz form
+     * @param MoodleQuickForm $mform mform
      * @param int $attemptid attempt id
      * @return String
      *
@@ -261,8 +261,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     /**
      * Add settings form fields
      *
-     * @param stdClass $quizform quizform
-     * @param stdClass $mform moodle quicl form
+     * @param mod_quiz_mod_form $quizform quizform
+     * @param MoodleQuickForm $mform moodle quicl form
      */
     public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
         global $CFG;

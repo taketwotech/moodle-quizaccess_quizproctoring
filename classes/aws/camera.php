@@ -49,17 +49,24 @@ class camera {
     /**
      * Initialize value amazonapikey
      *
+     * @param $amazonapikey
+     * @return null
      */
     private static $amazonapikey = null;
+
     /**
      * Initialize value amazonapisecret
      *
+     * @param $amazonapisecret
+     * @return null
      */
     private static $amazonapisecret = null;
 
     /**
      * Initialize value client
      *
+     * @param $client
+     * @return null
      */
     private static $client = null;
 
