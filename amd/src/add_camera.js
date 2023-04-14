@@ -148,6 +148,7 @@ function($, str, ModalFactory) {
                         modal.show();
                         return null;
                     });
+                    return true;
                 }
             });
         }
