@@ -26,6 +26,7 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_login();
 $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
@@ -55,7 +56,9 @@ if ($currentpage) {
         } else {
             $target = $img->userimg;
         }
-        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') ,
+        array_push($imgarray, array('title' => $img->image_status == 'M' ?
+            get_string('mainimage', 'quizaccess_quizproctoring') :
+            get_string($img->status, 'quizaccess_quizproctoring', '') ,
             'img' => $target, 'totalpage' => $countrecord));
     }
     echo json_encode($imgarray);
@@ -82,7 +85,9 @@ if ($currentpage) {
         } else {
             $target = $img->userimg;
         }
-        array_push($imgarray, array('title' => $img->image_status == 'M' ? get_string('mainimage', 'quizaccess_quizproctoring') : get_string($img->status, 'quizaccess_quizproctoring', '') ,
+        array_push($imgarray, array('title' => $img->image_status == 'M' ?
+            get_string('mainimage', 'quizaccess_quizproctoring') :
+            get_string($img->status, 'quizaccess_quizproctoring', '') ,
             'img' => $target, 'totalpage' => $countrecord, 'total' => $totalrecord));
     }
     echo json_encode($imgarray);
