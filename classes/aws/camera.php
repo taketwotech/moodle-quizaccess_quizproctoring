@@ -50,7 +50,6 @@ class camera {
      * Initialize value amazonapikey
      *
      * @param Longtext $amazonapikey
-     * @return string
      */
     private static $amazonapikey = null;
 
@@ -58,7 +57,6 @@ class camera {
      * Initialize value amazonapisecret
      *
      * @param Longtext $amazonapisecret
-     * @return string
      */
     private static $amazonapisecret = null;
 
@@ -66,7 +64,6 @@ class camera {
      * Initialize value client
      *
      * @param Longtext $client
-     * @return string
      */
     private static $client = null;
 
