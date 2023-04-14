@@ -50,7 +50,7 @@ class camera {
      * Initialize value amazonapikey
      *
      */
-    private static $amazonapikey = null;    
+    private static $amazonapikey = null;
     /**
      * Initialize value amazonapisecret
      *
