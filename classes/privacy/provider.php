@@ -24,8 +24,6 @@
 
 namespace quizaccess_quizproctoring\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for quizaccess_quizproctoring implementing null_provider.
  *
