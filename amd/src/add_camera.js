@@ -22,6 +22,7 @@ function($, str, ModalFactory) {
                   this.video.play();
                   return true;
                 }
+                return true;
             })
         .catch(function() {
             // Console.log(err);
