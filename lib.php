@@ -97,7 +97,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $cmid course module id
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
- * @param $mainimage main image
+ * @param boolean $mainimage main image
  * @param string $status
  */
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status='') {
