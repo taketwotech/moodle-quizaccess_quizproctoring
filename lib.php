@@ -197,11 +197,11 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             }
 
             if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
-                print_error($status, 'quizaccess_quizproctoring', '', $errorstring);
+                throw new moodle_exception($status, 'quizaccess_quizproctoring', '', $errorstring);
                 die();
             }
         } else if ($quizaccessquizproctoring->warning_threshold == 0) {
-            print_error($status, 'quizaccess_quizproctoring', '', '');
+            throw new moodle_exception($status, 'quizaccess_quizproctoring', '', '');
             die();
         }
     }

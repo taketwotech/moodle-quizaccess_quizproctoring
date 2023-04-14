@@ -33,7 +33,7 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
-    print_error('invalidcoursemodule');
+    throw new moodle_exception('invalidcoursemodule');
 }
 
 $course = $DB->get_record('course', array("id" => $cm->course), '*', MUST_EXIST);
@@ -64,7 +64,7 @@ switch ($validate) {
         if (!$mainimage) {
             quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
-            print_error(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
+            throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED:
@@ -72,7 +72,7 @@ switch ($validate) {
             quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
             $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
         } else {
-            print_error(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
+            throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED:
@@ -80,12 +80,12 @@ switch ($validate) {
             quizproctoring_storeimage($img, $cmid, $attemptid,
             $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
         } else {
-            print_error(QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
+            throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED:
         if ($mainimage) {
-            print_error(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
+            throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED:
@@ -93,7 +93,7 @@ switch ($validate) {
             quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
             $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
         } else {
-            print_error(QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
+            throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
         }
         break;
     default:
