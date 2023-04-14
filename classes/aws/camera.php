@@ -46,25 +46,13 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/libraries/aws/
  */
 class camera {
 
-    /**
-     * Initialize value amazonapikey
-     *
-     * @param Longtext $amazonapikey
-     */
+    /** @var API amazonapikey */
     private static $amazonapikey = null;
 
-    /**
-     * Initialize value amazonapisecret
-     *
-     * @param Longtext $amazonapisecret
-     */
+    /** @var API amazonapisecret */
     private static $amazonapisecret = null;
 
-    /**
-     * Initialize value client
-     *
-     * @param Longtext $client
-     */
+    /** @var API client */
     private static $client = null;
 
     /**
