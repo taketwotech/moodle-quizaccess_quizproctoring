@@ -39,11 +39,11 @@ define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/m
             this.getModal().on(CustomEvents.events.activate, SELECTORS.PREVIOUS_BUTTON, function(e) {
                 $(document).trigger('prev');
                 e.preventDefault();
-            }.bind(this));
+            });
             this.getModal().on(CustomEvents.events.activate, SELECTORS.NEXT_BUTTON, function(e) {
                 $(document).trigger('next');
                 e.preventDefault();
-            }.bind(this));
+            });
         };
 
         // Automatically register with the modal registry the first time this module is imported so that you can create modals
