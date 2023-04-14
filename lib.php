@@ -94,7 +94,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
 /**
  * Proctoring images store
  *
- * @param $data user image in base64
+ * @param string $data user image in base64
  * @param int $cmid course module id
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
