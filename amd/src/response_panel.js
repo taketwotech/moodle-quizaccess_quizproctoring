@@ -295,6 +295,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                             return null;
                         });
                     }
+                    return true;
                 }
             });
         });
