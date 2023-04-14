@@ -60,7 +60,6 @@ class camera {
      * Initialize value client
      *
      */
-
     private static $client = null;
 
     /**
