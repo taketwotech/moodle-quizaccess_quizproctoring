@@ -199,16 +199,6 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
 
     };
 
-    /**
-     * Comfirm user's response
-     *
-     * @method _rejectResponse
-     */
-    ResponsePanel.prototype._rejectResponse = function() {
-        this._rejectResponseEntry(this.qid, this.rid).then(function() {
-            window.location.reload();
-        });
-    };
     var init = function(attemptid = null, quizid = null, userid = null, useridentity = null) {
         var docElement = $(document);
         docElement.ready(function() {

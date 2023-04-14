@@ -20,6 +20,7 @@ function($, str, ModalFactory) {
                 if (this.video) {
                   this.video.srcObject = stream;
                   this.video.play();
+                  return true;
                 }
             })
         .catch(function() {
@@ -110,7 +111,6 @@ function($, str, ModalFactory) {
             body: message,
         }).then(function(modal) {
             modal.show();
-             return null;
         });
     };
     var init = function(cmid, mainimage, verifyduringattempt = false, attemptid = null, setinterval = 300) {
@@ -144,8 +144,8 @@ function($, str, ModalFactory) {
                         body: str.get_string('clickpicture', 'quizaccess_quizproctoring'),
                     }).then(function(modal) {
                         modal.show();
-                        return null;
                     });
+                    return true;
                 }
             });
         }
