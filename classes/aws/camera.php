@@ -45,11 +45,13 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/libraries/aws/
  * Provides all the functions for aws call
  */
 class camera {
+
     /**
      * Initialize value amazonapikey
      *
      */
     private static $amazonapikey = null;
+    
     /**
      * Initialize value amazonapisecret
      *
