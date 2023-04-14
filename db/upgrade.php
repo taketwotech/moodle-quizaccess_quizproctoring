@@ -146,7 +146,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Define index quizid-attemptid-userid-image_status-status (not unique) to be added to quizaccess_proctor_data.
         $table = new xmldb_table('quizaccess_proctor_data');
-        $index = new xmldb_index('quizid-attemptid-userid-image_status-status', XMLDB_INDEX_NOTUNIQUE, ['quizid', 'attemptid', 'userid', 'image_status', 'status']);
+        $index = new xmldb_index('quizid-attemptid-userid-image_status-status',
+            XMLDB_INDEX_NOTUNIQUE, ['quizid', 'attemptid', 'userid', 'image_status', 'status']);
 
         // Conditionally launch add index quizid-attemptid-userid-image_status-status.
         if (!$dbman->index_exists($table, $index)) {

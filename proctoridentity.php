@@ -25,7 +25,7 @@
 define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-
+require_login();
 $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
