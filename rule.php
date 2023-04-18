@@ -315,18 +315,17 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function save_settings($quiz) {
         global $DB;
-
-        $interval = required_param('time_interval', PARAM_INT);
         if (empty($quiz->enableproctoring)) {
             $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
-            $record->time_interval = $interval;
+            $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
+            $interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
             $record = new stdClass();
             $record->quizid = $quiz->id;
