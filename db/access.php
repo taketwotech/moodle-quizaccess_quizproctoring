@@ -34,5 +34,12 @@ $capabilities = array(
         'archetypes' => array(
             'teacher' => CAP_ALLOW,
         )
+    ),
+    'quizaccess/quizproctoring:quizproctoringonlinestudent' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'teacher' => CAP_ALLOW,
+        )
     )
 );

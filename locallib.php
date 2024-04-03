@@ -15,18 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * API call to save video file and make it part of moodle file
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version = 2024020234;
-$plugin->requires = 2019111200;
-$plugin->release = 'v4.1.2';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+/**
+ * proctoring web app service name
+ */
+define('PROCTORING_WEB_SERVICE', 'proctoring_web_service');

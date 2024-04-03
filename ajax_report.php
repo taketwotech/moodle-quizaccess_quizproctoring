@@ -35,12 +35,12 @@ $currentpage = optional_param('currentpage', 0 , PARAM_INT);
 if ($currentpage) {
     $offset = $currentpage * 20;
     $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
     $getimages = $DB->get_records_sql($sql, null, $offset , 20);
 
     $imgarray = array();
     $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
 
     if ($countrecord) {
@@ -65,11 +65,11 @@ if ($currentpage) {
 
 } else {
     $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 AND userimg IS NOT NULL ";
     $getimages = $DB->get_records_sql($sql, null, '' , 20);
     $imgarray = array();
     $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 ";
+    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
     $totalrecord = count($countrecord);
     if ($countrecord) {

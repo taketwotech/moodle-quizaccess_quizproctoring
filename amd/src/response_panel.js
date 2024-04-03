@@ -199,7 +199,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
 
     };
 
-    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null) {
+    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, savedvideolink = null) {
         var docElement = $(document);
         docElement.ready(function() {
             let btn = document.createElement("button");
@@ -221,6 +221,17 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                 btnidentity.setAttribute("data-quizid", quizid);
                 btnidentity.setAttribute("data-userid", userid);
                 document.getElementById("page-content").prepend(btnidentity);
+            }
+            if (savedvideolink) {
+                let btnsavevideo = document.createElement("button");
+                btnsavevideo.innerHTML = M.util.get_string('proctoringvideo', 'quizaccess_quizproctoring');
+                btnsavevideo.setAttribute("type", "button");
+                btnsavevideo.setAttribute("value", "proctoringvideo");
+                btnsavevideo.setAttribute("class", "proctoringvideo btn btn-primary");
+                btnsavevideo.setAttribute("data-attemptid", attemptid);
+                btnsavevideo.setAttribute("data-quizid", quizid);
+                btnsavevideo.setAttribute("data-userid", userid);
+                document.getElementById("page-content").prepend(btnsavevideo);
             }
         });
         docElement.on('click', 'button.proctoringimage', function(e) {
@@ -298,6 +309,39 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                     return true;
                 }
             });
+        });
+        docElement.on('click', 'button.proctoringvideo', function(e) {
+            e.preventDefault();
+            var videopath =  location.protocol + '//' + location.host + "/mod/quiz/accessrule/quizproctoring/" + savedvideolink;
+            //var recordedVideo = $("<video controls>").attr("src", videopath);
+            console.log(videopath);
+            var modalHtml ='<div id="myModal" class="modalvideo"><span class="closevideo">&times;</span><div id="videoscrollbox" class="modalvideo-content"></div></div>';
+            $("body").append(modalHtml);
+            var modal = document.getElementById("myModal");
+            var videoscrollbox = document.getElementById("videoscrollbox");
+            // Create an element <video>
+            var v = document.createElement ("video");
+            // Set the attributes of the video
+            v.src = videopath;
+            v.controls = true;
+            // Add the video to <div>
+            videoscrollbox.appendChild (v);
+            modal.style.display = "block";
+                
+        });
+
+        $(document).on('click', '.closevideo', function (e) {        
+            e.preventDefault();
+            var modal = document.getElementById("myModal");
+            modal.style.display = "none";
+            modal.remove();
+        });
+        $(document).keydown(function(e) {
+            // ESCAPE key pressed
+            if (e.keyCode == 27) {
+                var modal = document.getElementById("myModal");
+                modal.remove();
+            }
         });
     };
 

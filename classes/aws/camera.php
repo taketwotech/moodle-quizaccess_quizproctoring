@@ -61,7 +61,7 @@ class camera {
      * @return null
      */
     public static function init() {
-        global $CFG;
+        global $CFG;        
         // Amazonapikey set amazon api key.
         self::$amazonapikey = get_config('quizaccess_quizproctoring', 'aws_key');
         // Amazonapisecret set amazon api secret key.

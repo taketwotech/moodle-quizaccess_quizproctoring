@@ -190,5 +190,41 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023031600, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2024020202) {
+
+        // Define field savedvideolink to be added to quizaccess_proctor_data.
+        $table = new xmldb_table('quizaccess_proctor_data');
+        $field = new xmldb_field('savedvideolink', XMLDB_TYPE_TEXT, null, null, null, null, null, 'status');
+
+        // Conditionally launch add field savedvideolink.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024020202, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2024020234) {
+
+        // Define table quizaccess_proctor_video to be created.
+        $table = new xmldb_table('quizaccess_proctor_video');
+
+        // Adding fields to table quizaccess_proctor_video.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('proctor_id', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $table->add_field('quiz_videos', XMLDB_TYPE_TEXT, null, null, null, null, null);
+
+        // Adding keys to table quizaccess_proctor_video.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for quizaccess_proctor_video.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024020234, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }
