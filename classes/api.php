@@ -103,7 +103,14 @@ class api {
         self::init();
         $curl = new \curl();
         $url = self::$resturl; 
-        $curl->setHeader('Content-Type: application/json');
+        $access_token = self::$access_token; 
+        $access_token_secret = self::$access_token_secret; 
+        
+        $header = array('Content-Type: application/json', 
+                        'secret-key: ' . $access_token,
+                        'secret-code: ' . $access_token_secret
+                    );
+        $curl->setHeader($header);
 
 		$result = $curl->post($url, $imagedata);
 		return $result;
@@ -118,6 +125,7 @@ class api {
      */
     public static function validate($response, $source, $target = '') {
         global $CFG;
+        self::init();
         $result = json_decode($response, true);
         if (isset($result["FaceDetails"]) && count($result["FaceDetails"]) > 0) {
             $count = count($result["FaceDetails"]);
@@ -125,15 +133,15 @@ class api {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
             } else if ($count == 1) {
                 $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
-                if ($eyesopen  === 'false') {
+                if ($eyesopen  === false) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
                 } else if ($target !== '') {
-                    $compareresult = self::compare_faces($response, $source, $target);
-                    if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLD) {
+                    $compareresult = self::compare_faces($response);
+                    if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
                         return QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED;
-                    } /*else {
-                        return self::check_protective_equipment($source);
-                    }*/
+                    } else {
+                        //return self::check_protective_equipment($response);
+                    }
                 } /*else {echo $eyesopen;
                     return self::check_protective_equipment($source);
                 }*/
@@ -153,12 +161,44 @@ class api {
      * @param Longtext $target data
      * @return string
      */
-    public static function compare_faces($response, $source, $target) {
+    public static function compare_faces($response) {
         $result = json_decode($response, true);
-        if (isset($result["FaceMatches"]) && isset($result["FaceMatches"]["Face"]) && isset($result["FaceMatches"]["Similarity"])) {
-            return $result["FaceMatches"]["Similarity"];
+        if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"]) && isset($result["FaceMatches"][0]["Similarity"])) {
+            return $result["FaceMatches"][0]["Similarity"];
         }
         return false;      
+    }
+
+    /**
+     * Merge Video
+     *
+     * @param Longtext $postdata
+     * @return string
+     */
+    public static function merge_video_api($postdata) {
+        self::init();
+        $curl = curl_init();
+        $url = self::$serviceurl;
+        $url = $url.'mergeVideos';
+
+        curl_setopt_array($curl, array(
+              CURLOPT_URL => $url,
+              CURLOPT_RETURNTRANSFER => true,
+              CURLOPT_ENCODING => '',
+              CURLOPT_MAXREDIRS => 10,
+              CURLOPT_TIMEOUT => 0,
+              CURLOPT_FOLLOWLOCATION => true,
+              CURLOPT_SSL_VERIFYHOST => false,
+              CURLOPT_SSL_VERIFYPEER => false,
+              CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+              CURLOPT_CUSTOMREQUEST => 'POST',
+              CURLOPT_POSTFIELDS =>$postdata,
+              CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json'
+              ),
+        ));        
+        $result = curl_exec($curl);
+        return $result;
     }
 
 }

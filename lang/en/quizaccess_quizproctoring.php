@@ -99,3 +99,5 @@ $string['accesstoken'] = 'Extenal Server Access Token';
 $string['accesstoken_help'] = 'Access token generated from Extenal Server System Integration';
 $string['accesstokensecret'] = 'Extenal Server Access Token Secret';
 $string['accesstokensecret_help'] = 'Access secret generated from Extenal Server System Integration';
+$string['proctoring_recording'] = 'Proctoring Recording';
+$string['proctoring_recording_help'] = 'If set, Proctoring Recording Show in review attempt.';

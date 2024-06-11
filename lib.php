@@ -30,6 +30,7 @@ define('QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED', 'multifacesdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED', 'facesnotmatched');
 define('QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED', 'eyesnotopened');
 define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLD', 90);
+define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT', 60);
 define('QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED', 'facemaskdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD', 80);
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_PASSED', 'completionpassed');
@@ -89,13 +90,14 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
+    $proctoringrecording = get_config('quizaccess_quizproctoring', 'proctoring_recording');
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid)); 
     $securewindow = $DB->get_record('quiz', array('id' => $quizid)); 
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io.js',true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js',true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js',true);
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
-        [$cmid, false, true, $attemptid, false, $quizid, $externalserver, $serviceoption, $securewindow->browsersecurity, $interval->time_interval]);
+        [$cmid, false, true, $attemptid, false, $quizid, $externalserver, $serviceoption, $proctoringrecording, $securewindow->browsersecurity, $interval->time_interval]);
 }
 
 /**

@@ -153,10 +153,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
+        $proctoringrecording = get_config('quizaccess_quizproctoring', 'proctoring_recording');
         $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id)); 
         $securewindow = $DB->get_record('quiz', array('id' => $this->quiz->id));
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
-        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid, false, $this->quiz->id, $externalserver, $serviceoption, $securewindow->browsersecurity]);
+        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid, false, $this->quiz->id, $externalserver, $serviceoption, $proctoringrecording, $securewindow->browsersecurity]);
 
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('requireproctoringmessage', 'quizaccess_quizproctoring'));
@@ -416,16 +417,17 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $userid = $attemptobj->get_userid();
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
+            $proctoringrecording = get_config('quizaccess_quizproctoring', 'proctoring_recording');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
                 $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
                 $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id,
                     'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
-                if ($quizinfo && ($proctoringimageshow == 1)) {
+                if ($quizinfo && ($proctoringimageshow == 1 || $proctoringrecording == 1)) {
                     if ($usermages) {
                         $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
                         $videofilePath = '/uploads';
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
-                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $videofilePath]);
+                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $videofilePath, $proctoringimageshow, $proctoringrecording]);
                         $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
                             'proctoringidentity','proctoringvideo'), 'quizaccess_quizproctoring');
                     }

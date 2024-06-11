@@ -5,7 +5,10 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
+window.addEventListener('beforeunload', function (event) {
+    event.stopImmediatePropagation();
+    event.returnValue = '';
+});
 define(['jquery', 'core/str', 'core/modal_factory','core/ajax'],
 function($, str, ModalFactory, ajax) {
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
@@ -150,7 +153,7 @@ function($, str, ModalFactory, ajax) {
         });
     };
 
-    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, teacher, quizid, externalserver, serviceoption, browsersecurity= null, setinterval = 300) {        
+    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, teacher, quizid, externalserver, serviceoption, proctoringrecording, browsersecurity= null, setinterval = 300) {        
         if(!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);
@@ -173,15 +176,17 @@ function($, str, ModalFactory, ajax) {
                 /** TO DISABLE SCREEN CAPTURE **/
                 document.addEventListener('keyup', (e) => {
                     if (e.key == 'PrintScreen') {
+                        e.preventDefault();
                         navigator.clipboard.writeText('');
-                        alert('Screenshots disabled!');
+                    }
+                    if (e.keyCode === 18) {
+                       e.preventDefault();
                     }
                 });
 
                 /** TO DISABLE PRINTS WHIT CTRL+P **/
                 document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.key == 'p') {
-                        alert('This section is not allowed to print or export to PDF');
+                    if (e.ctrlKey && e.key == 'p') {                        
                         e.cancelBubble = true;
                         e.preventDefault();
                         e.stopImmediatePropagation();
@@ -197,7 +202,7 @@ function($, str, ModalFactory, ajax) {
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             
-           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, browsersecurity, setinterval, serviceoption, quizid, function () {
+           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, browsersecurity, setinterval, serviceoption, proctoringrecording, quizid, function () {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var room = getRoomFromQuery(quizid);
                 var teacherroom = getTeacherroom();
@@ -510,9 +515,32 @@ function($, str, ModalFactory, ajax) {
        
         
         $('#mod_quiz-next-nav').click(function(event) {
-            var text = $(this).attr('value');
-            event.preventDefault();               
+            $('#responseform').append('<input type="hidden" name="next" value="Next page">');
+            event.preventDefault();
+            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
+            $('#loading').show();
+            $("#mod_quiz-prev-nav").prop("disabled", true);
             $("#mod_quiz-next-nav").prop("disabled", true);
+            stopRecording(quizid, attemptid, cmid);
+        });
+
+        $('#mod_quiz-prev-nav').click(function(event) {
+            $('#responseform').append('<input type="hidden" name="previous" value="Previous page">');
+            event.preventDefault();
+            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
+            $('#loading').show();
+            $("#mod_quiz-prev-nav").prop("disabled", true);
+            $("#mod_quiz-next-nav").prop("disabled", true);
+            stopRecording(quizid, attemptid, cmid);
+        });
+
+        $('#endtestlink').click(function(event) {
+            var text = document.getElementById("endtestlink").innerHTML;
+            console.log(text);
+            event.preventDefault();
+            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
+            $('#loading').show();             
+            $("#endtestlink").prop("disabled", true);
             stopRecording(quizid, attemptid, cmid, text);
         });
 
@@ -533,7 +561,7 @@ function($, str, ModalFactory, ajax) {
             recording = true;
         }
 
-        function stopRecording(quizid, attemptid, cmid, text) {
+        function stopRecording(quizid, attemptid, cmid, text='') {
          require(['core/ajax'], function(ajax) {
             // Stop recording for the local user
             if (recordRTC) {
@@ -561,8 +589,12 @@ function($, str, ModalFactory, ajax) {
                             ajax.call([requestvideo])[0].done(function(result) {
                                 if(result.success === true) {
                                     console.log(result);
-                                    //$('#loading').hide();
-                                    window.location = result.url;
+                                    $('#loading').hide();
+                                    if(result.url){
+                                        window.location.href = result.url;
+                                    } else {
+                                        $('#responseform').submit();                                        
+                                    }
                                 }
                             });                        
                         }
@@ -652,7 +684,7 @@ function($, str, ModalFactory, ajax) {
     }
 
 
-     function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, browsersecurity,setinterval, serviceoption, quizid, callback, errorback) {
+     function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, browsersecurity, setinterval, serviceoption, proctoringrecording, quizid, callback, errorback) {
         require(['core/ajax'], function(ajax) {
         if (local_media_stream != null) {  /* i.e, if we've already been initialized */
             if (callback) callback();
@@ -703,7 +735,7 @@ function($, str, ModalFactory, ajax) {
                             },
                         };                       
                         ajax.call([request])[0].done(function(result) {
-                            if(result.url) {             
+                            if(result.finish) {             
                                 stopRecording(quizid, attemptid, cmid, 'Finish attempt ...');
                             } else {
                                 $(document).trigger('popup', result.warning);
@@ -718,7 +750,7 @@ function($, str, ModalFactory, ajax) {
                 setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
             }
         }
-            if (callback) callback();
+        if (callback) callback();
         })
         });
     }

@@ -68,13 +68,26 @@ if($service === 'AWS') {
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
         $imagedata = array("primary"=>$data,"target"=>$tdata);
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
-        $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
-        
+        $result = json_decode($response, true);
+        if (isset($result['error'])) {
+            // Print the error message
+            throw new moodle_exception($result['error'], 'quizaccess_quizproctoring', '', '');
+            die();
+        } else {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
+        }
     } else {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $imagedata = array("primary"=>$data);
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
-        $validate = \quizaccess_quizproctoring\api::validate($response, $data);        
+        $result = json_decode($response, true);
+        if (isset($result['error'])) {
+            // Print the error message
+            throw new moodle_exception($result['error'], 'quizaccess_quizproctoring', '', '');
+            die();
+        } else {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data);
+        }
     }    
 }
 

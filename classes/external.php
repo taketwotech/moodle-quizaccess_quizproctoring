@@ -79,38 +79,20 @@ class quizaccess_quizproctoring_external extends external_api {
                	if ($recordurl = $DB->get_record('quizaccess_proctor_data', array('userid' => $USER->id, 'quizid' => $quizid, 'image_status' => 'M', 'attemptid' => $attemptid))) {
 	               	$tempUser = new stdClass();
 			        $tempUser->proctor_id  = $recordurl->id;
-			        $tempUser->quiz_videos = $videoURL;	         
+			        $tempUser->quiz_videos = $videoURL;
 	                $id = $DB->insert_record('quizaccess_proctor_video', $tempUser);
                     $page = 0;
                     if($text == 'Finish attempt ...'){
                         // Submit quiz.
                         $attemptobj = \quiz_attempt::create($attemptid);
-                        $attemptobj->process_finish(time(), false);                
+                        $attemptobj->process_finish(time(), false);
                         $result['url'] = $attemptobj->review_url()->out();
-                    } else if($text == 'Next page'){
-                        $updatedurl = explode('&page=', $currenturl);
-                        if($updatedurl[1]){
-                            $page = $updatedurl[1] + 1;  
-                        } else {
-                            $page = 1;
-                        }                       
-                        $newurl = $updatedurl[0]."&page=".$page;
-                        $result['url'] = $newurl; 
-                    } else if($text == 'Previous page'){
-                        $updatedurl = explode('&page=', $currenturl);
-                        if($updatedurl[1]){
-                            $page = $updatedurl[1] - 1;  
-                        } else {
-                            $page = 1;
-                        }                       
-                        $newurl = $updatedurl[0]."&page=".$page;
-                        $result['url'] = $newurl; 
                     }
 	            	$result['success'] = true;
 	        	}
 	        }
         } catch (dml_exception $e) {
-            $result['message'] = get_multilang_string($e->errorcode, $e->module);
+            $result['message'] = get_string($e->errorcode, $e->module);
         }
          return $result;
     }
@@ -191,11 +173,8 @@ class quizaccess_quizproctoring_external extends external_api {
             AND status IN (:param1,:param2,:param3,:param4,:param5)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
-            if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
-                // Submit quiz.
-                $attemptobj = \quiz_attempt::create($attemptid);
-                $attemptobj->process_finish(time(), false);                
-                $results['url'] = $attemptobj->review_url()->out();
+            if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {                
+                $results['finish'] = true;
             } else {
                 $left = $quizaccessquizproctoring->warning_threshold - count($errorrecords);
                 if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
@@ -227,9 +206,9 @@ class quizaccess_quizproctoring_external extends external_api {
         return  new external_single_structure(
            array(
                 'warning' => new external_value(PARAM_RAW, 'warning', VALUE_OPTIONAL),
-                'url'     => new external_value(PARAM_RAW, 'url', VALUE_OPTIONAL),
+                'finish'  => new external_value(PARAM_BOOL, 'finish', VALUE_OPTIONAL),
 
             )
         );
-    }
+    } 
 }
