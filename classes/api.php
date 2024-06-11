@@ -123,7 +123,7 @@ class api {
      * @param Longtext $target data
      * @return string
      */
-    public static function validate($response, $source, $target = '') {
+    public static function validate($response, $target = '') {
         global $CFG;
         self::init();
         $result = json_decode($response, true);

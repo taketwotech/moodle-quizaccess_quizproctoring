@@ -66,7 +66,7 @@ if($service === 'AWS') {
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
-        $imagedata = array("primary"=>$data,"target"=>$tdata);
+        $imagedata = array("primary"=>$tdata,"target"=>$data);
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         $result = json_decode($response, true);
         if (isset($result['error'])) {
