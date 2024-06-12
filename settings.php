@@ -60,12 +60,6 @@ if ($hassiteconfig && !empty($USER->id)) {
         '',
         PARAM_TEXT));
 
-    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/end_point',
-        get_string('endpoint', 'quizaccess_quizproctoring'),
-        get_string('endpoint_help', 'quizaccess_quizproctoring'),
-        '',
-        PARAM_TEXT));
-
     $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/accesstoken',
         get_string('accesstoken', 'quizaccess_quizproctoring'),
         get_string('accesstoken_help', 'quizaccess_quizproctoring'),

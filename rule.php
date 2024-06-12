@@ -79,10 +79,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 }
             }
         } else {
-            $resturl = get_config('quizaccess_quizproctoring', 'end_point');
+            $serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
             $access_token = get_config('quizaccess_quizproctoring', 'accesstoken');
             $access_token_secret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
-            if (empty($external_server) || empty($resturl) || empty($access_token) || empty($access_token_secret)) {
+            if (empty($external_server) || empty($serviceurl) || empty($access_token) || empty($access_token_secret)) {
                 if ($isadmin) {
                     return get_string('warningopensourse', 'quizaccess_quizproctoring', $url);
                 } else {

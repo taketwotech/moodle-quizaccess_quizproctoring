@@ -47,7 +47,7 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  */
 class api {
 
-    private static $resturl = null;
+    private static $serviceurl = null;
 
     private static $access_token = null;
 
@@ -60,7 +60,7 @@ class api {
      */
     public static function init() {
         global $CFG;
-        self::$resturl = get_config('quizaccess_quizproctoring', 'end_point');
+        self::$serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
         self::$access_token = get_config('quizaccess_quizproctoring', 'accesstoken');
         self::$access_token_secret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
     }
@@ -71,7 +71,7 @@ class api {
      * @return string
      */
     public static function get_rest_url() {
-        return self::$resturl;
+        return self::$serviceurl;
     }
 
     /**
@@ -102,7 +102,8 @@ class api {
     public static function proctor_image_api($imagedata) {
         self::init();
         $curl = new \curl();
-        $url = self::$resturl; 
+        $url = self::$serviceurl;
+        $url = $url.'validate';
         $access_token = self::$access_token; 
         $access_token_secret = self::$access_token_secret; 
         
