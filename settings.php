@@ -95,8 +95,4 @@ if ($hassiteconfig && !empty($USER->id)) {
     $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
         get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
         get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 0));
-
-    $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_recording',
-        get_string('proctoring_recording', 'quizaccess_quizproctoring'),
-        get_string('proctoring_recording_help', 'quizaccess_quizproctoring'), 0));
 }

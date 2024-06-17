@@ -199,7 +199,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
 
     };
 
-    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, externalserver, videofilePath = null, $proctoringimageshow) {
+    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, externalserver, $proctoringimageshow) {
         var docElement = $(document);
         docElement.ready(function() {
             if($proctoringimageshow == 1) {
