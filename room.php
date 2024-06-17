@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Teacher Proctoring access file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring

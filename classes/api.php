@@ -57,10 +57,10 @@ class api {
     private static $accesstokensecret = null;
 
     /**
-    * Initialize Facematch Endpoint
-    *
-    * @return null
-    */
+     * Initialize Facematch Endpoint
+     *
+     * @return null
+     */
     public static function init() {
         global $CFG;
         self::$serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
@@ -69,10 +69,10 @@ class api {
     }
 
     /**
-    * Get the rest url to connect to
-    *
-    * @return string
-    */
+     * Get the rest url to connect to
+     *
+     * @return string
+     */
     public static function get_rest_url() {
         return self::$serviceurl;
     }
@@ -155,7 +155,7 @@ class api {
     /**
      * Compare faces
      *
-     * @param $response data
+     * @param Longtext $response data
      * @return string
      */
     public static function compare_faces($response) {
