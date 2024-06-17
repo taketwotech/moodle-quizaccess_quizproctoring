@@ -52,7 +52,7 @@ if (!$mainimage) {
 }
 $service = get_config('quizaccess_quizproctoring', 'serviceoption');
 
-if($service === 'AWS') { 
+if ($service === 'AWS') {
     // Validate image.
     \quizaccess_quizproctoring\aws\camera::init();
     if ($target !== '') {
@@ -94,7 +94,7 @@ if($service === 'AWS') {
 switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, 
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
                 $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');

@@ -31,7 +31,7 @@ $cmid = required_param('cmid', PARAM_INT);
 
 $context = context_module::instance($cmid);
 if (!has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
-	redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
+    redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
 }
 
 $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
@@ -43,6 +43,7 @@ $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
 // Include js module.
 echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/socket.io.js', true);
 echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
-$PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$cmid, false, true, null, true, $room, $externalserver, $serviceoption]);
+$PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
+	'init', [$cmid, false, true, null, true, $room, $externalserver, $serviceoption]);
 
 echo $OUTPUT->footer();

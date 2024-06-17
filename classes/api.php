@@ -47,17 +47,20 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  */
 class api {
 
+    /** @var API serviceurl */
     private static $serviceurl = null;
 
+    /** @var API accesstoken */
     private static $accesstoken = null;
 
+    /** @var API accesstokensecret */
     private static $accesstokensecret = null;
 
-	/**
-     * Initialize Facematch Endpoint
-     *
-     * @return null
-     */
+    /**
+    * Initialize Facematch Endpoint
+    *
+    * @return null
+    */
     public static function init() {
         global $CFG;
         self::$serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
@@ -66,10 +69,10 @@ class api {
     }
 
     /**
-     * Get the rest url to connect to
-     *
-     * @return string
-     */
+    * Get the rest url to connect to
+    *
+    * @return string
+    */
     public static function get_rest_url() {
         return self::$serviceurl;
     }
@@ -104,21 +107,21 @@ class api {
         $curl = new \curl();
         $url = self::$serviceurl;
         $url = $url.'validate';
-        $accesstoken = self::$accesstoken; 
-        $accesstokensecret = self::$accesstokensecret; 
-        
-        $header = array('Content-Type: application/json', 
+        $accesstoken = self::$accesstoken;
+        $accesstokensecret = self::$accesstokensecret;
+        $header = array('Content-Type: application/json',
                         'secret-key: ' . $accesstoken,
                         'secret-code: ' . $accesstokensecret
                     );
         $curl->setHeader($header);
         $result = $curl->post($url, $imagedata);
-		return $result;
+        return $result;
     }
 
     /**
      * Validate the image captured
      *
+     * @param Longtext $response data
      * @param Longtext $source data
      * @param Longtext $target data
      * @return string
@@ -153,13 +156,12 @@ class api {
      * Compare faces
      *
      * @param $response data
-     * @param Longtext $source data
-     * @param Longtext $target data
      * @return string
      */
     public static function compare_faces($response) {
         $result = json_decode($response, true);
-        if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"]) && isset($result["FaceMatches"][0]["Similarity"])) {
+        if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"])
+            && isset($result["FaceMatches"][0]["Similarity"])) {
             return $result["FaceMatches"][0]["Similarity"];
         }
         return false;
@@ -192,7 +194,7 @@ class api {
               CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json'
               ),
-        ));        
+        ));
         $result = curl_exec($curl);
         return $result;
     }

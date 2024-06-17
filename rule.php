@@ -110,7 +110,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $context = context_module::instance($id);
         if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $getquiz->instance, 'enableteacherproctor' => 1))) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
-                $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?', array('cmid' => $id, 'room' => $getquiz->instance, 'teacher' => 'teacher')), get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
+                $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?',
+                    array('cmid' => $id, 'room' => $getquiz->instance, 'teacher' => 'teacher')),
+                get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
             }
         }
         return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
@@ -156,7 +158,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
-        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid, false, $this->quiz->id, $externalserver, $serviceoption]);
+        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
+            'init', [$this->quiz->cmid, true, false, $attemptid, false,
+                $this->quiz->id, $externalserver, $serviceoption]);
 
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('reqproctormsg', 'quizaccess_quizproctoring'));
@@ -388,7 +392,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function get_settings_sql($quizid) {
         return array(
-            'enableproctoring,time_interval,warning_threshold,proctoringvideo_link',
+            'enableproctoring,enableteacherproctor,time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             array());
     }

@@ -116,8 +116,6 @@ function($, str, ModalFactory) {
     var peer_id = null;
     var peer_media_elements = {};
     var connectedPeers = {};
-    var recordRTC;
-    
     var USE_AUDIO = true;
     var USE_VIDEO = true;
     var MUTE_AUDIO_BY_DEFAULT = true;
@@ -140,7 +138,7 @@ function($, str, ModalFactory) {
         });
     };
 
-    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, 
+    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, externalserver, serviceoption, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
@@ -160,9 +158,8 @@ function($, str, ModalFactory) {
             signaling_socket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
-            var sessionState = storedSession ? JSON.parse(storedSession) : null;
-            
-           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, 
+            var sessionState = storedSession ? JSON.parse(storedSession) : null;            
+           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid,
             teacher, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var room = getRoomFromQuery(quizid);
@@ -208,8 +205,7 @@ function($, str, ModalFactory) {
 
             // Add peer to the connectedPeers object
             connectedPeers[peer_id] = {
-                stream: new MediaStream(),
-                recordRTC: null
+                stream: new MediaStream()
             };
 
             peer_connection.onicecandidate = function(event) {
@@ -470,10 +466,6 @@ function($, str, ModalFactory) {
             if (callback) callback();
             return; 
         }
-        /* Ask user for permission to use mic &/or cam, 
-         * attach it to an <audio> or <video> tag if they give us access. */
-        console.log("Requesting access to local audio/video i/p");
-
 
         navigator.getUserMedia = ( 
                navigator.getUserMedia ||
@@ -482,13 +474,11 @@ function($, str, ModalFactory) {
                navigator.msGetUserMedia);
 
         attachMediaStream = function(element, stream) {
-            console.log('DEPRECATED, attachMediaStream will soon be removed.');
             element.srcObject = stream;
          };
 
         navigator.mediaDevices.getUserMedia({"audio":USE_AUDIO, "video":USE_VIDEO})
-        .then(function(stream) {                /* user accepted access to a/v */
-        console.log("Access granted to audio/video");
+        .then(function(stream) {
         local_media_stream = stream;
         var camera;
         var warning = 0;
@@ -513,19 +503,16 @@ function($, str, ModalFactory) {
 
 
     function getRoomFromQuery(room) {
-        console.log('Room from URL:', room);
         return room || DEFAULT_CHANNEL;
     }
 
     function getTeacherroom() {
         var urlParams = new URLSearchParams(window.location.search);
         var teacher = urlParams.get('teacher');
-        console.log('teacher from URL:', teacher);
         return teacher;
     }
 
     function join_chat_channel(room, userdata) {
-        console.log('Join room');
         signaling_socket.emit('join', {"room": room, "userdata": userdata});
     }
 });
