@@ -109,8 +109,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $getquiz = $DB->get_record_sql($sql);
         $button = '';
         $context = context_module::instance($id);
-        if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
-            $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?', array('cmid'=>$id, 'room'=>$getquiz->instance, 'teacher'=>'teacher')), get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
+        if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $getquiz->instance, 'enableteacherproctor' => 1))) {
+            if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
+                $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?', array('cmid'=>$id, 'room'=>$getquiz->instance, 'teacher'=>'teacher')), get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
+            }
         }
         return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
     }
@@ -153,11 +155,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-        $proctoringrecording = get_config('quizaccess_quizproctoring', 'proctoring_recording');
-        $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id)); 
-        $securewindow = $DB->get_record('quiz', array('id' => $this->quiz->id));
+        $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
-        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid, false, $this->quiz->id, $externalserver, $serviceoption, $proctoringrecording, $securewindow->browsersecurity]);
+        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid, false, $this->quiz->id, $externalserver, $serviceoption]);
 
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('requireproctoringmessage', 'quizaccess_quizproctoring'));
@@ -298,6 +298,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addHelpButton('enableproctoring', 'enableproctoring', 'quizaccess_quizproctoring');
         $mform->setDefault('enableproctoring', 0);
 
+        // Allow admin or teacher to setup proctored quiz.
+        $mform->addElement('selectyesno', 'enableteacherproctor', get_string('enableteacherproctor', 'quizaccess_quizproctoring'));
+        $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
+        $mform->setDefault('enableteacherproctor', 0);
+        $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
+
         // Time interval set for proctoring image.
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
                 array("5" => get_string('fiveseconds', 'quizaccess_quizproctoring'),
@@ -346,6 +352,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
+            $record->enableteacherproctor = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -356,6 +363,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
+            $record->enableteacherproctor = 1;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -417,17 +425,16 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $userid = $attemptobj->get_userid();
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
-            $proctoringrecording = get_config('quizaccess_quizproctoring', 'proctoring_recording');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
                 $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
                 $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id,
                     'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
-                if ($quizinfo && ($proctoringimageshow == 1 || $proctoringrecording == 1)) {
+                if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
                         $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
                         $videofilePath = '/uploads';
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
-                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $videofilePath, $proctoringimageshow, $proctoringrecording]);
+                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $videofilePath, $proctoringimageshow]);
                         $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
                             'proctoringidentity','proctoringvideo'), 'quizaccess_quizproctoring');
                     }

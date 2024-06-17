@@ -199,7 +199,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
 
     };
 
-    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, externalserver, videofilePath = null, $proctoringimageshow, $proctoringrecording) {
+    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, externalserver, videofilePath = null, $proctoringimageshow) {
         var docElement = $(document);
         docElement.ready(function() {
             if($proctoringimageshow == 1) {
@@ -223,18 +223,6 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                 btnidentity.setAttribute("data-quizid", quizid);
                 btnidentity.setAttribute("data-userid", userid);
                 document.getElementById("page-content").prepend(btnidentity);
-            }
-            if($proctoringrecording == 1) {
-                let btnsavevideo = document.createElement("button");
-                btnsavevideo.innerHTML = M.util.get_string('proctoringvideo', 'quizaccess_quizproctoring');
-                btnsavevideo.setAttribute("type", "button");
-                btnsavevideo.setAttribute("value", "proctoringvideo");
-                btnsavevideo.setAttribute("class", "proctoringvideo btn btn-primary");            
-                btnsavevideo.setAttribute("id", "proctoringvideo");
-                btnsavevideo.setAttribute("data-attemptid", attemptid);
-                btnsavevideo.setAttribute("data-quizid", quizid);
-                btnsavevideo.setAttribute("data-userid", userid);
-                document.getElementById("page-content").prepend(btnsavevideo);
             }
         });
         docElement.on('click', 'button.proctoringimage', function(e) {
@@ -312,69 +300,6 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                     return true;
                 }
             });
-        });
-        docElement.on('click', 'button.proctoringvideo', function(e) {
-            e.preventDefault();
-            $(".proctoringvideo").prop("disabled", true);
-            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
-            $('#loading').show();
-            var path =  location.protocol + '//' + location.host + "/mod/quiz/accessrule/quizproctoring/uploads/";
-            $.ajax({
-                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/video_report.php',
-                data: {                    
-                    attemptid: $(this).data('attemptid'),
-                    userid: $(this).data('userid'),
-                    quizid: $(this).data('quizid'),
-                    externalurl: path
-                },
-                dataType: 'json',
-                success: function(response) {
-                    var image_x = document.getElementById('loading');
-                    image_x.parentNode.removeChild(image_x);
-                    if (response.success) {                        
-                        var videopath =  location.protocol + '//' + location.host + "/mod/quiz/accessrule/quizproctoring/uploads/" + response.videoname;
-                        console.log(videopath);
-                        var modalHtml ='<div id="myModal" class="modalvideo"><span class="close">&times;</span><div id="videoscrollbox" class="modalvideo-content"></div></div>';
-                        $("body").append(modalHtml);
-                        var modal = document.getElementById("myModal");
-                        var videoscrollbox = document.getElementById("videoscrollbox");
-                        // Create an element <video>
-                        var v = document.createElement ("video");
-                        // Set the attributes of the video
-                        v.src = videopath;
-                        v.controls = true;
-                        v.muted = false;
-                        // Add the video to <div>
-                        videoscrollbox.appendChild (v);
-                        modal.style.display = "block";
-                    } else {
-                        return ModalFactory.create({
-                            type: ModalFactory.types.DEFAULT,
-                            body: response.message,
-                        }).then(function(modal) {
-                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                            modal.show();
-                            return null;
-                        });
-                    }
-                }
-            });                
-        });
-
-        $(document).on('click', '.close', function (e) {        
-            e.preventDefault();
-            document.getElementById('proctoringvideo').removeAttribute('disabled');
-            var modal = document.getElementById("myModal");
-            modal.style.display = "none";
-            modal.remove();
-        });
-        $(document).keydown(function(e) {
-            // ESCAPE key pressed
-            if (e.keyCode == 27) {
-                document.getElementById('proctoringvideo').removeAttribute('disabled');
-                var modal = document.getElementById("myModal");
-                modal.remove();
-            }
         });
     };
 

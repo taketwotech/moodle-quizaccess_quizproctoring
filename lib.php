@@ -90,14 +90,12 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-    $proctoringrecording = get_config('quizaccess_quizproctoring', 'proctoring_recording');
-    $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid)); 
-    $securewindow = $DB->get_record('quiz', array('id' => $quizid)); 
+    $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io.js',true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js',true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js',true);
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
-        [$cmid, false, true, $attemptid, false, $quizid, $externalserver, $serviceoption, $proctoringrecording, $securewindow->browsersecurity, $interval->time_interval]);
+        [$cmid, false, true, $attemptid, false, $quizid, $externalserver, $serviceoption, $interval->time_interval]);
 }
 
 /**
@@ -182,7 +180,10 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {                
-                throw new moodle_exception(get_string('warning_threshold', 'quizaccess_quizproctoring'));
+                // Submit quiz.
+                $attemptobj = quiz_attempt::create($attemptid);
+                $attemptobj->process_finish(time(), false);
+                echo json_encode(array('status' => 'true', 'redirect' => 'true', 'url' => $attemptobj->review_url()->out()));
                 die();
             } else {
                 if ($status) {

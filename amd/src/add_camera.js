@@ -27,7 +27,6 @@ function($, str, ModalFactory, ajax) {
                   this.video.srcObject = stream;
                   this.video.muted = true;                  
                   local_media_stream = stream;
-                  startRecording();                   
                   this.video.play();
                   return true;
                 }
@@ -104,11 +103,7 @@ function($, str, ModalFactory, ajax) {
             success: function(response) {
                 if (response && response.errorcode) {
                     console.log(response.errorcode);
-                    if(response.errorcode.length > 35){
-                        stopRecording(quizid, attemptid, cmid, 'Finish attempt ...');
-                    } else{
-                        $(document).trigger('popup', response.error);
-                    }
+                    $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
                         window.onbeforeunload = null;
@@ -153,7 +148,7 @@ function($, str, ModalFactory, ajax) {
         });
     };
 
-    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, teacher, quizid, externalserver, serviceoption, proctoringrecording, browsersecurity= null, setinterval = 300) {        
+    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, teacher, quizid, externalserver, serviceoption, setinterval = 300) {        
         if(!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);
@@ -168,31 +163,6 @@ function($, str, ModalFactory, ajax) {
                 camera.retake();
             });            
         } else {
-            if(browsersecurity === 'securewindow'){
-                document.onkeydown = function (e) {
-                    return false;
-                }
-
-                /** TO DISABLE SCREEN CAPTURE **/
-                document.addEventListener('keyup', (e) => {
-                    if (e.key == 'PrintScreen') {
-                        e.preventDefault();
-                        navigator.clipboard.writeText('');
-                    }
-                    if (e.keyCode === 18) {
-                       e.preventDefault();
-                    }
-                });
-
-                /** TO DISABLE PRINTS WHIT CTRL+P **/
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.key == 'p') {                        
-                        e.cancelBubble = true;
-                        e.preventDefault();
-                        e.stopImmediatePropagation();
-                    }
-                });
-            }
             signaling_socket = io(externalserver);
 
         signaling_socket.on('connect', function () {
@@ -202,7 +172,7 @@ function($, str, ModalFactory, ajax) {
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             
-           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, browsersecurity, setinterval, serviceoption, proctoringrecording, quizid, function () {
+           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, function () {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var room = getRoomFromQuery(quizid);
                 var teacherroom = getTeacherroom();
@@ -321,7 +291,7 @@ function($, str, ModalFactory, ajax) {
             }
         });
 
-         /** 
+                 /** 
                  * Peers exchange session descriptions which contains information
                  * about their audio / video settings and that sort of stuff. First
                  * the 'offerer' sends a description to the 'answerer' (with type
@@ -366,7 +336,7 @@ function($, str, ModalFactory, ajax) {
 
                 });
 
- /**
+                /**
                  * The offerer will send a number of ICE Candidate blobs to the answerer so they 
                  * can begin trying to find the best path to one another on the net.
                  */
@@ -375,7 +345,7 @@ function($, str, ModalFactory, ajax) {
                     var ice_candidate = config.ice_candidate;
                     peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
                 });
-     /**
+                /**
                  * When a user leaves a channel (or is disconnected from the
                  * signaling server) everyone will recieve a 'removePeer' message
                  * telling them to trash the media channels they have open for those
@@ -511,39 +481,7 @@ function($, str, ModalFactory, ajax) {
                     }
                 );
             }
-        }
-       
-        
-        $('#mod_quiz-next-nav').click(function(event) {
-            $('#responseform').append('<input type="hidden" name="next" value="Next page">');
-            event.preventDefault();
-            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
-            $('#loading').show();
-            $("#mod_quiz-prev-nav").prop("disabled", true);
-            $("#mod_quiz-next-nav").prop("disabled", true);
-            stopRecording(quizid, attemptid, cmid);
-        });
-
-        $('#mod_quiz-prev-nav').click(function(event) {
-            $('#responseform').append('<input type="hidden" name="previous" value="Previous page">');
-            event.preventDefault();
-            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
-            $('#loading').show();
-            $("#mod_quiz-prev-nav").prop("disabled", true);
-            $("#mod_quiz-next-nav").prop("disabled", true);
-            stopRecording(quizid, attemptid, cmid);
-        });
-
-        $('#endtestlink').click(function(event) {
-            var text = document.getElementById("endtestlink").innerHTML;
-            console.log(text);
-            event.preventDefault();
-            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
-            $('#loading').show();             
-            $("#endtestlink").prop("disabled", true);
-            stopRecording(quizid, attemptid, cmid, text);
-        });
-
+        } 
     }
 
     };
@@ -551,140 +489,8 @@ function($, str, ModalFactory, ajax) {
         init: init
     };
 
-       function startRecording() {
-            // Create a RecordRTC object for the local user
-            recordRTC = RecordRTC(local_media_stream, {
-                type: 'video' // or 'audio' for audio recording
-            });
 
-            recordRTC.startRecording();
-            recording = true;
-        }
-
-        function stopRecording(quizid, attemptid, cmid, text='') {
-         require(['core/ajax'], function(ajax) {
-            // Stop recording for the local user
-            if (recordRTC) {
-                recordRTC.stopRecording(function (videoURL) {
-                    // videoURL contains the recorded video data
-                    console.log(videoURL);
-
-                    // Display the recorded video on the page
-                    var recordedVideo = $("<video controls>").attr("src", videoURL);
-                    uploadToServer(recordRTC, quizid, attemptid, cmid, function(progress, fileURL) {
-                        if(progress === 'ended') {
-                            console.log('save successfully');
-                            console.log(quizid);
-                            videopath = fileURL;
-                            const requestvideo = {
-                                methodname: 'quizaccess_quizproctoring_save_video_recording',
-                                args: {
-                                    videoURL: fileURL,
-                                    quizid: quizid,
-                                    attemptid: attemptid,
-                                    text: text,
-                                    currenturl:window.location.href,
-                                },
-                            };                       
-                            ajax.call([requestvideo])[0].done(function(result) {
-                                if(result.success === true) {
-                                    console.log(result);
-                                    $('#loading').hide();
-                                    if(result.url){
-                                        window.location.href = result.url;
-                                    } else {
-                                        $('#responseform').submit();                                        
-                                    }
-                                }
-                            });                        
-                        }
-                    });                    
-               });
-            }
-        });
-
-
-        function uploadToServer(recordRTC, quizid, attemptid, cmid, callback) {
-            var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.blob;
-            var fileType = blob.type.split('/')[0] || 'audio';
-            var fileName = (Math.random() * 1000).toString().replace('.', '');
-
-            if (fileType === 'audio') {
-                fileName += '.' + (!!navigator.mozGetUserMedia ? 'ogg' : 'wav');
-            } else {
-                fileName += '.webm';
-            }
-
-            // create FormData
-            var formData = new FormData();
-            formData.append(fileType + '-filename', fileName);
-            formData.append(fileType + '-blob', blob);
-            formData.append('cmid', cmid);
-            formData.append('quizid', quizid);
-            formData.append('attemptid', attemptid);
-
-            callback('Uploading ' + fileType + ' recording to server.');
-
-            // var upload_url = 'https://your-domain.com/files-uploader/';
-            var upload_url = '/mod/quiz/accessrule/quizproctoring/save.php';
-
-            // var upload_directory = upload_url;
-            var upload_directory = 'uploads/';
-
-            makeXMLHttpRequest(upload_url, formData, function(progress) {
-                if (progress !== 'upload-ended') {
-                    callback(progress);
-                    return;
-                }
-
-                callback('ended', fileName);
-
-            });
-        }
-
-        function makeXMLHttpRequest(url, data, callback) {
-            var request = new XMLHttpRequest();
-            request.onreadystatechange = function() {
-                if (request.readyState == 4 && request.status == 200) {
-                    callback('upload-ended');
-                }
-            };
-
-            request.upload.onloadstart = function() {
-                callback('Upload started...');
-            };
-
-            request.upload.onprogress = function(event) {
-                callback('Upload Progress ' + Math.round(event.loaded / event.total * 100) + "%");
-            };
-
-            request.upload.onload = function() {
-                callback('progress-about-to-end');
-            };
-
-            request.upload.onload = function() {
-                callback('progress-ended');
-            };
-
-            request.upload.onerror = function(error) {
-                callback('Failed to upload to server');
-                console.error('XMLHttpRequest failed', error);
-            };
-
-            request.upload.onabort = function(error) {
-                callback('Upload aborted.');
-                console.error('XMLHttpRequest aborted', error);
-            };
-
-            request.open('POST', url);
-            request.send(data);
-        }
-
-       recording = false;
-    }
-
-
-     function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, browsersecurity, setinterval, serviceoption, proctoringrecording, quizid, callback, errorback) {
+     function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, callback, errorback) {
         require(['core/ajax'], function(ajax) {
         if (local_media_stream != null) {  /* i.e, if we've already been initialized */
             if (callback) callback();
@@ -712,7 +518,6 @@ function($, str, ModalFactory, ajax) {
         local_media_stream = stream;
         var camera;
         var warning = 0;
-        console.log(browsersecurity);
         if (verifyduringattempt) {
             var teacherroom = getTeacherroom();
             if (teacherroom !== 'teacher') {
@@ -723,29 +528,6 @@ function($, str, ModalFactory, ajax) {
                     'width': '280',
                     'height': '240',
                     'autoplay': 'autoplay'}).appendTo('body');                
-                if(!teacher && (browsersecurity === 'securewindow')) {
-                        window.addEventListener('blur', function(){
-                           warning = warning +1;
-                           const request = {
-                            methodname: 'quizaccess_quizproctoring_save_threshold_warning',
-                            args: {
-                                quizid: quizid,
-                                attemptid: attemptid,
-                                serviceoption: serviceoption
-                            },
-                        };                       
-                        ajax.call([request])[0].done(function(result) {
-                            if(result.finish) {             
-                                stopRecording(quizid, attemptid, cmid, 'Finish attempt ...');
-                            } else {
-                                $(document).trigger('popup', result.warning);
-                            }
-                        });
-                           
-                        }, false);
-                        
-                    
-                }
                 camera = new Camera(cmid, mainimage, attemptid, quizid);
                 setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
             }

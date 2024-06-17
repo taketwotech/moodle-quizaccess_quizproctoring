@@ -99,3 +99,5 @@ $string['accesstokensecret'] = 'Extenal Server Secret Token';
 $string['accesstokensecret_help'] = 'Access secret generated from Extenal Server System Integration';
 $string['proctoring_recording'] = 'Proctoring Recording';
 $string['proctoring_recording_help'] = 'If set, Proctoring Recording Show in review attempt.';
+$string['enableteacherproctor'] = 'Enable proctoring for Teacher with this quiz';
+$string['enableteacherproctor_help'] = 'If you enable it, Teacher should be able to see group of users attempting proctored quiz';
