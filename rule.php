@@ -65,13 +65,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $USER;
         $isadmin = is_siteadmin($USER);
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-        $external_server = get_config('quizaccess_quizproctoring', 'external_server');
+        $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
         $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
         $url = $url->out();
-        if($serviceoption == 'AWS') {
+        if ($serviceoption == 'AWS') {
             $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
-            $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');            
-            if (empty($awskey) || empty($awssecret)  || empty($external_server)) {
+            $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');
+            if (empty($awskey) || empty($awssecret)  || empty($externalserver)) {
                 if ($isadmin) {
                     return get_string('warningaws', 'quizaccess_quizproctoring', $url);
                 } else {
@@ -79,10 +79,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 }
             }
         } else {
-            $serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
-            $access_token = get_config('quizaccess_quizproctoring', 'accesstoken');
-            $access_token_secret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
-            if (empty($external_server) || empty($serviceurl) || empty($access_token) || empty($access_token_secret)) {
+            $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
+            $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+            if (empty($externalserver) || empty($accesstoken) || empty($accesstokensecret)) {
                 if ($isadmin) {
                     return get_string('warningopensourse', 'quizaccess_quizproctoring', $url);
                 } else {
@@ -111,7 +110,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $context = context_module::instance($id);
         if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $getquiz->instance, 'enableteacherproctor' => 1))) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
-                $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?', array('cmid'=>$id, 'room'=>$getquiz->instance, 'teacher'=>'teacher')), get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
+                $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?', array('cmid' => $id, 'room' => $getquiz->instance, 'teacher' => 'teacher')), get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
             }
         }
         return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
@@ -137,7 +136,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             }
         } else {
             return true;
-        }        
+        }
     }
 
     /**
@@ -160,7 +159,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init', [$this->quiz->cmid, true, false, $attemptid, false, $this->quiz->id, $externalserver, $serviceoption]);
 
         $mform->addElement('static', 'proctoringmessage', '',
-                get_string('requireproctoringmessage', 'quizaccess_quizproctoring'));
+                get_string('reqproctormsg', 'quizaccess_quizproctoring'));
 
         $filemanageroptions = array();
         $filemanageroptions['accepted_types'] = '*';
@@ -435,7 +434,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $proctoringimageshow]);
                         $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
-                            'proctoringidentity','proctoringvideo'), 'quizaccess_quizproctoring');
+                            'proctoringidentity', 'proctoringvideo'), 'quizaccess_quizproctoring');
                     }
                 }
             }

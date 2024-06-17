@@ -70,19 +70,19 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('accesstokensecret_help', 'quizaccess_quizproctoring'),
         PARAM_TEXT));
 
-    $settings->hide_if('quizaccess_quizproctoring/end_point','quizaccess_quizproctoring/serviceoption',
+    $settings->hide_if('quizaccess_quizproctoring/end_point', 'quizaccess_quizproctoring/serviceoption',
                 'eq', 'AWS');
 
-    $settings->hide_if('quizaccess_quizproctoring/accesstoken','quizaccess_quizproctoring/serviceoption',
+    $settings->hide_if('quizaccess_quizproctoring/accesstoken', 'quizaccess_quizproctoring/serviceoption',
                 'eq', 'AWS');
 
-    $settings->hide_if('quizaccess_quizproctoring/accesstokensecret','quizaccess_quizproctoring/serviceoption',
+    $settings->hide_if('quizaccess_quizproctoring/accesstokensecret', 'quizaccess_quizproctoring/serviceoption',
                 'eq', 'AWS');
 
-    $settings->hide_if('quizaccess_quizproctoring/aws_key','quizaccess_quizproctoring/serviceoption',
+    $settings->hide_if('quizaccess_quizproctoring/aws_key', 'quizaccess_quizproctoring/serviceoption',
                 'neq', 'AWS');
 
-    $settings->hide_if('quizaccess_quizproctoring/aws_secret','quizaccess_quizproctoring/serviceoption',
+    $settings->hide_if('quizaccess_quizproctoring/aws_secret', 'quizaccess_quizproctoring/serviceoption',
                 'neq', 'AWS');
 
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/img_check_time',

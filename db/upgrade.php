@@ -194,7 +194,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Define field enableteacherproctor to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enableteacherproctor', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'proctoringvideo_link');
+        $field = new xmldb_field('enableteacherproctor', XMLDB_TYPE_INTEGER, '1',
+         null, XMLDB_NOTNULL, null, '0', 'proctoringvideo_link');
 
         // Conditionally launch add field enableteacherproctor.
         if (!$dbman->field_exists($table, $field)) {

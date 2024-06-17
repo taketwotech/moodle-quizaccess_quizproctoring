@@ -49,11 +49,11 @@ class api {
 
     private static $serviceurl = null;
 
-    private static $access_token = null;
+    private static $accesstoken = null;
 
-    private static $access_token_secret = null;
+    private static $accesstokensecret = null;
 
-	 /**
+	/**
      * Initialize Facematch Endpoint
      *
      * @return null
@@ -61,8 +61,8 @@ class api {
     public static function init() {
         global $CFG;
         self::$serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
-        self::$access_token = get_config('quizaccess_quizproctoring', 'accesstoken');
-        self::$access_token_secret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+        self::$accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
+        self::$accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
     }
 
     /**
@@ -80,7 +80,7 @@ class api {
      * @return string
      */
     public static function get_access_token() {
-        return self::$access_token;
+        return self::$accesstoken;
     }
 
     /**
@@ -89,7 +89,7 @@ class api {
      * @return string
      */
     public static function get_access_token_secret() {
-        return self::$access_token_secret;
+        return self::$accesstokensecret;
     }
 
 
@@ -104,16 +104,15 @@ class api {
         $curl = new \curl();
         $url = self::$serviceurl;
         $url = $url.'validate';
-        $access_token = self::$access_token; 
-        $access_token_secret = self::$access_token_secret; 
+        $accesstoken = self::$accesstoken; 
+        $accesstokensecret = self::$accesstokensecret; 
         
         $header = array('Content-Type: application/json', 
-                        'secret-key: ' . $access_token,
-                        'secret-code: ' . $access_token_secret
+                        'secret-key: ' . $accesstoken,
+                        'secret-code: ' . $accesstokensecret
                     );
         $curl->setHeader($header);
-
-		$result = $curl->post($url, $imagedata);
+        $result = $curl->post($url, $imagedata);
 		return $result;
     }
 
@@ -134,18 +133,14 @@ class api {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
             } else if ($count == 1) {
                 $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
-                if ($eyesopen  === false) {
+                if ($eyesopen === false) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
                 } else if ($target !== '') {
                     $compareresult = self::compare_faces($response);
                     if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
                         return QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED;
-                    } else {
-                        //return self::check_protective_equipment($response);
                     }
-                } /*else {echo $eyesopen;
-                    return self::check_protective_equipment($source);
-                }*/
+                }
             } else {
                 return null;
             }
@@ -167,7 +162,7 @@ class api {
         if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"]) && isset($result["FaceMatches"][0]["Similarity"])) {
             return $result["FaceMatches"][0]["Similarity"];
         }
-        return false;      
+        return false;
     }
 
     /**
@@ -193,7 +188,7 @@ class api {
               CURLOPT_SSL_VERIFYPEER => false,
               CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
               CURLOPT_CUSTOMREQUEST => 'POST',
-              CURLOPT_POSTFIELDS =>$postdata,
+              CURLOPT_POSTFIELDS => $postdata,
               CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json'
               ),
@@ -201,5 +196,4 @@ class api {
         $result = curl_exec($curl);
         return $result;
     }
-
 }

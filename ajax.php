@@ -52,7 +52,7 @@ if (!$mainimage) {
 }
 $service = get_config('quizaccess_quizproctoring', 'serviceoption');
 
-if($service === 'AWS') {
+if($service === 'AWS') { 
     // Validate image.
     \quizaccess_quizproctoring\aws\camera::init();
     if ($target !== '') {
@@ -66,11 +66,11 @@ if($service === 'AWS') {
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
-        $imagedata = array("primary"=>$tdata,"target"=>$data);
+        $imagedata = array("primary" => $tdata, "target" => $data);
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         $result = json_decode($response, true);
         if (isset($result['error'])) {
-            // Print the error message
+            // Print the error message.
             throw new moodle_exception($result['error'], 'quizaccess_quizproctoring', '', '');
             die();
         } else {
@@ -78,23 +78,24 @@ if($service === 'AWS') {
         }
     } else {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
-        $imagedata = array("primary"=>$data);
+        $imagedata = array("primary" => $data);
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         $result = json_decode($response, true);
         if (isset($result['error'])) {
-            // Print the error message
+            // Print the error message.
             throw new moodle_exception($result['error'], 'quizaccess_quizproctoring', '', '');
             die();
         } else {
             $validate = \quizaccess_quizproctoring\api::validate($response, $data);
         }
-    }    
+    }
 }
 
 switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, 
+                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
         }

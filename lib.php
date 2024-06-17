@@ -91,9 +91,9 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io.js',true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js',true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js',true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js', true);
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
         [$cmid, false, true, $attemptid, false, $quizid, $externalserver, $serviceoption, $interval->time_interval]);
 }
@@ -179,7 +179,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             AND status IN (:param1,:param2,:param3,:param4,:param5)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
-            if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {                
+            if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
                 // Submit quiz.
                 $attemptobj = quiz_attempt::create($attemptid);
                 $attemptobj->process_finish(time(), false);
@@ -202,7 +202,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                         }
                     }
                     $errorstring = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
-                }            
+                }
 
                 if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
                     throw new moodle_exception($status, 'quizaccess_quizproctoring', '', $errorstring);
