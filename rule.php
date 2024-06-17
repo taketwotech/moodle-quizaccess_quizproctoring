@@ -434,7 +434,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $proctoringimageshow]);
                         $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
-                            'proctoringidentity', 'proctoringvideo'), 'quizaccess_quizproctoring');
+                            'proctoringidentity'), 'quizaccess_quizproctoring');
                     }
                 }
             }

@@ -5,12 +5,12 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-window.addEventListener('beforeunload', function (event) {
+window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
-define(['jquery', 'core/str', 'core/modal_factory','core/ajax'],
-function($, str, ModalFactory, ajax) {
+define(['jquery', 'core/str', 'core/modal_factory', 'core/ajax'],
+function($, str, ModalFactory) {
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
         this.video = document.getElementById(this.videoid);
@@ -25,7 +25,7 @@ function($, str, ModalFactory, ajax) {
             .then(function(stream) {
                 if (this.video) {
                   this.video.srcObject = stream;
-                  this.video.muted = true;                  
+                  this.video.muted = true;
                   local_media_stream = stream;
                   this.video.play();
                   return true;
@@ -93,16 +93,12 @@ function($, str, ModalFactory, ajax) {
         var context = this.canvas.getContext('2d');
         context.drawImage(this.video, 0, 0, this.width, this.height);
         var data = this.canvas.toDataURL('image/png');
-        var quizid = this.quizid;
-        var cmid = this.cmid;
-        var attemptid = this.attemptid;
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
             data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
             success: function(response) {
                 if (response && response.errorcode) {
-                    console.log(response.errorcode);
                     $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
@@ -113,24 +109,20 @@ function($, str, ModalFactory, ajax) {
             }
         });
     };
-    
-    var signaling_socket = null;    /* our socket.io connection to our webserver */
-    var local_media_stream = null; /* our own mic / webcam */
-    var peers = {};                /* keep track of our peer connections, indexed by peer_id (aka socket.io id) */
-    var peer_media_elements = {};  /* keep track of our <video>/<audio> tags, indexed by peer_id */
-    var connectedPeers = {};
 
-    var recordingStatus = {};
-    var recording = false;
+    var signaling_socket = null;
+    var local_media_stream = null;
+    var peers = {};
+    var peer_id = null;
+    var peer_media_elements = {};
+    var connectedPeers = {};
     var recordRTC;
     
     var USE_AUDIO = true;
     var USE_VIDEO = true;
     var MUTE_AUDIO_BY_DEFAULT = true;
 
-    /** Use different stun server doing commercial stuff **/
-    /** Ref: https://gist.github.com/zziuni/3741933 **/
-    var ICE_SERVERS = [{urls:"stun:stun.l.google.com:19302"}];
+    var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
         $("input[name='userimg']").val('');
@@ -148,8 +140,9 @@ function($, str, ModalFactory, ajax) {
         });
     };
 
-    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, teacher, quizid, externalserver, serviceoption, setinterval = 300) {        
-        if(!verifyduringattempt) {
+    var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null, 
+        teacher, quizid, externalserver, serviceoption, setinterval = 300) {
+        if (!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);
             // Take picture on button click
@@ -161,34 +154,31 @@ function($, str, ModalFactory, ajax) {
             $('#' + camera.retakeid).on('click', function(e) {
                 e.preventDefault();
                 camera.retake();
-            });            
+            });
         } else {
             signaling_socket = io(externalserver);
-
-        signaling_socket.on('connect', function () {
-            console.log("Connected to signaling server..");
-
-             // Retrieve the session state from localStorage
+            signaling_socket.on('connect', function() {
+            // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             
-           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, function () {
+           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, 
+            teacher, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var room = getRoomFromQuery(quizid);
                 var teacherroom = getTeacherroom();
-                var typet = { "type": (teacherroom === 'teacher') ? 'teacher' : 'student' }; 
+                var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
 
-                join_chat_channel(room, { 'quizid': quizid, 'type': typet });         // LINE WHICH SOLVED
+                join_chat_channel(room, {'quizid': quizid, 'type': typet});
 
                 // Restore the session state if available
                 if (sessionState) {
                     restoreSessionState(sessionState);
                 }
-            });         
+            });
         });
 
         signaling_socket.on('disconnect', function() {
-            console.log("Disconnected from signaling server");
             /* Tear down all of our peer connections and remove all
              * media divs when we disconnect */
 
@@ -204,11 +194,9 @@ function($, str, ModalFactory, ajax) {
         });
 
         signaling_socket.on('addPeer', function(config) {
-            console.log('Signaling server said to add peer:', config);
             var peer_id = config.peer_id;
 
             if (peer_id in peers) {
-                console.log("Already connected to peer ", peer_id);
                 return;
             }
 
@@ -237,22 +225,20 @@ function($, str, ModalFactory, ajax) {
             };
 
             peer_connection.ontrack = function(event) {
-                console.log("ontrack", event);
 
                 // Update connectedPeers stream
-                connectedPeers[peer_id].stream.addTrack(event.track);                
+                connectedPeers[peer_id].stream.addTrack(event.track);
                 var remote_media;
 
                 if (peer_media_elements[peer_id]) {
                     remote_media = peer_media_elements[peer_id];
-                } 
-                else {
+                } else {
                     remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
                     remote_media.attr("autoplay", "autoplay");
-                    remote_media.attr("muted", "true");  /* always mute ourselves by default */
+                    remote_media.attr("muted", "true");
                     remote_media.attr("controls", "");
                     remote_media.attr("class", "quizaccess_quizproctoring");
-                    
+
                     if (MUTE_AUDIO_BY_DEFAULT) {
                         remote_media.attr("muted", "true");
                     }
@@ -264,28 +250,25 @@ function($, str, ModalFactory, ajax) {
                         attachMediaStream(remote_media[0], connectedPeers[peer_id].stream);
                     }
                 }
-                
             };
 
             // Add our local stream
             peer_connection.addStream(local_media_stream);
 
             if (config.should_create_offer) {
-                console.log("Creating RTC offer to ", peer_id);
                 peer_connection.createOffer(
                     function(local_description) {
-                        console.log("Local offer description is: ", local_description);
                         peer_connection.setLocalDescription(local_description,
                             function() {
                                 signaling_socket.emit('relaySessionDescription',
                                     {'peer_id': peer_id, 'session_description': local_description});
-                                console.log("Offer setLocalDescription succeeded");
                             },
-                            function() { Alert("Offer setLocalDescription failed!"); }
+                            function() { 
+                                alert("Offer setLocalDescription failed!");
+                            }
                         );
                     },
                     function(error) {
-                        console.log("Error sending offer: ", error);
                     }
                 );
             }
@@ -302,14 +285,10 @@ function($, str, ModalFactory, ajax) {
                     var peer_id = config.peer_id;
                     var peer = peers[peer_id];
                     var remote_description = config.session_description;
-                    console.log(config.session_description);
-
                     var desc = new RTCSessionDescription(remote_description);
-                    var stuff = peer.setRemoteDescription(desc, 
+                    var stuff = peer.setRemoteDescription(desc,
                         function() {
-                            console.log("setRemoteDescription succeeded");
                             if (remote_description.type == "offer") {
-                                console.log("Creating answer");
                                 peer.createAnswer(
                                     function(local_description) {
                                         console.log("Answer description is: ", local_description);
@@ -317,23 +296,19 @@ function($, str, ModalFactory, ajax) {
                                             function() { 
                                                 signaling_socket.emit('relaySessionDescription', 
                                                     {'peer_id': peer_id, 'session_description': local_description});
-                                                console.log("Answer setLocalDescription succeeded");
                                             },
-                                            function() { Alert("Answer setLocalDescription failed!"); }
+                                            function() {
+                                                alert("Answer setLocalDescription failed!");
+                                            }
                                         );
                                     },
                                     function(error) {
-                                        console.log("Error creating answer: ", error);
-                                        console.log(peer);
                                     });
                             }
                         },
                         function(error) {
-                            console.log("setRemoteDescription error: ", error);
                         }
                     );
-                    console.log("Description Object: ", desc);
-
                 });
 
                 /**
@@ -360,7 +335,6 @@ function($, str, ModalFactory, ajax) {
                     var peer_id = config.peer_id;
 
                     if (!(peer_id in peers)) {
-                        console.log("[" + socket.id + "] ERROR: peer_id does not exist", peer_id);
                         return;
                     }
 
@@ -453,7 +427,6 @@ function($, str, ModalFactory, ajax) {
                             attachMediaStream(remote_media[0], stream);
                         }
                     }
-
                     attachMediaStream(remote_media[0], peer.stream);
                 };
 
@@ -467,13 +440,14 @@ function($, str, ModalFactory, ajax) {
 
                 // Create an offer
                 peer_connection.createOffer(
-                    function (local_description) {
+                    function(local_description) {
                         peer_connection.setLocalDescription(local_description,
-                            function () {
+                            function() {
                                 signaling_socket.emit('relaySessionDescription',
                                     { 'peer_id': peer_id, 'session_description': local_description });
                             },
-                            function () { console.error("Offer setLocalDescription failed!"); }
+                            function() {                                
+                            }
                         );
                     },
                     function (error) {
