@@ -458,14 +458,13 @@ function($, str, ModalFactory) {
         init: init
     };
 
-    // Do not warn "Missing JSDoc comment"
+    /**
+     * Function setup_local_media
+     */
      function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, setinterval, serviceoption, quizid, callback) {
+        teacher, setinterval, serviceoption, quizid) {
         require(['core/ajax'], function() {
-        if (localMediaStream !== null) {
-            if (callback) {
-                callback();
-            }
+        if (localMediaStream !== null) {            
             return;
         }
 
@@ -498,26 +497,29 @@ function($, str, ModalFactory) {
                         setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                     }
                 }
-                if (callback) {
-                    callback();
-                }
             });
         });
     }
 
-    // Do not warn "Missing JSDoc comment"
+    /**
+     * Function getRoomFromQuery
+     */
     function getRoomFromQuery(room) {
         return room;
     }
 
-    // Do not warn "Missing JSDoc comment"
+    /**
+     * Function getTeacherroom
+     */
     function getTeacherroom() {
         var urlParams = new URLSearchParams(window.location.search);
         var teacher = urlParams.get('teacher');
         return teacher;
     }
 
-    // Do not warn "Missing JSDoc comment"
+    /**
+     * Function joinchatChannel
+     */
     function joinchatChannel(room, userdata) {
         signalingSocket.emit('join', {"room": room, "userdata": userdata});
     }
