@@ -202,7 +202,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
     var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, externalserver, $proctoringimageshow) {
         var docElement = $(document);
         docElement.ready(function() {
-            if($proctoringimageshow == 1) {
+            if ($proctoringimageshow == 1) {
                 let btn = document.createElement("button");
                 btn.innerHTML = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                 btn.setAttribute("type", "button");

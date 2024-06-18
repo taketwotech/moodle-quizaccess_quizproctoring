@@ -21,8 +21,8 @@ button.proctoridentity {
 }
 .quizaccess_quizproctoring {
     top: 0;
-    right: 0 !important;
-    z-index: 1000 !important;
+    right: 0;
+    z-index: 1000;
     width: 280px;
 }
 .modalvideo {
@@ -40,23 +40,6 @@ button.proctoridentity {
 .modalvideo-content {
     margin: auto;
     width: 50%;
-}
-
-/* The Close Button */
-.closevideo {
-    color: #000;
-    margin-right: 3px;
-    float: right !important;
-    font-size: 23px;
-    height: 20px;
-    font-weight: bold;
-}
-
-.closevideo:hover,
-.closevideo:focus {
-    color: #005;
-    text-decoration: none;
-    cursor: pointer;
 }
 
 #loading {

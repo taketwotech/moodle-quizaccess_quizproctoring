@@ -355,7 +355,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
-            $record->enableteacherproctor = 0;
+            $record->enableteacherproctor = $quiz->enableteacherproctor;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -366,7 +366,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
-            $record->enableteacherproctor = 1;
+            $record->enableteacherproctor = $quiz->enableteacherproctor;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
