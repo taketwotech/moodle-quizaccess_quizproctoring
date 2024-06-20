@@ -155,19 +155,18 @@ function($, str, ModalFactory) {
                 camera.retake();
             });
         } else {
- signalingSocket = io(externalserver);
+            signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
-           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid,
+           setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
             teacher, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
-                var room = quizid;
                 var teacherroom = getTeacherroom();
                 var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
 
-                joinchatChannel(room, {'quizid': quizid, 'type': typet});
+                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid, 'type': typet}});
 
                 // Restore the session state if available
                 if (sessionState) {
@@ -458,10 +457,12 @@ function($, str, ModalFactory) {
     };
 
 
-     function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, callback, errorback) {
+     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, callback, errorback) {
         require(['core/ajax'], function(ajax) {
         if (local_media_stream != null) {  /* i.e, if we've already been initialized */
-            if (callback) callback();
+            if (callback) {
+                callback();
+            }
             return;
         }
 
@@ -475,29 +476,31 @@ function($, str, ModalFactory) {
             element.srcObject = stream;
          };
 
-        navigator.mediaDevices.getUserMedia({"audio":USE_AUDIO, "video":USE_VIDEO})
-        .then(function(stream) {
-        local_media_stream = stream;
-        var camera;
-        var warning = 0;
-        if (verifyduringattempt) {
-            var teacherroom = getTeacherroom();
-            if (teacherroom !== 'teacher') {
-                $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
-                $('<video>').attr({
-                    'id': 'video',
-                    'class': 'quizaccess_quizproctoring-video',
-                    'width': '280',
-                    'height': '240',
-                    'autoplay': 'autoplay'}).appendTo('body');
-                camera = new Camera(cmid, mainimage, attemptid, quizid);
-                setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+            navigator.mediaDevices.getUserMedia({"audio":USE_AUDIO, "video":USE_VIDEO})
+            .then(function(stream) {
+            local_media_stream = stream;
+            var camera;
+            var warning = 0;
+            if (verifyduringattempt) {
+                var teacherroom = getTeacherroom();
+                if (teacherroom !== 'teacher') {
+                    $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
+                    $('<video>').attr({
+                        'id': 'video',
+                        'class': 'quizaccess_quizproctoring-video',
+                        'width': '280',
+                        'height': '240',
+                        'autoplay': 'autoplay'}).appendTo('body');
+                    camera = new Camera(cmid, mainimage, attemptid, quizid);
+                    setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+                }
             }
-        }
-        if (callback) callback();
+            if (callback) {
+                callback();
+            }
         });
-        });
-    }
+    });
+}
 
     /**
      * get Teacher room
@@ -507,14 +510,5 @@ function($, str, ModalFactory) {
         var urlParams = new URLSearchParams(window.location.search);
         var teacher = urlParams.get('teacher');
         return teacher;
-    }
-
-    /**
-     * join chat Channel
-     * @param {int} room.
-     * @param {array} userdata.
-     */
-    function joinchatChannel(room, userdata) {
-        signalingSocket.emit('join', {"room": room, "userdata": userdata});
     }
 });
