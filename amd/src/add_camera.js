@@ -527,8 +527,8 @@ function($, str, ModalFactory) {
 
     /**
      * join chat Channel
-     * @param int room.
-     * @param string userdata.
+     * @param {int} room.
+     * @param {array} userdata.
      */
     function joinchatChannel(room, userdata) {
         signalingSocket.emit('join', {"room": room, "userdata": userdata});
