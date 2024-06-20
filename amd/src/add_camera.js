@@ -456,14 +456,14 @@ function($, str, ModalFactory) {
 
     /**
      * Function setupLocalMedia
-     * @param {int} cmid.
-     * @param {string} mainimage.
-     * @param {boolean} verifyduringattempt.
-     * @param {int} attemptid.
-     * @param {string} teacher.
-     * @param {string} setinterval.
-     * @param {string} serviceoption.
-     * @param {int} quizid.
+     * @param int cmid.
+     * @param string mainimage.
+     * @param boolean verifyduringattempt.
+     * @param int attemptid.
+     * @param string teacher.
+     * @param string setinterval.
+     * @param string serviceoption.
+     * @param int quizid.
      * @return
      */
      function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
@@ -507,8 +507,8 @@ function($, str, ModalFactory) {
     }
 
     /**
-     * Function getRoomFromQuery
-     * @param {int} room.
+     * get Room From Query
+     * @param int room.
      * @return int
      */
     function getRoomFromQuery(room) {
@@ -516,7 +516,7 @@ function($, str, ModalFactory) {
     }
 
     /**
-     * Function getTeacherroom
+     * get Teacher room
      * @return string
      */
     function getTeacherroom() {
@@ -526,9 +526,9 @@ function($, str, ModalFactory) {
     }
 
     /**
-     * Function joinchatChannel
-     * @param {int} room.
-     * @param {string} userdata.
+     * join chat Channel
+     * @param int room.
+     * @param string userdata.
      */
     function joinchatChannel(room, userdata) {
         signalingSocket.emit('join', {"room": room, "userdata": userdata});
