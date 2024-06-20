@@ -26,7 +26,7 @@ function($, str, ModalFactory) {
                 if (this.video) {
                   this.video.srcObject = stream;
                   this.video.muted = true;
-                  local_media_stream = stream;
+                  localMediaStream = stream;
                   this.video.play();
                   return true;
                 }
@@ -111,8 +111,8 @@ function($, str, ModalFactory) {
         });
     };
 
- var signalingSocket = null;
-    var local_media_stream = null;
+    var signalingSocket = null;
+    var localMediaStream = null;
     var peers = {};
     var peer_id = null;
     var peer_media_elements = {};
@@ -120,6 +120,7 @@ function($, str, ModalFactory) {
     var USE_AUDIO = true;
     var USE_VIDEO = true;
     var MUTE_AUDIO_BY_DEFAULT = true;
+    var attachMediaStream = null;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -202,7 +203,7 @@ function($, str, ModalFactory) {
                 {"optional": [{"DtlsSrtpKeyAgreement": true}]}
             );
             peers[peer_id] = peer_connection;
- // Add peer to the connectedPeers object
+            // Add peer to the connectedPeers object
             connectedPeers[peer_id] = {
                 stream: new MediaStream()
             };
@@ -223,31 +224,31 @@ function($, str, ModalFactory) {
 
                 // Update connectedPeers stream
                 connectedPeers[peer_id].stream.addTrack(event.track);
-                var remote_media;
+                var remoteMedia;
 
                 if (peer_media_elements[peer_id]) {
-                    remote_media = peer_media_elements[peer_id];
+                    remoteMedia = peer_media_elements[peer_id];
                 } else {
-                    remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
-                    remote_media.attr("autoplay", "autoplay");
-                    remote_media.attr("muted", "true");
-                    remote_media.attr("controls", "");
-                    remote_media.attr("class", "quizaccess_quizproctoring");
+                    remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+                    remoteMedia.attr("autoplay", "autoplay");
+                    remoteMedia.attr("muted", "true");
+                    remoteMedia.attr("controls", "");
+                    remoteMedia.attr("class", "quizaccess_quizproctoring");
 
                     if (MUTE_AUDIO_BY_DEFAULT) {
-                        remote_media.attr("muted", "true");
+                        remoteMedia.attr("muted", "true");
                     }
-                    remote_media.attr("controls", "");
-                    peer_media_elements[peer_id] = remote_media;
+                    remoteMedia.attr("controls", "");
+                    peer_media_elements[peer_id] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
-                        $('#region-main-box').append(remote_media);
-                        attachMediaStream(remote_media[0], connectedPeers[peer_id].stream);
+                        $('#region-main-box').append(remoteMedia);
+                        attachMediaStream(remoteMedia[0], connectedPeers[peer_id].stream);
                     }
                 }
             };
- // Add our local stream
-            peer_connection.addStream(local_media_stream);
+            // Add our local stream
+            peer_connection.addStream(localMediaStream);
 
             if (config.should_create_offer) {
                 peer_connection.createOffer(
@@ -324,7 +325,7 @@ function($, str, ModalFactory) {
                  * signalingSocket.on('disconnect') code will kick in and tear down
                  * all the peer sessions.
                  */
- signalingSocket.on('removePeer', function (config) {
+                    signalingSocket.on('removePeer', function (config) {
                     console.log('Signaling server said to remove peer:', config);
                     var peer_id = config.peer_id;
 
@@ -339,9 +340,9 @@ function($, str, ModalFactory) {
                     // Remove the peer from connectedPeers
                     delete connectedPeers[peer_id];
 
-                    var remote_media = peer_media_elements[peer_id];
-                    if (remote_media) {
-                        remote_media.remove();
+                    var remoteMedia = peer_media_elements[peer_id];
+                    if (remoteMedia) {
+                        remoteMedia.remove();
                         adjustLayout();
                     }
                     // Remove references
@@ -380,8 +381,8 @@ function($, str, ModalFactory) {
 
                 // Create RTCPeerConnection and add track
                 var peer_connection = new RTCPeerConnection(
-                    { "iceServers": ICE_SERVERS },
-                    { "optional": [{ "DtlsSrtpKeyAgreement": true }] }
+                    {"iceServers": ICE_SERVERS},
+                    {"optional": [{"DtlsSrtpKeyAgreement": true}]}
                 );
 
                 peers[peer_id] = peer_connection;
@@ -397,34 +398,34 @@ function($, str, ModalFactory) {
                         });
                     }
                 };
- peer_connection.ontrack = function (event) {
+                    peer_connection.ontrack = function (event) {
                     // Update connectedPeers stream
                     peer.stream.addTrack(event.track);
 
-                    var remote_media;
+                    var remoteMedia;
 
                     if (peer_media_elements[peer_id]) {
-                        remote_media = peer_media_elements[peer_id];
+                        remoteMedia = peer_media_elements[peer_id];
                     } else {
-                        remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
-                        remote_media.attr("autoplay", "autoplay");
+                        remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+                        remoteMedia.attr("autoplay", "autoplay");
 
                         if (MUTE_AUDIO_BY_DEFAULT) {
-                            remote_media.attr("muted", "true");
+                            remoteMedia.attr("muted", "true");
                         }
-                        remote_media.attr("controls", "");
-                        peer_media_elements[peer_id] = remote_media;
+                        remoteMedia.attr("controls", "");
+                        peer_media_elements[peer_id] = remoteMedia;
                         var teacherroom = getTeacherroom();
                         if (teacherroom === 'teacher') {
-                            $('#region-main-box').append(remote_media);
-                            attachMediaStream(remote_media[0], stream);
+                            $('#region-main-box').append(remoteMedia);
+                            attachMediaStream(remoteMedia[0], stream);
                         }
                     }
-                    attachMediaStream(remote_media[0], peer.stream);
+                    attachMediaStream(remoteMedia[0], peer.stream);
                 };
 
                 // Add our local stream
-                peer_connection.addStream(local_media_stream);
+                peer_connection.addStream(localMediaStream);
 
                 // Add existing tracks to the new connection
                 for (var track of peer.stream.getTracks()) {
@@ -457,9 +458,9 @@ function($, str, ModalFactory) {
     };
 
 
-     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, callback, errorback) {
-        require(['core/ajax'], function(ajax) {
-        if (local_media_stream != null) {  /* i.e, if we've already been initialized */
+     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, callback) {
+        require(['core/ajax'], function() {
+        if (localMediaStream != null) {
             if (callback) {
                 callback();
             }
@@ -478,9 +479,8 @@ function($, str, ModalFactory) {
 
             navigator.mediaDevices.getUserMedia({"audio":USE_AUDIO, "video":USE_VIDEO})
             .then(function(stream) {
-            local_media_stream = stream;
+            localMediaStream = stream;
             var camera;
-            var warning = 0;
             if (verifyduringattempt) {
                 var teacherroom = getTeacherroom();
                 if (teacherroom !== 'teacher') {
@@ -503,7 +503,7 @@ function($, str, ModalFactory) {
 }
 
     /**
-     * get Teacher room
+     * Get Teacher room
      * @return string
      */
     function getTeacherroom() {
