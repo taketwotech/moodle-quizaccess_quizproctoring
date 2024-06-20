@@ -258,8 +258,13 @@ function($, str, ModalFactory) {
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
                                     {'peer_id': peer_id, 'session_description': local_description});
+                            },
+                            function() {
+                                alert("Offer setLocalDescription failed!");
                             }
                         );
+                    },
+                    function(error) {
                     }
                 );
             }
@@ -285,10 +290,17 @@ function($, str, ModalFactory) {
                                             function() {
                                                 signalingSocket.emit('relaySessionDescription',
                                                     {'peer_id': peer_id, 'session_description': local_description});
-                                            }
+                                            },
+                                            function() {
+                                                alert("Answer setLocalDescription failed!");
+ }
                                         );
+                                    },
+                                    function(error) {
                                     });
                             }
+                        },
+                        function(error) {
                         }
                     );
                 });
