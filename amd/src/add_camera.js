@@ -26,7 +26,7 @@ function($, str, ModalFactory) {
                 if (this.video) {
                   this.video.srcObject = stream;
                   this.video.muted = true;
-                  localMediaStream = stream;
+                  local_media_stream = stream;
                   this.video.play();
                   return true;
                 }
@@ -61,6 +61,7 @@ function($, str, ModalFactory) {
     Camera.prototype.attemptid = false;
      /** @type int quiz id. */
     Camera.prototype.quizid = false;
+
 
     Camera.prototype.takepicture = function() {
         // Console.log('takepicture function');
@@ -110,10 +111,10 @@ function($, str, ModalFactory) {
         });
     };
 
-    var signalingSocket = null;
-    var localMediaStream = null;
+ var signalingSocket = null;
+    var local_media_stream = null;
     var peers = {};
-    var peerId = null;
+    var peer_id = null;
     var peer_media_elements = {};
     var connectedPeers = {};
     var USE_AUDIO = true;
@@ -154,15 +155,15 @@ function($, str, ModalFactory) {
                 camera.retake();
             });
         } else {
-            signalingSocket = io(externalserver);
+ signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
-            var sessionState = storedSession ? JSON.parse(storedSession) : null;            
-           setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+            var sessionState = storedSession ? JSON.parse(storedSession) : null;
+           setup_local_media(cmid, mainimage, verifyduringattempt, attemptid,
             teacher, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
-                var room = getRoomFromQuery(quizid);
+                var room = quizid;
                 var teacherroom = getTeacherroom();
                 var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
 
@@ -179,11 +180,11 @@ function($, str, ModalFactory) {
             /* Tear down all of our peer connections and remove all
              * media divs when we disconnect */
 
-            for (peerId in peer_media_elements) {
-                peer_media_elements[peerId].remove();
+            for (peer_id in peer_media_elements) {
+                peer_media_elements[peer_id].remove();
             }
-            for (peerId in peers) {
-                peers[peerId].close();
+            for (peer_id in peers) {
+                peers[peer_id].close();
             }
 
             peers = {};
@@ -191,27 +192,26 @@ function($, str, ModalFactory) {
         });
 
         signalingSocket.on('addPeer', function(config) {
-            var peerId = config.peerId;
+            var peer_id = config.peer_id;
 
-            if (peerId in peers) {
+            if (peer_id in peers) {
                 return;
             }
 
-            var peerConnection = new RTCPeerConnection(
+            var peer_connection = new RTCPeerConnection(
                 {"iceServers": ICE_SERVERS},
                 {"optional": [{"DtlsSrtpKeyAgreement": true}]}
             );
-            peers[peerId] = peerConnection;
-
-            // Add peer to the connectedPeers object
-            connectedPeers[peerId] = {
+            peers[peer_id] = peer_connection;
+ // Add peer to the connectedPeers object
+            connectedPeers[peer_id] = {
                 stream: new MediaStream()
             };
 
-            peerConnection.onicecandidate = function(event) {
+            peer_connection.onicecandidate = function(event) {
                 if (event.candidate) {
                     signalingSocket.emit('relayICECandidate', {
-                        'peerId': peerId,
+                        'peer_id': peer_id,
                         'ice_candidate': {
                             'sdpMLineIndex': event.candidate.sdpMLineIndex,
                             'candidate': event.candidate.candidate
@@ -220,46 +220,45 @@ function($, str, ModalFactory) {
                 }
             };
 
-            peerConnection.ontrack = function(event) {
+            peer_connection.ontrack = function(event) {
 
                 // Update connectedPeers stream
-                connectedPeers[peerId].stream.addTrack(event.track);
-                var remoteMedia;
+                connectedPeers[peer_id].stream.addTrack(event.track);
+                var remote_media;
 
-                if (peer_media_elements[peerId]) {
-                    remoteMedia = peer_media_elements[peerId];
+                if (peer_media_elements[peer_id]) {
+                    remote_media = peer_media_elements[peer_id];
                 } else {
-                    remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-                    remoteMedia.attr("autoplay", "autoplay");
-                    remoteMedia.attr("muted", "true");
-                    remoteMedia.attr("controls", "");
-                    remoteMedia.attr("class", "quizaccess_quizproctoring");
+                    remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
+                    remote_media.attr("autoplay", "autoplay");
+                    remote_media.attr("muted", "true");
+                    remote_media.attr("controls", "");
+                    remote_media.attr("class", "quizaccess_quizproctoring");
 
                     if (MUTE_AUDIO_BY_DEFAULT) {
-                        remoteMedia.attr("muted", "true");
+                        remote_media.attr("muted", "true");
                     }
-                    remoteMedia.attr("controls", "");
-                    peer_media_elements[peerId] = remoteMedia;
+                    remote_media.attr("controls", "");
+                    peer_media_elements[peer_id] = remote_media;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
-                        $('#region-main-box').append(remoteMedia);
-                        attachMediaStream(remoteMedia[0], connectedPeers[peerId].stream);
+                        $('#region-main-box').append(remote_media);
+                        attachMediaStream(remote_media[0], connectedPeers[peer_id].stream);
                     }
                 }
             };
-
-            // Add our local stream
-            peerConnection.addStream(localMediaStream);
+ // Add our local stream
+            peer_connection.addStream(local_media_stream);
 
             if (config.should_create_offer) {
-                peerConnection.createOffer(
-                    function(localDescription) {
-                        peerConnection.setLocalDescription(localDescription,
+                peer_connection.createOffer(
+                    function(local_description) {
+                        peer_connection.setLocalDescription(local_description,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
-                                    {'peerId': peerId, 'session_description': localDescription});
+                                    {'peer_id': peer_id, 'session_description': local_description});
                             },
-                            function() { 
+                            function() {
                                 alert("Offer setLocalDescription failed!");
                             }
                         );
@@ -270,32 +269,32 @@ function($, str, ModalFactory) {
             }
         });
 
-                 /** 
+                 /**
                  * Peers exchange session descriptions which contains information
                  * about their audio / video settings and that sort of stuff. First
                  * the 'offerer' sends a description to the 'answerer' (with type
-                 * "offer"), then the answerer sends one back (with type "answer").  
+                 * "offer"), then the answerer sends one back (with type "answer").
                  */
                 signalingSocket.on('sessionDescription', function(config) {
                     console.log('Remote description received: ', config);
-                    var peerId = config.peerId;
-                    var peer = peers[peerId];
+                    var peer_id = config.peer_id;
+                    var peer = peers[peer_id];
                     var remote_description = config.session_description;
                     var desc = new RTCSessionDescription(remote_description);
                     var stuff = peer.setRemoteDescription(desc,
                         function() {
                             if (remote_description.type == "offer") {
                                 peer.createAnswer(
-                                    function(localDescription) {
-                                        console.log("Answer description is: ", localDescription);
-                                        peer.setLocalDescription(localDescription,
-                                            function() { 
-                                                signalingSocket.emit('relaySessionDescription', 
-                                                    {'peerId': peerId, 'session_description': localDescription});
+                                    function(local_description) {
+                                        console.log("Answer description is: ", local_description);
+                                        peer.setLocalDescription(local_description,
+                                            function() {
+                                                signalingSocket.emit('relaySessionDescription',
+                                                    {'peer_id': peer_id, 'session_description': local_description});
                                             },
                                             function() {
                                                 alert("Answer setLocalDescription failed!");
-                                            }
+ }
                                         );
                                     },
                                     function(error) {
@@ -308,11 +307,11 @@ function($, str, ModalFactory) {
                 });
 
                 /**
-                 * The offerer will send a number of ICE Candidate blobs to the answerer so they 
+                 * The offerer will send a number of ICE Candidate blobs to the answerer so they
                  * can begin trying to find the best path to one another on the net.
                  */
                 signalingSocket.on('iceCandidate', function(config) {
-                    var peer = peers[config.peerId];
+                    var peer = peers[config.peer_id];
                     var ice_candidate = config.ice_candidate;
                     peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
                 });
@@ -326,29 +325,29 @@ function($, str, ModalFactory) {
                  * signalingSocket.on('disconnect') code will kick in and tear down
                  * all the peer sessions.
                  */
-                signalingSocket.on('removePeer', function (config) {
+ signalingSocket.on('removePeer', function (config) {
                     console.log('Signaling server said to remove peer:', config);
-                    var peerId = config.peerId;
+                    var peer_id = config.peer_id;
 
-                    if (!(peerId in peers)) {
+                    if (!(peer_id in peers)) {
                         return;
                     }
 
                     // Close the peer connection
-                    peers[peerId].removeStream(connectedPeers[peerId].stream);
-                    peers[peerId].close();
+                    peers[peer_id].removeStream(connectedPeers[peer_id].stream);
+                    peers[peer_id].close();
 
                     // Remove the peer from connectedPeers
-                    delete connectedPeers[peerId];
+                    delete connectedPeers[peer_id];
 
-                    var remoteMedia = peer_media_elements[peerId];
-                    if (remoteMedia) {
-                        remoteMedia.remove();
+                    var remote_media = peer_media_elements[peer_id];
+                    if (remote_media) {
+                        remote_media.remove();
                         adjustLayout();
                     }
                     // Remove references
-                    delete peers[peerId];
-                    delete peer_media_elements[peerId];
+                    delete peers[peer_id];
+                    delete peer_media_elements[peer_id];
                 });
 
                  // Function to adjust the layout after removing a video element
@@ -373,25 +372,25 @@ function($, str, ModalFactory) {
                                 'left': (col * 320) + 'px' // Adjust based on your video width
                             });
                         });
-                    } 
+  }
                 }
 
         function restoreSessionState(sessionState) {
-            for (var peerId in sessionState.connectedPeers) {
-                var peer = sessionState.connectedPeers[peerId];
+            for (var peer_id in sessionState.connectedPeers) {
+                var peer = sessionState.connectedPeers[peer_id];
 
                 // Create RTCPeerConnection and add track
-                var peerConnection = new RTCPeerConnection(
+                var peer_connection = new RTCPeerConnection(
                     { "iceServers": ICE_SERVERS },
                     { "optional": [{ "DtlsSrtpKeyAgreement": true }] }
                 );
 
-                peers[peerId] = peerConnection;
+                peers[peer_id] = peer_connection;
 
-                peerConnection.onicecandidate = function (event) {
+                peer_connection.onicecandidate = function (event) {
                     if (event.candidate) {
                         signalingSocket.emit('relayICECandidate', {
-                            'peerId': peerId,
+                            'peer_id': peer_id,
                             'ice_candidate': {
                                 'sdpMLineIndex': event.candidate.sdpMLineIndex,
                                 'candidate': event.candidate.candidate
@@ -399,50 +398,54 @@ function($, str, ModalFactory) {
                         });
                     }
                 };
-
-                peerConnection.ontrack = function (event) {
+ peer_connection.ontrack = function (event) {
                     // Update connectedPeers stream
                     peer.stream.addTrack(event.track);
 
-                    var remoteMedia;
+                    var remote_media;
 
-                    if (peer_media_elements[peerId]) {
-                        remoteMedia = peer_media_elements[peerId];
+                    if (peer_media_elements[peer_id]) {
+                        remote_media = peer_media_elements[peer_id];
                     } else {
-                        remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-                        remoteMedia.attr("autoplay", "autoplay");
+                        remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
+                        remote_media.attr("autoplay", "autoplay");
 
                         if (MUTE_AUDIO_BY_DEFAULT) {
-                            remoteMedia.attr("muted", "true");
+                            remote_media.attr("muted", "true");
                         }
-                        remoteMedia.attr("controls", "");
-                        peer_media_elements[peerId] = remoteMedia;
+                        remote_media.attr("controls", "");
+                        peer_media_elements[peer_id] = remote_media;
                         var teacherroom = getTeacherroom();
                         if (teacherroom === 'teacher') {
-                            $('#region-main-box').append(remoteMedia);
-                            attachMediaStream(remoteMedia[0], stream);
+                            $('#region-main-box').append(remote_media);
+                            attachMediaStream(remote_media[0], stream);
                         }
                     }
-                    attachMediaStream(remoteMedia[0], peer.stream);
+                    attachMediaStream(remote_media[0], peer.stream);
                 };
 
                 // Add our local stream
-                peerConnection.addStream(localMediaStream);
+                peer_connection.addStream(local_media_stream);
 
                 // Add existing tracks to the new connection
                 for (var track of peer.stream.getTracks()) {
-                    peerConnection.addTrack(track, peer.stream);
+                    peer_connection.addTrack(track, peer.stream);
                 }
 
                 // Create an offer
-                peerConnection.createOffer(
-                    function(localDescription) {
-                        peerConnection.setLocalDescription(localDescription,
+                peer_connection.createOffer(
+                    function(local_description) {
+                        peer_connection.setLocalDescription(local_description,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
-                                    { 'peerId': peerId, 'session_description': localDescription});
+                                    { 'peer_id': peer_id, 'session_description': local_description });
+                            },
+                            function() {
                             }
                         );
+ },
+                    function (error) {
+                        console.error("Error creating offer: ", error);
                     }
                 );
             }
@@ -454,22 +457,11 @@ function($, str, ModalFactory) {
         init: init
     };
 
-    /**
-     * Function setupLocalMedia
-     * @param int cmid.
-     * @param string mainimage.
-     * @param boolean verifyduringattempt.
-     * @param int attemptid.
-     * @param string teacher.
-     * @param string setinterval.
-     * @param string serviceoption.
-     * @param int quizid.
-     * @return
-     */
-     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, setinterval, serviceoption, quizid) {
-        require(['core/ajax'], function() {
-        if (localMediaStream !== null) {
+
+     function setup_local_media(cmid, mainimage, verifyduringattempt, attemptid, teacher, setinterval, serviceoption, quizid, callback, errorback) {
+        require(['core/ajax'], function(ajax) {
+        if (local_media_stream != null) {  /* i.e, if we've already been initialized */
+            if (callback) callback();
             return;
         }
 
@@ -483,36 +475,28 @@ function($, str, ModalFactory) {
             element.srcObject = stream;
          };
 
-            navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
-            .then(function(stream) {
-                localMediaStream = stream;
-                var camera;
-                var warning = 0;
-                if (verifyduringattempt) {
-                    var teacherroom = getTeacherroom();
-                    if (teacherroom !== 'teacher') {
-                        $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
-                        $('<video>').attr({
-                            'id': 'video',
-                            'class': 'quizaccess_quizproctoring-video',
-                            'width': '280',
-                            'height': '240',
-                            'autoplay': 'autoplay'}).appendTo('body');
-                        camera = new Camera(cmid, mainimage, attemptid, quizid);
-                        setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
-                    }
-                }
-            });
+        navigator.mediaDevices.getUserMedia({"audio":USE_AUDIO, "video":USE_VIDEO})
+        .then(function(stream) {
+        local_media_stream = stream;
+        var camera;
+        var warning = 0;
+        if (verifyduringattempt) {
+            var teacherroom = getTeacherroom();
+            if (teacherroom !== 'teacher') {
+                $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
+                $('<video>').attr({
+                    'id': 'video',
+                    'class': 'quizaccess_quizproctoring-video',
+                    'width': '280',
+                    'height': '240',
+                    'autoplay': 'autoplay'}).appendTo('body');
+                camera = new Camera(cmid, mainimage, attemptid, quizid);
+                setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+            }
+        }
+        if (callback) callback();
         });
-    }
-
-    /**
-     * get Room From Query
-     * @param int room.
-     * @return int
-     */
-    function getRoomFromQuery(room) {
-        return room;
+        });
     }
 
     /**
