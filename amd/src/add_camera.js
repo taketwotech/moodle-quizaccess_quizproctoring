@@ -121,6 +121,7 @@ function($, str, ModalFactory) {
     var USE_VIDEO = true;
     var MUTE_AUDIO_BY_DEFAULT = true;
     var attachMediaStream = null;
+    var stream = null;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -257,13 +258,8 @@ function($, str, ModalFactory) {
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
                                     {'peer_id': peer_id, 'session_description': local_description});
-                            },
-                            function() {
-                                alert("Offer setLocalDescription failed!");
                             }
                         );
-                    },
-                    function(error) {
                     }
                 );
             }
@@ -289,17 +285,10 @@ function($, str, ModalFactory) {
                                             function() {
                                                 signalingSocket.emit('relaySessionDescription',
                                                     {'peer_id': peer_id, 'session_description': local_description});
-                                            },
-                                            function() {
-                                                alert("Answer setLocalDescription failed!");
- }
+                                            }
                                         );
-                                    },
-                                    function(error) {
                                     });
                             }
-                        },
-                        function(error) {
                         }
                     );
                 });
@@ -378,8 +367,8 @@ function($, str, ModalFactory) {
 
                 // Create RTCPeerConnection and add track
                 var peer_connection = new RTCPeerConnection(
-                    { "iceServers": ICE_SERVERS },
-                    { "optional": [{ "DtlsSrtpKeyAgreement": true }] }
+                    {"iceServers": ICE_SERVERS},
+                    {"optional": [{ "DtlsSrtpKeyAgreement": true}] }
                 );
 
                 peers[peer_id] = peer_connection;
@@ -448,11 +437,14 @@ function($, str, ModalFactory) {
         init: init
     };
 
-
+    /**
+     * Setup Local Media
+     *
+     */
      function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, setinterval, serviceoption, quizid, callback, errorback) {
+        teacher, setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
-        if (localMediaStream != null) {
+        if (localMediaStream !== null) {
             if (callback) {
                 callback();
             }
