@@ -452,6 +452,15 @@ function($, str, ModalFactory) {
     /**
      * Setup Local Media
      *
+     * @param int $cmid data
+     * @param boolean $mainimage
+     * @param boolean $verifyduringattempt
+     * @param int $attemptid
+     * @param boolean $teacher
+     * @param bigint $setinterval
+     * @param Longtext $serviceoption
+     * @param int $quizid
+     * @return null
      */
      function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, setinterval, serviceoption, quizid, callback) {
