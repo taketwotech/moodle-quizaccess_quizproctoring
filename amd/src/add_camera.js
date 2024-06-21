@@ -253,11 +253,11 @@ function($, str, ModalFactory) {
 
             if (config.should_create_offer) {
                 peer_connection.createOffer(
-                    function(local_description) {
-                        peer_connection.setLocalDescription(local_description,
+                    function(localDescription) {
+                        peer_connection.setLocalDescription(localDescription,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
-                                    {'peer_id': peer_id, 'session_description': local_description});
+                                    {'peer_id': peer_id, 'session_description': localDescription});
                             },
                             function() {
                                 alert("Offer setLocalDescription failed!");
@@ -285,11 +285,11 @@ function($, str, ModalFactory) {
                         function() {
                             if (remote_description.type == "offer") {
                                 peer.createAnswer(
-                                    function(local_description) {
-                                        peer.setLocalDescription(local_description,
+                                    function(localDescription) {
+                                        peer.setLocalDescription(localDescription,
                                             function() {
                                                 signalingSocket.emit('relaySessionDescription',
-                                                    {'peer_id': peer_id, 'session_description': local_description});
+                                                    {'peer_id': peer_id, 'session_description': localDescription});
                                             },
                                             function() {
                                                 alert("Answer setLocalDescription failed!");
@@ -373,11 +373,12 @@ function($, str, ModalFactory) {
                     }
                 }
 
+        /*eslint valid-jsdoc: "error"*/
         /**
          * RestoreSessionState
          *
-         * @param Longtext sessionState
-         * @return string
+         * @param {Longtext} sessionState
+         * @return {string}
          */
         function restoreSessionState(sessionState) {
             for (var peer_id in sessionState.connectedPeers) {
@@ -438,11 +439,11 @@ function($, str, ModalFactory) {
 
                 // Create an offer
                 peer_connection.createOffer(
-                    function(local_description) {
-                        peer_connection.setLocalDescription(local_description,
+                    function(localDescription) {
+                        peer_connection.setLocalDescription(localDescription,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
-                                    {'peer_id': peer_id, 'session_description': local_description});
+                                    {'peer_id': peer_id, 'session_description': localDescription});
                             }
                         );
                     });
@@ -455,18 +456,19 @@ function($, str, ModalFactory) {
         init: init
     };
 
+    /*eslint valid-jsdoc: "error"*/
     /**
      * Setup Local Media
      *
-     * @param int cmid data
-     * @param boolean mainimage
-     * @param boolean verifyduringattempt
-     * @param int attemptid
-     * @param boolean teacher
-     * @param bigint setinterval
-     * @param Longtext serviceoption
-     * @param int quizid
-     * @return null
+     * @param {int} cmid cmid
+     * @param {boolean} mainimage boolean value
+     * @param {boolean} verifyduringattempt boolean value
+     * @param {int} attemptid Attempt Id 
+     * @param {boolean} teacher boolean value
+     * @param {bigint} setinterval int value
+     * @param {Longtext} serviceoption string value
+     * @param {int} quizid int value
+     * @return {void}
      */
      function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, setinterval, serviceoption, quizid, callback) {
