@@ -370,9 +370,15 @@ function($, str, ModalFactory) {
                                 'left': (col * 320) + 'px' // Adjust based on your video width
                             });
                         });
-  }
+                    }
                 }
 
+        /**
+         * RestoreSessionState
+         *
+         * @param Longtext sessionState
+         * @return string
+         */
         function restoreSessionState(sessionState) {
             for (var peer_id in sessionState.connectedPeers) {
                 var peer = sessionState.connectedPeers[peer_id];
@@ -380,7 +386,7 @@ function($, str, ModalFactory) {
                 // Create RTCPeerConnection and add track
                 var peer_connection = new RTCPeerConnection(
                     {"iceServers": ICE_SERVERS},
-                    {"optional": [{ "DtlsSrtpKeyAgreement": true}] }
+                    {"optional": [{"DtlsSrtpKeyAgreement": true}]}
                 );
 
                 peers[peer_id] = peer_connection;
@@ -452,14 +458,14 @@ function($, str, ModalFactory) {
     /**
      * Setup Local Media
      *
-     * @param int $cmid data
-     * @param boolean $mainimage
-     * @param boolean $verifyduringattempt
-     * @param int $attemptid
-     * @param boolean $teacher
-     * @param bigint $setinterval
-     * @param Longtext $serviceoption
-     * @param int $quizid
+     * @param int cmid data
+     * @param boolean mainimage
+     * @param boolean verifyduringattempt
+     * @param int attemptid
+     * @param boolean teacher
+     * @param bigint setinterval
+     * @param Longtext serviceoption
+     * @param int quizid
      * @return null
      */
      function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
