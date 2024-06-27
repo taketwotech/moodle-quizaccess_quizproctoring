@@ -110,8 +110,8 @@ class api {
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $header = array('Content-Type: application/json',
-                        'secret-key: ' . $accesstoken,
-                        'secret-code: ' . $accesstokensecret
+                        'access-token: ' . $accesstoken,
+                        'secret-token: ' . $accesstokensecret
                     );
         $curl->setHeader($header);
         $result = $curl->post($url, $imagedata);

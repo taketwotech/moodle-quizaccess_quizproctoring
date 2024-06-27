@@ -463,7 +463,7 @@ function($, str, ModalFactory) {
      * @param {int} cmid cmid
      * @param {boolean} mainimage boolean value
      * @param {boolean} verifyduringattempt boolean value
-     * @param {int} attemptid Attempt Id 
+     * @param {int} attemptid Attempt Id
      * @param {boolean} teacher boolean value
      * @param {bigint} setinterval int value
      * @param {Longtext} serviceoption string value
@@ -517,7 +517,8 @@ function($, str, ModalFactory) {
 
     /**
      * Get Teacher room
-     * @return string
+     *
+     * @return {string} teacher
      */
     function getTeacherroom() {
         var urlParams = new URLSearchParams(window.location.search);
