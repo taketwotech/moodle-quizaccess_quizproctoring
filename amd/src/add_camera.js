@@ -114,7 +114,7 @@ function($, str, ModalFactory) {
     var signalingSocket = null;
     var localMediaStream = null;
     var peers = {};
-    var peer_id = null;
+    var peerId = null;
     var peerMediaElements = {};
     var connectedPeers = {};
     var USE_AUDIO = true;
@@ -181,11 +181,11 @@ function($, str, ModalFactory) {
             /* Tear down all of our peer connections and remove all
              * media divs when we disconnect */
 
-            for (peer_id in peerMediaElements) {
-                peerMediaElements[peer_id].remove();
+            for (peerId in peerMediaElements) {
+                peerMediaElements[peerId].remove();
             }
-            for (peer_id in peers) {
-                peers[peer_id].close();
+            for (peerId in peers) {
+                peers[peerId].close();
             }
 
             peers = {};
@@ -193,9 +193,9 @@ function($, str, ModalFactory) {
         });
 
         signalingSocket.on('addPeer', function(config) {
-            var peer_id = config.peer_id;
+            var peerId = config.peer_id;
 
-            if (peer_id in peers) {
+            if (peerId in peers) {
                 return;
             }
 
@@ -203,16 +203,16 @@ function($, str, ModalFactory) {
                 {"iceServers": ICE_SERVERS},
                 {"optional": [{"DtlsSrtpKeyAgreement": true}]}
             );
-            peers[peer_id] = peerConnection;
+            peers[peerId] = peerConnection;
             // Add peer to the connectedPeers object
-            connectedPeers[peer_id] = {
+            connectedPeers[peerId] = {
                 stream: new MediaStream()
             };
 
             peerConnection.onicecandidate = function(event) {
                 if (event.candidate) {
                     signalingSocket.emit('relayICECandidate', {
-                        'peer_id': peer_id,
+                        'peer_id': peerId,
                         'ice_candidate': {
                             'sdpMLineIndex': event.candidate.sdpMLineIndex,
                             'candidate': event.candidate.candidate
@@ -224,11 +224,11 @@ function($, str, ModalFactory) {
             peerConnection.ontrack = function(event) {
 
                 // Update connectedPeers stream
-                connectedPeers[peer_id].stream.addTrack(event.track);
+                connectedPeers[peerId].stream.addTrack(event.track);
                 var remoteMedia;
 
-                if (peerMediaElements[peer_id]) {
-                    remoteMedia = peerMediaElements[peer_id];
+                if (peerMediaElements[peerId]) {
+                    remoteMedia = peerMediaElements[peerId];
                 } else {
                     remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
                     remoteMedia.attr("autoplay", "autoplay");
@@ -240,11 +240,11 @@ function($, str, ModalFactory) {
                         remoteMedia.attr("muted", "true");
                     }
                     remoteMedia.attr("controls", "");
-                    peerMediaElements[peer_id] = remoteMedia;
+                    peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
                         $('#region-main-box').append(remoteMedia);
-                        attachMediaStream(remoteMedia[0], connectedPeers[peer_id].stream);
+                        attachMediaStream(remoteMedia[0], connectedPeers[peerId].stream);
                     }
                 }
             };
@@ -257,7 +257,7 @@ function($, str, ModalFactory) {
                         peerConnection.setLocalDescription(localDescription,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
-                                    {'peer_id': peer_id, 'session_description': localDescription});
+                                    {'peer_id': peerId, 'session_description': localDescription});
                             },
                             function() {
                                 alert("Offer setLocalDescription failed!");
@@ -270,26 +270,26 @@ function($, str, ModalFactory) {
             }
         });
 
-                 /**
+                /**
                  * Peers exchange session descriptions which contains information
                  * about their audio / video settings and that sort of stuff. First
                  * the 'offerer' sends a description to the 'answerer' (with type
                  * "offer"), then the answerer sends one back (with type "answer").
                  */
                 signalingSocket.on('sessionDescription', function(config) {
-                    var peer_id = config.peer_id;
-                    var peer = peers[peer_id];
-                    var remote_description = config.session_description;
-                    var desc = new RTCSessionDescription(remote_description);
+                    var peerId = config.peer_id;
+                    var peer = peers[peerId];
+                    var remoteDescription = config.session_description;
+                    var desc = new RTCSessionDescription(remoteDescription);
                     var stuff = peer.setRemoteDescription(desc,
                         function() {
-                            if (remote_description.type == "offer") {
+                            if (remoteDescription.type == "offer") {
                                 peer.createAnswer(
                                     function(localDescription) {
                                         peer.setLocalDescription(localDescription,
                                             function() {
                                                 signalingSocket.emit('relaySessionDescription',
-                                                    {'peer_id': peer_id, 'session_description': localDescription});
+                                                    {'peer_id': peerId, 'session_description': localDescription});
                                             },
                                             function() {
                                                 alert("Answer setLocalDescription failed!");
@@ -325,9 +325,9 @@ function($, str, ModalFactory) {
                  * all the peer sessions.
                  */
                     signalingSocket.on('removePeer', function(config) {
-                    var peer_id = config.peer_id;
+                    var peerId = config.peer_id;
 
-                    if (!(peer_id in peers)) {
+                    if (!(peerId in peers)) {
                         return;
                     }
 
@@ -397,7 +397,7 @@ function($, str, ModalFactory) {
                 peerConnection.onicecandidate = function (event) {
                     if (event.candidate) {
                         signalingSocket.emit('relayICECandidate', {
-                            'peer_id': peer_id,
+                            'peer_id': peerId,
                             'ice_candidate': {
                                 'sdpMLineIndex': event.candidate.sdpMLineIndex,
                                 'candidate': event.candidate.candidate
@@ -411,8 +411,8 @@ function($, str, ModalFactory) {
 
                     var remoteMedia;
 
-                    if (peerMediaElements[peer_id]) {
-                        remoteMedia = peerMediaElements[peer_id];
+                    if (peerMediaElements[peerId]) {
+                        remoteMedia = peerMediaElements[peerId];
                     } else {
                         remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
                         remoteMedia.attr("autoplay", "autoplay");
@@ -421,7 +421,7 @@ function($, str, ModalFactory) {
                             remoteMedia.attr("muted", "true");
                         }
                         remoteMedia.attr("controls", "");
-                        peerMediaElements[peer_id] = remoteMedia;
+                        peerMediaElements[peerId] = remoteMedia;
                         var teacherroom = getTeacherroom();
                         if (teacherroom === 'teacher') {
                             $('#region-main-box').append(remoteMedia);
@@ -445,7 +445,7 @@ function($, str, ModalFactory) {
                         peerConnection.setLocalDescription(localDescription,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
-                                    {'peer_id': peer_id, 'session_description': localDescription});
+                                    {'peer_id': peerId, 'session_description': localDescription});
                             }
                         );
                     });
