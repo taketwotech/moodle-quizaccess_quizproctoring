@@ -295,7 +295,9 @@ function($, str, ModalFactory) {
                                                 alert("Answer setLocalDescription failed!");
  }
                                         );
-                                    }
+                                    },
+                                    function(error) {
+                                    });
                             }
                         },
                         function(error) {
