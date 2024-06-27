@@ -311,8 +311,8 @@ function($, str, ModalFactory) {
                  */
                 signalingSocket.on('iceCandidate', function(config) {
                     var peer = peers[config.peer_id];
-                    var ice_candidate = config.ice_candidate;
-                    peer.addIceCandidate(new RTCIceCandidate(ice_candidate));
+                    var iceCandidate = config.ice_candidate;
+                    peer.addIceCandidate(new RTCIceCandidate(iceCandidate));
                 });
                 /**
                  * When a user leaves a channel (or is disconnected from the
@@ -332,20 +332,20 @@ function($, str, ModalFactory) {
                     }
 
                     // Close the peer connection
-                    peers[peer_id].removeStream(connectedPeers[peer_id].stream);
-                    peers[peer_id].close();
+                    peers[peerId].removeStream(connectedPeers[peerId].stream);
+                    peers[peerId].close();
 
                     // Remove the peer from connectedPeers
-                    delete connectedPeers[peer_id];
+                    delete connectedPeers[peerId];
 
-                    var remoteMedia = peerMediaElements[peer_id];
+                    var remoteMedia = peerMediaElements[peerId];
                     if (remoteMedia) {
                         remoteMedia.remove();
                         adjustLayout();
                     }
                     // Remove references
-                    delete peers[peer_id];
-                    delete peerMediaElements[peer_id];
+                    delete peers[peerId];
+                    delete peerMediaElements[peerId];
                 });
 
                 /**
@@ -383,8 +383,8 @@ function($, str, ModalFactory) {
          * @return {string} Description
          */
         function restoreSessionState(sessionState) {
-            for (var peer_id in sessionState.connectedPeers) {
-                var peer = sessionState.connectedPeers[peer_id];
+            for (var peerId in sessionState.connectedPeers) {
+                var peer = sessionState.connectedPeers[peerId];
 
                 // Create RTCPeerConnection and add track
                 var peerConnection = new RTCPeerConnection(
@@ -392,7 +392,7 @@ function($, str, ModalFactory) {
                     {"optional": [{"DtlsSrtpKeyAgreement": true}]}
                 );
 
-                peers[peer_id] = peerConnection;
+                peers[peerId] = peerConnection;
 
                 peerConnection.onicecandidate = function (event) {
                     if (event.candidate) {
