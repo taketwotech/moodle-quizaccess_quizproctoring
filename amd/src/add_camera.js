@@ -115,7 +115,7 @@ function($, str, ModalFactory) {
     var localMediaStream = null;
     var peers = {};
     var peer_id = null;
-    var peer_media_elements = {};
+    var peerMediaElements = {};
     var connectedPeers = {};
     var USE_AUDIO = true;
     var USE_VIDEO = true;
@@ -181,15 +181,15 @@ function($, str, ModalFactory) {
             /* Tear down all of our peer connections and remove all
              * media divs when we disconnect */
 
-            for (peer_id in peer_media_elements) {
-                peer_media_elements[peer_id].remove();
+            for (peer_id in peerMediaElements) {
+                peerMediaElements[peer_id].remove();
             }
             for (peer_id in peers) {
                 peers[peer_id].close();
             }
 
             peers = {};
-            peer_media_elements = {};
+            peerMediaElements = {};
         });
 
         signalingSocket.on('addPeer', function(config) {
@@ -199,17 +199,17 @@ function($, str, ModalFactory) {
                 return;
             }
 
-            var peer_connection = new RTCPeerConnection(
+            var peerConnection = new RTCPeerConnection(
                 {"iceServers": ICE_SERVERS},
                 {"optional": [{"DtlsSrtpKeyAgreement": true}]}
             );
-            peers[peer_id] = peer_connection;
+            peers[peer_id] = peerConnection;
             // Add peer to the connectedPeers object
             connectedPeers[peer_id] = {
                 stream: new MediaStream()
             };
 
-            peer_connection.onicecandidate = function(event) {
+            peerConnection.onicecandidate = function(event) {
                 if (event.candidate) {
                     signalingSocket.emit('relayICECandidate', {
                         'peer_id': peer_id,
@@ -221,40 +221,40 @@ function($, str, ModalFactory) {
                 }
             };
 
-            peer_connection.ontrack = function(event) {
+            peerConnection.ontrack = function(event) {
 
                 // Update connectedPeers stream
                 connectedPeers[peer_id].stream.addTrack(event.track);
-                var remote_media;
+                var remoteMedia;
 
-                if (peer_media_elements[peer_id]) {
-                    remote_media = peer_media_elements[peer_id];
+                if (peerMediaElements[peer_id]) {
+                    remoteMedia = peerMediaElements[peer_id];
                 } else {
-                    remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
-                    remote_media.attr("autoplay", "autoplay");
-                    remote_media.attr("muted", "true");
-                    remote_media.attr("controls", "");
-                    remote_media.attr("class", "quizaccess_quizproctoring");
+                    remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+                    remoteMedia.attr("autoplay", "autoplay");
+                    remoteMedia.attr("muted", "true");
+                    remoteMedia.attr("controls", "");
+                    remoteMedia.attr("class", "quizaccess_quizproctoring");
 
                     if (MUTE_AUDIO_BY_DEFAULT) {
-                        remote_media.attr("muted", "true");
+                        remoteMedia.attr("muted", "true");
                     }
-                    remote_media.attr("controls", "");
-                    peer_media_elements[peer_id] = remote_media;
+                    remoteMedia.attr("controls", "");
+                    peerMediaElements[peer_id] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
-                        $('#region-main-box').append(remote_media);
-                        attachMediaStream(remote_media[0], connectedPeers[peer_id].stream);
+                        $('#region-main-box').append(remoteMedia);
+                        attachMediaStream(remoteMedia[0], connectedPeers[peer_id].stream);
                     }
                 }
             };
             // Add our local stream
-            peer_connection.addStream(localMediaStream);
+            peerConnection.addStream(localMediaStream);
 
             if (config.should_create_offer) {
-                peer_connection.createOffer(
+                peerConnection.createOffer(
                     function(localDescription) {
-                        peer_connection.setLocalDescription(localDescription,
+                        peerConnection.setLocalDescription(localDescription,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
                                     {'peer_id': peer_id, 'session_description': localDescription});
@@ -295,9 +295,7 @@ function($, str, ModalFactory) {
                                                 alert("Answer setLocalDescription failed!");
  }
                                         );
-                                    },
-                                    function(error) {
-                                    });
+                                    }
                             }
                         },
                         function(error) {
@@ -338,17 +336,20 @@ function($, str, ModalFactory) {
                     // Remove the peer from connectedPeers
                     delete connectedPeers[peer_id];
 
-                    var remote_media = peer_media_elements[peer_id];
-                    if (remote_media) {
-                        remote_media.remove();
+                    var remoteMedia = peerMediaElements[peer_id];
+                    if (remoteMedia) {
+                        remoteMedia.remove();
                         adjustLayout();
                     }
                     // Remove references
                     delete peers[peer_id];
-                    delete peer_media_elements[peer_id];
+                    delete peerMediaElements[peer_id];
                 });
 
-                 // Function to adjust the layout after removing a video element
+                /**
+                 * Function to adjust the layout after removing a video element
+                 *
+                 */
                 function adjustLayout() {
                     var videosContainer = $('#region-main');
                     var videoElements = videosContainer.children('video');
@@ -373,26 +374,25 @@ function($, str, ModalFactory) {
                     }
                 }
 
-        /*eslint valid-jsdoc: "error"*/
         /**
          * RestoreSessionState
          *
-         * @param {Longtext} sessionState
-         * @return {string}
+         * @param {Longtext} sessionState sessionState
+         * @return {string} Description
          */
         function restoreSessionState(sessionState) {
             for (var peer_id in sessionState.connectedPeers) {
                 var peer = sessionState.connectedPeers[peer_id];
 
                 // Create RTCPeerConnection and add track
-                var peer_connection = new RTCPeerConnection(
+                var peerConnection = new RTCPeerConnection(
                     {"iceServers": ICE_SERVERS},
                     {"optional": [{"DtlsSrtpKeyAgreement": true}]}
                 );
 
-                peers[peer_id] = peer_connection;
+                peers[peer_id] = peerConnection;
 
-                peer_connection.onicecandidate = function (event) {
+                peerConnection.onicecandidate = function (event) {
                     if (event.candidate) {
                         signalingSocket.emit('relayICECandidate', {
                             'peer_id': peer_id,
@@ -403,44 +403,44 @@ function($, str, ModalFactory) {
                         });
                     }
                 };
-                    peer_connection.ontrack = function (event) {
+                    peerConnection.ontrack = function (event) {
                     // Update connectedPeers stream
                     peer.stream.addTrack(event.track);
 
-                    var remote_media;
+                    var remoteMedia;
 
-                    if (peer_media_elements[peer_id]) {
-                        remote_media = peer_media_elements[peer_id];
+                    if (peerMediaElements[peer_id]) {
+                        remoteMedia = peerMediaElements[peer_id];
                     } else {
-                        remote_media = USE_VIDEO ? $("<video>") : $("<audio>");
-                        remote_media.attr("autoplay", "autoplay");
+                        remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+                        remoteMedia.attr("autoplay", "autoplay");
 
                         if (MUTE_AUDIO_BY_DEFAULT) {
-                            remote_media.attr("muted", "true");
+                            remoteMedia.attr("muted", "true");
                         }
-                        remote_media.attr("controls", "");
-                        peer_media_elements[peer_id] = remote_media;
+                        remoteMedia.attr("controls", "");
+                        peerMediaElements[peer_id] = remoteMedia;
                         var teacherroom = getTeacherroom();
                         if (teacherroom === 'teacher') {
-                            $('#region-main-box').append(remote_media);
-                            attachMediaStream(remote_media[0], stream);
+                            $('#region-main-box').append(remoteMedia);
+                            attachMediaStream(remoteMedia[0], stream);
                         }
                     }
-                    attachMediaStream(remote_media[0], peer.stream);
+                    attachMediaStream(remoteMedia[0], peer.stream);
                 };
 
                 // Add our local stream
-                peer_connection.addStream(localMediaStream);
+                peerConnection.addStream(localMediaStream);
 
                 // Add existing tracks to the new connection
                 for (var track of peer.stream.getTracks()) {
-                    peer_connection.addTrack(track, peer.stream);
+                    peerConnection.addTrack(track, peer.stream);
                 }
 
                 // Create an offer
-                peer_connection.createOffer(
+                peerConnection.createOffer(
                     function(localDescription) {
-                        peer_connection.setLocalDescription(localDescription,
+                        peerConnection.setLocalDescription(localDescription,
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
                                     {'peer_id': peer_id, 'session_description': localDescription});
@@ -456,7 +456,6 @@ function($, str, ModalFactory) {
         init: init
     };
 
-    /*eslint valid-jsdoc: "error"*/
     /**
      * Setup Local Media
      *
