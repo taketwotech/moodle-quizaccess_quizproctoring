@@ -262,6 +262,7 @@ function($, str, ModalFactory) {
                         );
                     },
                     function(error) {
+                        // Eslint-disable-next-line no-console
                         console.log("Error sending offer: ", error);
                     }
                 );
