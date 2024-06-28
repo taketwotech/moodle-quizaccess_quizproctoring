@@ -258,9 +258,6 @@ function($, str, ModalFactory) {
                             function() {
                                 signalingSocket.emit('relaySessionDescription',
                                     {'peer_id': peerId, 'session_description': localDescription});
-                            },
-                            function() {
-                                alert("Offer setLocalDescription failed!");
                             }
                         );
                     },
@@ -290,10 +287,7 @@ function($, str, ModalFactory) {
                                             function() {
                                                 signalingSocket.emit('relaySessionDescription',
                                                     {'peer_id': peerId, 'session_description': localDescription});
-                                            },
-                                            function() {
-                                                alert("Answer setLocalDescription failed!");
- }
+                                            }
                                         );
                                     },
                                     function(error) {
@@ -380,7 +374,6 @@ function($, str, ModalFactory) {
          * RestoreSessionState
          *
          * @param {Longtext} sessionState sessionState
-         * @return {string} Description
          */
         function restoreSessionState(sessionState) {
             for (var peerId in sessionState.connectedPeers) {
@@ -394,7 +387,7 @@ function($, str, ModalFactory) {
 
                 peers[peerId] = peerConnection;
 
-                peerConnection.onicecandidate = function (event) {
+                peerConnection.onicecandidate = function(event) {
                     if (event.candidate) {
                         signalingSocket.emit('relayICECandidate', {
                             'peer_id': peerId,
@@ -405,7 +398,7 @@ function($, str, ModalFactory) {
                         });
                     }
                 };
-                    peerConnection.ontrack = function (event) {
+                    peerConnection.ontrack = function(event) {
                     // Update connectedPeers stream
                     peer.stream.addTrack(event.track);
 
@@ -469,6 +462,7 @@ function($, str, ModalFactory) {
      * @param {bigint} setinterval int value
      * @param {Longtext} serviceoption string value
      * @param {int} quizid int value
+     * @param {function} callback - The callback function to execute after setting up the media stream.
      * @return {void}
      */
      function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
