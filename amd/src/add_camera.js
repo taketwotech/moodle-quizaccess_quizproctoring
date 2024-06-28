@@ -261,7 +261,8 @@ function($, str, ModalFactory) {
                             }
                         );
                     },
-                    function(_error) {
+                    function(error) {
+                        // Error handling will be implemented later
                     }
                 );
             }
@@ -290,11 +291,13 @@ function($, str, ModalFactory) {
                                             }
                                         );
                                     },
-                                    function(_error) {
+                                    function(error) {
+                                        // Error handling will be implemented later
                                     });
                             }
                         },
-                        function(_error) {
+                        function(error) {
+                            // Error handling will be implemented later
                         }
                     );
                 });
