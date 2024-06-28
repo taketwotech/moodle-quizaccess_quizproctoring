@@ -261,9 +261,7 @@ function($, str, ModalFactory) {
                             }
                         );
                     },
-                    function(error) {
-                        // Eslint-disable-next-line no-console
-                        console.log("Error sending offer: ", error);
+                    function(_error) {
                     }
                 );
             }
@@ -292,13 +290,11 @@ function($, str, ModalFactory) {
                                             }
                                         );
                                     },
-                                    function(error) {
-                                        // Error handling will be implemented later
+                                    function(_error) {
                                     });
                             }
                         },
-                        function(error) {
-                            // Error handling will be implemented later
+                        function(_error) {
                         }
                     );
                 });
