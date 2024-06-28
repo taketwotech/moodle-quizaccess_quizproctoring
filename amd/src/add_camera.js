@@ -157,7 +157,7 @@ function($, str, ModalFactory) {
                 camera.retake();
             });
         } else {
-            const signalingSocket = io(externalserver);
+            signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
@@ -262,7 +262,7 @@ function($, str, ModalFactory) {
                         );
                     },
                     function(error) {
-                        // Error handling will be implemented later
+                        console.log("Error sending offer: ", error);
                     }
                 );
             }
@@ -342,7 +342,7 @@ function($, str, ModalFactory) {
                     // Remove references
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
-                });               
+                });
 
         /**
          * RestoreSessionState
