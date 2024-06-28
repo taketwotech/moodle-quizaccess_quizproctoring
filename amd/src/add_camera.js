@@ -157,7 +157,7 @@ function($, str, ModalFactory) {
                 camera.retake();
             });
         } else {
-            signalingSocket = io(externalserver);
+            const signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
@@ -262,6 +262,7 @@ function($, str, ModalFactory) {
                         );
                     },
                     function(error) {
+                        // Error handling will be implemented later
                     }
                 );
             }
@@ -291,10 +292,12 @@ function($, str, ModalFactory) {
                                         );
                                     },
                                     function(error) {
+                                        // Error handling will be implemented later
                                     });
                             }
                         },
                         function(error) {
+                            // Error handling will be implemented later
                         }
                     );
                 });
@@ -335,40 +338,11 @@ function($, str, ModalFactory) {
                     var remoteMedia = peerMediaElements[peerId];
                     if (remoteMedia) {
                         remoteMedia.remove();
-                        adjustLayout();
                     }
                     // Remove references
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
-                });
-
-                /**
-                 * Function to adjust the layout after removing a video element
-                 *
-                 */
-                function adjustLayout() {
-                    var videosContainer = $('#region-main');
-                    var videoElements = videosContainer.children('video');
-                    var totalVideos = videoElements.length;
-
-                    // Adjust the layout based on the total number of videos
-                    if (totalVideos > 1) {
-                        // For example, distribute the videos evenly in rows and columns
-                        var rows = Math.ceil(Math.sqrt(totalVideos));
-                        var cols = Math.ceil(totalVideos / rows);
-
-                        videoElements.each(function(index) {
-                            var row = Math.floor(index / cols);
-                            var col = index % cols;
-
-                            $(this).css({
-                                'position': 'absolute',
-                                'top': (row * 240) + 'px', // Adjust based on your video height
-                                'left': (col * 320) + 'px' // Adjust based on your video width
-                            });
-                        });
-                    }
-                }
+                });               
 
         /**
          * RestoreSessionState
