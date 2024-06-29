@@ -503,14 +503,13 @@ function($, str, ModalFactory) {
                     peerConnection.setLocalDescription(localDescription,
                         function() {
                             signalingSocket.emit('relaySessionDescription', {
-                                'peer_id': peerId, 
+                                'peer_id': peerId,
                                 'session_description': localDescription
                             });
                         }
                     );
                 });
-        })(peerId);
+        })(peerId, peers, signalingSocket, peerMediaElements, attachMediaStream, localMediaStream);
     }
 }
-
 });
