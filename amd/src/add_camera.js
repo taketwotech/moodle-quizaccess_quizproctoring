@@ -421,8 +421,6 @@ function($, str, ModalFactory) {
         });
     }
 
-
-
     /**
      * Get Teacher room
      *
@@ -434,12 +432,12 @@ function($, str, ModalFactory) {
         return teacher;
     }
 
-    /**
-     * RestoreSessionState
-     *
-     * @param {Longtext} sessionState sessionState
-     */
-    function restoreSessionState(sessionState) {
+/**
+ * RestoreSessionState
+ *
+ * @param {Longtext} sessionState sessionState
+ */
+function restoreSessionState(sessionState) {
     for (var peerId in sessionState.connectedPeers) {
         (function(peerId) {
             var peer = sessionState.connectedPeers[peerId];
@@ -510,7 +508,7 @@ function($, str, ModalFactory) {
                         }
                     );
                 });
-        })(peerId, peers, signalingSocket, peerMediaElements, attachMediaStream, localMediaStream);
+        })(peerId);
     }
 }
 });
