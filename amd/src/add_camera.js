@@ -371,58 +371,56 @@ function($, str, ModalFactory) {
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, setinterval, serviceoption, quizid, callback) {
     require(['core/ajax'], function() {
-    if (localMediaStream !== null) {
-        if (callback) {
-            callback();
-        }
-        return;
-    }
-
-    navigator.getUserMedia = (
-        navigator.getUserMedia ||
-        navigator.webkitGetUserMedia ||
-        navigator.mozGetUserMedia ||
-        navigator.msGetUserMedia
-    );
-
-    attachMediaStream = function(element, stream) {
-        element.srcObject = stream;
-    };
-
-    navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
-        .then(function(stream) {
-            localMediaStream = stream;
-            var camera;
-            if (verifyduringattempt) {
-                var teacherroom = getTeacherroom();
-                if (teacherroom !== 'teacher') {
-                    $('<canvas>').attr({id: 'canvas', width: '280', height: '240', 'style': 'display: none;'}).appendTo('body');
-                    $('<video>').attr({
-                        'id': 'video',
-                        'class': 'quizaccess_quizproctoring-video',
-                        'width': '280',
-                        'height': '240',
-                        'autoplay': 'autoplay'
-                    }).appendTo('body');
-                    camera = new Camera(cmid, mainimage, attemptid, quizid);
-                    setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
-                }
-            }
-            return stream;
-        })
-        .then(function(stream) {
-            return stream;
-        })
-        .catch(function(error) {
-            throw error;
-        })
-        .finally(function() {
+        if (localMediaStream !== null) {
             if (callback) {
                 callback();
             }
-        });
+            return;
+        }
+
+        navigator.getUserMedia = (
+            navigator.getUserMedia ||
+            navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia ||
+            navigator.msGetUserMedia
+        );
+
+        attachMediaStream = function(element, stream) {
+            element.srcObject = stream;
+        };
+
+        navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
+            .then(function(stream) {
+                localMediaStream = stream;
+                if (verifyduringattempt) {
+                    var teacherroom = getTeacherroom();
+                    if (teacherroom !== 'teacher') {
+                        $('<canvas>').attr({id: 'canvas', width: '280',
+                            height: '240', 'style': 'display: none;'}).appendTo('body');
+                        $('<video>').attr({
+                            'id': 'video',
+                            'class': 'quizaccess_quizproctoring-video',
+                            'width': '280',
+                            'height': '240',
+                            'autoplay': 'autoplay'
+                        }).appendTo('body');
+                        var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                        setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+                    }
+                }
+                return stream;
+            })
+            .catch(function(error) {
+                throw error;
+            })
+            .finally(function() {
+                if (callback) {
+                    callback();
+                }
+            });
     });
 }
+
 
     /**
      * Get Teacher room
