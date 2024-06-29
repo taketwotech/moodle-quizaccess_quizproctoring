@@ -439,7 +439,8 @@ function($, str, ModalFactory) {
      * @param {Longtext} sessionState sessionState
      */
     function restoreSessionState(sessionState) {
-        for (var peerId in sessionState.connectedPeers) {
+    for (var peerId in sessionState.connectedPeers) {
+        (function(peerId) {
             var peer = sessionState.connectedPeers[peerId];
 
             // Create RTCPeerConnection and add track
@@ -461,7 +462,8 @@ function($, str, ModalFactory) {
                     });
                 }
             };
-                peerConnection.ontrack = function(event) {
+
+            peerConnection.ontrack = function(event) {
                 // Update connectedPeers stream
                 peer.stream.addTrack(event.track);
 
@@ -500,11 +502,15 @@ function($, str, ModalFactory) {
                 function(localDescription) {
                     peerConnection.setLocalDescription(localDescription,
                         function() {
-                            signalingSocket.emit('relaySessionDescription',
-                                {'peer_id': peerId, 'session_description': localDescription});
+                            signalingSocket.emit('relaySessionDescription', {
+                                'peer_id': peerId, 
+                                'session_description': localDescription
+                            });
                         }
                     );
                 });
-        }
+        })(peerId);
     }
+}
+
 });
