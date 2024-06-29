@@ -280,27 +280,30 @@ function($, str, ModalFactory) {
                     var remoteDescription = config.session_description;
                     var desc = new RTCSessionDescription(remoteDescription);
                     peer.setRemoteDescription(desc)
-                        .then(function() {
-                            if (remoteDescription.type === "offer") {
-                                return peer.createAnswer();
-                            }
-                        })
-                        .then(function(localDescription) {
-                            if (localDescription) {
-                                return peer.setLocalDescription(localDescription);
-                            }
-                        })
-                        .then(function() {
-                            if (peer.localDescription) {
-                                signalingSocket.emit('relaySessionDescription', {
-                                    'peer_id': peerId,
-                                    'session_description': peer.localDescription
-                                });
-                            }
-                        })
-                        .catch(function() {
-                            // Error handling will be implemented later
-                        });
+                    .then(function() {
+                        if (remoteDescription.type === "offer") {
+                            return peer.createAnswer();
+                        }
+                        return null;
+                    })
+                    .then(function(localDescription) {
+                        if (localDescription) {
+                            return peer.setLocalDescription(localDescription);
+                        }
+                        return null;
+                    })
+                    .then(function() {
+                        if (peer.localDescription) {
+                            signalingSocket.emit('relaySessionDescription', {
+                                'peer_id': peerId,
+                                'session_description': peer.localDescription
+                            });
+                        }
+                        return null;
+                    })
+                    .catch(function(error) {
+                        throw error;
+                    });
                 });
 
                 /**
