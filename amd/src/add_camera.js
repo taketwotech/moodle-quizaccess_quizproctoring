@@ -417,6 +417,7 @@ function($, str, ModalFactory) {
                     if (callback) {
                         callback();
                     }
+                    return Promise.resolve(); // Ensure a consistent return value
                 });
         });
     }

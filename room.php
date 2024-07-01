@@ -42,7 +42,6 @@ $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
 $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
 
 // Include js module.
-//echo html_writer::script('', 'https://proctorofppt.dataprotechgroup.com/socket.io/socket.io.js', true);
 echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
 'init', [$cmid, false, true, null, true, $room, $externalserver, $serviceoption]);
