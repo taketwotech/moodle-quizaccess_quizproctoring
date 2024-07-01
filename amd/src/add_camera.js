@@ -412,13 +412,11 @@ function($, str, ModalFactory) {
                 })
                 .catch(function(error) {
                     throw error; // Rethrow the error to propagate it further
-                    return Promise.reject(error);
                 })
                 .finally(function() {
                     if (callback) {
                         callback();
                     }
-                    return;
                 });
         });
     }
