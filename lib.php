@@ -91,7 +91,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
-    $PAGE->requires->js('https://proctorofppt.dataprotechgroup.com/socket.io/socket.io.js', true);
+    //$PAGE->requires->js('https://proctorofppt.dataprotechgroup.com/socket.io/socket.io.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js', true);
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
