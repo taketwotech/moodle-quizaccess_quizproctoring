@@ -407,8 +407,9 @@ function($, str, ModalFactory) {
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
+                        return true;
                     }
-                    return stream;
+                    return true;
                 })
                 .catch(function(error) {
                     throw error; // Rethrow the error to propagate it further
