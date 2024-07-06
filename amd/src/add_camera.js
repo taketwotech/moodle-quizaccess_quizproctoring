@@ -411,7 +411,8 @@ function($, str, ModalFactory) {
                     return stream;
                 })
                 .catch(function(error) {
-                    return Promise.reject(error); // Return a rejected promise to propagate the error
+                    console.error('Error accessing media devices: ', error); // Log the error
+                    throw error; // Rethrow the error to propagate it further
                 })
                 .finally(function() {
                     if (callback) {
