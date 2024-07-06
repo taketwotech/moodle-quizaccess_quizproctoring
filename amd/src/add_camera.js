@@ -411,7 +411,7 @@ function($, str, ModalFactory) {
                     return stream;
                 })
                 .catch(function(error) {
-                    throw error; // Rethrow the error to propagate it further
+                    return Promise.reject(error); // Return a rejected promise to propagate the error
                 })
                 .finally(function() {
                     if (callback) {
