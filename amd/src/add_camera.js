@@ -407,12 +407,11 @@ function($, str, ModalFactory) {
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
-                        return true;
                     }
-                    return true;
+                    return stream;
                 })
                 .catch(function(error) {
-                    throw error; // Rethrow the error to propagate it further
+                    return false;
                 })
                 .finally(function() {
                     if (callback) {
