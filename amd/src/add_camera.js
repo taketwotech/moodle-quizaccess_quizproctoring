@@ -411,7 +411,7 @@ function($, str, ModalFactory) {
                     return stream;
                 })
                 .catch(function(error) {
-                    return false;
+                    throw error; // Rethrow the error to propagate it further
                 })
                 .finally(function() {
                     if (callback) {
