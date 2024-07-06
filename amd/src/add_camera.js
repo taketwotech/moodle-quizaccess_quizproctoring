@@ -410,10 +410,6 @@ function($, str, ModalFactory) {
                     }
                     return stream;
                 })
-                .catch(function(error) {
-                    console.error('Error accessing media devices: ', error); // Log the error
-                    throw error; // Rethrow the error to propagate it further
-                })
                 .finally(function() {
                     if (callback) {
                         callback();
