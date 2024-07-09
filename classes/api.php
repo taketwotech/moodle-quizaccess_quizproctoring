@@ -166,36 +166,4 @@ class api {
         }
         return false;
     }
-
-    /**
-     * Merge Video
-     *
-     * @param Longtext $postdata
-     * @return string
-     */
-    public static function merge_video_api($postdata) {
-        self::init();
-        $curl = curl_init();
-        $url = self::$serviceurl;
-        $url = $url.'mergeVideos';
-
-        curl_setopt_array($curl, array(
-              CURLOPT_URL => $url,
-              CURLOPT_RETURNTRANSFER => true,
-              CURLOPT_ENCODING => '',
-              CURLOPT_MAXREDIRS => 10,
-              CURLOPT_TIMEOUT => 0,
-              CURLOPT_FOLLOWLOCATION => true,
-              CURLOPT_SSL_VERIFYHOST => false,
-              CURLOPT_SSL_VERIFYPEER => false,
-              CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-              CURLOPT_CUSTOMREQUEST => 'POST',
-              CURLOPT_POSTFIELDS => $postdata,
-              CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json'
-              ),
-        ));
-        $result = curl_exec($curl);
-        return $result;
-    }
 }

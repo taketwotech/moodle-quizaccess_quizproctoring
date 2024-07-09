@@ -3,7 +3,7 @@
     bottom: 0;
     right: 0;
     z-index: 1000;
-    width: 280px;
+    width: 240px;
 }
 button.proctoringimage {
     margin-left: 1.5%;
@@ -23,7 +23,7 @@ button.proctoridentity {
     top: 0;
     right: 0;
     z-index: 1000;
-    width: 280px;
+    width: 240px;
 }
 .modalvideo {
     display: none;
