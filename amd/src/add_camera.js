@@ -9,7 +9,7 @@ window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
-define(['jquery', 'core/str', 'core/modal_factory', 'core/ajax'],
+define(['jquery', 'core/str', 'core/modal_factory'],
 function($, str, ModalFactory) {
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
@@ -21,7 +21,7 @@ function($, str, ModalFactory) {
         this.attemptid = attemptid;
         $("#id_submitbutton").prop("disabled", true);
         docElement.on('popup', this.showpopup.bind(this));
-        setTimeout(navigator.mediaDevices.getUserMedia({video: true, audio: true})
+        navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then(function(stream) {
                 if (this.video) {
                   this.video.srcObject = stream;
@@ -34,7 +34,7 @@ function($, str, ModalFactory) {
             })
         .catch(function() {
             // Console.log(err);
-        }), 10000);
+        });
     };
 
     /** @type Tag element contain video. */

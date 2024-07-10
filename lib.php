@@ -93,8 +93,14 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js', true);
-    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
-        [$cmid, false, true, $attemptid, false, $quizid, $externalserver, $serviceoption, $interval->time_interval]);
+    // Inline JavaScript to call the AMD module
+    $PAGE->requires->js_init_call('M.util.js_pending', array(true), true);
+    $PAGE->requires->js_init_code("
+    require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
+        add_camera.init($cmid, false, true, $attemptid, false,
+        $quizid, '$externalserver', '$serviceoption', $interval->time_interval);
+    });
+    M.util.js_complete();", true);
 }
 
 /**
