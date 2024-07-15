@@ -32,7 +32,7 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('pluginname', 'quizaccess_quizproctoring'), 'moodle/site:config');
 
     $choices = array(
-        'take2' => 'take2',
+        'take2' => 'Take2 Proctoring',
         'AWS' => 'AWS'
     );
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
