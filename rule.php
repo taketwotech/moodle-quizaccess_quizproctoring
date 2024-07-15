@@ -318,9 +318,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
                     "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
                     "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
-                    "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
-                    "600" => get_string('tenminutes', 'quizaccess_quizproctoring'),
-                    "900" => get_string('fiftenminutes', 'quizaccess_quizproctoring')));
+                    "300" => get_string('fiveminutes', 'quizaccess_quizproctoring')));
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
