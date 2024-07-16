@@ -47,9 +47,6 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  */
 class api {
 
-    /** @var API serviceurl */
-    private static $serviceurl = null;
-
     /** @var API accesstoken */
     private static $accesstoken = null;
 
@@ -98,13 +95,29 @@ class api {
         $url = 'https://proctorofppt.dataprotechgroup.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
+        $domain = self::url();
         $header = array('Content-Type: application/json',
                         'access-token: ' . $accesstoken,
-                        'secret-token: ' . $accesstokensecret
+                        'secret-token: ' . $accesstokensecret,
+                        'domain: ' . $domain
                     );
         $curl->setHeader($header);
         $result = $curl->post($url, $imagedata);
         return $result;
+    }
+
+    /**
+     * Get the Domain Name captured
+     *
+     * @return string
+     */
+    public static function url(){
+        if(isset($_SERVER['HTTPS'])) {
+            $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
+        } else {
+            $protocol = 'http';
+        }
+        return $protocol . "://" . $_SERVER['HTTP_HOST'];
     }
 
     /**
