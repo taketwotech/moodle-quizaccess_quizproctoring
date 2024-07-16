@@ -50,19 +50,48 @@ if (!$mainimage) {
         $target = $f1->get_content();
     }
 }
+$service = get_config('quizaccess_quizproctoring', 'serviceoption');
 
-// Validate image.
-\quizaccess_quizproctoring\aws\camera::init();
-if ($target !== '') {
-    $tdata = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $target));
-    $validate = \quizaccess_quizproctoring\aws\camera::validate($data, $tdata);
+if ($service === 'AWS') {
+    // Validate image.
+    \quizaccess_quizproctoring\aws\camera::init();
+    if ($target !== '') {
+        $tdata = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $target));
+        $validate = \quizaccess_quizproctoring\aws\camera::validate($data, $tdata);
+    } else {
+        $validate = \quizaccess_quizproctoring\aws\camera::validate($data);
+    }
 } else {
-    $validate = \quizaccess_quizproctoring\aws\camera::validate($data);
+    // Validate image.
+    if ($target !== '') {
+        $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
+        $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
+        $imagedata = array("primary" => $tdata, "target" => $data);
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
+        if ($response == 'Unauthorized') {
+            throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
+            die();
+        } else {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
+        }
+    } else {
+        $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
+        $imagedata = array("primary" => $data);
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
+        if ($response == 'Unauthorized') {
+            throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
+            die();
+        } else {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data);
+        }
+    }
 }
+
 switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
         if (!$mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
         } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
         }
@@ -70,7 +99,7 @@ switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED:
         if (!$mainimage) {
             quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-            $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
+            $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
         } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
         }
@@ -78,7 +107,7 @@ switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED:
         if (!$mainimage) {
             quizproctoring_storeimage($img, $cmid, $attemptid,
-            $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
+            $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED);
         } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED, 'quizaccess_quizproctoring', '', '');
         }
@@ -91,7 +120,7 @@ switch ($validate) {
     case QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED:
         if (!$mainimage) {
             quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-            $mainimage, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
+            $mainimage, $service, QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED);
         } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED, 'quizaccess_quizproctoring', '', '');
         }
@@ -99,7 +128,7 @@ switch ($validate) {
     default:
         // Store only if main image.
         if ($mainimage) {
-            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage);
+            quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, $service);
         }
          break;
 }

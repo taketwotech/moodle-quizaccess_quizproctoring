@@ -31,6 +31,17 @@ if ($hassiteconfig && !empty($USER->id)) {
     $settings = new admin_settingpage('modsettingsquizcatproctoring',
         get_string('pluginname', 'quizaccess_quizproctoring'), 'moodle/site:config');
 
+    $choices = array(
+        'take2' => 'Take2 Proctoring',
+        'AWS' => 'AWS'
+    );
+    $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
+        get_string('serviceoption', 'quizaccess_quizproctoring'),
+        get_string('serviceoption_desc', 'quizaccess_quizproctoring'),
+        'take2',
+        $choices
+    ));
+
     $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/aws_key',
         get_string('awskey', 'quizaccess_quizproctoring'),
         get_string('awskey_help', 'quizaccess_quizproctoring'),
@@ -43,12 +54,37 @@ if ($hassiteconfig && !empty($USER->id)) {
         '',
         PARAM_TEXT));
 
+    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/accesstoken',
+        get_string('accesstoken', 'quizaccess_quizproctoring'),
+        get_string('accesstoken_help', 'quizaccess_quizproctoring'),
+                PARAM_TEXT));
+
+    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/accesstokensecret',
+        get_string('accesstokensecret', 'quizaccess_quizproctoring'),
+        get_string('accesstokensecret_help', 'quizaccess_quizproctoring'),
+        PARAM_TEXT));
+
+    $settings->hide_if('quizaccess_quizproctoring/end_point', 'quizaccess_quizproctoring/serviceoption',
+                'eq', 'AWS');
+
+    $settings->hide_if('quizaccess_quizproctoring/accesstoken', 'quizaccess_quizproctoring/serviceoption',
+                'eq', 'AWS');
+
+    $settings->hide_if('quizaccess_quizproctoring/accesstokensecret', 'quizaccess_quizproctoring/serviceoption',
+                'eq', 'AWS');
+
+    $settings->hide_if('quizaccess_quizproctoring/aws_key', 'quizaccess_quizproctoring/serviceoption',
+                'neq', 'AWS');
+
+    $settings->hide_if('quizaccess_quizproctoring/aws_secret', 'quizaccess_quizproctoring/serviceoption',
+                'neq', 'AWS');
+
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/img_check_time',
         get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
         get_string('help_timeinterval', 'quizaccess_quizproctoring'), 5,
-        array(1 => get_string('oneminute', 'quizaccess_quizproctoring'),
-         5 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
-         10 => get_string('tenminutes', 'quizaccess_quizproctoring'))));
+        array(5 => get_string('fiveseconds', 'quizaccess_quizproctoring'),
+         60 => get_string('oneminute', 'quizaccess_quizproctoring'),
+         300 => get_string('fiveminutes', 'quizaccess_quizproctoring'))));
 
     $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
         get_string('proctoring_image_show', 'quizaccess_quizproctoring'),

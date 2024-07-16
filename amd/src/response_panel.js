@@ -199,18 +199,20 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
 
     };
 
-    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null) {
+    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, $proctoringimageshow) {
         var docElement = $(document);
         docElement.ready(function() {
-            let btn = document.createElement("button");
-            btn.innerHTML = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
-            btn.setAttribute("type", "button");
-            btn.setAttribute("value", "proctoringimage");
-            btn.setAttribute("class", "proctoringimage btn btn-primary");
-            btn.setAttribute("data-attemptid", attemptid);
-            btn.setAttribute("data-quizid", quizid);
-            btn.setAttribute("data-userid", userid);
-            document.getElementById("page-content").prepend(btn);
+            if ($proctoringimageshow == 1) {
+                let btn = document.createElement("button");
+                btn.innerHTML = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
+                btn.setAttribute("type", "button");
+                btn.setAttribute("value", "proctoringimage");
+                btn.setAttribute("class", "proctoringimage btn btn-primary");
+                btn.setAttribute("data-attemptid", attemptid);
+                btn.setAttribute("data-quizid", quizid);
+                btn.setAttribute("data-userid", userid);
+                document.getElementById("page-content").prepend(btn);
+            }
             if (useridentity && useridentity != 0) {
                 let btnidentity = document.createElement("button");
                 btnidentity.innerHTML = M.util.get_string('proctoringidentity', 'quizaccess_quizproctoring');

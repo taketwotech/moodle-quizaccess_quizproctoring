@@ -190,5 +190,20 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2023031600, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2024020251) {
+
+        // Define field enableteacherproctor to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableteacherproctor', XMLDB_TYPE_INTEGER, '1',
+         null, XMLDB_NOTNULL, null, '0', 'proctoringvideo_link');
+
+        // Conditionally launch add field enableteacherproctor.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }

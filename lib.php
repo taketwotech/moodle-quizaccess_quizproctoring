@@ -30,10 +30,12 @@ define('QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED', 'multifacesdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED', 'facesnotmatched');
 define('QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED', 'eyesnotopened');
 define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLD', 90);
+define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT', 45);
 define('QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED', 'facemaskdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD', 80);
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_PASSED', 'completionpassed');
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
+define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 
 /**
  * Serves the quizaccess proctoring files.
@@ -86,9 +88,18 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
+    $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
-    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera', 'init',
-        [$cmid, false, true, $attemptid, $interval->time_interval]);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js', true);
+    // Inline JavaScript to call the AMD module
+    $PAGE->requires->js_init_call('M.util.js_pending', array(true), true);
+    $PAGE->requires->js_init_code("
+    require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
+        add_camera.init($cmid, false, true, $attemptid, false,
+        $quizid, '$serviceoption', $interval->time_interval);
+    });
+    M.util.js_complete();", true);
 }
 
 /**
@@ -99,9 +110,10 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
  * @param boolean $mainimage main image
+ * @param string $service service enabled
  * @param string $status
  */
-function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status='') {
+function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='') {
     global $USER, $DB, $COURSE;
 
     $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
@@ -122,7 +134,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->userid = $user->id;
     $record->quizid = $quizid;
     $record->image_status = $mainimage ? 'I' : 'A';
-    $record->aws_response = 'aws';
+    $record->aws_response = $service;
     $record->timecreated = time();
     $record->timemodified = time();
     $record->userimg = $imagename;
@@ -164,11 +176,12 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
                 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
                 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
+                'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
                 'userid' => $user->id, 'quizid' => $quizid,
                 'attemptid' => $attemptid, 'image_status' => 'A');
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
@@ -177,29 +190,29 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 $attemptobj->process_finish(time(), false);
                 echo json_encode(array('status' => 'true', 'redirect' => 'true', 'url' => $attemptobj->review_url()->out()));
                 die();
-            }
-
-            if ($status) {
-                $left = $quizaccessquizproctoring->warning_threshold - count($errorrecords);
-                if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
-                    if ($left == 1) {
-                        $left = $left .get_string('avertissement', 'quizaccess_quizproctoring');
+            } else {
+                if ($status) {
+                    $left = $quizaccessquizproctoring->warning_threshold - count($errorrecords);
+                    if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
+                        if ($left == 1) {
+                            $left = $left .get_string('avertissement', 'quizaccess_quizproctoring');
+                        } else {
+                            $left = $left .get_string('avertissements', 'quizaccess_quizproctoring');
+                        }
                     } else {
-                        $left = $left .get_string('avertissements', 'quizaccess_quizproctoring');
+                        if ($left == 1) {
+                            $left = $left . get_string('warning', 'quizaccess_quizproctoring');
+                        } else {
+                            $left = $left . get_string('warnings', 'quizaccess_quizproctoring');
+                        }
                     }
-                } else {
-                    if ($left == 1) {
-                        $left = $left . get_string('warning', 'quizaccess_quizproctoring');
-                    } else {
-                        $left = $left . get_string('warnings', 'quizaccess_quizproctoring');
-                    }
+                    $errorstring = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
                 }
-                $errorstring = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
-            }
 
-            if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
-                throw new moodle_exception($status, 'quizaccess_quizproctoring', '', $errorstring);
-                die();
+                if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+                    throw new moodle_exception($status, 'quizaccess_quizproctoring', '', $errorstring);
+                    die();
+                }
             }
         } else if ($quizaccessquizproctoring->warning_threshold == 0) {
             throw new moodle_exception($status, 'quizaccess_quizproctoring', '', '');
