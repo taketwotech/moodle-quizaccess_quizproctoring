@@ -63,18 +63,8 @@ class api {
      */
     public static function init() {
         global $CFG;
-        self::$serviceurl = get_config('quizaccess_quizproctoring', 'external_server');
         self::$accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         self::$accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
-    }
-
-    /**
-     * Get the rest url to connect to
-     *
-     * @return string
-     */
-    public static function get_rest_url() {
-        return self::$serviceurl;
     }
 
     /**
@@ -105,8 +95,7 @@ class api {
     public static function proctor_image_api($imagedata) {
         self::init();
         $curl = new \curl();
-        $url = self::$serviceurl;
-        $url = $url.'validate';
+        $url = 'https://proctorofppt.dataprotechgroup.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $header = array('Content-Type: application/json',

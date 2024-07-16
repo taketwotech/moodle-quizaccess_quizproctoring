@@ -65,13 +65,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $USER;
         $isadmin = is_siteadmin($USER);
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-        $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
         $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
         $url = $url->out();
         if ($serviceoption == 'AWS') {
             $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
             $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');
-            if (empty($awskey) || empty($awssecret)  || empty($externalserver)) {
+            if (empty($awskey) || empty($awssecret)) {
                 if ($isadmin) {
                     return get_string('warningaws', 'quizaccess_quizproctoring', $url);
                 } else {
@@ -81,7 +80,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         } else {
             $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
             $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
-            if (empty($externalserver) || empty($accesstoken) || empty($accesstokensecret)) {
+            if (empty($accesstoken) || empty($accesstokensecret)) {
                 if ($isadmin) {
                     return get_string('warningopensourse', 'quizaccess_quizproctoring', $url);
                 } else {
@@ -154,13 +153,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             MoodleQuickForm $mform, $attemptid) {
         global $PAGE, $DB;
 
-        $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
-                $this->quiz->id, $externalserver, $serviceoption]);
+                $this->quiz->id, $serviceoption]);
 
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('reqproctormsg', 'quizaccess_quizproctoring'));
@@ -432,9 +430,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
-                        $externalserver = get_config('quizaccess_quizproctoring', 'external_server');
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
-                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $externalserver, $proctoringimageshow]);
+                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
                         $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
                             'proctoringidentity'), 'quizaccess_quizproctoring');
                     }

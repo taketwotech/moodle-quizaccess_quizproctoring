@@ -38,12 +38,11 @@ if (!has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $co
 $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('report');
 echo $OUTPUT->header();
-$externalserver = get_config('quizaccess_quizproctoring', 'external_server');
 $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
 
 // Include js module.
 echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
-'init', [$cmid, false, true, null, true, $room, $externalserver, $serviceoption]);
+'init', [$cmid, false, true, null, true, $room, $serviceoption]);
 
 echo $OUTPUT->footer();

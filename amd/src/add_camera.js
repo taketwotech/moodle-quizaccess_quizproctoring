@@ -112,6 +112,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
+    var externalserver = 'https://proctorofppt.dataprotechgroup.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -142,7 +143,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, externalserver, serviceoption, setinterval = 300) {
+        teacher, quizid, serviceoption, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);

@@ -38,15 +38,9 @@ if ($hassiteconfig && !empty($USER->id)) {
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
         get_string('serviceoption', 'quizaccess_quizproctoring'),
         get_string('serviceoption_desc', 'quizaccess_quizproctoring'),
-        'AWS',
+        'take2',
         $choices
     ));
-
-    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/external_server',
-        get_string('externalserver', 'quizaccess_quizproctoring'),
-        get_string('externalserver_help', 'quizaccess_quizproctoring'),
-        '',
-        PARAM_TEXT));
 
     $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/aws_key',
         get_string('awskey', 'quizaccess_quizproctoring'),
