@@ -38,7 +38,7 @@ if ($hassiteconfig && !empty($USER->id)) {
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
         get_string('serviceoption', 'quizaccess_quizproctoring'),
         get_string('serviceoption_desc', 'quizaccess_quizproctoring'),
-        'take2',
+        'AWS',
         $choices
     ));
 
