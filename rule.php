@@ -396,7 +396,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id,
                     'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
                 if ($quizinfo && ($proctoringimageshow == 1)) {
-                    if (count($usermages) > 0) {
+                    if ($usermages) {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity]);
                         $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
