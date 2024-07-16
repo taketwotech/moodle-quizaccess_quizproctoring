@@ -74,8 +74,8 @@ $string['fourminutes'] = '4 minutes';
 $string['fiftenminutes'] = '15 minutes';
 $string['warning'] = ' warning';
 $string['warnings'] = ' warnings';
-$string['proctoring_image_show'] = 'Proctoring Image Show';
-$string['proctoring_image_show_help'] = 'If set, Proctoring Image Show in review attempt.';
+$string['proctoring_image_show'] = 'Show Proctoring Images';
+$string['proctoring_image_show_help'] = 'If set, Proctoring Images can be displayed on review attempt page in a popup.';
 $string['mainimage'] = 'Main Image';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
 $string['warningopensourse'] = 'Please complete <a href="{$a}">configuration</a> to continue with quiz.';
@@ -90,11 +90,11 @@ $string['quizproctoring:quizproctoringonlinestudent'] = 'View Online Students du
 $string['novideo'] = 'No Videos';
 $string['serviceoption'] = 'Facematch Service Option';
 $string['serviceoption_desc'] = 'Service to match faces';
-$string['accesstoken'] = 'Extenal Server Token';
-$string['accesstoken_help'] = 'Access token generated from Extenal Server System Integration';
-$string['accesstokensecret'] = 'Extenal Server Secret Token';
-$string['accesstokensecret_help'] = 'Access secret generated from Extenal Server System Integration';
+$string['accesstoken'] = 'External Server Token';
+$string['accesstoken_help'] = 'Access token generated from External Server System Integration';
+$string['accesstokensecret'] = 'External Server Secret Token';
+$string['accesstokensecret_help'] = 'Access secret generated from External Server System Integration';
 $string['enableteacherproctor'] = 'Enable proctoring for Teacher with this quiz';
 $string['enableteacherproctor_help'] = 'If you enable it, Teacher should be able to see group of users attempting proctored quiz';
-$string['tokenerror'] = 'Invalid Extenal Server token or secret token';
+$string['tokenerror'] = 'Invalid External Server token or secret token';
 
