@@ -38,7 +38,7 @@ class restore_quizaccess_quizproctoring_activity_structure_step extends restore_
      */
     protected function define_structure() {
 
-        $paths = array();
+        $paths = [];
         $paths[] = new restore_path_element('quizaccess_quizproctoring', '/activity/quizaccess_quizproctoring');
 
         // Return the paths wrapped into standard activity structure.
