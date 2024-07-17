@@ -48,7 +48,7 @@ class observer {
         global $DB, $CFG;
         $eventdata = $event->get_data();
         if ($quizid = $eventdata['other']['quizid']) {
-            if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $quizid, 'enableproctoring' => 1))) {
+            if ($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $quizid, 'enableproctoring' => 1])) {
                 quizproctoring_camera_task($eventdata['contextinstanceid'], $eventdata['objectid'], $quizid);
             }
         }
@@ -63,6 +63,6 @@ class observer {
     public static function quizproctoring_image_delete($event) {
         global $DB, $CFG;
         $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where
-         attemptid=?", array($event->objectid));
+         attemptid=?", [$event->objectid]);
     }
 }

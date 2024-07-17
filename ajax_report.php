@@ -38,7 +38,7 @@ if ($currentpage) {
     AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
     $getimages = $DB->get_records_sql($sql, null, $offset , 20);
 
-    $imgarray = array();
+    $imgarray = [];
     $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
     AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
@@ -56,10 +56,12 @@ if ($currentpage) {
         } else {
             $target = $img->userimg;
         }
-        array_push($imgarray, array('title' => $img->image_status == 'M' ?
+        array_push($imgarray, ['title' => $img->image_status == 'M' ?
             get_string('mainimage', 'quizaccess_quizproctoring') :
-            get_string($img->status, 'quizaccess_quizproctoring', '') ,
-            'img' => $target, 'totalpage' => $countrecord));
+            get_string($img->status, 'quizaccess_quizproctoring', ''),
+            'img' => $target,
+            'totalpage' => $countrecord
+        ]);
     }
     echo json_encode($imgarray);
 
@@ -67,7 +69,7 @@ if ($currentpage) {
     $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
     AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 AND userimg IS NOT NULL ";
     $getimages = $DB->get_records_sql($sql, null, '' , 20);
-    $imgarray = array();
+    $imgarray = [];
     $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
     AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
     $countrecord  = $DB->get_records_sql($sqlcount, null);
@@ -85,10 +87,12 @@ if ($currentpage) {
         } else {
             $target = $img->userimg;
         }
-        array_push($imgarray, array('title' => $img->image_status == 'M' ?
+        array_push($imgarray, ['title' => $img->image_status == 'M' ?
             get_string('mainimage', 'quizaccess_quizproctoring') :
-            get_string($img->status, 'quizaccess_quizproctoring', '') ,
-            'img' => $target, 'totalpage' => $countrecord, 'total' => $totalrecord));
+            get_string($img->status, 'quizaccess_quizproctoring', ''),
+            'img' => $target,
+            'totalpage' => $countrecord, 'total' => $totalrecord
+        ]);
     }
     echo json_encode($imgarray);
 }

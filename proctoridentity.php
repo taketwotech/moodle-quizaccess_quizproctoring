@@ -31,8 +31,8 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
 $url = '';
-if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", array('attemptid' => $attemptid,
-    'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'))) {
+if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", ['attemptid' => $attemptid,
+    'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'])) {
     $quizobj = \quiz::create($quizid, $userid);
     $context = $quizobj->get_context();
     $fs = get_file_storage();
@@ -45,10 +45,10 @@ if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", array('attempt
 
     if ($url) {
         $url = new moodle_url($url);
-        echo json_encode(array('success' => true, 'url' => $url->out()));
+        echo json_encode(['success' => true, 'url' => $url->out()]);
     } else {
-        echo json_encode(array('success' => false, 'message' => get_string('noimages', 'quizaccess_quizproctoring')));
+        echo json_encode(['success' => false, 'message' => get_string('noimages', 'quizaccess_quizproctoring')]);
     }
 } else {
-    echo json_encode(array('success' => false, 'message' => get_string('noimages', 'quizaccess_quizproctoring')));
+    echo json_encode(['success' => false, 'message' => get_string('noimages', 'quizaccess_quizproctoring')]);
 }

@@ -72,8 +72,8 @@ class camera {
             'region' => AWS_REGION,
             'credentials' => [
                 'key' => self::$amazonapikey,
-                'secret' => self::$amazonapisecret
-            ]
+                'secret' => self::$amazonapisecret,
+            ],
         ]);
     }
 
@@ -123,9 +123,9 @@ class camera {
     public static function detect_faces($source) {
         $result = self::$client->detectFaces([
             'Image' => [
-                'Bytes' => $source
+                'Bytes' => $source,
             ],
-            'Attributes' => ['ALL']
+            'Attributes' => ['ALL'],
         ]);
         return $result;
     }
@@ -140,11 +140,11 @@ class camera {
     public static function compare_faces($source, $target) {
         $result = self::$client->CompareFaces([
             'SourceImage' => [
-                'Bytes' => $source
+                'Bytes' => $source,
             ],
             'TargetImage' => [
-                'Bytes' => $target
-            ]
+                'Bytes' => $target,
+            ],
         ]);
         if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]) && isset($result["FaceMatches"][0]["Similarity"])) {
             return $result["FaceMatches"][0]["Similarity"];
@@ -189,14 +189,14 @@ class camera {
     public static function detect_protective_equipment($source) {
         $result = self::$client->detectProtectiveEquipment([
             'Image' => [
-                'Bytes' => $source
+                'Bytes' => $source,
             ],
             'SummarizationAttributes' => [
                 'MinConfidence' => QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD,
                 'RequiredEquipmentTypes' => [
-                    'FACE_COVER'
-                ]
-            ]
+                    'FACE_COVER',
+                ],
+            ],
         ]);
 
         return $result;

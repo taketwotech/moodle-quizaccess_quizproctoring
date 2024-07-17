@@ -26,20 +26,19 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
-
-    'quizaccess/quizproctoring:quizproctoringreport' => array(
+$capabilities = [
+    'quizaccess/quizproctoring:quizproctoringreport' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'teacher' => CAP_ALLOW,
-        )
-    ),
-    'quizaccess/quizproctoring:quizproctoringonlinestudent' => array(
+        ],
+    ],
+    'quizaccess/quizproctoring:quizproctoringonlinestudent' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes' => [
             'teacher' => CAP_ALLOW,
-        )
-    )
-);
+        ],
+    ],
+];
