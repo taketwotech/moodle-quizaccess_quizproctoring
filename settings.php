@@ -85,7 +85,7 @@ if ($hassiteconfig && !empty($USER->id)) {
         [
             5 => get_string('fiveseconds', 'quizaccess_quizproctoring'),
             60 => get_string('oneminute', 'quizaccess_quizproctoring'),
-            300 => get_string('fiveminutes', 'quizaccess_quizproctoring')
+            300 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]
     ));
 

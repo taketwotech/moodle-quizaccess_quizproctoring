@@ -60,7 +60,7 @@ if ($currentpage) {
             get_string('mainimage', 'quizaccess_quizproctoring') :
             get_string($img->status, 'quizaccess_quizproctoring', ''),
             'img' => $target,
-            'totalpage' => $countrecord
+            'totalpage' => $countrecord,
         ]);
     }
     echo json_encode($imgarray);
@@ -91,7 +91,7 @@ if ($currentpage) {
             get_string('mainimage', 'quizaccess_quizproctoring') :
             get_string($img->status, 'quizaccess_quizproctoring', ''),
             'img' => $target,
-            'totalpage' => $countrecord, 'total' => $totalrecord
+            'totalpage' => $countrecord, 'total' => $totalrecord,
         ]);
     }
     echo json_encode($imgarray);
