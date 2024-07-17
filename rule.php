@@ -65,7 +65,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $USER;
         $isadmin = is_siteadmin($USER);
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-        $url = new moodle_url('/admin/settings.php', array('section' => 'modsettingsquizcatproctoring'));
+        $url = new moodle_url('/admin/settings.php', ['section' => 'modsettingsquizcatproctoring']);
         $url = $url->out();
         if ($serviceoption == 'AWS') {
             $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
@@ -107,11 +107,17 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $getquiz = $DB->get_record_sql($sql);
         $button = '';
         $context = context_module::instance($id);
-        if ($DB->record_exists('quizaccess_quizproctoring', array('quizid' => $getquiz->instance, 'enableteacherproctor' => 1))) {
+        if ($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance, 'enableteacherproctor' => 1])) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
-                $button = $OUTPUT->single_button(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php?',
-                    array('cmid' => $id, 'room' => $getquiz->instance, 'teacher' => 'teacher')),
-                get_string('viewstudentonline', 'quizaccess_quizproctoring'), 'get');
+                $button = $OUTPUT->single_button(
+                    new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php', [
+                        'cmid' => $id,
+                        'room' => $getquiz->instance,
+                        'teacher' => 'teacher'
+                    ]),
+                    get_string('viewstudentonline', 'quizaccess_quizproctoring'),
+                    'get'
+                );
             }
         }
         return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
@@ -126,10 +132,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public function is_preflight_check_required($attemptid) {
         global $SESSION, $DB, $USER;
-        $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
+        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_proctor_data', array('quizid' => $this->quiz->id,
-            'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ))) {
+        if ($DB->record_exists('quizaccess_proctor_data', ['quizid' => $this->quiz->id,
+            'image_status' => 'M', 'userid' => $user->id, 'deleted' => 0, 'status' => '' ])) {
             if ($attemptid) {
                 return false;
             } else {
@@ -154,8 +160,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $PAGE, $DB;
 
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-        $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
-        $proctoringdata = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $this->quiz->id));
+        $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
+        $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
                 $this->quiz->id, $serviceoption]);
@@ -163,41 +169,38 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('reqproctormsg', 'quizaccess_quizproctoring'));
 
-        $filemanageroptions = array();
+        $filemanageroptions = [];
         $filemanageroptions['accepted_types'] = '*';
         $filemanageroptions['maxbytes'] = 0;
         $filemanageroptions['maxfiles'] = 1;
         $filemanageroptions['mainfile'] = true;
         // Video tag.
-        $html = html_writer::start_tag('div', array('id' => 'fitem_id_user_video', 'class' => 'form-group row fitem videohtml'));
+        $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_video', 'class' => 'form-group row fitem videohtml']);
         $html .= html_writer::div('', 'col-md-3');
-        $videotag = html_writer::tag('video', '', array('id' => 'video', 'width' => '320'
-            , 'height' => '240', 'autoplay' => 'autoplay'));
+        $videotag = html_writer::tag('video', '', ['id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay']);
         $html .= html_writer::div($videotag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         // Canvas tag.
-        $html .= html_writer::start_tag('div', array('id' => 'fitem_id_user_canvas', 'class' => 'form-group row fitem videohtml'));
+        $html .= html_writer::start_tag('div', ['id' => 'fitem_id_user_canvas', 'class' => 'form-group row fitem videohtml']);
         $html .= html_writer::div('', 'col-md-3');
-        $canvastag = html_writer::tag('canvas', '', array('id' => 'canvas', 'width' => '320',
-         'height' => '240', 'class' => 'hidden'));
+        $canvastag = html_writer::tag('canvas', '', ['id' => 'canvas', 'width' => '320', 'height' => '240', 'class' => 'hidden']);
         $html .= html_writer::div($canvastag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         // Take picture button.
-        $html .= html_writer::start_tag('div', array('id' => 'fitem_id_user_takepicture', 'class' => 'form-group row fitem'));
+        $html .= html_writer::start_tag('div', ['id' => 'fitem_id_user_takepicture', 'class' => 'form-group row fitem']);
         $html .= html_writer::div('', 'col-md-3');
-
         $button = html_writer::tag('button', get_string('takepicture', 'quizaccess_quizproctoring'),
-            array('class' => 'btn btn-primary', 'id' => 'takepicture'));
+            ['class' => 'btn btn-primary', 'id' => 'takepicture']);
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         // Retake button.
-        $html .= html_writer::start_tag('div', array('id' => 'fitem_id_user_retake', 'class' => 'form-group row fitem'));
+        $html .= html_writer::start_tag('div', ['id' => 'fitem_id_user_retake', 'class' => 'form-group row fitem']);
         $html .= html_writer::div('', 'col-md-3');
         $button = html_writer::tag('button', get_string('retake', 'quizaccess_quizproctoring'),
-            array('class' => 'btn btn-primary hidden', 'id' => 'retake'));
+            ['class' => 'btn btn-primary hidden', 'id' => 'retake']);
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
@@ -207,17 +210,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         // Video button.
         if ($proctoringdata->proctoringvideo_link) {
-
-            $html = html_writer::start_tag('div', array('id' => 'fitem_id_user_demovideo', 'class' => 'form-group row fitem'));
+            $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_demovideo', 'class' => 'form-group row fitem']);
             $html .= html_writer::div('', 'col-md-3');
             $link = html_writer::tag('a', get_string('demovideo', 'quizaccess_quizproctoring'),
-                array('id' => 'demovideo', 'target' => '_blank', 'href' => $proctoringdata->proctoringvideo_link));
+                ['id' => 'demovideo', 'target' => '_blank', 'href' => $proctoringdata->proctoringvideo_link]);
             $html .= html_writer::div($link, 'col-md-9');
             $html .= html_writer::end_tag('div');
-
             $mform->addElement('html', $html);
         }
-
     }
 
     /**
@@ -243,8 +243,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $record->attemptid = $attemptid;
         // We probably have an entry already in DB.
         $file = file_get_draft_area_info($useridentity);
-        if ($rc = $DB->get_record('quizaccess_proctor_data', array('userid' =>
-            $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
+        if ($rc = $DB->get_record('quizaccess_proctor_data', ['userid' =>
+            $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ])) {
             $context = context_module::instance($cmid);
             $rc->image_status = 'M';
             if ($file['filecount'] > 0) {
@@ -306,21 +306,22 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
 
         // Time interval set for proctoring image.
-        $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
-                array("5" => get_string('fiveseconds', 'quizaccess_quizproctoring'),
-                    "10" => get_string('tenseconds', 'quizaccess_quizproctoring'),
-                    "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
-                    "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'),
-                    "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
-                    "60" => get_string('oneminute', 'quizaccess_quizproctoring'),
-                    "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
-                    "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
-                    "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
-                    "300" => get_string('fiveminutes', 'quizaccess_quizproctoring')));
+        $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), [
+            "5" => get_string('fiveseconds', 'quizaccess_quizproctoring'),
+            "10" => get_string('tenseconds', 'quizaccess_quizproctoring'),
+            "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
+            "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'),
+            "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
+            "60" => get_string('oneminute', 'quizaccess_quizproctoring'),
+            "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
+            "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
+            "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
+            "300" => get_string('fiveminutes', 'quizaccess_quizproctoring')
+        ]);
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
-        $thresholds = array();
+        $thresholds = [];
         for ($i = 0; $i <= 20; $i++) {
             if ($i == 0) {
                 $thresholds[$i] = 'Unlimited';
@@ -347,7 +348,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public static function save_settings($quiz) {
         global $DB;
         if (empty($quiz->enableproctoring)) {
-            $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
+            $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
@@ -358,7 +359,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
             $interval = required_param('time_interval', PARAM_INT);
-            $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
+            $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
@@ -377,7 +378,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function delete_settings($quiz) {
         global $DB;
-        $DB->delete_records('quizaccess_quizproctoring', array('quizid' => $quiz->id));
+        $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
     }
 
     /**
@@ -387,10 +388,11 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * @return string
      */
     public static function get_settings_sql($quizid) {
-        return array(
+        return [
             'enableproctoring,enableteacherproctor,time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
-            array());
+            []
+        ];
     }
 
     /**
@@ -425,15 +427,18 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
-                $quizinfo = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quiz->id));
-                $usermages = $DB->get_record('quizaccess_proctor_data',  array('quizid' => $quiz->id,
-                    'userid' => $userid, 'attemptid' => $attemptid, 'image_status' => 'M'));
+                $quizinfo = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
+                $usermages = $DB->get_record('quizaccess_proctor_data', [
+                    'quizid' => $quiz->id,
+                    'userid' => $userid,
+                    'attemptid' => $attemptid,
+                    'image_status' => 'M'
+                ]);
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
-                        $PAGE->requires->strings_for_js(array('noimageswarning', 'proctoringimages',
-                            'proctoringidentity'), 'quizaccess_quizproctoring');
+                        $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages', 'proctoringidentity'], 'quizaccess_quizproctoring');
                     }
                 }
             }

@@ -96,11 +96,12 @@ class api {
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::url();
-        $header = array('Content-Type: application/json',
-                        'access-token: ' . $accesstoken,
-                        'secret-token: ' . $accesstokensecret,
-                        'domain: ' . $domain
-                    );
+        $header = [
+            'Content-Type: application/json',
+            'access-token: ' . $accesstoken,
+            'secret-token: ' . $accesstokensecret,
+            'domain: ' . $domain,
+        ];
         $curl->setHeader($header);
         $result = $curl->post($url, $imagedata);
         return $result;
@@ -111,8 +112,8 @@ class api {
      *
      * @return string
      */
-    public static function url(){
-        if(isset($_SERVER['HTTPS'])) {
+    public static function url() {
+        if (isset($_SERVER['HTTPS'])) {
             $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
         } else {
             $protocol = 'http';

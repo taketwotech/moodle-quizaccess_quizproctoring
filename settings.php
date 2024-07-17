@@ -31,10 +31,10 @@ if ($hassiteconfig && !empty($USER->id)) {
     $settings = new admin_settingpage('modsettingsquizcatproctoring',
         get_string('pluginname', 'quizaccess_quizproctoring'), 'moodle/site:config');
 
-    $choices = array(
+    $choices = [
         'take2' => 'Take2 Proctoring',
-        'AWS' => 'AWS'
-    );
+        'AWS' => 'AWS',
+    ];
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
         get_string('serviceoption', 'quizaccess_quizproctoring'),
         get_string('serviceoption_desc', 'quizaccess_quizproctoring'),
@@ -82,9 +82,12 @@ if ($hassiteconfig && !empty($USER->id)) {
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/img_check_time',
         get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
         get_string('help_timeinterval', 'quizaccess_quizproctoring'), 5,
-        array(5 => get_string('fiveseconds', 'quizaccess_quizproctoring'),
-         60 => get_string('oneminute', 'quizaccess_quizproctoring'),
-         300 => get_string('fiveminutes', 'quizaccess_quizproctoring'))));
+        [
+            5 => get_string('fiveseconds', 'quizaccess_quizproctoring'),
+            60 => get_string('oneminute', 'quizaccess_quizproctoring'),
+            300 => get_string('fiveminutes', 'quizaccess_quizproctoring')
+        ]
+    ));
 
     $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
         get_string('proctoring_image_show', 'quizaccess_quizproctoring'),

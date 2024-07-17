@@ -36,14 +36,17 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-$course = $DB->get_record('course', array("id" => $cm->course), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 require_login($course);
 $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
 $target = '';
 if (!$mainimage) {
     // If it is not main image, get the main image data and compare.
-    if ($mainentry = $DB->get_record('quizaccess_proctor_data',
-        array('userid' => $USER->id, 'quizid' => $cm->instance, 'image_status' => 'M', 'attemptid' => $attemptid))) {
+    if ($mainentry = $DB->get_record('quizaccess_proctor_data', [
+    'userid' => $USER->id,
+    'quizid' => $cm->instance,
+    'image_status' => 'M',
+    'attemptid' => $attemptid])) {
         $context = context_module::instance($cmid);
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
@@ -66,7 +69,7 @@ if ($service === 'AWS') {
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
-        $imagedata = array("primary" => $tdata, "target" => $data);
+        $imagedata = ["primary" => $tdata, "target" => $data];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
@@ -76,7 +79,7 @@ if ($service === 'AWS') {
         }
     } else {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
-        $imagedata = array("primary" => $data);
+        $imagedata = ["primary" => $data];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
@@ -132,5 +135,5 @@ switch ($validate) {
         }
          break;
 }
-echo json_encode(array('status' => 'true'));
+echo json_encode(['status' => 'true']);
 die();

@@ -50,7 +50,7 @@ define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
  * @return bool false if file not found, does not return if found - justsend the file
  */
 function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload,
-    array $options=array()) {
+    array $options=[]) {
     global $DB;
     $itemid = array_shift($args);
     $filename = array_pop($args);
@@ -60,7 +60,7 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
     } else {
         $filepath = '/' . implode('/', $args) . '/';
     }
-    if (!$data = $DB->get_record("quizaccess_proctor_data", array('id' => $itemid)) && $filearea == 'identity') {
+    if (!$data = $DB->get_record("quizaccess_proctor_data", ['id' => $itemid]) && $filearea == 'identity') {
         return false;
     }
 
@@ -82,18 +82,20 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER;
     // Update main image attempt id as soon as user landed on attemp page.
-    $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
-    if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id,
-        'quizid' => $quizid, 'image_status' => 'M', 'attemptid' => 0))) {
+    $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+    if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
+    'userid' => $user->id,
+    'quizid' => $quizid,
+    'image_status' => 'M',
+    'attemptid' => 0
+    ])) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-    $interval = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/RecordRTC.js', true);
-    // Inline JavaScript to call the AMD module
-    $PAGE->requires->js_init_call('M.util.js_pending', array(true), true);
+    $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
+    $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
@@ -116,16 +118,20 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='') {
     global $USER, $DB, $COURSE;
 
-    $user = $DB->get_record('user', array('id' => $USER->id), '*', MUST_EXIST);
+    $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     // We are all good, store the image.
     if ( $mainimage ) {
-        if ($qpd = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id,
-            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'M' ))) {
-            $DB->delete_records('quizaccess_proctor_data', array('id' => $qpd->id));
+        if ($qpd = $DB->get_record('quizaccess_proctor_data', [
+            'userid' => $user->id,
+            'quizid' => $quizid,
+            'attemptid' => $attemptid,
+            'image_status' => 'M'
+        ])) {
+            $DB->delete_records('quizaccess_proctor_data', ['id' => $qpd->id]);
         }
-        if ($qpd = $DB->get_record('quizaccess_proctor_data', array('userid' => $user->id,
-            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'I' ))) {
-            $DB->delete_records('quizaccess_proctor_data', array('id' => $qpd->id));
+        if ($qpd = $DB->get_record('quizaccess_proctor_data', ['userid' => $user->id,
+            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'I' ])) {
+            $DB->delete_records('quizaccess_proctor_data', ['id' => $qpd->id]);
         }
     }
     $imagename = $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
@@ -143,7 +149,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
     if ($status != '') {
         $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-        $proctoreddata = $DB->get_record('quizaccess_proctor_data', array('id' => $id));
+        $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
         $proctoreddata->userimg = $imagename;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
@@ -153,13 +159,14 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $fs = get_file_storage();
     // Prepare file record object.
     $context = context_module::instance($cmid);
-    $fileinfo = array(
+    $fileinfo = [
         'contextid' => $context->id,
         'component' => 'quizaccess_quizproctoring',
         'filearea' => 'cameraimages',
         'itemid' => $id,
         'filepath' => '/',
-        'filename' => $imagename);
+        'filename' => $imagename
+    ];
     $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
             $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
     if ($file) {
@@ -168,17 +175,21 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $fs->create_file_from_pathname($fileinfo, $tmpdir . $imagename);
 
     if ( !$mainimage ) {
-        $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', array('quizid' => $quizid));
+        $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
-            $inparams = array('param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
+            $inparams = [
+                'param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
                 'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
                 'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
                 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
                 'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
-                'userid' => $user->id, 'quizid' => $quizid,
-                'attemptid' => $attemptid, 'image_status' => 'A');
+                'userid' => $user->id,
+                'quizid' => $quizid,
+                'attemptid' => $attemptid,
+                'image_status' => 'A',
+            ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
             AND status IN (:param1,:param2,:param3,:param4,:param5)";
@@ -188,7 +199,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 // Submit quiz.
                 $attemptobj = quiz_attempt::create($attemptid);
                 $attemptobj->process_finish(time(), false);
-                echo json_encode(array('status' => 'true', 'redirect' => 'true', 'url' => $attemptobj->review_url()->out()));
+                echo json_encode(['status' => 'true', 'redirect' => 'true', 'url' => $attemptobj->review_url()->out()]);
                 die();
             } else {
                 if ($status) {
