@@ -47,4 +47,12 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+
+    <library>
+        <location>libraries/socket.io.js</location>
+        <name>socket.io</name>
+        <version>1.4.5</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
 </libraries>

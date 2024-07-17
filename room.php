@@ -41,7 +41,7 @@ echo $OUTPUT->header();
 $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
 
 // Include js module.
-echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
+echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
 'init', [$cmid, false, true, null, true, $room, $serviceoption]);
 

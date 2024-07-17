@@ -94,7 +94,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/socket.io-1.4.5.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
