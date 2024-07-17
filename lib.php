@@ -87,7 +87,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     'userid' => $user->id,
     'quizid' => $quizid,
     'image_status' => 'M',
-    'attemptid' => 0
+    'attemptid' => 0,
     ])) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
@@ -125,7 +125,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             'userid' => $user->id,
             'quizid' => $quizid,
             'attemptid' => $attemptid,
-            'image_status' => 'M'
+            'image_status' => 'M',
         ])) {
             $DB->delete_records('quizaccess_proctor_data', ['id' => $qpd->id]);
         }
@@ -165,7 +165,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
         'filearea' => 'cameraimages',
         'itemid' => $id,
         'filepath' => '/',
-        'filename' => $imagename
+        'filename' => $imagename,
     ];
     $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
             $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);

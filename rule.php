@@ -108,13 +108,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $button = '';
         $context = context_module::instance($id);
         $service = get_config('quizaccess_quizproctoring', 'serviceoption');
-        if (($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance, 'enableteacherproctor' => 1])) && ($service != 'AWS')) {
+        if (($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance,
+            'enableteacherproctor' => 1])) && ($service != 'AWS')) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
                 $button = $OUTPUT->single_button(
                     new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php', [
                         'cmid' => $id,
                         'room' => $getquiz->instance,
-                        'teacher' => 'teacher'
+                        'teacher' => 'teacher',
                     ]),
                     get_string('viewstudentonline', 'quizaccess_quizproctoring'),
                     'get'
@@ -303,7 +304,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
 
         if ($service != 'AWS') {
             // Allow admin or teacher to setup proctored quiz.
-            $mform->addElement('selectyesno', 'enableteacherproctor', get_string('enableteacherproctor', 'quizaccess_quizproctoring'));
+            $mform->addElement('selectyesno', 'enableteacherproctor',
+                get_string('enableteacherproctor', 'quizaccess_quizproctoring'));
             $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
             $mform->setDefault('enableteacherproctor', 0);
             $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
@@ -320,7 +322,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
             "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
             "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
-            "300" => get_string('fiveminutes', 'quizaccess_quizproctoring')
+            "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]);
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
@@ -395,7 +397,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         return [
             'enableproctoring,enableteacherproctor,time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
-            []
+            [],
         ];
     }
 
@@ -436,13 +438,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'quizid' => $quiz->id,
                     'userid' => $userid,
                     'attemptid' => $attemptid,
-                    'image_status' => 'M'
+                    'image_status' => 'M',
                 ]);
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
-                        $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages', 'proctoringidentity'], 'quizaccess_quizproctoring');
+                        $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
+                            'proctoringidentity'], 'quizaccess_quizproctoring');
                     }
                 }
             }

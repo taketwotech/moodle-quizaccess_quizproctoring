@@ -38,7 +38,7 @@ class backup_quizaccess_quizproctoring_activity_structure_step extends backup_ac
 
         // Define each element separated.
         $quizaccessproctoring = new backup_nested_element('quizaccess_quizproctoring', ['id'], [
-            'quizid', 'enableproctoring', 'enableteacherproctor', 'time_interval'
+            'quizid', 'enableproctoring', 'enableteacherproctor', 'time_interval',
         ]);
 
         // Define sources.

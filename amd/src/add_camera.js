@@ -112,7 +112,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctorofppt.dataprotechgroup.com';
+    var externalserver = 'https://proctoring.taketwotechnologies.com/';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
