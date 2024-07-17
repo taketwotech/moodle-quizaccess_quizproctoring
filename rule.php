@@ -107,7 +107,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $getquiz = $DB->get_record_sql($sql);
         $button = '';
         $context = context_module::instance($id);
-        if ($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance, 'enableteacherproctor' => 1])) {
+        $service = get_config('quizaccess_quizproctoring', 'serviceoption');
+        if (($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance, 'enableteacherproctor' => 1])) && ($service != 'AWS')) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
                 $button = $OUTPUT->single_button(
                     new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php', [
@@ -295,15 +296,18 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $CFG;
 
         // Allow to enable the access rule only if the Mobile services are enabled.
+        $service = get_config('quizaccess_quizproctoring', 'serviceoption');
         $mform->addElement('selectyesno', 'enableproctoring', get_string('enableproctoring', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('enableproctoring', 'enableproctoring', 'quizaccess_quizproctoring');
         $mform->setDefault('enableproctoring', 0);
 
-        // Allow admin or teacher to setup proctored quiz.
-        $mform->addElement('selectyesno', 'enableteacherproctor', get_string('enableteacherproctor', 'quizaccess_quizproctoring'));
-        $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
-        $mform->setDefault('enableteacherproctor', 0);
-        $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
+        if ($service != 'AWS') {
+            // Allow admin or teacher to setup proctored quiz.
+            $mform->addElement('selectyesno', 'enableteacherproctor', get_string('enableteacherproctor', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
+            $mform->setDefault('enableteacherproctor', 0);
+            $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
+        }
 
         // Time interval set for proctoring image.
         $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), [
