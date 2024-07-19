@@ -20,7 +20,8 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response', 'core/modal_events', 'quizaccess_quizproctoring/modal_proctoring'],
+define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response',
+    'core/modal_events', 'quizaccess_quizproctoring/modal_proctoring'],
 function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
 
     var ResponsePanel = function(responses) {
@@ -227,9 +228,9 @@ function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
         });
         docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
-            var type = ModalProctoringImages.TYPE;
+            var modalType = ModalProctoringImages.TYPE;
             if (release && parseFloat(release) < 4.3) {
-                type = ModalResponse.TYPE;
+                modalType = ModalResponse.TYPE;
             }
             var quizid = $(this).data('quizid');
             var userid = $(this).data('userid');
@@ -251,7 +252,7 @@ function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
                         rp.attemptid = attemptid;
                         rp.lastpage = rp.responses[rp.index].totalpage;
                         return ModalFactory.create({
-                            type: type,
+                            type: modalType,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.setTitle('User Images');
