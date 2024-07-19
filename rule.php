@@ -430,6 +430,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
             $quiz = $attemptobj->get_quiz();
             $userid = $attemptobj->get_userid();
+            $release = get_config('moodle', 'release');
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
@@ -443,7 +444,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
                         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
-                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
+                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow], $release);
                         $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
                             'proctoringidentity'], 'quizaccess_quizproctoring');
                     }

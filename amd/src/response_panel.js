@@ -20,8 +20,8 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response', 'core/modal_events'],
-function($, ModalFactory, ModalResponse, ModalEvents) {
+define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response', 'core/modal_events', 'quizaccess_quizproctoring/modal_proctoring'],
+function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
 
     var ResponsePanel = function(responses) {
         this.responses = responses;
@@ -199,10 +199,10 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
 
     };
 
-    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, $proctoringimageshow) {
+    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, proctoringimageshow, release) {
         var docElement = $(document);
         docElement.ready(function() {
-            if ($proctoringimageshow == 1) {
+            if (proctoringimageshow == 1) {
                 let btn = document.createElement("button");
                 btn.innerHTML = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                 btn.setAttribute("type", "button");
@@ -227,6 +227,11 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
         });
         docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
+            if (release && parseFloat(release) < 4.3) {
+                var type = ModalResponse.TYPE;
+            } else {
+                var type = ModalProctoringImages.TYPE;
+            }
             var quizid = $(this).data('quizid');
             var userid = $(this).data('userid');
             var attemptid = $(this).data('attemptid');
@@ -247,7 +252,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                         rp.attemptid = attemptid;
                         rp.lastpage = rp.responses[rp.index].totalpage;
                         return ModalFactory.create({
-                            type: ModalResponse.TYPE,
+                            type: type,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.setTitle('User Images');
