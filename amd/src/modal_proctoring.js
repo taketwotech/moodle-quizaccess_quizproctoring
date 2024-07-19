@@ -1,4 +1,5 @@
-define(['jquery', 'core/modal', 'core/modal_registry'], function($, Modal, ModalRegistry) {
+define(['jquery', 'core/notification', 'core/custom_interaction_events', 'core/modal', 'core/modal_registry'],
+    function($, Notification, CustomEvents, Modal, ModalRegistry) {
     var registered = false;
         var SELECTORS = {
             PREVIOUS_BUTTON: '[data-action="previous"]',

@@ -25,7 +25,7 @@ import $ from 'jquery';
 import Modal from 'core/modal';
 import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
-import ModalProctoring from './modal_proctoring';
+//import ModalProctoring from './modal_proctoring';
 
     var ResponsePanel = function(responses) {
         this.responses = responses;
@@ -54,9 +54,45 @@ import ModalProctoring from './modal_proctoring';
      * @method registerEventListeners
      */
     ResponsePanel.prototype.registerEventListeners = function() {
-        var docElement = $(document);
-        docElement.on('next', this._getNextUser.bind(this));
-        docElement.on('prev', this._getPreviousUser.bind(this));
+       
+        var self = this; // Store reference to ResponsePanel instance
+
+    // Example assuming you have direct access to the buttons triggering 'next' and 'prev'
+    $(document).on('click', SELECTORS.PREVIOUS_BUTTON, function(e) {
+        $(document).trigger('prev');
+        e.preventDefault();
+    });
+
+    $(document).on('click', SELECTORS.NEXT_BUTTON, function(e) {
+        $(document).trigger('next');
+        e.preventDefault();
+    });
+
+    // Assuming you also want to handle 'next' and 'prev' events within ResponsePanel
+    $(document).on('next', function() {
+        self._getNextUser();
+    });
+
+    $(document).on('prev', function() {
+        self._getPreviousUser();
+    });
+};
+
+    var registered = false;
+        var SELECTORS = {
+            PREVIOUS_BUTTON: '[data-action="previous"]',
+            NEXT_BUTTON: '[data-action="next"]',
+        };
+
+    var ModalProctoring = function(root) {
+        Modal.call(this, root);
+        if (!this.getFooter().find(SELECTORS.PREVIOUS_BUTTON).length) {
+                 Notification.exception({message: 'No previous button found'});
+            }
+
+            if (!this.getFooter().find(SELECTORS.NEXT_BUTTON).length) {
+                Notification.exception({message: 'No next button found'});
+            }
     };
 
     /**
@@ -207,14 +243,15 @@ export default class ModalAddProctoringImage extends Modal {
     static TYPE = 'quizaccess_quizproctoring-response';
     static TEMPLATE = 'quizaccess_quizproctoring/response_modal';
 
+
     /**
      * Create the add random question modal.
      *
-     * @param  {Number} contextId Current context id.
-     * @param  {string} category Category id and category context id comma separated.
-     * @param  {string} returnUrl URL to return to after form submission.
-     * @param  {Number} cmid Current course module id.
-     * @param  {boolean} showNewCategory Display the New category tab when selecting random questions.
+     * @param  {Number} attemptid Current attempt id.
+     * @param  {Number} quizid quiz id.
+     * @param  {Number} userid User Id.
+     * @param  {boolean} useridentity user Identity.
+     * @param  {boolean} proctoringimageshow proctoring Image Show.
      */
     static init(attemptid = null, quizid = null, userid = null, useridentity = null, $proctoringimageshow) {
         var docElement = $(document);
@@ -266,7 +303,7 @@ export default class ModalAddProctoringImage extends Modal {
                         rp.attemptid = attemptid;
                         rp.lastpage = rp.responses[rp.index].totalpage;console.log(rp.responses[rp.index]);
                         return ModalAddProctoringImage.create({
-                            type: ModalProctoring.TYPE,
+                            type: ModalAddProctoringImage.TYPE,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.setTitle('User Images');
