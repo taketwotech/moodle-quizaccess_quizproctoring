@@ -227,10 +227,9 @@ function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
         });
         docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
+            var type = ModalProctoringImages.TYPE;
             if (release && parseFloat(release) < 4.3) {
-                var type = ModalResponse.TYPE;
-            } else {
-                var type = ModalProctoringImages.TYPE;
+                type = ModalResponse.TYPE;
             }
             var quizid = $(this).data('quizid');
             var userid = $(this).data('userid');
