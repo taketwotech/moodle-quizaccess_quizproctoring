@@ -20,12 +20,12 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define([
-    'jquery', 
-    'core/modal_factory', 
-    'core/modal_events', 
-    'quizaccess_quizproctoring/modal_proctoring'
-], function($, ModalFactory, ModalEvents, ModalAddProctoringImage) {
+
+import $ from 'jquery';
+import Modal from 'core/modal';
+import ModalFactory from 'core/modal_factory';
+import ModalEvents from 'core/modal_events';
+import ModalProctoring from './modal_proctoring';
 
     var ResponsePanel = function(responses) {
         this.responses = responses;
@@ -203,7 +203,20 @@ define([
 
     };
 
-    var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, $proctoringimageshow) {
+export default class ModalAddProctoringImage extends Modal {
+    static TYPE = 'quizaccess_quizproctoring-response';
+    static TEMPLATE = 'quizaccess_quizproctoring/response_modal';
+
+    /**
+     * Create the add random question modal.
+     *
+     * @param  {Number} contextId Current context id.
+     * @param  {string} category Category id and category context id comma separated.
+     * @param  {string} returnUrl URL to return to after form submission.
+     * @param  {Number} cmid Current course module id.
+     * @param  {boolean} showNewCategory Display the New category tab when selecting random questions.
+     */
+    static init(attemptid = null, quizid = null, userid = null, useridentity = null, $proctoringimageshow) {
         var docElement = $(document);
         docElement.ready(function() {
             if ($proctoringimageshow == 1) {
@@ -229,6 +242,7 @@ define([
                 document.getElementById("page-content").prepend(btnidentity);
             }
         });
+
         docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
             var quizid = $(this).data('quizid');
@@ -243,15 +257,16 @@ define([
                 },
                 dataType: 'json',
                 success: function(response) {
+                    console.log(response);
                     var images = JSON.parse(JSON.stringify(response));
                     if (images.length > 0) {
                         var rp = new ResponsePanel(images);
                         rp.quizid = quizid;
                         rp.userid = userid;
                         rp.attemptid = attemptid;
-                        rp.lastpage = rp.responses[rp.index].totalpage;
-                        return ModalFactory.create({
-                            type: ModalResponse.TYPE,
+                        rp.lastpage = rp.responses[rp.index].totalpage;console.log(rp.responses[rp.index]);
+                        return ModalAddProctoringImage.create({
+                            type: ModalProctoring.TYPE,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.setTitle('User Images');
@@ -277,37 +292,7 @@ define([
                 }
             });
         });
-        docElement.on('click', 'button.proctoridentity', function(e) {
-            e.preventDefault();
-            $.ajax({
-                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoridentity.php',
-                data: {
-                    attemptid: $(this).data('attemptid'),
-                    userid: $(this).data('userid'),
-                    quizid: $(this).data('quizid')
-                },
-                dataType: 'json',
-                success: function(response) {
-                    var residentity = JSON.parse(JSON.stringify(response));
-                    if (residentity.success) {
-                        window.open(residentity.url, "_blank");
-                    } else {
-                        return ModalFactory.create({
-                            type: ModalFactory.types.DEFAULT,
-                            body: residentity.message,
-                        }).then(function(modal) {
-                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                            modal.show();
-                            return null;
-                        });
-                    }
-                    return true;
-                }
-            });
-        });
-    };
+    }
+}
 
-    return {
-        init: init
-    };
-});
+ModalAddProctoringImage.registerModalType();

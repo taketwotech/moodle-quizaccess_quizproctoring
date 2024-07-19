@@ -442,10 +442,23 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 ]);
                 if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
-                        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
+                        // Get the Moodle version
+                        $release = get_config('moodle', 'release');
+                        // Define the version to compare against
+                        $compareVersion = '4.3';
+
+                        // Compare the Moodle version with the specified version
+                        if (version_compare($release, $compareVersion, '<')) {
+                            $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
-                        $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
+                            $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
                             'proctoringidentity'], 'quizaccess_quizproctoring');
+                        } else {
+                            $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_proctoring', 'init',
+                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
+                            $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
+                            'proctoringidentity'], 'quizaccess_quizproctoring');
+                        }
                     }
                 }
             }
