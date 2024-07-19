@@ -20,8 +20,8 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response', 'core/modal_events'],
-function($, ModalFactory, ModalResponse, ModalEvents) {
+define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_proctoring', 'core/modal_events'],
+function($, ModalFactory, ModalProctoringImages, ModalEvents) {
 
     var ResponsePanel = function(responses) {
         this.responses = responses;
@@ -247,7 +247,7 @@ function($, ModalFactory, ModalResponse, ModalEvents) {
                         rp.attemptid = attemptid;
                         rp.lastpage = rp.responses[rp.index].totalpage;
                         return ModalFactory.create({
-                            type: ModalResponse.TYPE,
+                            type: ModalProctoringImages.TYPE,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.setTitle('User Images');
