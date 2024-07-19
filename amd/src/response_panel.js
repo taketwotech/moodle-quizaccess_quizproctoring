@@ -20,9 +20,9 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response',
+define(['jquery', 'core/modal_factory',
     'core/modal_events', 'quizaccess_quizproctoring/modal_proctoring'],
-function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
+function($, ModalFactory, ModalEvents, ModalProctoringImages) {
 
     var ResponsePanel = function(responses) {
         this.responses = responses;
@@ -230,7 +230,10 @@ function($, ModalFactory, ModalResponse, ModalEvents, ModalProctoringImages) {
             e.preventDefault();
             var modalType = ModalProctoringImages.TYPE;
             if (release && parseFloat(release) < 4.3) {
-                modalType = ModalResponse.TYPE;
+                require(['quizaccess_quizproctoring/modal_response'],
+                    function(ModalResponse) {
+                    modalType = ModalResponse.TYPE;
+                });
             }
             var quizid = $(this).data('quizid');
             var userid = $(this).data('userid');
