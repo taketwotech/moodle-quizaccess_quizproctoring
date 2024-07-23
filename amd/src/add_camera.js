@@ -90,17 +90,15 @@ function($, str, ModalFactory) {
         });
     };
     Camera.prototype.proctoringimage = function() {
-        if(this.canvas) {
-            var context = this.canvas.getContext('2d');
-            context.drawImage(this.video, 0, 0, this.width, this.height);
-            var data = this.canvas.toDataURL('image/png');
-        }
         var requestData = {
             cmid: this.cmid,
             attemptid: this.attemptid,
             mainimage: this.mainimage
         };
-        if (data) {
+        if (this.canvas) {
+            var context = this.canvas.getContext('2d');
+            context.drawImage(this.video, 0, 0, this.width, this.height);
+            var data = this.canvas.toDataURL('image/png');
             requestData.imgBase64 = data;
         }
         $.ajax({
@@ -420,7 +418,7 @@ function($, str, ModalFactory) {
                     }
                     return stream;
                 })
-                .catch(function(error) {
+                .catch(function() {
                     // Handle the case where permission is denied
                     if (verifyduringattempt) {
                         var teacherroom = getTeacherroom();
