@@ -90,14 +90,23 @@ function($, str, ModalFactory) {
         });
     };
     Camera.prototype.proctoringimage = function() {
-        // Console.log(this.cmid);
-        var context = this.canvas.getContext('2d');
-        context.drawImage(this.video, 0, 0, this.width, this.height);
-        var data = this.canvas.toDataURL('image/png');
+        if(this.canvas) {
+            var context = this.canvas.getContext('2d');
+            context.drawImage(this.video, 0, 0, this.width, this.height);
+            var data = this.canvas.toDataURL('image/png');
+        }
+        var requestData = {
+            cmid: this.cmid,
+            attemptid: this.attemptid,
+            mainimage: this.mainimage
+        };
+        if (data) {
+            requestData.imgBase64 = data;
+        }
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
-            data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
+            data: requestData,
             success: function(response) {
                 if (response && response.errorcode) {
                     $(document).trigger('popup', response.error);
@@ -412,7 +421,14 @@ function($, str, ModalFactory) {
                     return stream;
                 })
                 .catch(function(error) {
-                    throw error; // Rethrow the error to propagate it further
+                    // Handle the case where permission is denied
+                    if (verifyduringattempt) {
+                        var teacherroom = getTeacherroom();
+                        if (teacherroom !== 'teacher') {
+                            var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                            setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+                        }
+                    }
                 })
                 .finally(function() {
                     if (callback) {

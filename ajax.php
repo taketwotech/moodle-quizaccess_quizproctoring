@@ -27,13 +27,18 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
-$img = required_param('imgBase64', PARAM_RAW);
+$img = optional_param('imgBase64', '', PARAM_RAW);
 $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
+}
+
+if(!$img) {
+    quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
 }
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
