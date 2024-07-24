@@ -140,5 +140,10 @@ switch ($validate) {
         }
          break;
 }
+if (($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $cm->instance,
+            'storeallimages' => 1])) && !$mainimage) {
+    quizproctoring_storeimage($img, $cmid, $attemptid,
+    $cm->instance, $mainimage, $service, '', true);
+}
 echo json_encode(['status' => 'true']);
 die();

@@ -205,5 +205,20 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
     }
+
+     if ($oldversion < 2024071903) {
+
+        // Define field storeallimages to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('storeallimages', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+
+        // Conditionally launch add field storeallimages.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024071903, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }

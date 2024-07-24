@@ -309,6 +309,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
             $mform->setDefault('enableteacherproctor', 0);
             $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
+
+            // Allow admin or teacher to capture all images not just warning images.
+            $mform->addElement('selectyesno', 'storeallimages',
+                get_string('storeallimages', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('storeallimages', 'storeallimages', 'quizaccess_quizproctoring');
+            $mform->setDefault('storeallimages', 0);
+            $mform->hideIf('storeallimages', 'enableproctoring', 'eq', '0');
         }
 
         // Time interval set for proctoring image.
@@ -359,6 +366,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
             $record->enableteacherproctor = $quiz->enableteacherproctor;
+            $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -370,6 +378,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
             $record->enableteacherproctor = $quiz->enableteacherproctor;
+            $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -395,7 +404,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function get_settings_sql($quizid) {
         return [
-            'enableproctoring,enableteacherproctor,time_interval,warning_threshold,proctoringvideo_link',
+            'enableproctoring,enableteacherproctor,storeallimages,time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             [],
         ];

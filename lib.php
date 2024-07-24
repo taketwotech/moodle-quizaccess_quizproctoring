@@ -116,7 +116,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param string $service service enabled
  * @param string $status
  */
-function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='') {
+function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='', $storeallimg=false) {
     global $USER, $DB, $COURSE;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
@@ -151,7 +151,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->attemptid = $attemptid;
     $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
-    if ($status != '') {
+    if (($status != '') || ($storeallimg && $status == '')) {
         if($data) {
             $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
         }
