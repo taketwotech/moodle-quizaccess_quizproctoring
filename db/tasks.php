@@ -15,18 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Task definition for quizaccess_quizproctoring
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2024071907;
-$plugin->requires = 2019111200;
-$plugin->release = 'v4.2.5';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+$tasks = [
+    [
+        'classname' => 'quizaccess_quizproctoring\task\deleteStoredImagesTask',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => '0',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];
