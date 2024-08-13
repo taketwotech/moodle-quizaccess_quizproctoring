@@ -33,14 +33,13 @@ function xmldb_quizaccess_quizproctoring_install() {
     global $DB, $USER;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
-    $version = get_config('quizaccess_quizproctoring', 'version');
 
     $record = new stdClass();
     $record->firstname = $user->firstname;
     $record->lastname  = $user->lastname;
     $record->email     = $user->email;
     $record->moodle_v  = get_config('moodle', 'release');    
-    $record->previously_installed_v = $version !== false ? $version : '';
+    $record->previously_installed_v = '';
 
     $postdata = json_encode($record);
 

@@ -206,16 +206,18 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2024081300) {
+    if ($oldversion < 2024081301) {
 
         $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+        $release = $plugin->release;
 
         $record = new stdClass();
         $record->firstname = $user->firstname;
         $record->lastname  = $user->lastname;
         $record->email     = $user->email;
         $record->moodle_v  = get_config('moodle', 'release');    
-        $record->previously_installed_v = $oldversion;
+        $record->previously_installed_v = $release .'(Build: '. $oldversion.')';
 
         $postdata = json_encode($record);
 
@@ -227,7 +229,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $curl->setHeader($header);
         $result = $curl->post($url, $postdata);
 
-        upgrade_plugin_savepoint(true, 2024081300, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2024081301, 'quizaccess', 'quizproctoring');
     }
     return true;
 }
