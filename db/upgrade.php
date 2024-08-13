@@ -28,7 +28,7 @@
  * @param string $oldversion the version we are upgrading from.
  */
 function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
-    global $CFG, $DB;
+    global $CFG, $DB, $USER;
 
     $dbman = $DB->get_manager();
 
@@ -204,6 +204,30 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2024081300) {
+
+        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+
+        $record = new stdClass();
+        $record->firstname = $user->firstname;
+        $record->lastname  = $user->lastname;
+        $record->email     = $user->email;
+        $record->moodle_v  = get_config('moodle', 'release');    
+        $record->previously_installed_v = $oldversion;
+
+        $postdata = json_encode($record);
+
+        $curl = new \curl();
+        $url = 'https://proctorofppt.dataprotechgroup.com/create';
+        $header = [
+            'Content-Type: application/json',
+        ];
+        $curl->setHeader($header);
+        $result = $curl->post($url, $postdata);
+
+        upgrade_plugin_savepoint(true, 2024081300, 'quizaccess', 'quizproctoring');
     }
     return true;
 }
