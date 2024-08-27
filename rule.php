@@ -102,6 +102,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public function description() {
         global $OUTPUT, $DB;
+        $isadmin = is_siteadmin($USER);
         $id = required_param('id', PARAM_INT);
         $sql = "SELECT cm.* FROM {modules} md JOIN {course_modules} cm ON cm.module = md.id WHERE cm.id = $id";
         $getquiz = $DB->get_record_sql($sql);
@@ -121,6 +122,16 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'get'
                 );
             }
+        }
+        if ($isadmin) {
+            $button .= $OUTPUT->single_button(
+                    new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
+                        'cmid' => $id,
+                        'quizid' => $getquiz->instance,
+                    ]),
+                    get_string('viewproctoringreport', 'quizaccess_quizproctoring'),
+                    'get'
+                );
         }
         return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
     }
