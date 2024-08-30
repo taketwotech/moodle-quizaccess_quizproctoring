@@ -51,3 +51,17 @@ button.proctoridentity {
     width: 5%;
     z-index: 9999999;
 }
+
+/* Hide video on mobile devices */
+@media only screen and (max-width: 767px) {
+    #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
+        display: none;
+    }
+}
+
+/* Show video on larger screens */
+@media only screen and (min-width: 768px) {
+    #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
+        display: block; /* Or use display: inline; or display: inline-block; as per your layout */
+    }
+}
