@@ -44,7 +44,7 @@ function xmldb_quizaccess_quizproctoring_install() {
     $postdata = json_encode($record);
 
     $curl = new \curl();
-    $url = 'https://proctorofppt.dataprotechgroup.com/create';
+    $url = 'https://proctoring.taketwotechnologies.com/create';
     $header = [
         'Content-Type: application/json',
     ];
