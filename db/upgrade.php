@@ -206,7 +206,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2024081300) {
+    if ($oldversion < 2024083000) {
 
         $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
         $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
@@ -229,7 +229,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $curl->setHeader($header);
         $result = $curl->post($url, $postdata);
 
-        upgrade_plugin_savepoint(true, 2024081300, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
     }
     return true;
 }
