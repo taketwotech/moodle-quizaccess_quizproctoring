@@ -194,6 +194,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
                 'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
                 'param6' => QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'userid' => $user->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -201,7 +202,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
@@ -229,7 +230,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                     $errorstring = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
                 }
 
-                if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+                if ($status) {
                     throw new moodle_exception($status, 'quizaccess_quizproctoring', '', $errorstring);
                     die();
                 }
