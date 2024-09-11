@@ -231,5 +231,26 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2024083001) {
+
+        // Set config values for the upgraded version
+        set_config('enablemobilewebservice', true);
+        set_config('enablewebservices', true);
+        set_config('webserviceprotocols', 'xmlrpc,rest');
+
+        // Assign new capabilities if they do not already exist
+        $system_context = context_system::instance();
+        $userRole = $DB->get_record('role', array('shortname' => 'user'));
+        if ($userRole) {
+            assign_capability('webservice/xmlrpc:use', CAP_ALLOW, $userRole->id, $system_context->id, true);
+            assign_capability('webservice/rest:use', CAP_ALLOW, $userRole->id, $system_context->id, true);
+            assign_capability('moodle/webservice:createtoken', CAP_ALLOW, $userRole->id, $system_context->id, true);
+        }
+
+        // After making these changes, update the version in the database
+        upgrade_plugin_savepoint(true, 2024083001, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }

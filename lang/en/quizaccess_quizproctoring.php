@@ -50,6 +50,7 @@ $string['fiveseconds'] = '5 seconds';
 $string['fourminutes'] = '4 minutes';
 $string['help_timeinterval'] = 'Select time interval for image Proctoring';
 $string['mainimage'] = 'Main Image';
+$string['minimizedetected'] = 'Do not move away from active tab. You have only {$a} left.';
 $string['multifacesdetected'] = 'More than one face detected. {$a}';
 $string['nocameradetected'] = 'No camera detected. {$a}';
 $string['nofacedetected'] = 'No face detected. {$a}';

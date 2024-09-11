@@ -37,6 +37,7 @@ define('QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD', 80);
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_PASSED', 'completionpassed');
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
+define('PROCTORING_WEB_SERVICE', 'proctoring_web_service');
 
 /**
  * Serves the quizaccess proctoring files.

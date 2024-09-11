@@ -164,7 +164,7 @@ function($, str, ModalFactory) {
                 e.preventDefault();
                 camera.retake();
             });
-        } else {
+        } else {            
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
@@ -378,7 +378,7 @@ function($, str, ModalFactory) {
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, setinterval, serviceoption, quizid, callback) {
-        require(['core/ajax'], function() {
+        require(['core/ajax'], function(ajax) {
             if (localMediaStream !== null) {
                 if (callback) {
                     callback();
@@ -399,7 +399,7 @@ function($, str, ModalFactory) {
 
             navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
-                    localMediaStream = stream;
+                    localMediaStream = stream;                    
                     if (verifyduringattempt) {
                         var teacherroom = getTeacherroom();
                         if (teacherroom !== 'teacher') {
@@ -412,6 +412,26 @@ function($, str, ModalFactory) {
                                 'height': '240',
                                 'autoplay': 'autoplay'
                             }).appendTo('body');
+                            if(!teacher) {
+                                document.addEventListener('visibilitychange', function() {
+                                if (document.visibilityState === 'visible') {
+                                   const request = {
+                                        methodname: 'quizaccess_quizproctoring_save_threshold_warning',
+                                        args: {
+                                            quizid: quizid,
+                                            attemptid: attemptid
+                                        },
+                                    };                       
+                                     ajax.call([request])[0].done(function(result) {
+                                        if(result.url) {             
+                                            window.location.href = result.url;
+                                        } else {
+                                            $(document).trigger('popup', result.warning);
+                                        }
+                                    })
+                                    }
+                                });                                
+                            }
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
