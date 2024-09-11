@@ -412,6 +412,25 @@ function($, str, ModalFactory) {
                                 'height': '240',
                                 'autoplay': 'autoplay'
                             }).appendTo('body');
+                            document.addEventListener('visibilitychange', function() {
+                                if (document.visibilityState === 'visible') {
+                                   $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                    method: 'POST',
+                                    data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
+                                    success: function(response) {
+                                        if (response && response.errorcode) {
+                                            $(document).trigger('popup', response.error);
+                                        } else {
+                                            if (response.redirect && response.url) {
+                                                window.onbeforeunload = null;
+                                                window.location.href = encodeURI(response.url);
+                                            }
+                                        }
+                                    }
+                                });
+                                }
+                            });
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }

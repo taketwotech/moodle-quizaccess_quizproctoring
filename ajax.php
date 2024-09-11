@@ -31,14 +31,20 @@ $img = optional_param('imgBase64', '', PARAM_RAW);
 $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
+$tab = optional_param('tab', false, PARAM_BOOL);
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-if(!$img) {
+if(!$img && !$tab) {
     quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
                 $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
+}
+
+if(!$img && $tab) {
+    quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED);
 }
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
