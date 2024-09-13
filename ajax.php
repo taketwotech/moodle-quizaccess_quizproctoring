@@ -51,6 +51,7 @@ $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 require_login($course);
 $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
 $target = '';
+$profileimg = '';
 if (!$mainimage) {
     // If it is not main image, get the main image data and compare.
     if ($mainentry = $DB->get_record('quizaccess_proctor_data', [
@@ -62,6 +63,13 @@ if (!$mainimage) {
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
         $target = $f1->get_content();
+    }
+} else {
+    $context = context_user::instance($USER->id);
+    $fs = get_file_storage();
+    $f1 = $fs->get_file($context->id, 'user', 'icon', 0, '/', 'f1.jpg');
+    if ($f1 && !$f1->is_directory()) {
+        $profileimage = $f1->get_content();
     }
 }
 $service = get_config('quizaccess_quizproctoring', 'serviceoption');
@@ -95,8 +103,20 @@ if ($service === 'AWS') {
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
+        } else if ($profileimage) {            
+            $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
+            $profiledata = ["primary" => $data, "target" => $imagecontent];
+            $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata));
+            $profileres = json_decode($matchprofile, true);
+            if (empty($profileres['FaceDetails']) && empty($profileres['FaceMatches']) && empty($profileres['UnmatchedFaces'])) {
+                throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
+                die();
+            } else {
+                $validate = \quizaccess_quizproctoring\api::validate($response, $data);
+            }
         } else {
-            $validate = \quizaccess_quizproctoring\api::validate($response, $data);
+            throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
+            die();
         }
     }
 }

@@ -21,20 +21,22 @@ function($, str, ModalFactory) {
         this.attemptid = attemptid;
         $("#id_submitbutton").prop("disabled", true);
         docElement.on('popup', this.showpopup.bind(this));
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-            .then(function(stream) {
-                if (this.video) {
-                  this.video.srcObject = stream;
-                  this.video.muted = true;
-                  localMediaStream = stream;
-                  this.video.play();
-                  return true;
-                }
-                return true;
-            })
-        .catch(function() {
-            // Console.log(err);
-        });
+	       navigator.mediaDevices.getUserMedia({ video: true})
+    	.then(function(stream) {
+        const videoElement = document.getElementById('video');
+        if (videoElement) {
+            videoElement.srcObject = stream;
+            videoElement.muted = true;  // Mute to avoid feedback loop with microphone
+            videoElement.playsinline = "";
+            localMediaStream = stream;
+            videoElement.play().catch(function(error) {
+                console.log('Autoplay prevented: ', error);
+            });
+        }
+    })
+    .catch(function(error) {
+        console.log('Error accessing media devices: ', error.name, error.message);
+    });
     };
 
     /** @type Tag element contain video. */
@@ -378,7 +380,7 @@ function($, str, ModalFactory) {
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, setinterval, serviceoption, quizid, callback) {
-        require(['core/ajax'], function() {
+        require(['core/ajax'], function(ajax) {
             if (localMediaStream !== null) {
                 if (callback) {
                     callback();
@@ -418,17 +420,17 @@ function($, str, ModalFactory) {
                                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                     method: 'POST',
                                     data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
-                                    success: function(response) {
-                                        if (response && response.errorcode) {
-                                            $(document).trigger('popup', response.error);
-                                        } else {
-                                            if (response.redirect && response.url) {
-                                                window.onbeforeunload = null;
-                                                window.location.href = encodeURI(response.url);
+                                        success: function(response) {
+                                            if (response && response.errorcode) {
+                                                $(document).trigger('popup', response.error);
+                                            } else {
+                                                if (response.redirect && response.url) {
+                                                    window.onbeforeunload = null;
+                                                    window.location.href = encodeURI(response.url);
+                                                }
                                             }
                                         }
-                                    }
-                                });
+                                    })
                                 }
                             });
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
