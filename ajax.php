@@ -103,14 +103,17 @@ if ($service === 'AWS') {
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
-        } else if ($profileimage) {            
+        } else if ($profileimage) {
             $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
             $profiledata = ["primary" => $data, "target" => $imagecontent];
             $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata));
             $profileres = json_decode($matchprofile, true);
-            if (empty($profileres['FaceDetails']) && empty($profileres['FaceMatches']) && empty($profileres['UnmatchedFaces'])) {
-                throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
-                die();
+            if (empty($profileres['FaceDetails']) || (isset($profileres["FaceMatches"]) && isset($profileres["FaceMatches"][0]["Face"])
+            && isset($profileres["FaceMatches"][0]["Similarity"]))) {
+                if ($profileres["FaceMatches"][0]["Similarity"] < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
+                    throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
+                    die();
+                }
             } else {
                 $validate = \quizaccess_quizproctoring\api::validate($response, $data);
             }
