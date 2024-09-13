@@ -358,18 +358,24 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
-            $record->enableteacherproctor = $quiz->enableteacherproctor;
+            $record->enableteacherproctor = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
+            $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
+            if ($serviceoption == 'AWS') {
+                $enableteacherproctor = 0;
+            } else {
+                $enableteacherproctor = $quiz->enableteacherproctor;
+            }
             $interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
-            $record->enableteacherproctor = $quiz->enableteacherproctor;
+            $record->enableteacherproctor = $enableteacherproctor;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
