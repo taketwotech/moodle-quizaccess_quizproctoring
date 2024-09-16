@@ -159,7 +159,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
-        global $PAGE, $DB;
+        global $PAGE, $DB, $USER;
 
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
@@ -167,7 +167,23 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
                 $this->quiz->id, $serviceoption]);
-
+        $context = context_user::instance($USER->id);
+        $fs = get_file_storage();
+        $f1 = $fs->get_file($context->id, 'user', 'icon', 0, '/', 'f1.jpg');
+        if ($f1 && !$f1->is_directory()) {
+            $profileimage = $f1->get_content();
+            $base64image = base64_encode($profileimage);
+            $data_uri = 'data:image/jpeg;base64,' . $base64image;
+        }
+        if ($data_uri) {
+            $mform->addElement('html', get_string('showprofileimage', 'quizaccess_quizproctoring').'
+                <div class="profile-image-wrapper">
+                    <img src="' . $data_uri . '" alt="User Profile Picture">
+                </div>');
+        } else {
+            $mform->addElement('static', 'proctoringprofilemsg', '',
+                get_string('showprofileimagemsg', 'quizaccess_quizproctoring'));
+        }
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('reqproctormsg', 'quizaccess_quizproctoring'));
 
