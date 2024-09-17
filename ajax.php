@@ -103,23 +103,27 @@ if ($service === 'AWS') {
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
-        } else if ($profileimage) {
-            $imagecontent = base64_encode($profileimage);
-            \quizaccess_quizproctoring\aws\camera::init();            
-            $matchprofile = \quizaccess_quizproctoring\aws\camera::validate($profileimage,$data);
-            if ($matchprofile == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
-                $matchprofile == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
-                $matchprofile == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
-                $matchprofile == QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED ||
-                $matchprofile == QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED) {
-                throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
-                die();            
-            } else {
-                $validate = \quizaccess_quizproctoring\api::validate($response, $data1);
-            }
         } else {
-            throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
-            die();
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data1);
+            if ($validate == '') {
+                if ($profileimage) {
+                    $imagecontent = base64_encode($profileimage);
+                    \quizaccess_quizproctoring\aws\camera::init();            
+                    $matchprofile = \quizaccess_quizproctoring\aws\camera::validate($profileimage,$data);
+                    if ($matchprofile == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
+                        $matchprofile == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
+                        $matchprofile == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
+                        $matchprofile == QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED ||
+                        $matchprofile == QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED ||
+                        empty($profileimage)) {
+                        throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
+                        die();            
+                    }
+                } else {
+                    throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
+                    die();
+                }
+            }
         }
     }
 }
