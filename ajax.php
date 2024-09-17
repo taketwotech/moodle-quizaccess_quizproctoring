@@ -97,25 +97,25 @@ if ($service === 'AWS') {
             $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
         }
     } else {
-        $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
-        $imagedata = ["primary" => $data];
+        $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
+        $imagedata = ["primary" => $data1];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
         } else if ($profileimage) {
-            $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
-            $profiledata = ["primary" => $data, "target" => $imagecontent];
-            $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata));
-            $profileres = json_decode($matchprofile, true);
-            if (empty($profileres['FaceDetails']) || (isset($profileres["FaceMatches"]) && isset($profileres["FaceMatches"][0]["Face"])
-            && isset($profileres["FaceMatches"][0]["Similarity"]))) {
-                if ($profileres["FaceMatches"][0]["Similarity"] < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
-                    throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
-                    die();
-                }
+            $imagecontent = base64_encode($profileimage);
+            \quizaccess_quizproctoring\aws\camera::init();            
+            $matchprofile = \quizaccess_quizproctoring\aws\camera::validate($profileimage,$data);
+            if ($matchprofile == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
+                $matchprofile == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
+                $matchprofile == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
+                $matchprofile == QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED ||
+                $matchprofile == QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED) {
+                throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
+                die();            
             } else {
-                $validate = \quizaccess_quizproctoring\api::validate($response, $data);
+                $validate = \quizaccess_quizproctoring\api::validate($response, $data1);
             }
         } else {
             throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
