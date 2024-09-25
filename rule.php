@@ -167,7 +167,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
                 $this->quiz->id, $serviceoption]);
-        if ( $serviceoption != 'AWS') {
+        if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
             $fs = get_file_storage();
             $f1 = $fs->get_file($context->id, 'user', 'icon', 0, '/', 'f1.jpg');
@@ -327,6 +327,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
             $mform->setDefault('enableteacherproctor', 0);
             $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
+
+            // Allow admin or teacher to setup profile picture match.
+            $mform->addElement('selectyesno', 'enableprofilematch',
+                get_string('enableprofilematch', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('enableprofilematch', 'enableprofilematch', 'quizaccess_quizproctoring');
+            $mform->setDefault('enableprofilematch', 0);
+            $mform->hideIf('enableprofilematch', 'enableproctoring', 'eq', '0');
         }
 
         // Time interval set for proctoring image.
@@ -377,6 +384,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
             $record->enableteacherproctor = 0;
+            $record->enableprofilematch = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -385,8 +393,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
             if ($serviceoption == 'AWS') {
                 $enableteacherproctor = 0;
+                $enableprofilematch = 0;
             } else {
                 $enableteacherproctor = $quiz->enableteacherproctor;
+                $enableprofilematch = $quiz->enableprofilematch;
             }
             $interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
@@ -394,6 +404,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
             $record->enableteacherproctor = $enableteacherproctor;
+            $record->enableprofilematch = $enableprofilematch;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -419,7 +430,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public static function get_settings_sql($quizid) {
         return [
-            'enableproctoring,enableteacherproctor,time_interval,warning_threshold,proctoringvideo_link',
+            'enableproctoring,enableteacherproctor,enableprofilematch,
+            time_interval,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             [],
         ];
