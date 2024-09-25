@@ -21,21 +21,21 @@ function($, str, ModalFactory) {
         this.attemptid = attemptid;
         $("#id_submitbutton").prop("disabled", true);
         docElement.on('popup', this.showpopup.bind(this));
-	       navigator.mediaDevices.getUserMedia({ video: true})
-    	.then(function(stream) {
+        navigator.mediaDevices.getUserMedia({ video: true})
+        .then(function(stream) {
         const videoElement = document.getElementById('video');
         if (videoElement) {
             videoElement.srcObject = stream;
-            videoElement.muted = true;  // Mute to avoid feedback loop with microphone
+            videoElement.muted = true;
             videoElement.playsinline = "";
             localMediaStream = stream;
             videoElement.play().catch(function(error) {
-                console.log('Autoplay prevented: ', error);
+                throw error;
             });
         }
     })
     .catch(function(error) {
-        console.log('Error accessing media devices: ', error.name, error.message);
+        throw error;
     });
     };
 
@@ -66,7 +66,6 @@ function($, str, ModalFactory) {
 
 
     Camera.prototype.takepicture = function() {
-        // Console.log('takepicture function');
         var context = this.canvas.getContext('2d');
         context.drawImage(this.video, 0, 0, this.width, this.height);
         var data = this.canvas.toDataURL('image/png');
@@ -82,7 +81,6 @@ function($, str, ModalFactory) {
             data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
             success: function(response) {
                 if (response && response.errorcode) {
-                    // Console.log(response.errorcode);
                     $("input[name='userimg']").val('');
                     $(document).trigger('popup', response.error);
                 } else {
@@ -380,7 +378,7 @@ function($, str, ModalFactory) {
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, setinterval, serviceoption, quizid, callback) {
-        require(['core/ajax'], function(ajax) {
+        require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {
                     callback();
@@ -430,7 +428,7 @@ function($, str, ModalFactory) {
                                                 }
                                             }
                                         }
-                                    })
+                                    });
                                 }
                             });
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
