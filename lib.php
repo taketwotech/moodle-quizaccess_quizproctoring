@@ -136,7 +136,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
         }
     }
     $imagename = '';
-    if($data) {
+    if ($data) {
         $imagename = $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
     }
 
@@ -152,14 +152,14 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
     if ($status != '') {
-        if($data) {
+        if ($data) {
             $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
         }
         $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
         $proctoreddata->userimg = $imagename;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
-    if($data) {
+    if ($data) {
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
         file_put_contents($tmpdir . $imagename, $data);
 

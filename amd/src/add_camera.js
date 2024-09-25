@@ -21,22 +21,20 @@ function($, str, ModalFactory) {
         this.attemptid = attemptid;
         $("#id_submitbutton").prop("disabled", true);
         docElement.on('popup', this.showpopup.bind(this));
-        navigator.mediaDevices.getUserMedia({ video: true})
+        navigator.mediaDevices.getUserMedia({video: true})
         .then(function(stream) {
-        const videoElement = document.getElementById('video');
-        if (videoElement) {
-            videoElement.srcObject = stream;
-            videoElement.muted = true;
-            videoElement.playsinline = "";
-            localMediaStream = stream;
-            videoElement.play().catch(function(error) {
-                throw error;
-            });
-        }
-    })
-    .catch(function(error) {
-        throw error;
-    });
+            const videoElement = document.getElementById('video');
+            if (videoElement) {
+                videoElement.srcObject = stream;
+                videoElement.muted = true;
+                videoElement.playsinline = "";
+                localMediaStream = stream;
+                videoElement.play();
+            }
+        })
+        .catch(function() {
+            // Console.log(err);
+        });
     };
 
     /** @type Tag element contain video. */

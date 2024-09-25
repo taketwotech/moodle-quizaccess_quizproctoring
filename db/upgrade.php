@@ -216,7 +216,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $record->firstname = $user->firstname;
         $record->lastname  = $user->lastname;
         $record->email     = $user->email;
-        $record->moodle_v  = get_config('moodle', 'release');    
+        $record->moodle_v  = get_config('moodle', 'release');
         $record->previously_installed_v = $release .'(Build: '. $oldversion.')';
 
         $postdata = json_encode($record);
@@ -236,7 +236,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Define field enableprofilematch to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER,
+            '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
 
         // Conditionally launch add field enableprofilematch.
         if (!$dbman->field_exists($table, $field)) {
@@ -246,7 +247,5 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024092400, 'quizaccess', 'quizproctoring');
     }
-
-
     return true;
 }

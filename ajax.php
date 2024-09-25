@@ -37,12 +37,12 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-if(!$img && !$tab) {
+if (!$img && !$tab) {
     quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
                 $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
 }
 
-if(!$img && $tab) {
+if (!$img && $tab) {
     quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
                 $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED);
 }

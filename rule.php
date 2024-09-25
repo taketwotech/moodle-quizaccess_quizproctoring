@@ -174,12 +174,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             if ($f1 && !$f1->is_directory()) {
                 $profileimage = $f1->get_content();
                 $base64image = base64_encode($profileimage);
-                $data_uri = 'data:image/jpeg;base64,' . $base64image;
+                $datauri = 'data:image/jpeg;base64,' . $base64image;
             }
-            if ($data_uri) {
+            if ($datauri) {
                 $mform->addElement('html', get_string('showprofileimage', 'quizaccess_quizproctoring').'
                     <div class="profile-image-wrapper">
-                        <img src="' . $data_uri . '" alt="User Profile Picture">
+                        <img src="' . $datauri . '" alt="User Profile Picture">
                     </div>');
             } else {
                 $mform->addElement('static', 'proctoringprofilemsg', '',
@@ -467,7 +467,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $quiz = $attemptobj->get_quiz();
             $userid = $attemptobj->get_userid();
             $release = get_config('moodle', 'release');
-            $compareVersion = '4.3';
+            $compareversion = '4.3';
             $context = context_module::instance($quiz->cmid);
             $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
             if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
@@ -482,7 +482,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     if ($usermages) {
                         $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
                             'proctoringidentity'], 'quizaccess_quizproctoring');
-                        if (version_compare($release, $compareVersion, '<')) {
+                        if (version_compare($release, $compareversion, '<')) {
                             $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
                         } else {
