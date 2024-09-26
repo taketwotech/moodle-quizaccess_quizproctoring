@@ -176,7 +176,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             ORDER BY timemodified, filename DESC LIMIT 1";
             $params = ['contextid' => $context->id];
             $filerecord = $DB->get_record_sql($sql, $params);
-            if ($filerecord) {    
+            if ($filerecord) {
                 $fs = get_file_storage();
                 $file = $fs->get_file(
                     $filerecord->contextid,
