@@ -72,16 +72,16 @@ if (!$mainimage) {
     filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
     ORDER BY timemodified, filename DESC LIMIT 1";
     $params = ['contextid' => $context->id];
-    $file_record = $DB->get_record_sql($sql, $params);
-    if ($file_record) {    
+    $filerecord = $DB->get_record_sql($sql, $params);
+    if ($filerecord) {    
         $fs = get_file_storage();
         $file = $fs->get_file(
-            $file_record->contextid,
-            $file_record->component,
-            $file_record->filearea,
-            $file_record->itemid,
-            $file_record->filepath,
-            $file_record->filename
+            $filerecord->contextid,
+            $filerecord->component,
+            $filerecord->filearea,
+            $filerecord->itemid,
+            $filerecord->filepath,
+            $filerecord->filename
         );
         $profileimage = $file->get_content();
     }
@@ -132,7 +132,7 @@ if ($service === 'AWS') {
                         $profileresp == QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED) {
                         throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
-                        die();            
+                        die();
                     }
                 } else {
                     throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
