@@ -231,5 +231,13 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2024083000) {
+        $service = $DB->get_record('external_services', array('shortname' => 'PROCTORING_WEB_SERVICE'));
+        if ($service) {
+            $DB->delete_records('external_services', array('id' => $service->id));
+        }
+        upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }

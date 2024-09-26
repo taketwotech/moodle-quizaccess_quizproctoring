@@ -159,7 +159,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
-        global $PAGE, $DB;
+        global $PAGE, $DB, $USER;
 
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
@@ -167,7 +167,39 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
                 $this->quiz->id, $serviceoption]);
-
+        if ( $serviceoption != 'AWS') {
+            $context = context_user::instance($USER->id);
+            $sql = "SELECT * FROM {files} WHERE contextid =
+            :contextid AND component = 'user' AND
+            filearea = 'icon' AND itemid = 0 AND
+            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+            ORDER BY timemodified, filename DESC LIMIT 1";
+            $params = ['contextid' => $context->id];
+            $filerecord = $DB->get_record_sql($sql, $params);
+            if ($filerecord) {
+                $fs = get_file_storage();
+                $file = $fs->get_file(
+                    $filerecord->contextid,
+                    $filerecord->component,
+                    $filerecord->filearea,
+                    $filerecord->itemid,
+                    $filerecord->filepath,
+                    $filerecord->filename
+                );
+                $profileimage = $file->get_content();
+                $base64image = base64_encode($profileimage);
+                $datauri = 'data:image/jpeg;base64,' . $base64image;
+            }
+            if ($datauri) {
+                $mform->addElement('html', get_string('showprofileimage', 'quizaccess_quizproctoring').'
+                    <div class="profile-image-wrapper">
+                        <img src ="' . $datauri . '" alt = "User Profile Picture" class = "userimage">
+                    </div>');
+            } else {
+                $mform->addElement('static', 'proctoringprofilemsg', '',
+                    get_string('showprofileimagemsg', 'quizaccess_quizproctoring'));
+            }
+        }
         $mform->addElement('static', 'proctoringmessage', '',
                 get_string('reqproctormsg', 'quizaccess_quizproctoring'));
 
@@ -358,18 +390,24 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 0;
-            $record->enableteacherproctor = $quiz->enableteacherproctor;
+            $record->enableteacherproctor = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
+            $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
+            if ($serviceoption == 'AWS') {
+                $enableteacherproctor = 0;
+            } else {
+                $enableteacherproctor = $quiz->enableteacherproctor;
+            }
             $interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
             $record = new stdClass();
             $record->quizid = $quiz->id;
             $record->enableproctoring = 1;
-            $record->enableteacherproctor = $quiz->enableteacherproctor;
+            $record->enableteacherproctor = $enableteacherproctor;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;

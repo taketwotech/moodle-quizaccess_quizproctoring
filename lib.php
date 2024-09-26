@@ -30,13 +30,14 @@ define('QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED', 'nocameradetected');
 define('QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED', 'multifacesdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED', 'facesnotmatched');
 define('QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED', 'eyesnotopened');
-define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLD', 90);
+define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLD', 70);
 define('QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT', 55);
 define('QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED', 'facemaskdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD', 80);
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_PASSED', 'completionpassed');
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
+define('PROCTORING_WEB_SERVICE', 'proctoring_web_service');
 
 /**
  * Serves the quizaccess proctoring files.
@@ -194,6 +195,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
                 'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
                 'param6' => QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'userid' => $user->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -201,7 +203,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
@@ -229,7 +231,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                     $errorstring = get_string('warningsleft', 'quizaccess_quizproctoring', $left);
                 }
 
-                if ($status && $status != QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+                if ($status) {
                     throw new moodle_exception($status, 'quizaccess_quizproctoring', '', $errorstring);
                     die();
                 }
