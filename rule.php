@@ -169,17 +169,31 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $this->quiz->id, $serviceoption]);
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
-            $fs = get_file_storage();
-            $f1 = $fs->get_file($context->id, 'user', 'icon', 0, '/', 'f1.jpg');
-            if ($f1 && !$f1->is_directory()) {
-                $profileimage = $f1->get_content();
+            $sql = "SELECT * FROM {files} WHERE contextid =
+            :contextid AND component = 'user' AND
+            filearea = 'icon' AND itemid = 0 AND
+            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+            ORDER BY timemodified, filename DESC LIMIT 1";
+            $params = ['contextid' => $context->id];
+            $file_record = $DB->get_record_sql($sql, $params);
+            if ($file_record) {    
+                $fs = get_file_storage();
+                $file = $fs->get_file(
+                    $file_record->contextid,
+                    $file_record->component,
+                    $file_record->filearea,
+                    $file_record->itemid,
+                    $file_record->filepath,
+                    $file_record->filename
+                );
+                $profileimage = $file->get_content();
                 $base64image = base64_encode($profileimage);
                 $datauri = 'data:image/jpeg;base64,' . $base64image;
             }
             if ($datauri) {
                 $mform->addElement('html', get_string('showprofileimage', 'quizaccess_quizproctoring').'
                     <div class="profile-image-wrapper">
-                        <img src="' . $datauri . '" alt="User Profile Picture">
+                        <img src ="' . $datauri . '" alt = "User Profile Picture" class = "userimage">
                     </div>');
             } else {
                 $mform->addElement('static', 'proctoringprofilemsg', '',
