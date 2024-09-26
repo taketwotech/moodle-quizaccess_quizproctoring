@@ -5,6 +5,10 @@
     z-index: 1000;
     width: 240px;
 }
+.userimage {
+    max-width: 100px;
+    max-height: 100px;
+}
 button.proctoringimage {
     margin-left: 1.5%;
     margin-bottom: 0.4%;

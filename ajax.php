@@ -66,10 +66,24 @@ if (!$mainimage) {
     }
 } else {
     $context = context_user::instance($USER->id);
-    $fs = get_file_storage();
-    $f1 = $fs->get_file($context->id, 'user', 'icon', 0, '/', 'f1.jpg');
-    if ($f1 && !$f1->is_directory()) {
-        $profileimage = $f1->get_content();
+    $sql = "SELECT * FROM {files} WHERE contextid =
+    :contextid AND component = 'user' AND
+    filearea = 'icon' AND itemid = 0 AND
+    filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+    ORDER BY timemodified, filename DESC LIMIT 1";
+    $params = ['contextid' => $context->id];
+    $filerecord = $DB->get_record_sql($sql, $params);
+    if ($filerecord) {
+        $fs = get_file_storage();
+        $file = $fs->get_file(
+            $filerecord->contextid,
+            $filerecord->component,
+            $filerecord->filearea,
+            $filerecord->itemid,
+            $filerecord->filepath,
+            $filerecord->filename
+        );
+        $profileimage = $file->get_content();
     }
 }
 $service = get_config('quizaccess_quizproctoring', 'serviceoption');

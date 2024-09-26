@@ -169,17 +169,31 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $this->quiz->id, $serviceoption]);
         if ( $serviceoption != 'AWS') {
             $context = context_user::instance($USER->id);
-            $fs = get_file_storage();
-            $f1 = $fs->get_file($context->id, 'user', 'icon', 0, '/', 'f1.jpg');
-            if ($f1 && !$f1->is_directory()) {
-                $profileimage = $f1->get_content();
+            $sql = "SELECT * FROM {files} WHERE contextid =
+            :contextid AND component = 'user' AND
+            filearea = 'icon' AND itemid = 0 AND
+            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+            ORDER BY timemodified, filename DESC LIMIT 1";
+            $params = ['contextid' => $context->id];
+            $filerecord = $DB->get_record_sql($sql, $params);
+            if ($filerecord) {
+                $fs = get_file_storage();
+                $file = $fs->get_file(
+                    $filerecord->contextid,
+                    $filerecord->component,
+                    $filerecord->filearea,
+                    $filerecord->itemid,
+                    $filerecord->filepath,
+                    $filerecord->filename
+                );
+                $profileimage = $file->get_content();
                 $base64image = base64_encode($profileimage);
-                $data_uri = 'data:image/jpeg;base64,' . $base64image;
+                $datauri = 'data:image/jpeg;base64,' . $base64image;
             }
-            if ($data_uri) {
+            if ($datauri) {
                 $mform->addElement('html', get_string('showprofileimage', 'quizaccess_quizproctoring').'
                     <div class="profile-image-wrapper">
-                        <img src="' . $data_uri . '" alt="User Profile Picture">
+                        <img src ="' . $datauri . '" alt = "User Profile Picture" class = "userimage">
                     </div>');
             } else {
                 $mform->addElement('static', 'proctoringprofilemsg', '',
