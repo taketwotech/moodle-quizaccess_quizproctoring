@@ -22,19 +22,24 @@
     Example context (json):
     {
         "title": "User Images",
-        "body": "Images with Previous & Next Button"
+        "body": "Lightbox Images with Previous & Next Button"
     }
 }}
-{{< core/modal }}
-    {{$title}}{{#str}} proctoringimages, quizaccess_quizproctoring {{/str}}{{/title}}
-    {{$body}}
-        <div class="text-center">
-            <div class="imgheading"></div>
-            <img class="userimg" src="#" alt="">
+<div class="proctoring-images-modal">
+    {{#images}}
+        <div class="proctoring-image-item">
+            <a href="{{url}}" data-lightbox="user-images" data-title="{{title}}" class="image-link">
+                <img src="{{url}}" alt="{{title}}" class="proctoring-image-thumbnail"/>
+            </a>
+            <p class="image-title" style="display:none;">{{title}}</p>
         </div>
-    {{/body}}
-    {{$footer}}
-        <button type="button" class="btn btn-secondary" data-action="previous" disabled>{{#str}} previous {{/str}}</button>
-        <button type="button" class="btn btn-secondary" data-action="next" >{{#str}} next {{/str}}</button>
-    {{/footer}}
-{{/ core/modal }}
+    {{/images}}
+
+    {{^images}}
+        <p>{{#str}} noimageswarning, quizaccess_quizproctoring {{/str}}</p>
+    {{/images}}
+</div>
+
+
+
+
