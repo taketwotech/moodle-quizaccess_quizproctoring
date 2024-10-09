@@ -15,38 +15,44 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Proctoring events file.
+ * Scheduled task to Clean Stored Images
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
  * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+*/
+namespace quizaccess_quizproctoring\task;
 
+use core\task\scheduled_task;
+use Exception;
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Post-install script
- */
-function xmldb_quizaccess_quizproctoring_install() {
-    global $DB, $USER;
+require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
 
-    $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+class deleteStoredImagesTask extends scheduled_task {
+    /**
+     * Task Name
+     *
+     * @return string
+     */
+    public function get_name() {
+        return get_string('delete_Stored_Images_Task', 'quizaccess_quizproctoring');
+    }
 
-    $record = new stdClass();
-    $record->firstname = $user->firstname;
-    $record->lastname  = $user->lastname;
-    $record->email     = $user->email;
-    $record->moodle_v  = get_config('moodle', 'release');
-    $record->previously_installed_v = '';
-
-    $postdata = json_encode($record);
-
-    $curl = new \curl();
-    $url = 'https://proctoring.taketwotechnologies.com/create';
-    $header = [
-        'Content-Type: application/json',
-    ];
-    $curl->setHeader($header);
-    $result = $curl->post($url, $postdata);
+    /**
+     * Execute Task.
+     *
+     * @return boolean
+     */
+    public function execute() {
+        global $DB, $CFG;
+         mtrace("Delete Stored Images started");
+        try {
+            clean_images_task();
+        } catch (Exception $exception) {
+            mtrace('error in delete stored images '.$exception->getMessage());
+        }
+        return true;
+    }
 }

@@ -206,6 +206,21 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2024071903) {
+
+        // Define field storeallimages to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('storeallimages', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+
+        // Conditionally launch add field storeallimages.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024071903, 'quizaccess', 'quizproctoring');
+    }
+
     if ($oldversion < 2024083000) {
 
         $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
@@ -216,7 +231,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $record->firstname = $user->firstname;
         $record->lastname  = $user->lastname;
         $record->email     = $user->email;
-        $record->moodle_v  = get_config('moodle', 'release');    
+        $record->moodle_v  = get_config('moodle', 'release');
         $record->previously_installed_v = $release .'(Build: '. $oldversion.')';
 
         $postdata = json_encode($record);
@@ -230,6 +245,17 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $result = $curl->post($url, $postdata);
 
         upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2024092400) {
+
+        // Define field enableprofilematch to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER,
+            '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+
+        // Conditionally launch add field enableprofilematch.
+        upgrade_plugin_savepoint(true, 2024092400, 'quizaccess', 'quizproctoring');
     }
     return true;
 }

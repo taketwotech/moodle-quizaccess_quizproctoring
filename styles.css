@@ -5,6 +5,10 @@
     z-index: 1000;
     width: 240px;
 }
+.userimage {
+    max-width: 100px;
+    max-height: 100px;
+}
 button.proctoringimage {
     margin-left: 1.5%;
     margin-bottom: 0.4%;
@@ -50,6 +54,12 @@ button.proctoridentity {
     height: 9%;
     width: 5%;
     z-index: 9999999;
+}
+
+.deltitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 /* Hide video on mobile devices */
