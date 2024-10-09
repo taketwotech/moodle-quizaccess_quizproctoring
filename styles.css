@@ -5,6 +5,10 @@
     z-index: 1000;
     width: 240px;
 }
+.userimage {
+    max-width: 100px;
+    max-height: 100px;
+}
 button.proctoringimage {
     margin-left: 1.5%;
     margin-bottom: 0.4%;
@@ -56,4 +60,18 @@ button.proctoridentity {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+/* Hide video on mobile devices */
+@media only screen and (max-width: 767px) {
+    #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
+        display: none;
+    }
+}
+
+/* Show video on larger screens */
+@media only screen and (min-width: 768px) {
+    #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
+        display: block; /* Or use display: inline; or display: inline-block; as per your layout */
+    }
 }

@@ -15,18 +15,38 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Proctoring events file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024092400;
-$plugin->requires = 2022041900;
-$plugin->release = 'v4.2.6';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+/**
+ * Post-install script
+ */
+function xmldb_quizaccess_quizproctoring_install() {
+    global $DB, $USER;
+
+    $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+
+    $record = new stdClass();
+    $record->firstname = $user->firstname;
+    $record->lastname  = $user->lastname;
+    $record->email     = $user->email;
+    $record->moodle_v  = get_config('moodle', 'release');
+    $record->previously_installed_v = '';
+
+    $postdata = json_encode($record);
+
+    $curl = new \curl();
+    $url = 'https://proctoring.taketwotechnologies.com/create';
+    $header = [
+        'Content-Type: application/json',
+    ];
+    $curl->setHeader($header);
+    $result = $curl->post($url, $postdata);
+}

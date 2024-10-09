@@ -31,20 +31,27 @@ $img = optional_param('imgBase64', '', PARAM_RAW);
 $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
+$tab = optional_param('tab', false, PARAM_BOOL);
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-if(!$img) {
+if (!$img && !$tab) {
     quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
                 $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
+}
+
+if (!$img && $tab) {
+    quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED);
 }
 
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 require_login($course);
 $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
 $target = '';
+$profileimg = '';
 if (!$mainimage) {
     // If it is not main image, get the main image data and compare.
     if ($mainentry = $DB->get_record('quizaccess_proctor_data', [
@@ -56,6 +63,27 @@ if (!$mainimage) {
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
         $target = $f1->get_content();
+    }
+} else {
+    $context = context_user::instance($USER->id);
+    $sql = "SELECT * FROM {files} WHERE contextid =
+    :contextid AND component = 'user' AND
+    filearea = 'icon' AND itemid = 0 AND
+    filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+    ORDER BY timemodified, filename DESC LIMIT 1";
+    $params = ['contextid' => $context->id];
+    $filerecord = $DB->get_record_sql($sql, $params);
+    if ($filerecord) {
+        $fs = get_file_storage();
+        $file = $fs->get_file(
+            $filerecord->contextid,
+            $filerecord->component,
+            $filerecord->filearea,
+            $filerecord->itemid,
+            $filerecord->filepath,
+            $filerecord->filename
+        );
+        $profileimage = $file->get_content();
     }
 }
 $service = get_config('quizaccess_quizproctoring', 'serviceoption');
@@ -83,14 +111,34 @@ if ($service === 'AWS') {
             $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
         }
     } else {
-        $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
-        $imagedata = ["primary" => $data];
+        $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
+        $imagedata = ["primary" => $data1];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
         } else {
-            $validate = \quizaccess_quizproctoring\api::validate($response, $data);
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data1);
+            $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
+            if ( $validate == '' && $proctoringdata->enableprofilematch == 1 ) {
+                if ( $profileimage ) {
+                    $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
+                    $profiledata = ["primary" => $data1, "target" => $imagecontent];
+                    $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata));
+                    $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent);
+                    if ($profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
+                        $profileresp == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
+                        $profileresp == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
+                        $profileresp == QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED ||
+                        $profileresp == QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED) {
+                        throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
+                        die();
+                    }
+                } else {
+                    throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
+                    die();
+                }
+            }
         }
     }
 }
@@ -121,7 +169,10 @@ switch ($validate) {
         }
         break;
     case QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED:
-        if ($mainimage) {
+        if (!$mainimage) {
+            quizproctoring_storeimage($img, $cmid, $attemptid,
+            $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED);
+        } else {
             throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
         }
         break;

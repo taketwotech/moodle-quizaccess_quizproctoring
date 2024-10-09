@@ -47,7 +47,7 @@ if ($currentpage) {
         $countrecord = ceil(count($countrecord) / 20);
     }
     foreach ($getimages as $img) {
-        if($img->userimg == '') {
+        if ($img->userimg == '') {
             $target = get_string('notcameradetected', 'quizaccess_quizproctoring');
         } else if (strlen($img->userimg) < 40) {
             $quizobj = \quiz::create($img->quizid, $img->userid);
@@ -80,7 +80,7 @@ if ($currentpage) {
         $countrecord = ceil(count($countrecord) / 20);
     }
     foreach ($getimages as $img) {
-        if($img->userimg == '') {
+        if ($img->userimg == '') {
             $target = get_string('notcameradetected', 'quizaccess_quizproctoring');
         } else if (strlen($img->userimg) < 40) {
             $quizobj = \quiz::create($img->quizid, $img->userid);
