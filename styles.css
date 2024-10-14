@@ -73,6 +73,38 @@ button.proctoridentity {
     cursor: pointer;
 }
 
+.proctoring-images-modal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.proctoring-image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.proctoring-image-thumbnail {
+    width: 100px;
+    height: 75px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.proctoring-image-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.image-title {
+    display: none;
+    font-size: 14px;
+    margin-top: 5px;
+    text-align: center;
+}
+
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
