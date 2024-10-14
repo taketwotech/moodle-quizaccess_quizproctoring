@@ -10,16 +10,26 @@ define(['jquery'], function($) {
             });
 
             $('.delete-quiz').on('click', function(event) {
-                var quiz_name = $(this).data('quiz');
-                var confirmation = confirm('Delete all the Images of quiz "' + quiz_name + '"?');
+                var quizname = $(this).data('quiz');
+                var confirmation = confirm('Delete all the Images of quiz "' + quizname + '"?');
                 if (!confirmation) {
                     event.preventDefault();
                 }
             });
 
             $('.delcourse').on('click', function(event) {
-                var course_name = $(this).data('course');
-                var confirmation = confirm('Delete all the Images of course "' + course_name + '"?');
+                var coursename = $(this).data('course');
+                var confirmation = confirm('Delete all the Images of course "' + coursename + '"?');
+                if (!confirmation) {
+                    event.preventDefault();
+                }
+            });
+
+            $('.proctoringimage').on('click', function(event) {
+                var attemptid = $(this).data('attemptid');
+                var quizid = $(this).data('quizid');
+                var userid = $(this).data('userid');
+                var confirmation = confirm('Delete all the Images of course "' + attemptid + '"?');
                 if (!confirmation) {
                     event.preventDefault();
                 }

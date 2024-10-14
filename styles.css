@@ -56,10 +56,20 @@ button.proctoridentity {
     z-index: 9999999;
 }
 
-.deltitle {
+.deltitle, .attempttitle {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.imageicon {
+    width: 20px;
+    height: 20px;
+}
+
+.proctoringimage {
+    display: inline-block;
+    cursor: pointer;
 }
 
 /* Hide video on mobile devices */

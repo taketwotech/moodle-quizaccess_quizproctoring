@@ -47,7 +47,6 @@ $context = $quizobj->get_context();
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php'));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
-$PAGE->set_heading($course->fullname.': '.get_string('proctoringreport', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('course');
 $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'), '/mod/quiz/accessrule/quizproctoring/proctoringreport.php');
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
@@ -90,6 +89,7 @@ $headers = array(
             get_string("fullname","quizaccess_quizproctoring"),
             get_string("email","quizaccess_quizproctoring"),
             get_string("usersimages","quizaccess_quizproctoring"),
+            get_string("reviewattempts","quizaccess_quizproctoring"),
             get_string("actions","quizaccess_quizproctoring")
         );
 $table->head = $headers;
@@ -98,18 +98,20 @@ echo $OUTPUT->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid='.$cmid;
     $btn = '<a class="btn btn-primary" href="'.$url.'">
-    '.get_string("proctoringimagereport","quizaccess_quizproctoring").'</a>';
+    '.get_string("proctoringimagereport","quizaccess_quizproctoring",$course->fullname).'</a>';
 }
 echo '<div class="deltitle">' .
      '<h5>' . get_string("delinformationu", "quizaccess_quizproctoring") . '</h5>' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
+
 $sql = "SELECT u.id, u.firstname, u.lastname, u.email,
 COUNT(DISTINCT CONCAT(p.userid, p.userimg)) AS image_count
 FROM {quizaccess_proctor_data} p JOIN {user} u ON u.id = p.userid
 WHERE p.userimg IS NOT NULL AND p.deleted=0 AND userimg !=''
 AND p.quizid = $quizid GROUP BY p.userid";
 $records = $DB->get_records_sql($sql);
+
 foreach($records as $record) {    
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', array('id' => $record->id)),
@@ -123,7 +125,10 @@ foreach($records as $record) {
         array('title' => get_string('delete'), 'class' => 'delete-icon',
         'data-username' => $record->firstname . ' ' . $record->lastname)
     );
-    $table->data[] = array($namelink, $record->email, $record->image_count, $deleteicon);
+    $imgurl = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid='.$record->id.'&cmid='.$cmid;
+    $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
+
+    $table->data[] = array($namelink, $record->email, $record->image_count, $imageicon, $deleteicon);
 }
 
 echo html_writer::table($table);

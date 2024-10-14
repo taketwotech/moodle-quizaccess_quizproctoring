@@ -121,8 +121,12 @@ echo $OUTPUT->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php', 
         array('delcourse' => $course->id, 'cmid' => $cmid));
-    $btn = '<a class="btn btn-primary delcourse" href="'.$url.'" data-course="' . $course->fullname . '">
-    '.get_string("delcoursemages","quizaccess_quizproctoring").'</a>';
+    $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', 
+        array('cmid' => $cmid, 'quizid' => $quiz->id));
+    $btn = '<a class="btn btn-primary" href="'.$backurl.'">
+    '.get_string("userimagereport","quizaccess_quizproctoring").'</a>&nbsp;';
+    $btn .= '<a class="btn btn-primary delcourse" href="'.$url.'" data-course="' . $course->fullname . '">
+    '.get_string("delcoursemages","quizaccess_quizproctoring",$course->fullname).'</a>';
 }
 echo '<div class="deltitle">' .
      '<h5>' . get_string("delinformation", "quizaccess_quizproctoring") . '</h5>' .
