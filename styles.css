@@ -56,7 +56,8 @@ button.proctoridentity {
     z-index: 9999999;
 }
 
-.deltitle, .attempttitle {
+.deltitle, 
+.attempttitle {
     display: flex;
     align-items: center;
     justify-content: space-between;

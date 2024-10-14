@@ -25,7 +25,6 @@
 
 use mod_quiz\output\renderer;
 use mod_quiz\output\view_page;
-use mod_quiz\quiz_settings;
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
@@ -33,9 +32,15 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = optional_param('quizid', '', PARAM_INT);
 $deleteuserid = optional_param('delete', '', PARAM_INT);
+if (class_exists('mod_quiz\quiz_settings')) {
+    class_alias('\mod_quiz\quiz_settings', '\quiz_settings_alias');
+} else {
+    require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+    class_alias('\quiz', '\quiz_settings_alias');
+}
 
 if ($cmid) {
-    $quizobj = quiz_settings::create_for_cmid($cmid, $USER->id);
+    $quizobj = quiz_settings_alias::create($cmid, $USER->id);
 }
 $quiz = $quizobj->get_quiz();
 $cm = $quizobj->get_cm();

@@ -25,7 +25,6 @@
 
 use mod_quiz\output\renderer;
 use mod_quiz\output\view_page;
-use mod_quiz\quiz_settings;
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
@@ -34,8 +33,15 @@ $cmid = required_param('cmid', PARAM_INT);
 $deletequizid = optional_param('delete', '', PARAM_INT);
 $delcourse = optional_param('delcourse', '', PARAM_INT);
 
+if (class_exists('mod_quiz\quiz_settings')) {
+    class_alias('\mod_quiz\quiz_settings', '\quiz_settings_alias');
+} else {
+    require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+    class_alias('\quiz', '\quiz_settings_alias');
+}
+
 if ($cmid) {
-    $quizobj = quiz_settings::create_for_cmid($cmid, $USER->id);
+    $quizobj = quiz_settings_alias::create($cmid, $USER->id);
 }
 $quiz = $quizobj->get_quiz();
 $cm = $quizobj->get_cm();
@@ -64,16 +70,16 @@ if ($deletequizid || $delcourse) {
             AND cm.module = (
             SELECT id FROM {modules} WHERE name = 'quiz'
             )";
-        $quizRecords = $DB->get_records_sql($sql);
+        $quizrecords = $DB->get_records_sql($sql);
         $quizids = array_map(function($record) {
             return $record->quizid;
-        }, $quizRecords);
-        $quizidsString = implode(',', array_map('intval', $quizids));
+        }, $quizrecords);
+        $quizidsstring = implode(',', array_map('intval', $quizids));
         $sql = "SELECT * from {quizaccess_proctor_data} where quizid
-          IN ($quizidsString) AND deleted = 0";
+          IN ($quizidsstring) AND deleted = 0";
         $usersrecords = $DB->get_records_sql($sql);
-        $deletequiz = $quizidsString;
-    }  
+        $deletequiz = $quizidsstring;
+    }
     foreach ($usersrecords as $usersrecord) {
         $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
         $context = $quizobj->get_context();
@@ -85,16 +91,16 @@ if ($deletequizid || $delcourse) {
             'itemid' => $usersrecord->id,
             'filepath' => '/',
             'filename' => $usersrecord->userimg,
-        ];    
+        ];
         $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
             $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
         if ($file) {
             $file->delete();
         }
 
-        // Delete file from the temp directory
+        // Delete file from the temp directory.
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-        $tempfilepath = $tmpdir . $usersrecord->userimg;    
+        $tempfilepath = $tmpdir . $usersrecord->userimg;
         if (file_exists($tempfilepath)) {
             unlink($tempfilepath);
         }
@@ -110,16 +116,16 @@ if ($deletequizid || $delcourse) {
 
 $table = new html_table();
 $headers = array(
-            get_string("fullquizname","quizaccess_quizproctoring"),
-            get_string("users","quizaccess_quizproctoring"),
-            get_string("usersimages","quizaccess_quizproctoring"),
-            get_string("actions","quizaccess_quizproctoring")
+            get_string("fullquizname", "quizaccess_quizproctoring"),
+            get_string("users", "quizaccess_quizproctoring"),
+            get_string("usersimages", "quizaccess_quizproctoring"),
+            get_string("actions", "quizaccess_quizproctoring")
         );
 $table->head = $headers;
 
 echo $OUTPUT->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
-    $url = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php', 
+    $url = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php',
         array('delcourse' => $course->id, 'cmid' => $cmid));
     $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', 
         array('cmid' => $cmid, 'quizid' => $quiz->id));
