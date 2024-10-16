@@ -33,23 +33,10 @@ $cmid = required_param('cmid', PARAM_INT);
 $deletequizid = optional_param('delete', '', PARAM_INT);
 $delcourse = optional_param('delcourse', '', PARAM_INT);
 
-if (class_exists('mod_quiz\quiz_settings')) {
-    class_alias('\mod_quiz\quiz_settings', '\quiz_settings_alias');
-} else {
-    require_once($CFG->dirroot . '/mod/quiz/locallib.php');
-    class_alias('\quiz', '\quiz_settings_alias');
-}
-
-if ($cmid) {
-    $quizobj = quiz_settings_alias::create($cmid, $USER->id);
-}
-$quiz = $quizobj->get_quiz();
-$cm = $quizobj->get_cm();
-$course = $quizobj->get_course();
-
 // Check login and get context.
-require_login($course, false, $cm);
-$context = $quizobj->get_context();
+$context = context_module::instance($cmid, MUST_EXIST);
+list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+require_login($course, true, $cm);
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php'));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
@@ -127,27 +114,20 @@ echo $OUTPUT->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php',
         array('delcourse' => $course->id, 'cmid' => $cmid));
-    $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', 
-        array('cmid' => $cmid, 'quizid' => $quiz->id));
-    $btn = '<a class="btn btn-primary" href="'.$backurl.'">
-    '.get_string("userimagereport","quizaccess_quizproctoring").'</a>&nbsp;';
-    $btn .= '<a class="btn btn-primary delcourse" href="'.$url.'" data-course="' . $course->fullname . '">
+    $btn = '<a class="btn btn-primary delcourse" href="'.$url.'" data-course="' . $course->fullname . '">
     '.get_string("delcoursemages","quizaccess_quizproctoring",$course->fullname).'</a>';
 }
 echo '<div class="deltitle">' .
      '<h5>' . get_string("delinformation", "quizaccess_quizproctoring") . '</h5>' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
-$sql = "SELECT q.name AS quiz_name, 
-        p.quizid, 
-        COUNT(DISTINCT p.userid) AS user_count,
-        COUNT(DISTINCT CONCAT(p.userid, p.userimg)) AS image_count
+$sql = "SELECT q.name AS quiz_name, p.quizid, COUNT(DISTINCT p.userid) AS user_count,
+        COUNT(p.userimg) AS image_count
         FROM {quizaccess_proctor_data} p
         JOIN {quiz} q ON p.quizid = q.id
-        JOIN {course_modules} cm ON cm.instance = q.id
-        WHERE p.userimg IS NOT NULL AND deleted=0
-        AND userimg !=''
-        AND cm.course = $course->id
+        WHERE p.userimg IS NOT NULL AND p.deleted=0
+        AND p.userimg !=''
+        AND q.course = $course->id
         GROUP BY p.quizid, q.name
         ORDER BY q.name;";
 $records = $DB->get_records_sql($sql);
@@ -159,7 +139,11 @@ foreach($records as $record) {
         array('title' => get_string('delete'), 'class' => 'delete-quiz',
         'data-quiz' => $record->quiz_name)
     );
-    $table->data[] = array($record->quiz_name, $record->user_count, $record->image_count, $deleteicon);
+    $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', 
+        array('cmid' => $cmid, 'quizid' => $record->quizid));
+    $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
+    $quizname = '<a href="'.$backurl.'" title="'.$helptext.'">'.$record->quiz_name.'</a>';
+    $table->data[] = array($quizname, $record->user_count, $record->image_count, $deleteicon);
 }
 
 echo html_writer::table($table);

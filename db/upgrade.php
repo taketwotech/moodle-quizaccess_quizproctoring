@@ -257,5 +257,21 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Conditionally launch add field enableprofilematch.
         upgrade_plugin_savepoint(true, 2024092400, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2024092404) {
+
+        // Define field isautosubmit to be added to quizaccess_proctor_data.
+        $table = new xmldb_table('quizaccess_proctor_data');
+        $field = new xmldb_field('isautosubmit', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'status');
+
+        // Conditionally launch add field isautosubmit.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024092404, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }

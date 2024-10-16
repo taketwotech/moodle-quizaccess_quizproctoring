@@ -40,6 +40,18 @@ button.proctoridentity {
     right: 0%;
 }
 
+.reviewimage {
+    max-width: 200px;
+}
+
+.proctoringimage {
+    cursor: pointer;
+}
+
+.proctoringidentity {
+    cursor: pointer;
+}
+
 /* Modal Content */
 .modalvideo-content {
     margin: auto;
@@ -64,12 +76,16 @@ button.proctoridentity {
 }
 
 .imageicon {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
 }
 
 .proctoringimage {
     display: inline-block;
+    cursor: pointer;
+}
+
+.proctoridentity {
     cursor: pointer;
 }
 

@@ -209,6 +209,14 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 // Submit quiz.
                 $attemptobj = quiz_attempt::create($attemptid);
                 $attemptobj->process_finish(time(), false);
+                $autosubmitdata = $DB->get_record('quizaccess_proctor_data', [
+                    'userid' => $user->id,
+                    'quizid' => $quizid,
+                    'attemptid' => $attemptid,
+                    'image_status' => 'M',
+                ]);
+                $autosubmitdata->isautosubmit = 1;
+                $DB->update_record('quizaccess_proctor_data', $autosubmitdata);
                 echo json_encode(['status' => 'true', 'redirect' => 'true', 'url' => $attemptobj->review_url()->out()]);
                 die();
             } else {
@@ -252,33 +260,34 @@ function clean_images_task() {
     $currenttime = time();
     $timedelete = get_config('quizaccess_quizproctoring', 'clear_images');
     $timestamp_days = $currenttime - ($timedelete * 24 * 60 * 60);
+    if($timedelete > 0) {
+        $totalrecords = $DB->get_records_sql("SELECT * FROM {quizaccess_proctor_data} where timecreated < ".$timestamp_days." AND deleted = 0 AND userimg IS NOT NULL");
+        foreach ($totalrecords as $record) {
+            $quizobj = \quiz::create($record->quizid, $record->userid);
+            $context = $quizobj->get_context();
+            $fs = get_file_storage();
+            $fileinfo = [
+                'contextid' => $context->id,
+                'component' => 'quizaccess_quizproctoring',
+                'filearea' => 'cameraimages',
+                'itemid' => $record->id,
+                'filepath' => '/',
+                'filename' => $record->userimg,
+            ];    
+            $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
+                $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
+            if ($file) {
+                $file->delete();
+            }
 
-    $totalrecords = $DB->get_records_sql("SELECT * FROM {quizaccess_proctor_data} where timecreated < ".$timestamp_days." AND deleted = 0 AND userimg IS NOT NULL");
-    foreach ($totalrecords as $record) {
-        $quizobj = \quiz::create($record->quizid, $record->userid);
-        $context = $quizobj->get_context();
-        $fs = get_file_storage();
-        $fileinfo = [
-            'contextid' => $context->id,
-            'component' => 'quizaccess_quizproctoring',
-            'filearea' => 'cameraimages',
-            'itemid' => $record->id,
-            'filepath' => '/',
-            'filename' => $record->userimg,
-        ];    
-        $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
-            $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
-        if ($file) {
-            $file->delete();
+            // Delete file from the temp directory
+            $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+            $tempfilepath = $tmpdir . $record->userimg;    
+            if (file_exists($tempfilepath)) {
+                unlink($tempfilepath);
+            }
+            $DB->delete_records('quizaccess_proctor_data', ['id' => $record->id]);
+            mtrace('Deleting quizaccess proctor data for Id (Id :- ' . $record->id . ')');
         }
-
-        // Delete file from the temp directory
-        $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-        $tempfilepath = $tmpdir . $record->userimg;    
-        if (file_exists($tempfilepath)) {
-            unlink($tempfilepath);
-        }
-        $DB->delete_records('quizaccess_proctor_data', ['id' => $record->id]);
-        mtrace('Deleting quizaccess proctor data for Id (Id :- ' . $record->id . ')');
     }
 }

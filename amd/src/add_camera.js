@@ -137,6 +137,7 @@ function($, str, ModalFactory) {
         $('#' + this.takepictureid).show();
         $('#' + this.canvasid).hide();
         $('#' + this.retakeid).hide();
+        $("#id_submitbutton").prop("disabled", true);
     };
     Camera.prototype.showpopup = function(event, message) {
         return ModalFactory.create({
