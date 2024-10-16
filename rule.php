@@ -426,6 +426,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             if ($serviceoption == 'AWS') {
                 $enableteacherproctor = 0;
                 $enableprofilematch = 0;
+                $storeallimages = 0;
             } else {
                 $enableteacherproctor = $quiz->enableteacherproctor;
                 $enableprofilematch = $quiz->enableprofilematch;

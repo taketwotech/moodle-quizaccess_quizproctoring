@@ -58,6 +58,10 @@ button.proctoridentity {
     width: 50%;
 }
 
+.submittag {
+    color :red;
+}
+
 #loading {
     backdrop-filter: blur(3px);
     position: fixed;

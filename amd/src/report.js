@@ -68,18 +68,17 @@ function($, ModalFactory, ModalEvents, Templates) {
                                     modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                                     modal.show();
                                     lightbox.init();
-                                $('.image-link').on('click', function() {
-                                    var titleElement = $(this).next('.image-title');
-                                    var timeElement = $(this).next('.image-time');
-                                    titleElement.show();
-                                    timeElement.show();
-                                    
-                                    lightbox.start($(this)[0]);
-                                });
-                                $('.image-link').on('lightbox:open', function() {
-                                    $(this).next('.image-title').hide();
-                                });
-                                       
+                                    $('.image-link').on('click', function() {
+                                        var titleElement = $(this).next('.image-title');
+                                        var timeElement = $(this).next('.image-time');
+                                        titleElement.show();
+                                        timeElement.show();
+                                        
+                                        lightbox.start($(this)[0]);
+                                    });
+                                    $('.image-link').on('lightbox:open', function() {
+                                        $(this).next('.image-title').hide();
+                                    });                                       
                                 });
                             });
                         } else {

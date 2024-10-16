@@ -98,7 +98,12 @@ foreach ($attempts as $attempt) {
     if ($usermages->user_identity && $usermages->user_identity != 0) {
         $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">';
     }
-    $table->data[] = array($namelink, $attempturl, userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig')), format_time($timetaken), $pimages, $pindentity, $usermages->isautosubmit);
+    if ($usermages->isautosubmit) {
+        $submit = '<div class="submittag">Yes</div>';
+    } else {
+        $submit = 'No';
+    }
+    $table->data[] = array($namelink, $attempturl, userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig')), format_time($timetaken), $pimages, $pindentity, $submit);
 }
 echo html_writer::table($table);
 echo $OUTPUT->footer();
