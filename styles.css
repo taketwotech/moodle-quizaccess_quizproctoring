@@ -68,7 +68,12 @@ button.proctoridentity {
     z-index: 9999999;
 }
 
-.deltitle, 
+.deltitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .attempttitle {
     display: flex;
     align-items: center;

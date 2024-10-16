@@ -55,7 +55,7 @@ foreach ($getimages as $img) {
     } else {
         $target = $img->userimg;
     }
-    $formattedtime = userdate($img->timecreated, '%H:%M:%S');
+    $formattedtime = userdate($img->timecreated, '%H:%M');
     array_push($imgarray, ['title' => $img->image_status == 'M' ?
         get_string('mainimage', 'quizaccess_quizproctoring') :
         get_string($img->status, 'quizaccess_quizproctoring', ''),

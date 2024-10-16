@@ -2,6 +2,12 @@ define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates'],
 function($, ModalFactory, ModalEvents, Templates) {
     return {
         init: function() {
+            $(document).ready(function() {
+                if (typeof lightbox !== 'undefined') {
+                    lightbox.init();
+                }
+            });
+
             $('.delete-icon').on('click', function(event) {
                 var username = $(this).data('username');
                 var confirmation = confirm('Delete all the Images of user "' + username + '"?');
@@ -27,6 +33,7 @@ function($, ModalFactory, ModalEvents, Templates) {
             });
 
             $('.proctoringimage').on('click', function(event) {
+                event.preventDefault();
                 var attemptid = $(this).data('attemptid');
                 var quizid = $(this).data('quizid');
                 var userid = $(this).data('userid');
@@ -60,15 +67,12 @@ function($, ModalFactory, ModalEvents, Templates) {
                                 }).then(function(modal) {
                                     modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                                     modal.show();
-                                    lightbox.init();                        
-                                $('.image-link').on('click', function(event) {
+                                    lightbox.init();
+                                $('.image-link').on('click', function() {
                                     var titleElement = $(this).next('.image-title');
                                     var timeElement = $(this).next('.image-time');
                                     titleElement.show();
                                     timeElement.show();
-                                    setTimeout(function() {
-                                        titleElement.hide();
-                                    }, 1000);
                                     
                                     lightbox.start($(this)[0]);
                                 });
@@ -77,9 +81,6 @@ function($, ModalFactory, ModalEvents, Templates) {
                                 });
                                        
                                 });
-                            })
-                            .fail(function() {
-                                console.error('Failed to render Mustache template');
                             });
                         } else {
                             var message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
