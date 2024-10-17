@@ -217,7 +217,8 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
                 ]);
                 $autosubmitdata->isautosubmit = 1;
                 $DB->update_record('quizaccess_proctor_data', $autosubmitdata);
-                echo json_encode(['status' => 'true', 'redirect' => 'true', 'url' => $attemptobj->review_url()->out()]);
+                echo json_encode(['status' => 'true', 'redirect' => 'true',
+                    'msg' => get_string('autosubmit', 'quizaccess_quizproctoring'), 'url' => $attemptobj->review_url()->out()]);
                 die();
             } else {
                 if ($status) {

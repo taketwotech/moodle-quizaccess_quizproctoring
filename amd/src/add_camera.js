@@ -109,7 +109,10 @@ function($, str, ModalFactory) {
                 } else {
                     if (response.redirect && response.url) {
                         window.onbeforeunload = null;
-                        window.location.href = encodeURI(response.url);
+                        $(document).trigger('popup', response.msg);
+                        setTimeout(function() {
+                            window.location.href = encodeURI(response.url);
+                        }, 3000);
                     }
                 }
             }
@@ -423,7 +426,10 @@ function($, str, ModalFactory) {
                                             } else {
                                                 if (response.redirect && response.url) {
                                                     window.onbeforeunload = null;
-                                                    window.location.href = encodeURI(response.url);
+                                                    $(document).trigger('popup', response.msg);
+                                                    setTimeout(function() {
+                                                        window.location.href = encodeURI(response.url);
+                                                    }, 3000);
                                                 }
                                             }
                                         }
