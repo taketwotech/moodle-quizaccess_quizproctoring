@@ -41,4 +41,11 @@ $capabilities = [
             'teacher' => CAP_ALLOW,
         ],
     ],
+    'quizaccess/quizproctoring:quizproctoringstudentreport' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+        ],
+    ],
 ];

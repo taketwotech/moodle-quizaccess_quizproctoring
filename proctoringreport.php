@@ -34,6 +34,7 @@ $deleteuserid = optional_param('delete', '', PARAM_INT);
 $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
 require_login($course, true, $cm);
+require_capability('quizaccess/quizproctoring:quizproctoringstudentreport', $context);
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php'));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
@@ -73,19 +74,21 @@ if ($deleteuserid) {
   }
   $DB->set_field('quizaccess_proctor_data', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
 }
-
 $table = new html_table();
 $headers = array(
-            get_string("fullname","quizaccess_quizproctoring"),
-            get_string("email","quizaccess_quizproctoring"),
-            get_string("usersimages","quizaccess_quizproctoring"),
-            get_string("reviewattempts","quizaccess_quizproctoring"),
-            get_string("actions","quizaccess_quizproctoring")
-        );
+    get_string("fullname", "quizaccess_quizproctoring"),
+    get_string("email", "quizaccess_quizproctoring"),
+    get_string("usersimages", "quizaccess_quizproctoring"),
+    get_string("actions", "quizaccess_quizproctoring")
+);
+$proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
+if ($proctoringimageshow == 1) {
+    array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring"));
+}
 $table->head = $headers;
 $output = $PAGE->get_renderer('mod_quiz');
-echo $OUTPUT->header();
-$proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
+echo $output->header();
+
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid='.$cmid;
     $btn = '<a class="btn btn-primary" href="'.$url.'">
@@ -118,7 +121,14 @@ foreach($records as $record) {
     $imgurl = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid='.$record->id.'&cmid='.$cmid.'&quizid='.$quizid;
     $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' . $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
 
-    $table->data[] = array($namelink, $record->email, $record->image_count, $imageicon, $deleteicon);
+    //$table->data[] = array($namelink, $record->email, $record->image_count, $imageicon, $deleteicon);
+
+    $row = array($namelink, $record->email, $record->image_count);
+    if ($proctoringimageshow == 1) {
+        $row[] = $imageicon;
+    }
+    $row[] = $deleteicon;  // Delete icon
+    $table->data[] = $row;
 }
 
 echo html_writer::table($table);
