@@ -37,12 +37,14 @@ function($, ModalFactory, ModalEvents, Templates) {
                 var attemptid = $(this).data('attemptid');
                 var quizid = $(this).data('quizid');
                 var userid = $(this).data('userid');
+                var all = $(this).data('all');
                 $.ajax({
                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
                     data: {
                         attemptid: attemptid,
                         userid: userid,
-                        quizid: quizid
+                        quizid: quizid,
+                        all: all
                     },
                     dataType: 'json',
                     success: function(response) {

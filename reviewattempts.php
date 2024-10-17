@@ -61,8 +61,11 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
                 get_string("proctoringidentity","quizaccess_quizproctoring"),            
                 get_string("isautosubmit","quizaccess_quizproctoring"),
             );
+    $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
+    if ($storerecord->storeallimages) {
+        array_splice($headers, -1, 0, get_string("allimages", "quizaccess_quizproctoring"));
+    }
     $table->head = $headers;
-    $table->colclasses = array('', '', 'reviewimage');
     $output = $PAGE->get_renderer('mod_quiz');
     echo $OUTPUT->header();
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
@@ -94,9 +97,9 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
                     ]);
         $attempt_url = new moodle_url('/mod/quiz/review.php', array('attempt' => $attempt->id));
         $attempturl = '<a href="' . $attempt_url->out() . '">' . $attempt->attempt . '</a>';
-        $attemptNumbers = $attempt->attempt;
-        $timetaken = $attempt->timefinish - $attempt->timestart;
-        $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
+        $attemptNumbers = $attempt->attempt;        
+        $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
+        $pallimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-all="true" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
         $pindentity = '';
         if ($usermages->user_identity && $usermages->user_identity != 0) {
             $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">';
@@ -106,7 +109,17 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
         } else {
             $submit = 'No';
         }
-        $table->data[] = array($namelink, $attempturl, userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig')), format_time($timetaken), $pimages, $pindentity, $submit);
+        $finishtime = $timetaken = get_string('inprogress', 'quiz');
+        if ($attempt->timefinish) {
+            $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
+            $timetaken = format_time($attempt->timefinish - $attempt->timestart);
+        }
+        $row = array($namelink, $attempturl, $finishtime, $timetaken, $pimages, $pindentity);
+        if ($storerecord->storeallimages) {
+            $row[] = $pallimages;
+        }
+        $row[] = $submit;
+        $table->data[] = $row;
     }
     echo html_writer::table($table);
     echo $OUTPUT->footer();

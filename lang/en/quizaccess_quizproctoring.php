@@ -31,6 +31,7 @@ $string['accesstoken_help'] = 'Access token generated from External Server Syste
 $string['accesstokensecret'] = 'External Server Secret Token';
 $string['accesstokensecret_help'] = 'Access secret generated from External Server System Integration';
 $string['actions'] = 'Action';
+$string['allimages'] = 'All Images';
 $string['attempts'] = 'Attempts';
 $string['autosubmit'] = 'The warning threshold has been reached. Your quiz has been automatically submitted.';
 $string['awskey'] = 'AWS API Key';

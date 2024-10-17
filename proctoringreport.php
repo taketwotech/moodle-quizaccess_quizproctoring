@@ -121,13 +121,11 @@ foreach($records as $record) {
     $imgurl = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid='.$record->id.'&cmid='.$cmid.'&quizid='.$quizid;
     $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' . $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
 
-    //$table->data[] = array($namelink, $record->email, $record->image_count, $imageicon, $deleteicon);
-
     $row = array($namelink, $record->email, $record->image_count);
     if ($proctoringimageshow == 1) {
         $row[] = $imageicon;
     }
-    $row[] = $deleteicon;  // Delete icon
+    $row[] = $deleteicon;
     $table->data[] = $row;
 }
 

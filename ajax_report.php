@@ -31,9 +31,12 @@ require_login();
 $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-
-$sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
-AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 AND userimg IS NOT NULL order by id asc";
+$all = required_param('all', PARAM_BOOL);
+$addsql = '';
+if(!$all) {
+    $addsql = " (status != '' OR image_status = 'M') AND "; 
+}
+$sql = "select * from {quizaccess_proctor_data} where ".$addsql." userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 order by id asc";
 $getimages = $DB->get_records_sql($sql);
 $imgarray = [];
 $totalrecord = count($getimages);
@@ -55,10 +58,14 @@ foreach ($getimages as $img) {
     } else {
         $target = $img->userimg;
     }
+    $status = '';
+    if ($img->status) {
+        $status = get_string($img->status, 'quizaccess_quizproctoring', '');
+    }
     $formattedtime = userdate($img->timecreated, '%H:%M');
     array_push($imgarray, ['title' => $img->image_status == 'M' ?
         get_string('mainimage', 'quizaccess_quizproctoring') :
-        get_string($img->status, 'quizaccess_quizproctoring', ''),
+        $status,
         'img' => $target,
         'timecreated' => $formattedtime,
         'totalpage' => $countrecord, 'total' => $totalrecord,
