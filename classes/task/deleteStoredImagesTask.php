@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Scheduled task to Clean Stored Images
+ * Scheduled task for Clean Stored Images
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -30,6 +30,12 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
 
+/**
+ * Scheduled task for Clean Stored Images
+ *
+ * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class deleteStoredImagesTask extends scheduled_task {
     /**
      * Task Name

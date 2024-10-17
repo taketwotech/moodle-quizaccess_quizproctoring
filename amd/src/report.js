@@ -72,13 +72,12 @@ function($, ModalFactory, ModalEvents, Templates) {
                                         var titleElement = $(this).next('.image-title');
                                         var timeElement = $(this).next('.image-time');
                                         titleElement.show();
-                                        timeElement.show();
-                                        
+                                        timeElement.show();                                        
                                         lightbox.start($(this)[0]);
                                     });
                                     $('.image-link').on('lightbox:open', function() {
                                         $(this).next('.image-title').hide();
-                                    });                                       
+                                    });
                                 });
                             });
                         } else {
