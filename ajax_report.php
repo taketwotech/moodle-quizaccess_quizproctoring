@@ -42,7 +42,7 @@ $imgarray = [];
 $totalrecord = count($getimages);
 
 foreach ($getimages as $img) {
-    if ($img->userimg == '') {
+    if ($img->userimg == '' && image_status != 'M') {
         $image_path = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
         if (file_exists($image_path)) {
             $image_content = file_get_contents($image_path);
