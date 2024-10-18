@@ -46,7 +46,7 @@ $PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
 $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'), '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
-                            'proctoringidentity'], 'quizaccess_quizproctoring');
+                            'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
 $PAGE->requires->jquery();
 $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
 $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);

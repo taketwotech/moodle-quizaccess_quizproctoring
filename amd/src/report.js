@@ -62,10 +62,12 @@ function($, ModalFactory, ModalEvents, Templates) {
 
                             Templates.render('quizaccess_quizproctoring/response_modal', data)
                                 .done(function(renderedHtml) {
+                                    var modaltitle = all ? M.util.get_string('allimages', 'quizaccess_quizproctoring') :
+                                    M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                                     ModalFactory.create({
                                     type: ModalFactory.types.DEFAULT,
                                     body: renderedHtml,
-                                    title: M.util.get_string('proctoringimages', 'quizaccess_quizproctoring')
+                                    title: modaltitle
                                 }).then(function(modal) {
                                     modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                                     modal.show();
@@ -74,7 +76,7 @@ function($, ModalFactory, ModalEvents, Templates) {
                                         var titleElement = $(this).next('.image-title');
                                         var timeElement = $(this).next('.image-time');
                                         titleElement.show();
-                                        timeElement.show();                                        
+                                        timeElement.show();
                                         lightbox.start($(this)[0]);
                                     });
                                     $('.image-link').on('lightbox:open', function() {
