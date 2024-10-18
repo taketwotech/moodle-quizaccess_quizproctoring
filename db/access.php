@@ -31,21 +31,21 @@ $capabilities = [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [
-            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
         ],
     ],
     'quizaccess/quizproctoring:quizproctoringonlinestudent' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [
-            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
         ],
     ],
     'quizaccess/quizproctoring:quizproctoringoverallreport' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [
-            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
         ],
     ],
 ];
