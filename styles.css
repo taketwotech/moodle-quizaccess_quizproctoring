@@ -5,6 +5,10 @@
     z-index: 1000;
     width: 240px;
 }
+.userimage {
+    max-width: 100px;
+    max-height: 100px;
+}
 button.proctoringimage {
     margin-left: 1.5%;
     margin-bottom: 0.4%;
@@ -36,10 +40,22 @@ button.proctoridentity {
     right: 0%;
 }
 
+.proctoringimage {
+    cursor: pointer;
+}
+
+.proctoringidentity {
+    cursor: pointer;
+}
+
 /* Modal Content */
 .modalvideo-content {
     margin: auto;
     width: 50%;
+}
+
+.submittag {
+    color: red;
 }
 
 #loading {
@@ -50,6 +66,64 @@ button.proctoridentity {
     height: 9%;
     width: 5%;
     z-index: 9999999;
+}
+
+.deltitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.attempttitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.imageicon {
+    width: 25px;
+    height: 25px;
+}
+
+.proctoringimage {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.proctoridentity {
+    cursor: pointer;
+}
+
+.proctoring-images-modal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.proctoring-image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.proctoring-image-thumbnail {
+    width: 100px;
+    height: 75px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.proctoring-image-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.image-title {
+    display: none;
+    font-size: 14px;
+    margin-top: 5px;
+    text-align: center;
 }
 
 /* Hide video on mobile devices */
