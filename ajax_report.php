@@ -42,14 +42,14 @@ $imgarray = [];
 $totalrecord = count($getimages);
 
 foreach ($getimages as $img) {
-    if ($img->userimg == '' && image_status != 'M') {
+    if ($img->userimg == '' && $img->image_status != 'M') {
         $image_path = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
         if (file_exists($image_path)) {
             $image_content = file_get_contents($image_path);
             $image_base64 = base64_encode($image_content);
             $target = 'data:image/png;base64,' . $image_base64;
         }
-    } else if (strlen($img->userimg) < 40) {
+    } else if (strlen($img->userimg) < 50) {
         $quizobj = \quiz::create($img->quizid, $img->userid);
         $context = $quizobj->get_context();
         $fs = get_file_storage();

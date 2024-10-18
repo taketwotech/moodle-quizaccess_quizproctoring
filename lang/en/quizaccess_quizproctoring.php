@@ -113,6 +113,7 @@ $string['serviceoption'] = 'Facematch Service Option';
 $string['serviceoption_desc'] = 'Service to match faces';
 $string['showprofileimage'] = 'Profile Image';
 $string['showprofileimagemsg'] = 'No profile picture uploaded';
+$string['started'] = 'Started';
 $string['storeallimages'] = 'Store All Images';
 $string['storeallimages_help'] = 'Enable this option to store all captured images during proctoring sessions, not just warning images.';
 $string['submitted'] = 'Submitted';

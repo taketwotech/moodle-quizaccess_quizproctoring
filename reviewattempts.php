@@ -55,6 +55,7 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
     $headers = array(
                 get_string("email","quizaccess_quizproctoring"),
                 get_string("attempts","quizaccess_quizproctoring"),
+                get_string("started","quizaccess_quizproctoring"),
                 get_string("submitted","quizaccess_quizproctoring"),
                 get_string("duration","quizaccess_quizproctoring"),
                 get_string("proctoringimages","quizaccess_quizproctoring"),
@@ -110,11 +111,12 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
             $submit = 'No';
         }
         $finishtime = $timetaken = get_string('inprogress', 'quiz');
+        $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
         if ($attempt->timefinish) {
             $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
             $timetaken = format_time($attempt->timefinish - $attempt->timestart);
         }
-        $row = array($namelink, $attempturl, $finishtime, $timetaken, $pimages, $pindentity);
+        $row = array($namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity);
         if ($storerecord->storeallimages) {
             $row[] = $pallimages;
         }
