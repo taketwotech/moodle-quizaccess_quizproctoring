@@ -123,7 +123,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 );
             }
         }
-        if (has_capability('quizaccess/quizproctoring:quizproctoringstudentreport', $context)) {
+        if (has_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context)) {
             $button .= $OUTPUT->single_button(
                     new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
                         'cmid' => $id,

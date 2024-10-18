@@ -36,7 +36,7 @@ $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
 require_login($course, true, $cm);
-require_capability('quizaccess/quizproctoring:quizproctoringstudentreport', $context);
+require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
 
