@@ -21,20 +21,6 @@ function($, str, ModalFactory) {
         this.attemptid = attemptid;
         $("#id_submitbutton").prop("disabled", true);
         docElement.on('popup', this.showpopup.bind(this));
-        navigator.mediaDevices.getUserMedia({video: true})
-        .then(function(stream) {
-            const videoElement = document.getElementById('video');
-            if (videoElement) {
-                videoElement.srcObject = stream;
-                videoElement.muted = true;
-                videoElement.playsinline = "";
-                localMediaStream = stream;
-                videoElement.play();
-            }
-        })
-        .catch(function() {
-            // Console.log(err);
-        });
     };
 
     /** @type Tag element contain video. */
@@ -62,6 +48,22 @@ function($, str, ModalFactory) {
      /** @type int quiz id. */
     Camera.prototype.quizid = false;
 
+    Camera.prototype.startcamera = function() {
+        navigator.mediaDevices.getUserMedia({video: true})
+        .then(function(stream) {
+            const videoElement = document.getElementById('video');
+            if (videoElement) {
+                videoElement.srcObject = stream;
+                videoElement.muted = true;
+                videoElement.playsinline = true;
+                localMediaStream = stream;
+                videoElement.play();
+            }
+        })
+        .catch(function() {
+            // Console.log(err);
+        });
+    };
 
     Camera.prototype.takepicture = function() {
         var context = this.canvas.getContext('2d');
@@ -156,6 +158,9 @@ function($, str, ModalFactory) {
         if (!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);
+            $('.quizstartbuttondiv [type=submit]').on('click', function() {
+                camera.startcamera();
+            });
             // Take picture on button click
             $('#' + camera.takepictureid).on('click', function(e) {
                 e.preventDefault();
@@ -437,6 +442,7 @@ function($, str, ModalFactory) {
                                 }
                             });
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                            camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
                     }
@@ -448,6 +454,7 @@ function($, str, ModalFactory) {
                         var teacherroom = getTeacherroom();
                         if (teacherroom !== 'teacher') {
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                            camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
                     }

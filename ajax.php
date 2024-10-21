@@ -37,58 +37,58 @@ $tab = optional_param('tab', false, PARAM_BOOL);
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
-
-if (!$img && !$tab) {
-    quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
-}
-
-if (!$img && $tab) {
-    quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED);
-}
-
-$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-require_login($course);
-$data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
-$target = '';
-$profileimg = '';
-if (!$mainimage) {
-    // If it is not main image, get the main image data and compare.
-    if ($mainentry = $DB->get_record('quizaccess_proctor_data', [
+$mainentry = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,
     'image_status' => 'M',
-    'attemptid' => $attemptid])) {
-        $context = context_module::instance($cmid);
-        $fs = get_file_storage();
-        $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
-        $target = $f1->get_content();
-    }
-} else {
-    $context = context_user::instance($USER->id);
-    $sql = "SELECT * FROM {files} WHERE contextid =
-    :contextid AND component = 'user' AND
-    filearea = 'icon' AND itemid = 0 AND
-    filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
-    ORDER BY timemodified, filename DESC LIMIT 1";
-    $params = ['contextid' => $context->id];
-    $filerecord = $DB->get_record_sql($sql, $params);
-    if ($filerecord) {
-        $fs = get_file_storage();
-        $file = $fs->get_file(
-            $filerecord->contextid,
-            $filerecord->component,
-            $filerecord->filearea,
-            $filerecord->itemid,
-            $filerecord->filepath,
-            $filerecord->filename
-        );
-        $profileimage = $file->get_content();
-    }
-}
-$service = get_config('quizaccess_quizproctoring', 'serviceoption');
+    'attemptid' => $attemptid]);
 if (!$mainentry->isautosubmit) {
+    if (!$img && !$tab) {
+        quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+                    $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
+    }
+
+    if (!$img && $tab) {
+        quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
+                    $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED);
+    }
+
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    require_login($course);
+    $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
+    $target = '';
+    $profileimg = '';
+    if (!$mainimage) {
+        // If it is not main image, get the main image data and compare.
+        if ($mainentry) {
+            $context = context_module::instance($cmid);
+            $fs = get_file_storage();
+            $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
+            $target = $f1->get_content();
+        }
+    } else {
+        $context = context_user::instance($USER->id);
+        $sql = "SELECT * FROM {files} WHERE contextid =
+        :contextid AND component = 'user' AND
+        filearea = 'icon' AND itemid = 0 AND
+        filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+        ORDER BY timemodified, filename DESC LIMIT 1";
+        $params = ['contextid' => $context->id];
+        $filerecord = $DB->get_record_sql($sql, $params);
+        if ($filerecord) {
+            $fs = get_file_storage();
+            $file = $fs->get_file(
+                $filerecord->contextid,
+                $filerecord->component,
+                $filerecord->filearea,
+                $filerecord->itemid,
+                $filerecord->filepath,
+                $filerecord->filename
+            );
+            $profileimage = $file->get_content();
+        }
+    }
+    $service = get_config('quizaccess_quizproctoring', 'serviceoption');
     if ($service === 'AWS') {
         // Validate image.
         \quizaccess_quizproctoring\aws\camera::init();
