@@ -26,6 +26,7 @@ define('AJAX_SCRIPT', true);
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
+require_login();
 
 $img = optional_param('imgBase64', '', PARAM_RAW);
 $cmid = required_param('cmid', PARAM_INT);
