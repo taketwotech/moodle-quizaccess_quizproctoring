@@ -92,7 +92,7 @@ if ($hassiteconfig && !empty($USER->id)) {
 
     $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
         get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
-        get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 0));
+        get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 1));
 
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/clear_images',
         get_string('clear_images', 'quizaccess_quizproctoring'),

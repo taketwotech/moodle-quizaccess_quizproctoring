@@ -29,6 +29,8 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $userid = required_param('userid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
+$perpage = 10;
+$page = optional_param('page', 0, PARAM_INT);
 
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 
@@ -39,17 +41,17 @@ require_login($course, true, $cm);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
+    $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php',
+        ['userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid]));
+    $PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
 
-$PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php'));
-$PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
-
-$PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'), '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
-$PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
-$PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
-                            'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
-$PAGE->requires->jquery();
-$PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
-$PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
+    $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'), '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
+    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
+    $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
+                                'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
+    $PAGE->requires->jquery();
+    $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
+    $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
 
     $table = new html_table();
     $headers = array(
@@ -85,7 +87,9 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
         new moodle_url('/user/view.php', array('id' => $user->id)),
         $user->email
     );
-    $attempts = $DB->get_records('quiz_attempts', array('quiz' => $quizid, 'userid' => $user->id), 'attempt ASC');
+    $totalattempts = $DB->count_records('quiz_attempts', ['quiz' => $quizid, 'userid' => $userid]);
+    $attempts = $DB->get_records('quiz_attempts', ['quiz' => $quizid, 'userid' => $userid],
+        'attempt ASC', '*', $page * $perpage, $perpage);
 
     // Prepare an array to hold the attempt numbers
     $attemptNumbers = array();
@@ -124,5 +128,6 @@ $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizpro
         $table->data[] = $row;
     }
     echo html_writer::table($table);
+    echo $OUTPUT->paging_bar($totalattempts, $page, $perpage, $PAGE->url);
     echo $OUTPUT->footer();
 }

@@ -126,6 +126,22 @@ button.proctoridentity {
     text-align: center;
 }
 
+.delcourse {
+    display: none;
+}
+
+.delete-icon {
+    display: none; 
+}
+
+.delete-quiz {
+    display: none; 
+}
+
+.deleteall {
+    margin-left: 2px;
+}
+
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video {

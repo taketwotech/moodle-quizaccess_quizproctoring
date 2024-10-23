@@ -20,9 +20,185 @@
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+define(['jquery', 'core/modal_factory', 'quizaccess_quizproctoring/modal_response', 'core/modal_events'],
+function($, ModalFactory, ModalResponse, ModalEvents) {
 
-define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates'],
-function($, ModalFactory, ModalEvents, Templates) {
+    var ResponsePanel = function(responses) {
+        this.responses = responses;
+        this.registerEventListeners();
+    };
+
+    ResponsePanel.prototype.qid = null;
+    ResponsePanel.prototype.rid = null;
+    ResponsePanel.prototype.sec = null;
+    ResponsePanel.prototype.courseid = null;
+    ResponsePanel.prototype.responses = Array();
+    ResponsePanel.prototype.index = 0;
+    ResponsePanel.prototype.quizid = 0;
+    ResponsePanel.prototype.attemptid = 0;
+    ResponsePanel.prototype.userid = 0;
+    ResponsePanel.prototype.currentpage = 1;
+    ResponsePanel.prototype.firstPage = 1;
+    ResponsePanel.prototype.lastPage = 0;
+    ResponsePanel.prototype.tempindex = 0;
+    ResponsePanel.prototype.prevpage = 0;
+    ResponsePanel.prototype.temarrayprev = Array();
+    ResponsePanel.prototype.temarraynext = Array();
+    /**
+     * Register event listeners for the grade panel.
+     *
+     * @method registerEventListeners
+     */
+    ResponsePanel.prototype.registerEventListeners = function() {
+        var docElement = $(document);
+        docElement.on('next', this._getNextUser.bind(this));
+        docElement.on('prev', this._getPreviousUser.bind(this));
+    };
+
+    /**
+     * Reset buttons method
+     */
+    ResponsePanel.prototype._reset = function() {
+        if (this.responses.length) {
+            var isFirst = this.index === 0;
+            var isLast = this.responses.length === this.index + 1;
+            if (isFirst) {
+                if (this.firstPage == this.currentpage) {
+                    $('[data-action="previous"]').prop("disabled", "disabled");
+                } else {
+                    $('[data-action="previous"]').prop("disabled", false);
+                }
+                $('[data-action="next"]').prop("disabled", false);
+            } else if (isLast) {
+                if (this.currentpage == this.lastpage) {
+                    $('[data-action="next"]').prop("disabled", "disabled");
+                } else {
+                    $('[data-action="next"]').prop("disabled", false);
+                }
+                $('[data-action="previous"]').prop("disabled", false);
+            } else {
+                $('[data-action="previous"]').prop("disabled", false);
+                $('[data-action="next"]').prop("disabled", false);
+            }
+        }
+    };
+
+    /**
+     * First page settings
+     *
+     */
+     ResponsePanel.prototype._isFirstPage = function() {
+        var insidethid = this;
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
+            data: {
+                attemptid: this.attemptid,
+                userid: this.userid,
+                quizid: this.quizid,
+                currentpage: (this.currentpage - 2)
+            },
+            dataType: 'json',
+            success: function(response) {
+                var images = JSON.parse(JSON.stringify(response));
+                insidethid.temarrayprev = images;
+                insidethid.prevpage = 1;
+            }
+        });
+     };
+
+     /**
+      * Last page settings
+      *
+      */
+    ResponsePanel.prototype._isLastPage = function() {
+        var insidethid = this;
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
+            data: {
+                attemptid: this.attemptid,
+                userid: this.userid,
+                quizid: this.quizid,
+                currentpage: this.currentpage
+            },
+            dataType: 'json',
+            success: function(response) {
+                var images = JSON.parse(JSON.stringify(response));
+                insidethid.temarraynext = images;
+                if (images[0]) {
+                    insidethid.tempindex = 1;
+                }
+            }
+        });
+    };
+
+    /**
+     * Get next user to process
+     *
+     * @method _getNextUser
+     */
+    ResponsePanel.prototype._getNextUser = function() {
+        if (this.tempindex) {
+            this.index = -1;
+            this.responses = this.temarraynext;
+            this.currentpage += 1;
+        }
+        this.tempindex = 0;
+        this.prevpage = 0;
+        this.index += 1;
+        this._reset();
+        var res = this.responses[this.index];
+        if (res) {
+            $(".imgheading").html(res.title);
+            $(".userimg").attr("src", res.img);
+        }
+        var isFirst = this.index === 0;
+        if (isFirst) {
+            this._isFirstPage();
+        }
+        var isLast = this.responses.length === this.index + 1;
+        if (isLast) {
+            this._isLastPage();
+        }
+
+    };
+
+    /**
+     * Get previous user to process
+     *
+     * @method _getNextUser
+     */
+    ResponsePanel.prototype._getPreviousUser = function() {
+        if (this.tempindex) {
+            this.index = 18;
+        } else {
+            this.index -= 1;
+        }
+
+        if (this.prevpage) {
+            this.index = 19;
+            this.responses = this.temarrayprev;
+            this.currentpage -= 1;
+        }
+        this.prevpage = 0;
+        this.tempindex = 0;
+        this._reset();
+        var res = this.responses[this.index];
+        if (res) {
+            $(".imgheading").html(res.title);
+            $(".userimg").attr("src", res.img);
+        }
+        var isFirst = this.index === 0;
+        if (isFirst) {
+            this._isFirstPage();
+        }
+
+        var isLast = this.responses.length === this.index + 1;
+        if (isLast) {
+            this._isLastPage();
+        }
+
+    };
+
     var init = function(attemptid = null, quizid = null, userid = null, useridentity = null, proctoringimageshow) {
         var docElement = $(document);
         docElement.ready(function() {
@@ -49,7 +225,6 @@ function($, ModalFactory, ModalEvents, Templates) {
                 document.getElementById("page-content").prepend(btnidentity);
             }
         });
-
         docElement.on('click', 'button.proctoringimage', function(e) {
             e.preventDefault();
             var quizid = $(this).data('quizid');
@@ -58,65 +233,46 @@ function($, ModalFactory, ModalEvents, Templates) {
             $.ajax({
                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
                 data: {
-                    attemptid: attemptid,
-                    userid: userid,
-                    quizid: quizid
+                    attemptid: $(this).data('attemptid'),
+                    userid: $(this).data('userid'),
+                    quizid: $(this).data('quizid')
                 },
                 dataType: 'json',
                 success: function(response) {
                     var images = JSON.parse(JSON.stringify(response));
                     if (images.length > 0) {
-                        var data = {
-                            images: images.map(function(image) {
-                                return {
-                                    url: image.img,
-                                    title: image.title
-                                };
-                            })
-                        };
-
-                        Templates.render('quizaccess_quizproctoring/response_modal', data)
-                            .done(function(renderedHtml) {
-                                ModalFactory.create({
-                                type: ModalFactory.types.DEFAULT,
-                                body: renderedHtml,
-                                title: M.util.get_string('proctoringimages', 'quizaccess_quizproctoring')
-                            }).then(function(modal) {
-                                modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                                modal.show();
-                                lightbox.init();                        
-                            $('.image-link').on('click', function(event) {
-                                var titleElement = $(this).next('.image-title');
-                                titleElement.show();                            
-                                setTimeout(function() {
-                                    titleElement.hide();
-                                }, 1000);
-                                
-                                lightbox.start($(this)[0]);
-                            });
-                            $('.image-link').on('lightbox:open', function() {
-                                $(this).next('.image-title').hide();
-                            });
-                                   
-                            });
-                        })
-                        .fail(function() {
-                            console.error('Failed to render Mustache template');
+                        var rp = new ResponsePanel(images);
+                        rp.quizid = quizid;
+                        rp.userid = userid;
+                        rp.attemptid = attemptid;
+                        rp.lastpage = rp.responses[rp.index].totalpage;
+                        return ModalFactory.create({
+                            type: ModalResponse.TYPE,
+                        }).then(function(modal) {
+                            modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                            modal.setTitle('User Images');
+                            modal.show();
+                            $(".imgheading").html(rp.responses[rp.index].title);
+                            $(".userimg").attr("src", rp.responses[rp.index].img);
+                            if (rp.responses[rp.index].total == 1) {
+                                $('[data-action="next"]').prop("disabled", "disabled");
+                            }
+                            return null;
                         });
                     } else {
                         var message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
-                        ModalFactory.create({
+                        return ModalFactory.create({
                             type: ModalFactory.types.DEFAULT,
-                            body: message
+                            body: message,
                         }).then(function(modal) {
                             modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                             modal.show();
+                            return null;
                         });
                     }
                 }
             });
         });
-
         docElement.on('click', 'button.proctoridentity', function(e) {
             e.preventDefault();
             $.ajax({
@@ -146,6 +302,7 @@ function($, ModalFactory, ModalEvents, Templates) {
             });
         });
     };
+
     return {
         init: init
     };

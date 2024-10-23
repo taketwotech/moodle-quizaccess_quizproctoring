@@ -513,7 +513,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'attemptid' => $attemptid,
                     'image_status' => 'M',
                 ]);
-                if ($quizinfo && ($proctoringimageshow == 1)) {
+                /*if ($quizinfo && ($proctoringimageshow == 1)) {
                     if ($usermages) {
                         $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
                             'proctoringidentity'], 'quizaccess_quizproctoring');
@@ -528,7 +528,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                             [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
                         }
                     }
-                }
+                }*/
             }
         }
     }

@@ -41,12 +41,17 @@ $string['awssecret_help'] = 'Enter AWS Secret here to be used to access AWS serv
 $string['clear_images'] = 'Clear All Stored Images After';
 $string['clear_images_help'] = 'After this period, All Stored Images will Clear';
 $string['clear_images_never'] = 'Never';
-$string['clear_images_oneeighty'] = '6 Month';
+$string['clear_images_oneeighty'] = '6 Months';
 $string['clear_images_oneyear'] = '1 Year';
-$string['clear_images_sixty'] = '3 Month';
+$string['clear_images_sixty'] = '3 Months';
 $string['clear_images_thirty'] = '1 Month';
 $string['clickpicture'] = 'Please capture your picture before starting the exam';
+$string['confirmation'] = 'Confirmation';
 $string['delcoursemages'] = 'Delete all stored images of {$a}';
+$string['deleteallimages'] = 'Permanently delete all images';
+$string['deleteallimagescourse'] = 'Delete all the user\'s data of course "{$a}"?';
+$string['deleteallimagesuser'] = 'Delete all the data of user "{$a}"?';
+$string['deleteallimagesquiz'] = 'Delete all the user\'s data of quiz "{$a}"?';
 $string['delete_Stored_Images_Task'] = 'Delete Stored Images Task';
 $string['delinformation'] = 'You can delete all the data related to quiz. It will delete all image file.';
 $string['delinformationu'] = 'You can delete all the data of user related to quiz. It will delete all image file.';
@@ -71,7 +76,8 @@ $string['fullname'] = 'Full Name';
 $string['fullquizname'] = 'Quiz Name';
 $string['help_timeinterval'] = 'Select time interval for image Proctoring';
 $string['hoverhelptext'] = 'Back to {$a} user image list';
-$string['isautosubmit'] = 'Isautosubmit';
+$string['isautosubmit'] = 'Proctor Failed';
+$string['imagesdeleted'] = 'Data Deleted Successfully';
 $string['mainimage'] = 'Main Image';
 $string['minimizedetected'] = 'Do not move away from active tab. {$a}';
 $string['multifacesdetected'] = 'More than one face detected. {$a}';
@@ -140,4 +146,6 @@ $string['warningopensourse'] = 'Please complete <a href="{$a}">configuration</a>
 $string['warnings'] = ' warnings';
 $string['warningsleft'] = 'You have only {$a} left.';
 $string['warningstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
+$string['yes'] = 'Yes';
+
 
