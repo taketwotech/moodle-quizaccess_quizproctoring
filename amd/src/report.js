@@ -159,11 +159,12 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 }).then(function(modal) {
                     modal.show();
 
-                    var perpage = 50;
+                    var perpage = 35;
                     var currentPage = 1;
+                    var totalPages = 1;
 
                     /**
-                     * Get css class
+                     * Load images via AJAX
                      *
                      * @param {int} page page
                      */
@@ -188,6 +189,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         cssClass: getCssClass(image.imagestatus)
                                     };
                                 });
+                                totalPages = response.totalPages;
 
                                 var data = {
                                     attemptdate: startdate,
@@ -215,8 +217,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         $('.image-link').on('lightbox:open', function() {
                                             $(this).next('.image-title').hide();
                                         });
-                                        modal.getBody().find('.pagination-controls').
-                                        html(getPaginationControls(response.currentPage, response.totalPages));
+                                        modal.getBody().find('.pagination-controls')
+                                        .html(getPaginationControls(response.currentPage, response.totalPages));
                                     });
                             },
                             error: function(jqXHR, textStatus) {
@@ -245,21 +247,21 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
 
                     /**
                      * Get pagination controls
-                     *
-                     * @param {int} currentPage currentPage
-                     * @param {int} totalPages totalPages
-                     * @return {string} button div
+                     * @param {int} currentPage Current page number
+                     * @param {int} totalPages Total number of pages
+                     * @return {string} HTML for pagination controls
                      */
                     function getPaginationControls(currentPage, totalPages) {
                         var prevButton = '<button class="prev-page" ' +
-                        (currentPage === 1 ? 'disabled' : '') + '>Previous</button>';
+                            (currentPage === 1 ? 'disabled' : '') + '>Previous</button>';
                         var nextButton = '<button class="next-page" ' +
-                        (currentPage === totalPages ? 'disabled' : '') + '>Next</button>';
+                            (currentPage === totalPages ? 'disabled' : '') + '>Next</button>';
 
                         return '<div>' + prevButton + ' Page ' + currentPage
-                        + ' of ' + totalPages + ' ' + nextButton + '</div>';
+                            + ' of ' + totalPages + ' ' + nextButton + '</div>';
                     }
-                    
+
+                    // Event handler for previous page
                     modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {
                         if (currentPage > 1) {
                             currentPage--;
@@ -267,8 +269,9 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     });
 
+                    // Event handler for next page
                     modal.getBody().off('click', '.next-page').on('click', '.next-page', function() {
-                        if (currentPage < response.totalPages) {
+                        if (currentPage < totalPages) {
                             currentPage++;
                             loadImages(currentPage);
                         }
