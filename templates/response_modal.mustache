@@ -25,9 +25,15 @@
         "body": "Lightbox Images with Previous & Next Button"
     }
 }}
+<h6 class="attempt-date">{{#str}} attemptstarted, quizaccess_quizproctoring {{/str}} {{attemptdate}}</h6>
+<ul class="imagelist">
+    <li class="mainimage">Main image - </li>
+    <li class="warningimage">Warning image - </li>
+    <li class="approveimage">Approved image - </li>
+</ul>
 <div class="proctoring-images-modal">
     {{#images}}
-        <div class="proctoring-image-item">
+        <div class="proctoring-image-item {{cssClass}}">
             <a href="{{url}}" data-lightbox="user-images" data-title="{{title}}" class="image-link">
                 <img src="{{url}}" alt="{{title}}" class="proctoring-image-thumbnail"/>
             </a>
@@ -40,7 +46,3 @@
         <p>{{#str}} noimageswarning, quizaccess_quizproctoring {{/str}}</p>
     {{/images}}
 </div>
-
-
-
-

@@ -108,8 +108,8 @@ button.proctoridentity {
 }
 
 .proctoring-image-thumbnail {
-    width: 100px;
-    height: 75px;
+    width: 75px;
+    height: 60px;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
@@ -140,6 +140,61 @@ button.proctoridentity {
 
 .deleteall {
     margin-left: 2px;
+}
+
+.attempt-date {
+    display: block;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.main-image img {
+    border: 2px solid blue;
+}
+
+.warning-image img {
+    border :2px solid red;
+}
+
+.green-image img {
+    border :2px solid green;
+}
+
+.imagelist {
+    list-style-type: none; /* Remove default bullet points */
+}
+
+.imagelist li {
+    display: inline-block; /* Make list items appear in one line */
+    margin-right: 20px; /* Optional: add spacing between the items */
+    font-size: 14px; /* Optional: adjust font size */
+}
+
+.mainimage::after {
+    content: '';
+    display: inline-block;
+    width: 15px; /* Adjust size as needed */
+    height: 15px;
+    background-color: blue;
+    margin-left: 5px; /* Space between text and square */
+}
+
+.warningimage::after {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    margin-left: 5px;
+}
+
+.approveimage::after {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: green;
+    margin-left: 5px;
 }
 
 /* Hide video on mobile devices */

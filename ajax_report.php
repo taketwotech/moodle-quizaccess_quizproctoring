@@ -63,10 +63,18 @@ foreach ($getimages as $img) {
         $status = get_string($img->status, 'quizaccess_quizproctoring', '');
     }
     $formattedtime = userdate($img->timecreated, '%H:%M');
+    if ($img->image_status == 'M') {
+        $imagestatusstr = get_string('mainimage', 'quizaccess_quizproctoring');
+    } elseif ($img->status != '') {
+        $imagestatusstr = get_string('imgwarning', 'quizaccess_quizproctoring');
+    } else {
+        $imagestatusstr = get_string('green', 'quizaccess_quizproctoring');
+    }
     array_push($imgarray, ['title' => $img->image_status == 'M' ?
         get_string('mainimage', 'quizaccess_quizproctoring') :
         $status,
         'img' => $target,
+        'imagestatus' => $imagestatusstr,
         'timecreated' => $formattedtime,
         'totalpage' => $countrecord, 'total' => $totalrecord,
     ]);

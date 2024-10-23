@@ -23,7 +23,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     str.get_string('confirmation', 'quizaccess_quizproctoring'),
                     str.get_string('deleteallimages', 'quizaccess_quizproctoring'),
                     str.get_string('delete', 'moodle'),
-                    str.get_string('cancel', 'moodle')
+                    str.get_string('cancel', 'moodle'),
                 ]).then(function(strings) {
                     var message = strings[0];
                     var title = strings[1];
@@ -63,7 +63,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     str.get_string('confirmation', 'quizaccess_quizproctoring'),
                     str.get_string('deleteallimages', 'quizaccess_quizproctoring'),
                     str.get_string('delete', 'moodle'),
-                    str.get_string('cancel', 'moodle')
+                    str.get_string('cancel', 'moodle'),
                 ]).then(function(strings) {
                     var message = strings[0];
                     var title = strings[1];
@@ -103,7 +103,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     str.get_string('confirmation', 'quizaccess_quizproctoring'),
                     str.get_string('deleteallimages', 'quizaccess_quizproctoring'),
                     str.get_string('delete', 'moodle'),
-                    str.get_string('cancel', 'moodle')
+                    str.get_string('cancel', 'moodle'),
                 ]).then(function(strings) {
                     var message = strings[0];
                     var title = strings[1];
@@ -136,37 +136,52 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 var attemptid = $(this).data('attemptid');
                 var quizid = $(this).data('quizid');
                 var userid = $(this).data('userid');
-                var all = $(this).data('all');
+                var startdate = $(this).data('startdate');
+                var all = $('#storeallimages').is(':checked') ? 'true' : 'false';
+           
                 $.ajax({
                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
                     data: {
                         attemptid: attemptid,
                         userid: userid,
                         quizid: quizid,
-                        all: all
+                        all: all,
                     },
                     dataType: 'json',
                     success: function(response) {
                         var images = JSON.parse(JSON.stringify(response));
                         if (images.length > 0) {
                             var data = {
+                                attemptdate: startdate,
                                 images: images.map(function(image) {
                                     return {
                                         url: image.img,
                                         time: image.timecreated,
-                                        title: image.title
+                                        title: image.title,
+                                        status: image.imagestatus,
+                                        cssClass: (function() {
+                                            switch (image.imagestatus.toLowerCase()) {
+                                                case 'main image':
+                                                    return 'main-image';
+                                                case 'warning':
+                                                    return 'warning-image';
+                                                default:
+                                                    return 'green-image';
+                                            }
+                                        })()
                                     };
                                 })
                             };
 
                             Templates.render('quizaccess_quizproctoring/response_modal', data)
                                 .done(function(renderedHtml) {
-                                    var modaltitle = all ? M.util.get_string('allimages', 'quizaccess_quizproctoring') :
+                                    var modaltitle = all === 'true' ? M.util.get_string('allimages', 'quizaccess_quizproctoring') :
                                     M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                                     ModalFactory.create({
                                     type: ModalFactory.types.DEFAULT,
                                     body: renderedHtml,
-                                    title: modaltitle
+                                    title: modaltitle,
+                                    large: true,
                                 }).then(function(modal) {
                                     modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                                     modal.show();
@@ -187,7 +202,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             var message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
                             ModalFactory.create({
                                 type: ModalFactory.types.DEFAULT,
-                                body: message
+                                body: message,
                             }).then(function(modal) {
                                 modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                                 modal.show();

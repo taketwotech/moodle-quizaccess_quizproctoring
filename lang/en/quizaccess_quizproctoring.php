@@ -33,6 +33,7 @@ $string['accesstokensecret_help'] = 'Access secret generated from External Serve
 $string['actions'] = 'Action';
 $string['allimages'] = 'All Images';
 $string['attempts'] = 'Attempts';
+$string['attemptstarted'] = 'Attempt started:';
 $string['autosubmit'] = 'The warning threshold has been reached. Your quiz has been automatically submitted.';
 $string['awskey'] = 'AWS API Key';
 $string['awskey_help'] = 'Enter AWS API key here to be used to access AWS services';
@@ -84,7 +85,7 @@ $string['multifacesdetected'] = 'More than one face detected. {$a}';
 $string['nocameradetected'] = 'No camera detected. {$a}';
 $string['nofacedetected'] = 'No face detected. {$a}';
 $string['noimages'] = 'No images';
-$string['noimageswarning'] = 'No Warnings Detected';
+$string['noimageswarning'] = 'No Warnings Images Detected';
 $string['notcameradetected'] = 'No camera detected.';
 $string['notmatchedprofile'] = 'Your Profile image is not matched with your current image.';
 $string['novideo'] = 'No Videos';
@@ -147,5 +148,7 @@ $string['warnings'] = ' warnings';
 $string['warningsleft'] = 'You have only {$a} left.';
 $string['warningstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
 $string['yes'] = 'Yes';
+$string['imgwarning'] = 'warning';
+
 
 
