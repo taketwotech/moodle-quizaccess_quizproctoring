@@ -121,7 +121,7 @@ $headers = array(
         );
 $table->head = $headers;
 echo $OUTPUT->header();
-if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {    
+if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $btn = '<a class="btn btn-primary delcourse" href="#"
     data-cmid="' . $cmid . '" data-courseid="' . $course->id . '"
     data-course="' . $course->fullname . '">

@@ -110,7 +110,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     var checkboxtext = strings[2];
                     var deleteLabel = strings[3];
                     var cancelLabel = strings[4];
-                    var checkboxHtml = '<div><input type="checkbox" id="deleteallimages" /><label class="deleteall">' + checkboxtext + '</label></div>';
+                    var checkboxHtml = '<div><input type="checkbox" id="deleteallimages" /><label class="deleteall">'
+                    + checkboxtext + '</label></div>';
                     notification.confirm(
                         title,
                         message + checkboxHtml,
