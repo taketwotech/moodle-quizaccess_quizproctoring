@@ -31,8 +31,17 @@ $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $perpage = 10;
 $page = optional_param('page', 0, PARAM_INT);
+$sort = optional_param('sort', 'email', PARAM_ALPHA);
+$dir = optional_param('dir', 'ASC', PARAM_ALPHA);
+
+$emailsort = ($sort === 'email' && $dir === 'ASC') ? 'DESC' : 'ASC';
+$attemptssort = ($sort === 'attempt' && $dir === 'ASC') ? 'DESC' : 'ASC';
+$arrowup = ' ▲';
+$arrowdown = ' ▼';
 
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
+$emailarrow = ($sort === 'email') ? ($dir === 'ASC' ? $arrowup : $arrowdown) : '';
+$attemptarrow = ($sort === 'attempt') ? ($dir === 'ASC' ? $arrowup : $arrowdown) : '';
 
 // Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
@@ -55,8 +64,10 @@ if ($proctoringimageshow == 1) {
     $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     $table = new html_table();
     $headers = array(
-        get_string("email","quizaccess_quizproctoring"),
-        get_string("attempts","quizaccess_quizproctoring"),
+        html_writer::link(new moodle_url($PAGE->url, ['sort' => 'email', 'dir' => $emailsort]),
+        get_string("email", "quizaccess_quizproctoring") . $emailarrow),
+        html_writer::link(new moodle_url($PAGE->url, ['sort' => 'attempt', 'dir' => $attemptssort]),
+        get_string("attempts", "quizaccess_quizproctoring") . $attemptarrow),
         get_string("started","quizaccess_quizproctoring"),
         get_string("submitted","quizaccess_quizproctoring"),
         get_string("duration","quizaccess_quizproctoring"),
@@ -67,7 +78,7 @@ if ($proctoringimageshow == 1) {
         get_string("isautosubmit","quizaccess_quizproctoring"),
     );
     
-    $table->head = $headers;
+    $table->head = $headers;    
     $output = $PAGE->get_renderer('mod_quiz');
     echo $OUTPUT->header();
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
@@ -76,9 +87,9 @@ if ($proctoringimageshow == 1) {
         $btn = '<a class="btn btn-primary" href="'.$backurl.'">
         '.get_string("userimagereport","quizaccess_quizproctoring").'</a>';
     }
-    echo '<div class="attempttitle">' .
-         '<h5>'.get_string('reviewattemptsu', 'quizaccess_quizproctoring',
-         	$user->firstname . ' ' . $user->lastname) . '</h5>' .
+    echo '<div class="headtitle">' .
+         '<p>'.get_string('reviewattemptsu', 'quizaccess_quizproctoring',
+         	$user->firstname . ' ' . $user->lastname) . '</p>' .
          '<div>' . $btn . '</div>' .
          '</div><br/>';
 
@@ -87,10 +98,19 @@ if ($proctoringimageshow == 1) {
         $user->email
     );
     $totalattempts = $DB->count_records('quiz_attempts', ['quiz' => $quizid, 'userid' => $userid]);
-    $attempts = $DB->get_records('quiz_attempts', ['quiz' => $quizid, 'userid' => $userid],
-        'attempt ASC', '*', $page * $perpage, $perpage);
+    $sortcolumns = [
+        'email' => 'u.email',
+        'attempt' => 'qa.attempt',
+    ];
+    $sortcolumn = isset($sortcolumns[$sort]) ? $sortcolumns[$sort] : $sortcolumns['email'];
 
-    // Prepare an array to hold the attempt numbers
+    $attempts = $DB->get_records_sql("
+        SELECT qa.* 
+        FROM {quiz_attempts} qa
+        JOIN {user} u ON qa.userid = u.id
+        WHERE qa.quiz = :quizid AND qa.userid = :userid
+        ORDER BY $sortcolumn $dir
+    ", ['quizid' => $quizid, 'userid' => $userid], $page * $perpage, $perpage);
     $attemptNumbers = array();
     foreach ($attempts as $attempt) {
         $usermages = $DB->get_record('quizaccess_proctor_data', [
@@ -124,6 +144,6 @@ if ($proctoringimageshow == 1) {
         $table->data[] = $row;
     }
     echo html_writer::table($table);
-    echo $OUTPUT->paging_bar($totalattempts, $page, $perpage, $PAGE->url);
+    echo $OUTPUT->paging_bar($totalattempts, $page, $perpage, $PAGE->url->out(true, ['sort' => $sort, 'dir' => $dir]));
     echo $OUTPUT->footer();
 }

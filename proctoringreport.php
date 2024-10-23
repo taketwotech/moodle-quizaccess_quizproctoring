@@ -22,6 +22,7 @@
  * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+use mod_quiz\quiz_settings;
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
@@ -35,7 +36,15 @@ $page = optional_param('page', 0, PARAM_INT);
 
 // Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
-list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+if ($id) {
+    $quizobj = quiz_settings::create_for_cmid($cmid, $USER->id);
+} else {
+    $quizobj = quiz_settings::create($quizid, $USER->id);
+}
+$quiz = $quizobj->get_quiz();
+$cm = $quizobj->get_cm();
+$course = $quizobj->get_course();
+quiz_view($quiz, $course, $cm, $context);
 require_login($course, true, $cm);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
@@ -105,8 +114,8 @@ if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) 
     $btn = '<a class="btn btn-primary" href="'.$url.'">
     '.get_string("proctoringimagereport","quizaccess_quizproctoring",$course->fullname).'</a>';
 }
-echo '<div class="deltitle">' .
-     '<h5>' . get_string("delinformationu", "quizaccess_quizproctoring") . '</h5>' .
+echo '<div class="headtitle">' .
+     '<p>' . get_string("delinformationu", "quizaccess_quizproctoring") . '</p>' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 

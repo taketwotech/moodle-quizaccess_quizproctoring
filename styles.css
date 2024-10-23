@@ -68,16 +68,15 @@ button.proctoridentity {
     z-index: 9999999;
 }
 
-.deltitle {
+.headtitle {
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-.attempttitle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.headtitle p {
+    font-size: 16px;
+    font-weight: 700;
 }
 
 .imageicon {
@@ -127,15 +126,8 @@ button.proctoridentity {
 }
 
 .delcourse {
-    display: none;
-}
-
-.delete-icon {
-    display: none;
-}
-
-.delete-quiz {
-    display: none;
+    background-color: #DC143C !important;
+    border-color: #DC143C !important;
 }
 
 .deleteall {

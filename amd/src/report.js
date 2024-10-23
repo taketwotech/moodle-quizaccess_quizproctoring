@@ -6,9 +6,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 if (typeof lightbox !== 'undefined') {
                     lightbox.init();
                 }
-                $('.delcourse').show();
-                $('.delete-icon').show();
-                $('.delete-quiz').show();
             });
             $('.delete-icon').on('click', function(event) {
                 event.preventDefault();

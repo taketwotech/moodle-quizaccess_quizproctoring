@@ -39,7 +39,7 @@ $page = optional_param('page', 0, PARAM_INT);
 // Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
-require_login($course, true, $cm);
+require_login($course, true);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php',
@@ -135,8 +135,8 @@ $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
              AND p.userimg !='' AND q.course = :courseid";
 $totalcount = $DB->count_records_sql($sqlcount, ['courseid' => $course->id]);
 if ($totalcount > 0) {
-    echo '<div class="deltitle">' .
-     '<h5>' . get_string("delinformation", "quizaccess_quizproctoring") . '</h5>' .
+    echo '<div class="headtitle">' .
+     '<p>' . get_string("delinformation", "quizaccess_quizproctoring", $course->fullname) . '</p>' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
  }
