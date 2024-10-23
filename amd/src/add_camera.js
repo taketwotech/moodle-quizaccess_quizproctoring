@@ -49,7 +49,7 @@ function($, str, ModalFactory) {
     Camera.prototype.quizid = false;
 
     Camera.prototype.startcamera = function() {
-        navigator.mediaDevices.getUserMedia({video: true})
+        navigator.mediaDevices.getUserMedia({video: true, audio: true})
         .then(function(stream) {
             const videoElement = document.getElementById('video');
             if (videoElement) {

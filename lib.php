@@ -113,9 +113,9 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
  * @param boolean $mainimage main image
- * @param string $service service enabled
- * @param boolean $storeallimg store images
+ * @param string $service service enabled 
  * @param string $status
+ * @param boolean $storeallimg store images
  */
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='', $storeallimg=false) {
     global $USER, $DB, $COURSE;

@@ -125,9 +125,9 @@ button.proctoridentity {
     text-align: center;
 }
 
-.delcourse {
-    background-color: #DC143C !important;
-    border-color: #DC143C !important;
+.headtitle .delcourse {
+    background-color: #dc143c;
+    border-color: #dc143c;
 }
 
 .deleteall {
@@ -145,11 +145,11 @@ button.proctoridentity {
 }
 
 .warning-image img {
-    border :2px solid red;
+    border: 2px solid red;
 }
 
 .green-image img {
-    border :2px solid green;
+    border: 2px solid green;
 }
 
 .imagelist {

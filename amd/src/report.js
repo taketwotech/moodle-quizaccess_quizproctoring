@@ -43,8 +43,12 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         },
                         function() {
                             // Do nothing on 'Cancel'
+                            return;
                         }
                     );
+                })
+                .catch(function() {
+                    // Console.log(err);
                 });
             });
 
@@ -83,8 +87,12 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         },
                         function() {
                             // Do nothing on 'Cancel'
+                            return;
                         }
                     );
+                })
+                .catch(function() {
+                    // Console.log(err);
                 });
             });
 
@@ -123,8 +131,12 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         },
                         function() {
                             // Do nothing on 'Cancel'
+                            return;
                         }
                     );
+                })
+                .catch(function() {
+                    // Console.log(err);
                 });
             });
 
@@ -150,6 +162,11 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     var perpage = 50;
                     var currentPage = 1;
 
+                    /**
+                     * Get css class
+                     *
+                     * @param {int} page page
+                     */
                     function loadImages(page) {
                         $.ajax({
                             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
@@ -179,14 +196,15 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                     totalPages: response.totalPages,
                                     isFirstPage: response.currentPage === 1,
                                     isLastPage: response.currentPage === response.totalPages,
-                                    str: function(key) { return M.util.get_string(key, 'quizaccess_quizproctoring'); }
+                                    str: function(key) {
+                                        return M.util.get_string(key, 'quizaccess_quizproctoring');
+                                    }
                                 };
 
                                 Templates.render('quizaccess_quizproctoring/response_modal', data)
                                     .done(function(renderedHtml) {
                                         modal.getBody().find('.image-content').html(renderedHtml);
                                         lightbox.init();
-
                                         $('.image-link').on('click', function() {
                                             var titleElement = $(this).next('.image-title');
                                             var timeElement = $(this).next('.image-time');
@@ -197,18 +215,23 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         $('.image-link').on('lightbox:open', function() {
                                             $(this).next('.image-title').hide();
                                         });
-
                                         modal.getBody().find('.pagination-controls').
                                         html(getPaginationControls(response.currentPage, response.totalPages));
                                     });
                             },
-                            error: function(jqXHR, textStatus, errorThrown) {
+                            error: function(jqXHR, textStatus) {
                                 modal.getBody().find('.image-content').html('<p>Error loading images: '
                                     + textStatus + '</p>');
                             }
                         });
                     }
 
+                    /**
+                     * Get css class
+                     *
+                     * @param {text} status status
+                     * @return {string} status class
+                     */
                     function getCssClass(status) {
                         switch (status.toLowerCase()) {
                             case 'main image':
@@ -220,6 +243,13 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     }
 
+                    /**
+                     * Get pagination controls
+                     *
+                     * @param {int} currentPage currentPage
+                     * @param {int} totalPages totalPages
+                     * @return {string} button div
+                     */
                     function getPaginationControls(currentPage, totalPages) {
                         var prevButton = '<button class="prev-page" ' +
                         (currentPage === 1 ? 'disabled' : '') + '>Previous</button>';
