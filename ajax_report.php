@@ -32,14 +32,33 @@ $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $all = required_param('all', PARAM_BOOL);
+$page = required_param('page', PARAM_INT); // Current page number
+$perpage = required_param('perpage', PARAM_INT); // Images per page
+$offset = ($page - 1) * $perpage;
+
 $addsql = '';
 if(!$all) {
     $addsql = " (status != '' OR image_status = 'M') AND "; 
 }
-$sql = "select * from {quizaccess_proctor_data} where ".$addsql." userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 order by id asc";
+$sql = "SELECT * FROM {quizaccess_proctor_data} 
+        WHERE ".$addsql."userid = ".$userid."
+        AND quizid = ".$quizid."
+        AND attemptid = ".$attemptid."
+        AND deleted = 0 
+        ORDER BY id ASC 
+        LIMIT ".$perpage." OFFSET ".$offset;
+
 $getimages = $DB->get_records_sql($sql);
+$sqlt = "SELECT * FROM {quizaccess_proctor_data} 
+        WHERE ".$addsql."userid = ".$userid."
+        AND quizid = ".$quizid."
+        AND attemptid = ".$attemptid."
+        AND deleted = 0 
+        ORDER BY id ASC";
+$totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
-$totalrecord = count($getimages);
+$totalrecord = count($totalimages);
+$totalPages = ceil($totalrecord / $perpage);
 
 foreach ($getimages as $img) {
     if ($img->userimg == '' && $img->image_status != 'M') {
@@ -76,7 +95,14 @@ foreach ($getimages as $img) {
         'img' => $target,
         'imagestatus' => $imagestatusstr,
         'timecreated' => $formattedtime,
-        'totalpage' => $countrecord, 'total' => $totalrecord,
+        'totalpage' => $totalPages,
+        'total' => $totalrecord,
     ]);
 }
-echo json_encode($imgarray);
+$response = [
+    'images' => $imgarray,
+    'totalRecords' => $totalrecord,
+    'totalPages' => $totalPages,
+    'currentPage' => $page,
+];
+echo json_encode($response);

@@ -138,80 +138,117 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 var userid = $(this).data('userid');
                 var startdate = $(this).data('startdate');
                 var all = $('#storeallimages').is(':checked') ? 'true' : 'false';
-           
-                $.ajax({
-                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
-                    data: {
-                        attemptid: attemptid,
-                        userid: userid,
-                        quizid: quizid,
-                        all: all,
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        var images = JSON.parse(JSON.stringify(response));
-                        if (images.length > 0) {
-                            var data = {
-                                attemptdate: startdate,
-                                images: images.map(function(image) {
+
+                var modaltitle = all === 'true' ? M.util.get_string('allimages', 'quizaccess_quizproctoring') :
+                    M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
+
+                ModalFactory.create({
+                    type: ModalFactory.types.DEFAULT,
+                    body: '<div class="image-content"><p>Loading images...</p></div><div class="pagination-controls"></div>',
+                    title: modaltitle,
+                    large: true,
+                }).then(function(modal) {
+                    modal.show();
+
+                    var perpage = 50;
+                    var currentPage = 1;
+
+                    function loadImages(page) {
+                        $.ajax({
+                            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_report.php',
+                            data: {
+                                attemptid: attemptid,
+                                userid: userid,
+                                quizid: quizid,
+                                all: all,
+                                page: page,
+                                perpage: perpage,
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                var images = response.images.map(function(image) {
                                     return {
                                         url: image.img,
-                                        time: image.timecreated,
                                         title: image.title,
-                                        status: image.imagestatus,
-                                        cssClass: (function() {
-                                            switch (image.imagestatus.toLowerCase()) {
-                                                case 'main image':
-                                                    return 'main-image';
-                                                case 'warning':
-                                                    return 'warning-image';
-                                                default:
-                                                    return 'green-image';
-                                            }
-                                        })()
+                                        time: image.timecreated,
+                                        cssClass: getCssClass(image.imagestatus)
                                     };
-                                })
-                            };
-
-                            Templates.render('quizaccess_quizproctoring/response_modal', data)
-                                .done(function(renderedHtml) {
-                                    var modaltitle = all === 'true' ? M.util.get_string('allimages', 'quizaccess_quizproctoring') :
-                                    M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
-                                    ModalFactory.create({
-                                    type: ModalFactory.types.DEFAULT,
-                                    body: renderedHtml,
-                                    title: modaltitle,
-                                    large: true,
-                                }).then(function(modal) {
-                                    modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                                    modal.show();
-                                    lightbox.init();
-                                    $('.image-link').on('click', function() {
-                                        var titleElement = $(this).next('.image-title');
-                                        var timeElement = $(this).next('.image-time');
-                                        titleElement.show();
-                                        timeElement.show();
-                                        lightbox.start($(this)[0]);
-                                    });
-                                    $('.image-link').on('lightbox:open', function() {
-                                        $(this).next('.image-title').hide();
-                                    });
                                 });
-                            });
-                        } else {
-                            var message = M.util.get_string('noimageswarning', 'quizaccess_quizproctoring');
-                            ModalFactory.create({
-                                type: ModalFactory.types.DEFAULT,
-                                body: message,
-                            }).then(function(modal) {
-                                modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
-                                modal.show();
-                            });
+
+                                var data = {
+                                    attemptdate: startdate,
+                                    images: images,
+                                    currentPage: response.currentPage,
+                                    totalPages: response.totalPages,
+                                    isFirstPage: response.currentPage === 1,
+                                    isLastPage: response.currentPage === response.totalPages,
+                                    str: function(key) { return M.util.get_string(key, 'quizaccess_quizproctoring'); }
+                                };
+
+                                Templates.render('quizaccess_quizproctoring/response_modal', data)
+                                    .done(function(renderedHtml) {
+                                        modal.getBody().find('.image-content').html(renderedHtml);
+                                        lightbox.init();
+
+                                        $('.image-link').on('click', function() {
+                                            var titleElement = $(this).next('.image-title');
+                                            var timeElement = $(this).next('.image-time');
+                                            titleElement.show();
+                                            timeElement.show();
+                                            lightbox.start($(this)[0]);
+                                        });
+                                        $('.image-link').on('lightbox:open', function() {
+                                            $(this).next('.image-title').hide();
+                                        });
+
+                                        modal.getBody().find('.pagination-controls').
+                                        html(getPaginationControls(response.currentPage, response.totalPages));
+                                    });
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                modal.getBody().find('.image-content').html('<p>Error loading images: '
+                                    + textStatus + '</p>');
+                            }
+                        });
+                    }
+
+                    function getCssClass(status) {
+                        switch (status.toLowerCase()) {
+                            case 'main image':
+                                return 'main-image';
+                            case 'warning':
+                                return 'warning-image';
+                            default:
+                                return 'green-image';
                         }
                     }
+
+                    function getPaginationControls(currentPage, totalPages) {
+                        var prevButton = '<button class="prev-page" ' +
+                        (currentPage === 1 ? 'disabled' : '') + '>Previous</button>';
+                        var nextButton = '<button class="next-page" ' +
+                        (currentPage === totalPages ? 'disabled' : '') + '>Next</button>';
+
+                        return '<div>' + prevButton + ' Page ' + currentPage
+                        + ' of ' + totalPages + ' ' + nextButton + '</div>';
+                    }
+                    
+                    modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            loadImages(currentPage);
+                        }
+                    });
+
+                    modal.getBody().off('click', '.next-page').on('click', '.next-page', function() {
+                        if (currentPage < response.totalPages) {
+                            currentPage++;
+                            loadImages(currentPage);
+                        }
+                    });
+                    loadImages(currentPage);
                 });
             });
-
             $('.proctoridentity').on('click', function(event) {
                 event.preventDefault();
                 $.ajax({

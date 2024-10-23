@@ -161,22 +161,23 @@ button.proctoridentity {
 }
 
 .imagelist {
-    list-style-type: none; /* Remove default bullet points */
+    list-style-type: none;
 }
 
 .imagelist li {
-    display: inline-block; /* Make list items appear in one line */
-    margin-right: 20px; /* Optional: add spacing between the items */
-    font-size: 14px; /* Optional: adjust font size */
+    display: inline-block;
+    margin-right: 20px;
+    font-size: 14px;
 }
 
 .mainimage::after {
     content: '';
     display: inline-block;
-    width: 15px; /* Adjust size as needed */
+    width: 15px;
     height: 15px;
     background-color: blue;
-    margin-left: 5px; /* Space between text and square */
+    margin-left: 5px;
+    vertical-align: middle;
 }
 
 .warningimage::after {
@@ -186,6 +187,7 @@ button.proctoridentity {
     height: 15px;
     background-color: red;
     margin-left: 5px;
+    vertical-align: middle;
 }
 
 .approveimage::after {
@@ -195,6 +197,11 @@ button.proctoridentity {
     height: 15px;
     background-color: green;
     margin-left: 5px;
+    vertical-align: middle;
+}
+
+#storeallimages {
+    vertical-align: middle;
 }
 
 /* Hide video on mobile devices */
