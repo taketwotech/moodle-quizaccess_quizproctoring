@@ -104,7 +104,8 @@ if (!$mainentry->isautosubmit) {
             $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
             $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
             $imagedata = ["primary" => $tdata, "target" => $data];
-            $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
+            $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
+                $USER->id, $cm->instance);
             if ($response == 'Unauthorized') {
                 throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
                 die();
@@ -114,7 +115,8 @@ if (!$mainentry->isautosubmit) {
         } else {
             $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
             $imagedata = ["primary" => $data1];
-            $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata));
+            $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
+                $USER->id, $cm->instance);
             if ($response == 'Unauthorized') {
                 throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
                 die();
@@ -125,7 +127,8 @@ if (!$mainentry->isautosubmit) {
                     if ( $profileimage ) {
                         $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
                         $profiledata = ["primary" => $data1, "target" => $imagecontent];
-                        $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata));
+                        $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata),
+                        $USER->id, $cm->instance);
                         $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent);
                         if ($profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
                             $profileresp == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||

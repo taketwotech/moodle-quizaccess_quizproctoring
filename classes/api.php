@@ -89,10 +89,10 @@ class api {
      * @param Longtext $imagedata data
      * @return string
      */
-    public static function proctor_image_api($imagedata) {
+    public static function proctor_image_api($imagedata, $userid, $quizid) {
         self::init();
         $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/validate';
+        $url = 'https://proctor-dev.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::url();
@@ -101,6 +101,8 @@ class api {
             'access-token: ' . $accesstoken,
             'secret-token: ' . $accesstokensecret,
             'domain: ' . $domain,
+            'user_id: ' . $userid,
+            'quiz_id: ' . $quizid,
         ];
         $curl->setHeader($header);
         $result = $curl->post($url, $imagedata);
