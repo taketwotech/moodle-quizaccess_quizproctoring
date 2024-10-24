@@ -81,9 +81,10 @@ if ($hassiteconfig && !empty($USER->id)) {
 
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/img_check_time',
         get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
-        get_string('help_timeinterval', 'quizaccess_quizproctoring'), 5,
+        get_string('help_timeinterval', 'quizaccess_quizproctoring'), 30,
         [
             5 => get_string('fiveseconds', 'quizaccess_quizproctoring'),
+            30 => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
             60 => get_string('oneminute', 'quizaccess_quizproctoring'),
             300 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]
@@ -91,5 +92,17 @@ if ($hassiteconfig && !empty($USER->id)) {
 
     $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
         get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
-        get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 0));
+        get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 1));
+
+    $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/clear_images',
+        get_string('clear_images', 'quizaccess_quizproctoring'),
+        get_string('clear_images_help', 'quizaccess_quizproctoring'), 0,
+        [
+            0 =>  get_string('clear_images_never', 'quizaccess_quizproctoring'),
+            30 => get_string('clear_images_thirty', 'quizaccess_quizproctoring'),
+            90 => get_string('clear_images_sixty', 'quizaccess_quizproctoring'),
+            180 => get_string('clear_images_oneeighty', 'quizaccess_quizproctoring'),
+            365 => get_string('clear_images_oneyear', 'quizaccess_quizproctoring'),
+        ]
+    ));
 }

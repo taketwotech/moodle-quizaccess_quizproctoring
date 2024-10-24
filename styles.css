@@ -5,6 +5,10 @@
     z-index: 1000;
     width: 240px;
 }
+.userimage {
+    max-width: 100px;
+    max-height: 100px;
+}
 button.proctoringimage {
     margin-left: 1.5%;
     margin-bottom: 0.4%;
@@ -36,10 +40,22 @@ button.proctoridentity {
     right: 0%;
 }
 
+.proctoringimage {
+    cursor: pointer;
+}
+
+.proctoringidentity {
+    cursor: pointer;
+}
+
 /* Modal Content */
 .modalvideo-content {
     margin: auto;
     width: 50%;
+}
+
+.submittag {
+    color: red;
 }
 
 #loading {
@@ -50,6 +66,134 @@ button.proctoridentity {
     height: 9%;
     width: 5%;
     z-index: 9999999;
+}
+
+.headtitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.headtitle p {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.imageicon {
+    width: 25px;
+    height: 25px;
+}
+
+.proctoringimage {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.proctoridentity {
+    cursor: pointer;
+}
+
+.proctoring-images-modal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.proctoring-image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.proctoring-image-thumbnail {
+    width: 75px;
+    height: 60px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.proctoring-image-thumbnail:hover {
+    transform: scale(1.05);
+}
+
+.image-title {
+    display: none;
+    font-size: 14px;
+    margin-top: 5px;
+    text-align: center;
+}
+
+.headtitle .delcourse {
+    background-color: #dc143c;
+    border-color: #dc143c;
+}
+
+.deleteall {
+    margin-left: 2px;
+}
+
+.attempt-date {
+    display: block;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.main-image img {
+    border: 2px solid blue;
+}
+
+.warning-image img {
+    border: 2px solid red;
+}
+
+.green-image img {
+    border: 2px solid green;
+}
+
+.imagelist {
+    list-style-type: none;
+}
+
+.imagelist li {
+    display: inline-block;
+    margin-right: 20px;
+    font-size: 14px;
+}
+
+.mainimage::after {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: blue;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.warningimage::after {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.approveimage::after {
+    content: '';
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background-color: green;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+#storeallimages {
+    vertical-align: middle;
 }
 
 /* Hide video on mobile devices */

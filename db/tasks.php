@@ -15,37 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Proctoring access file.
+ * Task definition for quizaccess_quizproctoring
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die;
 
-defined('MOODLE_INTERNAL') || die();
-
-$capabilities = [
-    'quizaccess/quizproctoring:quizproctoringreport' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => [
-            'editingteacher' => CAP_ALLOW,
-        ],
-    ],
-    'quizaccess/quizproctoring:quizproctoringonlinestudent' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => [
-            'editingteacher' => CAP_ALLOW,
-        ],
-    ],
-    'quizaccess/quizproctoring:quizproctoringoverallreport' => [
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => [
-            'editingteacher' => CAP_ALLOW,
-        ],
+$tasks = [
+    [
+        'classname' => 'quizaccess_quizproctoring\task\deleteStoredImagesTask',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => '0',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
     ],
 ];
