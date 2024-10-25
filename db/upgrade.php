@@ -262,15 +262,19 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024101601, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2024101602) {
+    if ($oldversion < 2024102402) {
 
         // Define field enableprofilematch to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER,
-            '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'storeallimages');
 
         // Conditionally launch add field enableprofilematch.
-        upgrade_plugin_savepoint(true, 2024101602, 'quizaccess', 'quizproctoring');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024102402, 'quizaccess', 'quizproctoring');
     }
 
     return true;

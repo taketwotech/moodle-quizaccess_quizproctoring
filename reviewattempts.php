@@ -142,4 +142,6 @@ if ($proctoringimageshow == 1) {
     echo html_writer::table($table);
     echo $OUTPUT->paging_bar($totalattempts, $page, $perpage, $PAGE->url->out(true, ['sort' => $sort, 'dir' => $dir]));
     echo $OUTPUT->footer();
+} else {
+    redirect(new moodle_url('/'));
 }
