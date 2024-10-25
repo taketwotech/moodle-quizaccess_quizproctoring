@@ -232,17 +232,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2024092400) {
-
-        // Define field enableprofilematch to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER,
-            '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
-
-        // Conditionally launch add field enableprofilematch.
-        upgrade_plugin_savepoint(true, 2024092400, 'quizaccess', 'quizproctoring');
-    }
-
     if ($oldversion < 2024092404) {
 
         // Define field isautosubmit to be added to quizaccess_proctor_data.
@@ -271,6 +260,17 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024101601, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2024101602) {
+
+        // Define field enableprofilematch to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER,
+            '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+
+        // Conditionally launch add field enableprofilematch.
+        upgrade_plugin_savepoint(true, 2024101602, 'quizaccess', 'quizproctoring');
     }
 
     return true;
