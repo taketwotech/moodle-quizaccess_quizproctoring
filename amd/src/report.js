@@ -217,8 +217,12 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         $('.image-link').on('lightbox:open', function() {
                                             $(this).next('.image-title').hide();
                                         });
-                                        modal.getBody().find('.pagination-controls')
-                                        .html(getPaginationControls(response.currentPage, response.totalPages));
+                                        if (images.length > 0) {
+                                            modal.getBody().find('.pagination-controls')
+                                            .html(getPaginationControls(response.currentPage, response.totalPages));
+                                        } else {
+                                            modal.getBody().find('.pagination-controls').html('');
+                                        }
                                     });
                             },
                             error: function(jqXHR, textStatus) {

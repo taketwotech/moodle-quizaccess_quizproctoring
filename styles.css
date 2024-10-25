@@ -162,7 +162,7 @@ button.proctoridentity {
     font-size: 14px;
 }
 
-.mainimage::after {
+.mainimage::before {
     content: '';
     display: inline-block;
     width: 15px;
@@ -172,7 +172,7 @@ button.proctoridentity {
     vertical-align: middle;
 }
 
-.warningimage::after {
+.warningimage::before {
     content: '';
     display: inline-block;
     width: 15px;
@@ -182,7 +182,7 @@ button.proctoridentity {
     vertical-align: middle;
 }
 
-.approveimage::after {
+.approveimage::before {
     content: '';
     display: inline-block;
     width: 15px;
