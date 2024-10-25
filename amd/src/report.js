@@ -204,7 +204,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 perpage: perpage,
                             },
                             dataType: 'json',
-                            success: function(response) {                                
+                            success: function(response) {
                                 var images = response.images.map(function(image) {
                                     return {
                                         url: image.img,
@@ -227,7 +227,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                     }
                                 };
 
-                                modal.getBody().find('.image-content').html(''); 
+                                modal.getBody().find('.image-content').html('');
                                 Templates.render('quizaccess_quizproctoring/response_modal', data)
                                     .done(function(renderedHtml) {
                                         modal.getBody().find('.image-content').html(renderedHtml);
