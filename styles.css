@@ -130,8 +130,15 @@ button.proctoridentity {
     border-color: #dc143c;
 }
 
+.headtitle .delcourse:hover {
+    background-color: #880808;
+    border-color: #880808;
+}
+
 .deleteall {
     margin-left: 2px;
+    display: inline;
+    font-size: 14px;
 }
 
 .attempt-date {
@@ -194,6 +201,40 @@ button.proctoridentity {
 
 #storeallimages {
     vertical-align: middle;
+}
+
+.delete-icon {
+    color: #dc143c;
+    transition: color 0.3s;
+}
+
+.delete-icon:hover {
+    color: #880808;
+}
+
+.delete-quiz {
+    color: #dc143c;
+    transition: color 0.3s;
+}
+
+.delete-quiz:hover {
+    color: #880808;
+}
+
+.modal-footer .btn-primary {
+    background-color: #dc143c;
+    border-color: #dc143c;
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: #880808;
+    border-color: #880808;
+}
+
+.modal-footer .btn-primary:disabled {
+    color: #fff;
+    background-color: #dc143c;
+    border-color: #dc143c;
 }
 
 /* Hide video on mobile devices */

@@ -25,6 +25,7 @@
 
 use mod_quiz\output\renderer;
 use mod_quiz\output\view_page;
+use mod_quiz\quiz_settings;
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
@@ -98,18 +99,18 @@ if ($deletequizid || $delcourse) {
                 unlink($tempfilepath);
             }
         }
-    }
-    if (!empty($deletequiz)) {
-        $DB->execute("
-            UPDATE {quizaccess_proctor_data}
-            SET deleted = 1
-            WHERE quizid IN ($deletequiz)
-        ");
-    }
-    $notification = new \core\output\notification(get_string('imagesdeleted', 'quizaccess_quizproctoring'), \core\output\notification::NOTIFY_SUCCESS);
-    echo $OUTPUT->render($notification);
-    $redirect_url = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php', ['cmid' => $cmid]);
-    redirect($redirect_url, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
+        if (!empty($deletequiz)) {
+            $DB->execute("
+                UPDATE {quizaccess_proctor_data}
+                SET deleted = 1
+                WHERE quizid IN ($deletequiz)
+            ");
+        }
+        $notification = new \core\output\notification(get_string('imagesdeleted', 'quizaccess_quizproctoring'), \core\output\notification::NOTIFY_SUCCESS);
+        echo $OUTPUT->render($notification);
+        $redirect_url = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php', ['cmid' => $cmid]);
+        redirect($redirect_url, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
+    }    
 }
 
 $table = new html_table();
@@ -150,13 +151,16 @@ $sql = "SELECT q.name AS quiz_name, p.quizid, COUNT(DISTINCT p.userid) AS user_c
         GROUP BY p.quizid, q.name
         ORDER BY q.name ASC";
 $records = $DB->get_records_sql($sql, ['courseid' => $course->id], $page * $perpage, $perpage);
-foreach($records as $record) {        
+foreach($records as $record) {
+    $quizobj = quiz_settings::create($record->quizid, $USER->id);
+    $quiz = $quizobj->get_quiz();
+    $cm = $quizobj->get_cm();
     $deleteicon = '<a href="#" title="' . get_string('delete') . '" 
     class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
     data-quiz="' . $record->quiz_name . '">
     <i class="icon fa fa-trash"></i></a>';
     $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', 
-        array('cmid' => $cmid, 'quizid' => $record->quizid));
+        array('cmid' => $quiz->cmid, 'quizid' => $record->quizid));
     $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
     $quizname = '<a href="'.$backurl.'" title="'.$helptext.'">'.$record->quiz_name.'</a>';
     $table->data[] = array($quizname, $record->user_count, $record->image_count, $deleteicon);

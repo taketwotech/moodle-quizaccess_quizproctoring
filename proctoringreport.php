@@ -84,15 +84,15 @@ if ($deleteuserid) {
             $tempfilepath = $tmpdir . $usersrecord->userimg;    
             if (file_exists($tempfilepath)) {
                 unlink($tempfilepath);
+            }
         }
-      }
-    }
-    $DB->set_field('quizaccess_proctor_data', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
-    $notification = new \core\output\notification(get_string('imagesdeleted', 'quizaccess_quizproctoring'), \core\output\notification::NOTIFY_SUCCESS);
-    echo $OUTPUT->render($notification);
-    $redirect_url = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
-        ['cmid' => $cmid, 'quizid' => $quizid]);
-    redirect($redirect_url, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
+        $DB->set_field('quizaccess_proctor_data', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
+        $notification = new \core\output\notification(get_string('imagesdeleted', 'quizaccess_quizproctoring'), \core\output\notification::NOTIFY_SUCCESS);
+        echo $OUTPUT->render($notification);
+        $redirect_url = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
+            ['cmid' => $cmid, 'quizid' => $quizid]);
+        redirect($redirect_url, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
+    }    
 }
 $table = new html_table();
 $headers = array(

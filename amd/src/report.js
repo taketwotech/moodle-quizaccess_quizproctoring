@@ -38,14 +38,21 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             var allImages = $('#deleteallimages').is(':checked');
                             if (allImages) {
                                 newUrl += '&all=true';
+                                window.location.href = newUrl;
                             }
-                            window.location.href = newUrl;
                         },
                         function() {
                             // Do nothing on 'Cancel'
                             return;
                         }
                     );
+                    setTimeout(function() {
+                        var deleteButton = $('.modal-footer button[data-action="save"]');
+                        deleteButton.prop('disabled', true);
+                        $(document).off('change', '#deleteallimages').on('change', '#deleteallimages', function() {
+                            deleteButton.prop('disabled', !$(this).is(':checked'));
+                        });
+                    }, 100);
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -71,7 +78,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     var checkboxtext = strings[2];
                     var deleteLabel = strings[3];
                     var cancelLabel = strings[4];
-                    var checkboxHtml = '<div><input type="checkbox" id="deleteallimages" /><label class="deleteall">'
+                    var checkboxHtml = '<div><input type="checkbox" id="deleteallimage" /><label class="deleteall">'
                     + checkboxtext + '</label></div>';
                     notification.confirm(
                         title,
@@ -79,17 +86,24 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         deleteLabel,
                         cancelLabel,
                         function() {
-                            var allImages = $('#deleteallimages').is(':checked');
+                            var allImages = $('#deleteallimage').is(':checked');
                             if (allImages) {
                                 newUrl += '&all=true';
-                            }
-                            window.location.href = newUrl;
+                                window.location.href = newUrl;
+                            }                            
                         },
                         function() {
                             // Do nothing on 'Cancel'
                             return;
                         }
                     );
+                    setTimeout(function() {
+                        var deleteButton = $('.modal-footer button[data-action="save"]');
+                        deleteButton.prop('disabled', true);
+                        $(document).off('change', '#deleteallimage').on('change', '#deleteallimage', function() {
+                            deleteButton.prop('disabled', !$(this).is(':checked'));
+                        });
+                    }, 100);
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -115,7 +129,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     var checkboxtext = strings[2];
                     var deleteLabel = strings[3];
                     var cancelLabel = strings[4];
-                    var checkboxHtml = '<div><input type="checkbox" id="deleteallimages" /><label class="deleteall">'
+                    var checkboxHtml = '<div><input type="checkbox" id="deleteallimag" /><label class="deleteall">'
                     + checkboxtext + '</label></div>';
                     notification.confirm(
                         title,
@@ -123,17 +137,24 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         deleteLabel,
                         cancelLabel,
                         function() {
-                            var allImages = $('#deleteallimages').is(':checked');
+                            var allImages = $('#deleteallimag').is(':checked');
                             if (allImages) {
                                 newUrl += '&all=true';
-                            }
-                            window.location.href = newUrl;
+                                window.location.href = newUrl;
+                            }                           
                         },
                         function() {
                             // Do nothing on 'Cancel'
                             return;
                         }
                     );
+                    setTimeout(function() {
+                        var deleteButton = $('.modal-footer button[data-action="save"]');
+                        deleteButton.prop('disabled', true);
+                        $(document).off('change', '#deleteallimag').on('change', '#deleteallimag', function() {
+                            deleteButton.prop('disabled', !$(this).is(':checked'));
+                        });
+                    }, 100);
                 })
                 .catch(function() {
                     // Console.log(err);
