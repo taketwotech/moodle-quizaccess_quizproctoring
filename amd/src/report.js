@@ -47,6 +47,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     );
                     setTimeout(function() {
+                        $('.modal-footer').addClass('deletenotifbtn');
                         var deleteButton = $('.modal-footer button[data-action="save"]');
                         deleteButton.prop('disabled', true);
                         $(document).off('change', '#deleteallimages').on('change', '#deleteallimages', function() {
@@ -90,7 +91,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             if (allImages) {
                                 newUrl += '&all=true';
                                 window.location.href = newUrl;
-                            }                            
+                            }
                         },
                         function() {
                             // Do nothing on 'Cancel'
@@ -98,6 +99,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     );
                     setTimeout(function() {
+                        $('.modal-footer').addClass('deletenotifbtn');
                         var deleteButton = $('.modal-footer button[data-action="save"]');
                         deleteButton.prop('disabled', true);
                         $(document).off('change', '#deleteallimage').on('change', '#deleteallimage', function() {
@@ -141,7 +143,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             if (allImages) {
                                 newUrl += '&all=true';
                                 window.location.href = newUrl;
-                            }                           
+                            }
                         },
                         function() {
                             // Do nothing on 'Cancel'
@@ -149,6 +151,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     );
                     setTimeout(function() {
+                        $('.modal-footer').addClass('deletenotifbtn');
                         var deleteButton = $('.modal-footer button[data-action="save"]');
                         deleteButton.prop('disabled', true);
                         $(document).off('change', '#deleteallimag').on('change', '#deleteallimag', function() {
@@ -201,7 +204,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 perpage: perpage,
                             },
                             dataType: 'json',
-                            success: function(response) {
+                            success: function(response) {                                
                                 var images = response.images.map(function(image) {
                                     return {
                                         url: image.img,
@@ -224,6 +227,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                     }
                                 };
 
+                                modal.getBody().find('.image-content').html(''); 
                                 Templates.render('quizaccess_quizproctoring/response_modal', data)
                                     .done(function(renderedHtml) {
                                         modal.getBody().find('.image-content').html(renderedHtml);

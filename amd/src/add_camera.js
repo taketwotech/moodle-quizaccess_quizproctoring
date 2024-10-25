@@ -153,6 +153,15 @@ function($, str, ModalFactory) {
         });
     };
 
+    Camera.prototype.stopcamera = function() {
+        if (localMediaStream) {
+            localMediaStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            localMediaStream = null;
+        }
+    };
+
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, setinterval = 300) {
         if (!verifyduringattempt) {
@@ -170,6 +179,9 @@ function($, str, ModalFactory) {
             $('#' + camera.retakeid).on('click', function(e) {
                 e.preventDefault();
                 camera.retake();
+            });
+            $('#id_cancel').on('click', function() {
+                camera.stopcamera();
             });
         } else {
             signalingSocket = io(externalserver);

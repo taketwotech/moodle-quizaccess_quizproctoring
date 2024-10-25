@@ -94,7 +94,7 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
         get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 1));
 
-    $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/clear_images',
+    /*$settings->add(new admin_setting_configselect('quizaccess_quizproctoring/clear_images',
         get_string('clear_images', 'quizaccess_quizproctoring'),
         get_string('clear_images_help', 'quizaccess_quizproctoring'), 0,
         [
@@ -104,5 +104,5 @@ if ($hassiteconfig && !empty($USER->id)) {
             180 => get_string('clear_images_oneeighty', 'quizaccess_quizproctoring'),
             365 => get_string('clear_images_oneyear', 'quizaccess_quizproctoring'),
         ]
-    ));
+    ));*/
 }

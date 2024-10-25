@@ -159,10 +159,6 @@ button.proctoridentity {
     border: 2px solid green;
 }
 
-.imagelist {
-    list-style-type: none;
-}
-
 .imagelist li {
     display: inline-block;
     margin-right: 20px;
@@ -221,20 +217,33 @@ button.proctoridentity {
     color: #880808;
 }
 
-.modal-footer .btn-primary {
+.deletenotifbtn .btn-primary {
     background-color: #dc143c;
     border-color: #dc143c;
 }
 
-.modal-footer .btn-primary:hover {
+.deletenotifbtn .btn-primary:hover {
     background-color: #880808;
     border-color: #880808;
 }
 
-.modal-footer .btn-primary:disabled {
+.deletenotifbtn .btn-primary:disabled {
     color: #fff;
     background-color: #dc143c;
     border-color: #dc143c;
+}
+
+.image-list-container {
+    display: block;
+    width: 100%;
+    margin-left: 190px;
+    margin-bottom: 10px;
+}
+
+.imagelist {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
 }
 
 /* Hide video on mobile devices */
