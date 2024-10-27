@@ -95,7 +95,7 @@ class api {
         $url = 'https://proctor-dev.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
-        $domain = self::url();
+        $domain = self::domain();
         $header = [
             'Content-Type: application/json',
             'access-token: ' . $accesstoken,
@@ -114,7 +114,7 @@ class api {
      *
      * @return string
      */
-    public static function url() {
+    public static function domain() {
         if (isset($_SERVER['HTTPS'])) {
             $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
         } else {

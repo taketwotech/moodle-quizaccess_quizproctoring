@@ -183,6 +183,11 @@ function($, str, ModalFactory) {
             $('#id_cancel').on('click', function() {
                 camera.stopcamera();
             });
+            $(document).on('click', '.closebutton', function() {
+                if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
+                    camera.stopcamera();
+                }
+            });
         } else {
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
