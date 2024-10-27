@@ -53,7 +53,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         $(document).off('change', '#deleteallimages').on('change', '#deleteallimages', function() {
                             deleteButton.prop('disabled', !$(this).is(':checked'));
                         });
-                    }, 100);
+                    }, 300);
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -105,7 +105,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         $(document).off('change', '#deleteallimage').on('change', '#deleteallimage', function() {
                             deleteButton.prop('disabled', !$(this).is(':checked'));
                         });
-                    }, 100);
+                    }, 300);
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -157,7 +157,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         $(document).off('change', '#deleteallimag').on('change', '#deleteallimag', function() {
                             deleteButton.prop('disabled', !$(this).is(':checked'));
                         });
-                    }, 100);
+                    }, 300);
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -237,7 +237,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                             var timeElement = $(this).next('.image-time');
                                             titleElement.show();
                                             timeElement.show();
-                                            lightbox.start($(this)[0]);
+                                            lightbox.start($(this));
                                         });
                                         $('.image-link').on('lightbox:open', function() {
                                             $(this).next('.image-title').hide();
@@ -306,8 +306,25 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     });
                     loadImages(currentPage);
+
+                    let escapePressed = false;
+                    $(document).on('keydown', function(event) {
+                        if (event.key === "Escape" && !escapePressed) {
+                            escapePressed = true;
+
+                            if ($('.lb-container').css('display') === 'block') {
+                                lightbox.end();
+                            }
+                            if (typeof modal !== 'undefined' && modal.isVisible()) {
+                                modal.hide();
+                            }
+                            setTimeout(() => escapePressed = false, 50);
+                            event.stopPropagation();
+                        }
+                    });
                 });
             });
+
             $('.proctoridentity').on('click', function(event) {
                 event.preventDefault();
                 $.ajax({
