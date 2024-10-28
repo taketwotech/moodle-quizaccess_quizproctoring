@@ -331,6 +331,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             event.stopPropagation();
                         }
                     });
+                    return undefined;
                 })
                 .catch(function() {
                     // Console.log(err);
