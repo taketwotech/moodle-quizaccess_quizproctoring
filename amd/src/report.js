@@ -55,6 +55,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             deleteButton.prop('disabled', !$(this).is(':checked'));
                         });
                     }, 300);
+                    return undefined;
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -107,6 +108,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             deleteButton.prop('disabled', !$(this).is(':checked'));
                         });
                     }, 300);
+                    return undefined;
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -159,6 +161,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             deleteButton.prop('disabled', !$(this).is(':checked'));
                         });
                     }, 300);
+                    return undefined;
                 })
                 .catch(function() {
                     // Console.log(err);
@@ -328,6 +331,9 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             event.stopPropagation();
                         }
                     });
+                })
+                .catch(function() {
+                    // Console.log(err);
                 });
             });
 
