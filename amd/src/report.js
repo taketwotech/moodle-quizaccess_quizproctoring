@@ -3,6 +3,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
     return {
         init: function() {
             $(document).ready(function() {
+                // eslint-disable-next-line no-undef
                 if (typeof lightbox !== 'undefined') {
                     lightbox.init();
                 }
@@ -231,12 +232,14 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 Templates.render('quizaccess_quizproctoring/response_modal', data)
                                     .done(function(renderedHtml) {
                                         modal.getBody().find('.image-content').html(renderedHtml);
+                                        // eslint-disable-next-line no-undef
                                         lightbox.init();
                                         $('.image-link').on('click', function() {
                                             var titleElement = $(this).next('.image-title');
                                             var timeElement = $(this).next('.image-time');
                                             titleElement.show();
                                             timeElement.show();
+                                            // eslint-disable-next-line no-undef
                                             lightbox.start($(this));
                                         });
                                         $('.image-link').on('lightbox:open', function() {
@@ -313,12 +316,13 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             escapePressed = true;
 
                             if ($('.lb-container').css('display') === 'block') {
+                                // eslint-disable-next-line no-undef
                                 lightbox.end();
                             }
                             if (typeof modal !== 'undefined' && modal.isVisible()) {
                                 modal.hide();
                             }
-                            setTimeout(() => escapePressed = false, 50);
+                            setTimeout(() => { escapePressed = false; }, 50);
                             event.stopPropagation();
                         }
                     });
