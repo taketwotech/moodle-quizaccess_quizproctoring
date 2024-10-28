@@ -3,8 +3,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
     return {
         init: function() {
             $(document).ready(function() {
-                // eslint-disable-next-line no-undef
                 if (typeof lightbox !== 'undefined') {
+                    // eslint-disable-next-line no-undef
                     lightbox.init();
                 }
             });
@@ -322,7 +322,9 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             if (typeof modal !== 'undefined' && modal.isVisible()) {
                                 modal.hide();
                             }
-                            setTimeout(() => { escapePressed = false; }, 50);
+                            setTimeout(() => {
+                                escapePressed = false;
+                            }, 50);
                             event.stopPropagation();
                         }
                     });
