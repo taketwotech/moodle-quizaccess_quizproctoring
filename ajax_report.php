@@ -32,41 +32,41 @@ $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $all = required_param('all', PARAM_BOOL);
-$page = required_param('page', PARAM_INT); // Current page number
-$perpage = required_param('perpage', PARAM_INT); // Images per page
+$page = required_param('page', PARAM_INT);
+$perpage = required_param('perpage', PARAM_INT);
 $offset = ($page - 1) * $perpage;
 
 $addsql = '';
-if(!$all) {
-    $addsql = " (status != '' OR image_status = 'M') AND "; 
+if (!$all) {
+    $addsql = " (status != '' OR image_status = 'M') AND ";
 }
-$sql = "SELECT * FROM {quizaccess_proctor_data} 
+$sql = "SELECT * FROM {quizaccess_proctor_data}
         WHERE ".$addsql."userid = ".$userid."
         AND quizid = ".$quizid."
         AND attemptid = ".$attemptid."
-        AND deleted = 0 
-        ORDER BY id ASC 
+        AND deleted = 0
+        ORDER BY id ASC
         LIMIT ".$perpage." OFFSET ".$offset;
 
 $getimages = $DB->get_records_sql($sql);
-$sqlt = "SELECT * FROM {quizaccess_proctor_data} 
+$sqlt = "SELECT * FROM {quizaccess_proctor_data}
         WHERE ".$addsql."userid = ".$userid."
         AND quizid = ".$quizid."
         AND attemptid = ".$attemptid."
-        AND deleted = 0 
+        AND deleted = 0
         ORDER BY id ASC";
 $totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
 $totalrecord = count($totalimages);
-$totalPages = ceil($totalrecord / $perpage);
+$totalpages = ceil($totalrecord / $perpage);
 
 foreach ($getimages as $img) {
     if ($img->userimg == '' && $img->image_status != 'M') {
-        $image_path = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
-        if (file_exists($image_path)) {
-            $image_content = file_get_contents($image_path);
-            $image_base64 = base64_encode($image_content);
-            $target = 'data:image/png;base64,' . $image_base64;
+        $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        if (file_exists($imagepath)) {
+            $imagecontent = file_get_contents($imagepath);
+            $imagebase64 = base64_encode($imagecontent);
+            $target = 'data:image/png;base64,' . $imagebase64;
         }
     } else if (strlen($img->userimg) < 50) {
         $quizobj = \quiz::create($img->quizid, $img->userid);
@@ -84,7 +84,7 @@ foreach ($getimages as $img) {
     $formattedtime = userdate($img->timecreated, '%H:%M');
     if ($img->image_status == 'M') {
         $imagestatusstr = get_string('mainimage', 'quizaccess_quizproctoring');
-    } elseif ($img->status != '') {
+    } else if ($img->status != '') {
         $imagestatusstr = get_string('imgwarning', 'quizaccess_quizproctoring');
     } else {
         $imagestatusstr = get_string('green', 'quizaccess_quizproctoring');
@@ -95,14 +95,14 @@ foreach ($getimages as $img) {
         'img' => $target,
         'imagestatus' => $imagestatusstr,
         'timecreated' => $formattedtime,
-        'totalpage' => $totalPages,
+        'totalpage' => $totalpages,
         'total' => $totalrecord,
     ]);
 }
 $response = [
     'images' => $imgarray,
     'totalRecords' => $totalrecord,
-    'totalPages' => $totalPages,
+    'totalPages' => $totalpages,
     'currentPage' => $page,
 ];
 echo json_encode($response);

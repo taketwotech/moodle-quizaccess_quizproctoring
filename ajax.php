@@ -63,7 +63,8 @@ if (!$mainentry->isautosubmit) {
         if ($mainentry) {
             $context = context_module::instance($cmid);
             $fs = get_file_storage();
-            $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
+            $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring',
+                'cameraimages', $mainentry->id, '/', $mainentry->userimg);
             $target = $f1->get_content();
         }
     } else {

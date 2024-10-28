@@ -87,6 +87,8 @@ class api {
      * Validate the image captured
      *
      * @param Longtext $imagedata data
+     * @param int $userid user id
+     * @param int $quizid quiz id
      * @return string
      */
     public static function proctor_image_api($imagedata, $userid, $quizid) {

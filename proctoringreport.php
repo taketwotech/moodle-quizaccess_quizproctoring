@@ -52,7 +52,8 @@ $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringrep
         ['cmid' => $cmid, 'quizid' => $quizid]));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('course');
-$PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'), '/mod/quiz/accessrule/quizproctoring/proctoringreport.php');
+$PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
+    '/mod/quiz/accessrule/quizproctoring/proctoringreport.php');
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deleteuserid) {
@@ -72,27 +73,27 @@ if ($deleteuserid) {
                 'itemid' => $usersrecord->id,
                 'filepath' => '/',
                 'filename' => $usersrecord->userimg,
-            ];    
+            ];
             $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
                 $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
             if ($file) {
                 $file->delete();
             }
 
-            // Delete file from the temp directory
             $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-            $tempfilepath = $tmpdir . $usersrecord->userimg;    
+            $tempfilepath = $tmpdir . $usersrecord->userimg;
             if (file_exists($tempfilepath)) {
                 unlink($tempfilepath);
             }
         }
         $DB->set_field('quizaccess_proctor_data', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
-        $notification = new \core\output\notification(get_string('imagesdeleted', 'quizaccess_quizproctoring'), \core\output\notification::NOTIFY_SUCCESS);
+        $notification = new \core\output\notification(get_string('imagesdeleted', 'quizaccess_quizproctoring'),
+            \core\output\notification::NOTIFY_SUCCESS);
         echo $OUTPUT->render($notification);
-        $redirect_url = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
+        $redirecturl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
             ['cmid' => $cmid, 'quizid' => $quizid]);
-        redirect($redirect_url, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
-    }    
+        redirect($redirecturl, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
+    }
 }
 $table = new html_table();
 $headers = array(
@@ -112,7 +113,7 @@ echo $output->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid='.$cmid;
     $btn = '<a class="btn btn-primary" href="'.$url.'">
-    '.get_string("proctoringimagereport","quizaccess_quizproctoring",$course->fullname).'</a>';
+    '.get_string("proctoringimagereport", "quizaccess_quizproctoring", $course->fullname).'</a>';
 }
 echo '<div class="headtitle">' .
      '<p>' . get_string("delinformationu", "quizaccess_quizproctoring") . '</p>' .
@@ -120,14 +121,14 @@ echo '<div class="headtitle">' .
      '</div><br/>';
 
 $sqlcount = "SELECT COUNT(DISTINCT p.userid) AS totalcount
-             FROM {quizaccess_proctor_data} p 
+             FROM {quizaccess_proctor_data} p
              JOIN {user} u ON u.id = p.userid
              WHERE p.userimg IS NOT NULL AND p.deleted = 0 AND p.userimg != ''
              AND p.quizid = :quizid";
 $totalcount = $DB->count_records_sql($sqlcount, ['quizid' => $quizid]);
 
 $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image_count
-        FROM {quizaccess_proctor_data} p 
+        FROM {quizaccess_proctor_data} p
         JOIN {user} u ON u.id = p.userid
         WHERE p.userimg IS NOT NULL AND p.deleted = 0 AND p.userimg != ''
         AND p.quizid = :quizid
@@ -135,18 +136,20 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image
         ORDER BY u.firstname ASC";
 $records = $DB->get_records_sql($sql, ['quizid' => $quizid], $page * $perpage, $perpage);
 
-foreach($records as $record) {    
+foreach ($records as $record) {    
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', array('id' => $record->id)),
         $record->firstname . ' ' . $record->lastname
     );    
-    $deleteicon = '<a href="#" title="' . get_string('delete') . '" 
+    $deleteicon = '<a href="#" title="' . get_string('delete') . '"
     class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
     data-username="' . $record->firstname . ' ' . $record->lastname . '">
     <i class="icon fa fa-trash"></i></a>';
 
-    $imgurl = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid='.$record->id.'&cmid='.$cmid.'&quizid='.$quizid;
-    $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' . $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
+    $imgurl = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid='.
+    $record->id.'&cmid='.$cmid.'&quizid='.$quizid;
+    $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' .
+    $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
 
     $row = array($namelink, $record->email, $record->image_count);
     if ($proctoringimageshow == 1) {

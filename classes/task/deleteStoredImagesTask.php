@@ -21,7 +21,7 @@
  * @subpackage quizproctoring
  * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-*/
+ */
 namespace quizaccess_quizproctoring\task;
 
 use core\task\scheduled_task;

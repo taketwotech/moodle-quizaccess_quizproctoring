@@ -113,7 +113,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
  * @param boolean $mainimage main image
- * @param string $service service enabled 
+ * @param string $service service enabled
  * @param string $status
  * @param boolean $storeallimg store images
  */
@@ -153,7 +153,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
     if (($status != '') || ($storeallimg && $status == '')) {
-        if($data) {
+        if ($data) {
             $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
         }
         $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
@@ -261,9 +261,10 @@ function clean_images_task() {
     global $DB;
     $currenttime = time();
     $timedelete = get_config('quizaccess_quizproctoring', 'clear_images');
-    $timestamp_days = $currenttime - ($timedelete * 24 * 60 * 60);
-    if($timedelete > 0) {
-        $totalrecords = $DB->get_records_sql("SELECT * FROM {quizaccess_proctor_data} where timecreated < ".$timestamp_days." AND deleted = 0 AND userimg IS NOT NULL");
+    $timestampdays = $currenttime - ($timedelete * 24 * 60 * 60);
+    if ($timedelete > 0) {
+        $totalrecords = $DB->get_records_sql("SELECT * FROM {quizaccess_proctor_data} where
+            timecreated < ".$timestampdays." AND deleted = 0 AND userimg IS NOT NULL");
         foreach ($totalrecords as $record) {
             $quizobj = \quiz::create($record->quizid, $record->userid);
             $context = $quizobj->get_context();
@@ -275,16 +276,15 @@ function clean_images_task() {
                 'itemid' => $record->id,
                 'filepath' => '/',
                 'filename' => $record->userimg,
-            ];    
+            ];
             $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
                 $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
             if ($file) {
                 $file->delete();
             }
 
-            // Delete file from the temp directory
             $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-            $tempfilepath = $tmpdir . $record->userimg;    
+            $tempfilepath = $tmpdir . $record->userimg;
             if (file_exists($tempfilepath)) {
                 unlink($tempfilepath);
             }

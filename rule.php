@@ -513,22 +513,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'attemptid' => $attemptid,
                     'image_status' => 'M',
                 ]);
-                /*if ($quizinfo && ($proctoringimageshow == 1)) {
-                    if ($usermages) {
-                        $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
-                            'proctoringidentity'], 'quizaccess_quizproctoring');
-                        $PAGE->requires->jquery();
-                        $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
-                        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
-                        if (version_compare($release, $compareversion, '<')) {                            
-                            $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_panel', 'init',
-                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
-                        } else {
-                            $PAGE->requires->js_call_amd('quizaccess_quizproctoring/response_proctoring', 'init',
-                            [$attemptid, $quiz->id, $userid, $usermages->user_identity, $proctoringimageshow]);
-                        }
-                    }
-                }*/
             }
         }
     }

@@ -52,7 +52,8 @@ if ($proctoringimageshow == 1) {
         ['userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid]));
     $PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
 
-    $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'), '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
+    $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
+        '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
     $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
     'attemptstarted', 'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
@@ -62,33 +63,33 @@ if ($proctoringimageshow == 1) {
     $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     $table = new html_table();
     $headers = array(
-        get_string("email","quizaccess_quizproctoring"),
+        get_string("email", "quizaccess_quizproctoring"),
         html_writer::link(new moodle_url($PAGE->url, ['sort' => 'attempt', 'dir' => $attemptssort]),
         get_string("attempts", "quizaccess_quizproctoring") . $attemptarrow),
-        get_string("started","quizaccess_quizproctoring"),
-        get_string("submitted","quizaccess_quizproctoring"),
-        get_string("duration","quizaccess_quizproctoring"),
-        get_string("proctoringimages", "quizaccess_quizproctoring") . 
+        get_string("started", "quizaccess_quizproctoring"),
+        get_string("submitted", "quizaccess_quizproctoring"),
+        get_string("duration", "quizaccess_quizproctoring"),
+        get_string("proctoringimages", "quizaccess_quizproctoring") .
         ($storerecord->storeallimages ? '
         <input type="checkbox" id="storeallimages" name="storeallimages" value="1" />' : ''),
-        get_string("proctoringidentity","quizaccess_quizproctoring"),            
-        get_string("isautosubmit","quizaccess_quizproctoring"),
+        get_string("proctoringidentity", "quizaccess_quizproctoring"),
+        get_string("isautosubmit", "quizaccess_quizproctoring"),
     );
     
-    $table->head = $headers;    
+    $table->head = $headers;
     $output = $PAGE->get_renderer('mod_quiz');
     echo $OUTPUT->header();
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
-        $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', 
+        $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
             array('cmid' => $cmid, 'quizid' => $quizid));
         $btn = '<a class="btn btn-primary" href="'.$backurl.'">
-        '.get_string("userimagereport","quizaccess_quizproctoring").'</a>';
+        '.get_string("userimagereport", "quizaccess_quizproctoring").'</a>';
     }
     echo '<div class="headtitle">' .
-         '<p>'.get_string('reviewattemptsu', 'quizaccess_quizproctoring',
-         	$user->firstname . ' ' . $user->lastname) . '</p>' .
-         '<div>' . $btn . '</div>' .
-         '</div><br/>';
+    '<p>'.get_string('reviewattemptsu', 'quizaccess_quizproctoring',
+        $user->firstname . ' ' . $user->lastname) . '</p>' .
+    '<div>' . $btn . '</div>' .
+    '</div><br/>';
 
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', array('id' => $user->id)),
@@ -101,13 +102,12 @@ if ($proctoringimageshow == 1) {
     $sortcolumn = isset($sortcolumns[$sort]) ? $sortcolumns[$sort] : $sortcolumns['attempt'];
 
     $attempts = $DB->get_records_sql("
-        SELECT qa.* 
+        SELECT qa.*
         FROM {quiz_attempts} qa
         JOIN {user} u ON qa.userid = u.id
         WHERE qa.quiz = :quizid AND qa.userid = :userid
         ORDER BY $sortcolumn $dir
     ", ['quizid' => $quizid, 'userid' => $userid], $page * $perpage, $perpage);
-    $attemptNumbers = array();
     foreach ($attempts as $attempt) {
         $usermages = $DB->get_record('quizaccess_proctor_data', [
                         'quizid' => $quizid,
@@ -115,9 +115,8 @@ if ($proctoringimageshow == 1) {
                         'attemptid' => $attempt->id,
                         'image_status' => 'M',
                     ]);
-        $attempt_url = new moodle_url('/mod/quiz/review.php', array('attempt' => $attempt->id));
-        $attempturl = '<a href="' . $attempt_url->out() . '">' . $attempt->attempt . '</a>';
-        $attemptNumbers = $attempt->attempt;
+        $attemptsurl = new moodle_url('/mod/quiz/review.php', array('attempt' => $attempt->id));
+        $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
         
         $finishtime = $timetaken = get_string('inprogress', 'quiz');
         $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
@@ -125,7 +124,9 @@ if ($proctoringimageshow == 1) {
             $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
             $timetaken = format_time($attempt->timefinish - $attempt->timestart);
         }
-        $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'" data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
+        $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'"
+        data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
+        data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
         
         $pindentity = '';
         if ($usermages->user_identity && $usermages->user_identity != 0) {
