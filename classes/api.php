@@ -92,7 +92,7 @@ class api {
     public static function proctor_image_api($imagedata, $userid, $quizid) {
         self::init();
         $curl = new \curl();
-        $url = 'https://proctor-dev.taketwotechnologies.com/validate';
+        $url = 'https://proctoring.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::domain();
