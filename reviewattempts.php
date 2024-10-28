@@ -75,7 +75,6 @@ if ($proctoringimageshow == 1) {
         get_string("proctoringidentity", "quizaccess_quizproctoring"),
         get_string("isautosubmit", "quizaccess_quizproctoring"),
     );
-    
     $table->head = $headers;
     $output = $PAGE->get_renderer('mod_quiz');
     echo $OUTPUT->header();
@@ -117,7 +116,6 @@ if ($proctoringimageshow == 1) {
                     ]);
         $attemptsurl = new moodle_url('/mod/quiz/review.php', array('attempt' => $attempt->id));
         $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
-        
         $finishtime = $timetaken = get_string('inprogress', 'quiz');
         $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
         if ($attempt->timefinish) {
@@ -127,10 +125,11 @@ if ($proctoringimageshow == 1) {
         $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'"
         data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
         data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
-        
         $pindentity = '';
         if ($usermages->user_identity && $usermages->user_identity != 0) {
-            $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'" data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">';
+            $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'"
+            data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity',
+                'quizaccess_quizproctoring') . '" alt="icon">';
         }
         if ($usermages->isautosubmit) {
             $submit = '<div class="submittag">Yes</div>';

@@ -136,11 +136,11 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image
         ORDER BY u.firstname ASC";
 $records = $DB->get_records_sql($sql, ['quizid' => $quizid], $page * $perpage, $perpage);
 
-foreach ($records as $record) {    
+foreach ($records as $record) {
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', array('id' => $record->id)),
         $record->firstname . ' ' . $record->lastname
-    );    
+    );
     $deleteicon = '<a href="#" title="' . get_string('delete') . '"
     class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
     data-username="' . $record->firstname . ' ' . $record->lastname . '">
