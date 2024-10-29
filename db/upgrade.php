@@ -245,7 +245,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024092404, 'quizaccess', 'quizproctoring');
-    }    
+    }
 
     if ($oldversion < 2024102700) {
 
@@ -265,7 +265,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024102700, 'quizaccess', 'quizproctoring');
     }
 
-     if ($oldversion < 2024102910) {
+    if ($oldversion < 2024102910) {
 
         // Define field storeallimages to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
