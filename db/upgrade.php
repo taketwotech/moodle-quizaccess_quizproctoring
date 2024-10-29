@@ -265,7 +265,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024102700, 'quizaccess', 'quizproctoring');
     }
 
-     if ($oldversion < 2024102900) {
+     if ($oldversion < 2024102910) {
 
         // Define field storeallimages to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
@@ -277,10 +277,10 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2024102900, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2024102910, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2024102900) {
+    if ($oldversion < 2024102911) {
 
         // Define field enableprofilematch to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
@@ -292,7 +292,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2024102900, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2024102911, 'quizaccess', 'quizproctoring');
     }
 
     return true;
