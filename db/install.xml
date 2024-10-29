@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/quiz/accessrule/quizproctoring/db" VERSION="20241015" COMMENT="XMLDB file for Moodle mod/quiz/accessrule/quizproctoring"
+<XMLDB PATH="mod/quiz/accessrule/quizproctoring/db" VERSION="20241029" COMMENT="XMLDB file for Moodle mod/quiz/accessrule/quizproctoring"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
 >
@@ -13,7 +13,8 @@
         <FIELD NAME="warning_threshold" TYPE="int" LENGTH="2" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="proctoringvideo_link" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="enableteacherproctor" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Teacher should be able to see group of users attempting proctored quiz"/>
-        <FIELD NAME="enableprofilematch" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Enable profile match"/>
+        <FIELD NAME="storeallimages" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="enableprofilematch" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

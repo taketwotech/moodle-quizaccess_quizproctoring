@@ -245,37 +245,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024092404, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2024101601) {
-
-        // Define field storeallimages to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('storeallimages', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
-
-        // Conditionally launch add field storeallimages.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2024101601, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2024102402) {
-
-        // Define field enableprofilematch to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'storeallimages');
-
-        // Conditionally launch add field enableprofilematch.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2024102402, 'quizaccess', 'quizproctoring');
-    }
+    }    
 
     if ($oldversion < 2024102700) {
 
@@ -293,6 +263,36 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Update the plugin savepoint.
         upgrade_plugin_savepoint(true, 2024102700, 'quizaccess', 'quizproctoring');
+    }
+
+     if ($oldversion < 2024102900) {
+
+        // Define field storeallimages to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('storeallimages', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
+
+        // Conditionally launch add field storeallimages.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024102900, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2024102900) {
+
+        // Define field enableprofilematch to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'storeallimages');
+
+        // Conditionally launch add field enableprofilematch.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2024102900, 'quizaccess', 'quizproctoring');
     }
 
     return true;
