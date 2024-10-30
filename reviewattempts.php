@@ -81,7 +81,7 @@ if ($proctoringimageshow == 1) {
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
             'cmid' => $cmid,
-            'quizid' => $quizid
+            'quizid' => $quizid,
         ]);
         $btn = '<a class="btn btn-primary" href="'.$backurl.'">
         '.get_string("userimagereport", "quizaccess_quizproctoring").'</a>';

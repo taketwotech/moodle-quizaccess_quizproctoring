@@ -162,7 +162,7 @@ foreach ($records as $record) {
     <i class="icon fa fa-trash"></i></a>';
     $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
     'cmid' => $quiz->cmid,
-    'quizid' => $record->quizid
+    'quizid' => $record->quizid,
     ]);
     $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
     $quizname = '<a href="'.$backurl.'" title="'.$helptext.'">'.$record->quiz_name.'</a>';
