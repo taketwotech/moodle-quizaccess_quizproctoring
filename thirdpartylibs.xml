@@ -65,7 +65,7 @@
     </library>
 
     <library>
-        <location>libraries/js/lightbox.min.js </location>
+        <location>libraries/js/lightbox.min.js</location>
         <name>lightbox.min</name>
         <version>2.11.5</version>
         <license>MIT</license>
