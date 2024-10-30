@@ -96,12 +96,12 @@ if ($deleteuserid) {
     }
 }
 $table = new html_table();
-$headers = array(
+$headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
     get_string("usersimages", "quizaccess_quizproctoring"),
-    get_string("actions", "quizaccess_quizproctoring")
-);
+    get_string("actions", "quizaccess_quizproctoring"),
+];
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
     array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring"));
@@ -138,7 +138,7 @@ $records = $DB->get_records_sql($sql, ['quizid' => $quizid], $page * $perpage, $
 
 foreach ($records as $record) {
     $namelink = html_writer::link(
-        new moodle_url('/user/view.php', array('id' => $record->id)),
+        new moodle_url('/user/view.php', ['id' => $record->id]),
         $record->firstname . ' ' . $record->lastname
     );
     $deleteicon = '<a href="#" title="' . get_string('delete') . '"
@@ -151,7 +151,7 @@ foreach ($records as $record) {
     $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' .
     $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
 
-    $row = array($namelink, $record->email, $record->image_count);
+    $row = [$namelink, $record->email, $record->image_count];
     if ($proctoringimageshow == 1) {
         $row[] = $imageicon;
     }
