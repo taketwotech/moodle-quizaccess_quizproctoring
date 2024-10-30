@@ -87,20 +87,24 @@ class api {
      * Validate the image captured
      *
      * @param Longtext $imagedata data
+     * @param int $userid user id
+     * @param int $quizid quiz id
      * @return string
      */
-    public static function proctor_image_api($imagedata) {
+    public static function proctor_image_api($imagedata, $userid, $quizid) {
         self::init();
         $curl = new \curl();
         $url = 'https://proctoring.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
-        $domain = self::url();
+        $domain = self::domain();
         $header = [
             'Content-Type: application/json',
             'access-token: ' . $accesstoken,
             'secret-token: ' . $accesstokensecret,
             'domain: ' . $domain,
+            'user_id: ' . $userid,
+            'quiz_id: ' . $quizid,
         ];
         $curl->setHeader($header);
         $result = $curl->post($url, $imagedata);
@@ -112,7 +116,7 @@ class api {
      *
      * @return string
      */
-    public static function url() {
+    public static function domain() {
         if (isset($_SERVER['HTTPS'])) {
             $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
         } else {

@@ -23,7 +23,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -38,7 +37,7 @@ function xmldb_quizaccess_quizproctoring_install() {
     $record->firstname = $user->firstname;
     $record->lastname  = $user->lastname;
     $record->email     = $user->email;
-    $record->moodle_v  = get_config('moodle', 'release');    
+    $record->moodle_v  = get_config('moodle', 'release');
     $record->previously_installed_v = '';
 
     $postdata = json_encode($record);

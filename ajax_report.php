@@ -27,76 +27,82 @@ require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_login();
+
 $userid = required_param('userid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-$currentpage = optional_param('currentpage', 0 , PARAM_INT);
+$all = required_param('all', PARAM_BOOL);
+$page = required_param('page', PARAM_INT);
+$perpage = required_param('perpage', PARAM_INT);
+$offset = ($page - 1) * $perpage;
 
-if ($currentpage) {
-    $offset = $currentpage * 20;
-    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
-    $getimages = $DB->get_records_sql($sql, null, $offset , 20);
-
-    $imgarray = [];
-    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
-    $countrecord  = $DB->get_records_sql($sqlcount, null);
-
-    if ($countrecord) {
-        $countrecord = ceil(count($countrecord) / 20);
-    }
-    foreach ($getimages as $img) {
-        if($img->userimg == '') {
-            $target = get_string('notcameradetected', 'quizaccess_quizproctoring');
-        } else if (strlen($img->userimg) < 40) {
-            $quizobj = \quiz::create($img->quizid, $img->userid);
-            $context = $quizobj->get_context();
-            $fs = get_file_storage();
-            $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
-            $target = $f1->get_content();
-        } else {
-            $target = $img->userimg;
-        }
-        array_push($imgarray, ['title' => $img->image_status == 'M' ?
-            get_string('mainimage', 'quizaccess_quizproctoring') :
-            get_string($img->status, 'quizaccess_quizproctoring', ''),
-            'img' => $target,
-            'totalpage' => $countrecord,
-        ]);
-    }
-    echo json_encode($imgarray);
-
-} else {
-    $sql = "select * from {quizaccess_proctor_data} where  (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0 AND userimg IS NOT NULL ";
-    $getimages = $DB->get_records_sql($sql, null, '' , 20);
-    $imgarray = [];
-    $sqlcount = "select * from {quizaccess_proctor_data} where (status != '' OR image_status = 'M')
-    AND userid = ".$userid." AND quizid =". $quizid. " AND attemptid =". $attemptid." AND deleted = 0  AND userimg IS NOT NULL ";
-    $countrecord  = $DB->get_records_sql($sqlcount, null);
-    $totalrecord = count($countrecord);
-    if ($countrecord) {
-        $countrecord = ceil(count($countrecord) / 20);
-    }
-    foreach ($getimages as $img) {
-        if($img->userimg == '') {
-            $target = get_string('notcameradetected', 'quizaccess_quizproctoring');
-        } else if (strlen($img->userimg) < 40) {
-            $quizobj = \quiz::create($img->quizid, $img->userid);
-            $context = $quizobj->get_context();
-            $fs = get_file_storage();
-            $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
-            $target = $f1->get_content();
-        } else {
-            $target = $img->userimg;
-        }
-        array_push($imgarray, ['title' => $img->image_status == 'M' ?
-            get_string('mainimage', 'quizaccess_quizproctoring') :
-            get_string($img->status, 'quizaccess_quizproctoring', ''),
-            'img' => $target,
-            'totalpage' => $countrecord, 'total' => $totalrecord,
-        ]);
-    }
-    echo json_encode($imgarray);
+$addsql = '';
+if (!$all) {
+    $addsql = " (status != '' OR image_status = 'M') AND ";
 }
+$sql = "SELECT * FROM {quizaccess_proctor_data}
+        WHERE ".$addsql."userid = ".$userid."
+        AND quizid = ".$quizid."
+        AND attemptid = ".$attemptid."
+        AND deleted = 0
+        ORDER BY id ASC
+        LIMIT ".$perpage." OFFSET ".$offset;
+
+$getimages = $DB->get_records_sql($sql);
+$sqlt = "SELECT * FROM {quizaccess_proctor_data}
+        WHERE ".$addsql."userid = ".$userid."
+        AND quizid = ".$quizid."
+        AND attemptid = ".$attemptid."
+        AND deleted = 0
+        ORDER BY id ASC";
+$totalimages = $DB->get_records_sql($sqlt);
+$imgarray = [];
+$totalrecord = count($totalimages);
+$totalpages = ceil($totalrecord / $perpage);
+
+foreach ($getimages as $img) {
+    if ($img->userimg == '' && $img->image_status != 'M') {
+        $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        if (file_exists($imagepath)) {
+            $imagecontent = file_get_contents($imagepath);
+            $imagebase64 = base64_encode($imagecontent);
+            $target = 'data:image/png;base64,' . $imagebase64;
+        }
+    } else if (strlen($img->userimg) < 50) {
+        $quizobj = \quiz::create($img->quizid, $img->userid);
+        $context = $quizobj->get_context();
+        $fs = get_file_storage();
+        $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
+        $target = $f1->get_content();
+    } else {
+        $target = $img->userimg;
+    }
+    $status = '';
+    if ($img->status) {
+        $status = get_string($img->status, 'quizaccess_quizproctoring', '');
+    }
+    $formattedtime = userdate($img->timecreated, '%H:%M');
+    if ($img->image_status == 'M') {
+        $imagestatusstr = get_string('mainimage', 'quizaccess_quizproctoring');
+    } else if ($img->status != '') {
+        $imagestatusstr = get_string('imgwarning', 'quizaccess_quizproctoring');
+    } else {
+        $imagestatusstr = get_string('green', 'quizaccess_quizproctoring');
+    }
+    array_push($imgarray, ['title' => $img->image_status == 'M' ?
+        get_string('mainimage', 'quizaccess_quizproctoring') :
+        $status,
+        'img' => $target,
+        'imagestatus' => $imagestatusstr,
+        'timecreated' => $formattedtime,
+        'totalpage' => $totalpages,
+        'total' => $totalrecord,
+    ]);
+}
+$response = [
+    'images' => $imgarray,
+    'totalRecords' => $totalrecord,
+    'totalPages' => $totalpages,
+    'currentPage' => $page,
+];
+echo json_encode($response);

@@ -21,20 +21,6 @@ function($, str, ModalFactory) {
         this.attemptid = attemptid;
         $("#id_submitbutton").prop("disabled", true);
         docElement.on('popup', this.showpopup.bind(this));
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-            .then(function(stream) {
-                if (this.video) {
-                  this.video.srcObject = stream;
-                  this.video.muted = true;
-                  localMediaStream = stream;
-                  this.video.play();
-                  return true;
-                }
-                return true;
-            })
-        .catch(function() {
-            // Console.log(err);
-        });
     };
 
     /** @type Tag element contain video. */
@@ -62,9 +48,24 @@ function($, str, ModalFactory) {
      /** @type int quiz id. */
     Camera.prototype.quizid = false;
 
+    Camera.prototype.startcamera = function() {
+        navigator.mediaDevices.getUserMedia({video: true, audio: true})
+        .then(function(stream) {
+            const videoElement = document.getElementById('video');
+            if (videoElement) {
+                videoElement.srcObject = stream;
+                videoElement.muted = true;
+                videoElement.playsinline = true;
+                localMediaStream = stream;
+                videoElement.play();
+            }
+        })
+        .catch(function() {
+            // Console.log(err);
+        });
+    };
 
     Camera.prototype.takepicture = function() {
-        // Console.log('takepicture function');
         var context = this.canvas.getContext('2d');
         context.drawImage(this.video, 0, 0, this.width, this.height);
         var data = this.canvas.toDataURL('image/png');
@@ -80,7 +81,6 @@ function($, str, ModalFactory) {
             data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
             success: function(response) {
                 if (response && response.errorcode) {
-                    // Console.log(response.errorcode);
                     $("input[name='userimg']").val('');
                     $(document).trigger('popup', response.error);
                 } else {
@@ -111,7 +111,10 @@ function($, str, ModalFactory) {
                 } else {
                     if (response.redirect && response.url) {
                         window.onbeforeunload = null;
-                        window.location.href = encodeURI(response.url);
+                        $(document).trigger('popup', response.msg);
+                        setTimeout(function() {
+                            window.location.href = encodeURI(response.url);
+                        }, 3000);
                     }
                 }
             }
@@ -139,6 +142,7 @@ function($, str, ModalFactory) {
         $('#' + this.takepictureid).show();
         $('#' + this.canvasid).hide();
         $('#' + this.retakeid).hide();
+        $("#id_submitbutton").prop("disabled", true);
     };
     Camera.prototype.showpopup = function(event, message) {
         return ModalFactory.create({
@@ -149,11 +153,23 @@ function($, str, ModalFactory) {
         });
     };
 
+    Camera.prototype.stopcamera = function() {
+        if (localMediaStream) {
+            localMediaStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            localMediaStream = null;
+        }
+    };
+
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);
+            $('.quizstartbuttondiv [type=submit]').on('click', function() {
+                camera.startcamera();
+            });
             // Take picture on button click
             $('#' + camera.takepictureid).on('click', function(e) {
                 e.preventDefault();
@@ -163,6 +179,14 @@ function($, str, ModalFactory) {
             $('#' + camera.retakeid).on('click', function(e) {
                 e.preventDefault();
                 camera.retake();
+            });
+            $('#id_cancel').on('click', function() {
+                camera.stopcamera();
+            });
+            $(document).on('click', '.closebutton', function() {
+                if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
+                    camera.stopcamera();
+                }
             });
         } else {
             signalingSocket = io(externalserver);
@@ -412,7 +436,30 @@ function($, str, ModalFactory) {
                                 'height': '240',
                                 'autoplay': 'autoplay'
                             }).appendTo('body');
+                            document.addEventListener('visibilitychange', function() {
+                                if (document.visibilityState === 'visible') {
+                                   $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                    method: 'POST',
+                                    data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
+                                        success: function(response) {
+                                            if (response && response.errorcode) {
+                                                $(document).trigger('popup', response.error);
+                                            } else {
+                                                if (response.redirect && response.url) {
+                                                    window.onbeforeunload = null;
+                                                    $(document).trigger('popup', response.msg);
+                                                    setTimeout(function() {
+                                                        window.location.href = encodeURI(response.url);
+                                                    }, 3000);
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            });
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                            camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
                     }
@@ -424,6 +471,7 @@ function($, str, ModalFactory) {
                         var teacherroom = getTeacherroom();
                         if (teacherroom !== 'teacher') {
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                            camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
                     }
