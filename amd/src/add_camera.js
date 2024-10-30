@@ -49,20 +49,21 @@ function($, str, ModalFactory) {
     Camera.prototype.quizid = false;
 
     Camera.prototype.startcamera = function() {
-        navigator.mediaDevices.getUserMedia({video: true, audio: true})
-        .then(function(stream) {
-            const videoElement = document.getElementById('video');
-            if (videoElement) {
-                videoElement.srcObject = stream;
-                videoElement.muted = true;
-                videoElement.playsinline = true;
-                localMediaStream = stream;
-                videoElement.play();
-            }
-        })
-        .catch(function() {
-            // Console.log(err);
-        });
+        return navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(function(stream) {
+                const videoElement = document.getElementById('video');
+                if (videoElement) {
+                    videoElement.srcObject = stream;
+                    videoElement.muted = true;
+                    videoElement.playsinline = true;
+                    localMediaStream = stream;
+                    videoElement.play();
+                }
+                return videoElement; // Return videoElement or stream here
+            })
+            .catch(function() {
+                // Console.log(err);
+            });
     };
 
     Camera.prototype.takepicture = function() {
