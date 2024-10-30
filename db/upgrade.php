@@ -252,13 +252,13 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Update img_check_time to 30 for all instances in quizaccess_quizproctoring.
         $DB->set_field('config_plugins', 'value', '30', [
             'plugin' => 'quizaccess_quizproctoring',
-            'name' => 'img_check_time'
+            'name' => 'img_check_time',
         ]);
 
         // Update proctoring_image_show to 1 for all instances in quizaccess_quizproctoring.
         $DB->set_field('config_plugins', 'value', '1', [
             'plugin' => 'quizaccess_quizproctoring',
-            'name' => 'proctoring_image_show'
+            'name' => 'proctoring_image_show',
         ]);
 
         // Update the plugin savepoint.

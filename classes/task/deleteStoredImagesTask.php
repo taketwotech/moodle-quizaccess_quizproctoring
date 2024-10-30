@@ -43,7 +43,7 @@ class deleteStoredImagesTask extends scheduled_task {
      * @return string
      */
     public function get_name() {
-        return get_string('delete_Stored_Images_Task', 'quizaccess_quizproctoring');
+        return get_string('deletestoredimagestask', 'quizaccess_quizproctoring');
     }
 
     /**

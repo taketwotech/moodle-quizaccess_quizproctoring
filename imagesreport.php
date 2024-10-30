@@ -115,12 +115,12 @@ if ($deletequizid || $delcourse) {
 }
 
 $table = new html_table();
-$headers = array(
-            get_string("fullquizname", "quizaccess_quizproctoring"),
-            get_string("users", "quizaccess_quizproctoring"),
-            get_string("usersimages", "quizaccess_quizproctoring"),
-            get_string("actions", "quizaccess_quizproctoring")
-        );
+$headers = [
+    get_string("fullquizname", "quizaccess_quizproctoring"),
+    get_string("users", "quizaccess_quizproctoring"),
+    get_string("usersimages", "quizaccess_quizproctoring"),
+    get_string("actions", "quizaccess_quizproctoring"),
+];
 $table->head = $headers;
 echo $OUTPUT->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
@@ -160,11 +160,13 @@ foreach ($records as $record) {
     class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
     data-quiz="' . $record->quiz_name . '">
     <i class="icon fa fa-trash"></i></a>';
-    $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
-        array('cmid' => $quiz->cmid, 'quizid' => $record->quizid));
+    $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
+    'cmid' => $quiz->cmid,
+    'quizid' => $record->quizid
+    ]);
     $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
     $quizname = '<a href="'.$backurl.'" title="'.$helptext.'">'.$record->quiz_name.'</a>';
-    $table->data[] = array($quizname, $record->user_count, $record->image_count, $deleteicon);
+    $table->data[] = [$quizname, $record->user_count, $record->image_count, $deleteicon];
 }
 
 echo html_writer::table($table);
