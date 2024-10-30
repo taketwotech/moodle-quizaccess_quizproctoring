@@ -55,4 +55,20 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+
+    <library>
+        <location>libraries/css/lightbox.min.css</location>
+        <name>lightbox.min</name>
+        <version>2.11.5</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/lightbox.min.js </location>
+        <name>lightbox.min</name>
+        <version>2.11.5</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
 </libraries>
