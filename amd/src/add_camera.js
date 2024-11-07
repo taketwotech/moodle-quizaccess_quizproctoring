@@ -167,9 +167,14 @@ function($, str, ModalFactory) {
         $("#id_submitbutton").prop("disabled", true);
     };
     Camera.prototype.showpopup = function(event, message) {
+        if (this.activeModal) {
+            this.activeModal.hide();
+            this.activeModal.destroy();
+        }
         return ModalFactory.create({
             body: message,
-        }).then(function(modal) {
+        }).then((modal) => {
+            this.activeModal = modal;
             modal.show();
             return null;
         });
