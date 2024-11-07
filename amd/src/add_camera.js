@@ -58,8 +58,29 @@ function($, str, ModalFactory) {
                     videoElement.playsinline = true;
                     localMediaStream = stream;
                     videoElement.play();
+
+                    let offsetX, offsetY, isDragging = false;
+
+                    videoElement.addEventListener('mousedown', function(e) {
+                        isDragging = true;
+                        offsetX = e.clientX - videoElement.getBoundingClientRect().left;
+                        offsetY = e.clientY - videoElement.getBoundingClientRect().top;
+                        videoElement.style.zIndex = 1001;
+                    });
+
+                    document.addEventListener('mousemove', function(e) {
+                        if (isDragging) {
+                            videoElement.style.left = `${e.clientX - offsetX}px`;
+                            videoElement.style.top = `${e.clientY - offsetY}px`;
+                        }
+                    });
+
+                    document.addEventListener('mouseup', function() {
+                        isDragging = false;
+                        videoElement.style.zIndex = 1000;
+                    });
                 }
-                return videoElement; // Return videoElement or stream here
+                return videoElement;
             })
             .catch(function() {
                 // Console.log(err);
