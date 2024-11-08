@@ -9,6 +9,7 @@ window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
+$('.quizstartbuttondiv [type=submit]').prop("disabled", true);
 define(['jquery', 'core/str', 'core/modal_factory'],
 function($, str, ModalFactory) {
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
@@ -195,6 +196,13 @@ function($, str, ModalFactory) {
         teacher, quizid, serviceoption, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
+            if (document.readyState === 'complete') {
+                $('.quizstartbuttondiv [type=submit]').prop("disabled", false);
+            } else {
+                $(window).on('load', function() {
+                    $('.quizstartbuttondiv [type=submit]').prop("disabled", false);
+                });
+            }
             camera = new Camera(cmid, mainimage, attemptid, quizid);
             $('.quizstartbuttondiv [type=submit]').on('click', function() {
                 camera.startcamera();
