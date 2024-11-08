@@ -299,7 +299,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Define field enablestudentvideo to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablestudentvideo', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableprofilematch');
+        $field = new xmldb_field('enablestudentvideo', XMLDB_TYPE_INTEGER, '1',
+            null, XMLDB_NOTNULL, null, '0', 'enableprofilematch');
 
         // Conditionally launch add field enablestudentvideo.
         if (!$dbman->field_exists($table, $field)) {

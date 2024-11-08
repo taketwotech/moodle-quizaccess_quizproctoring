@@ -436,6 +436,7 @@ function($, str, ModalFactory) {
      * @param {boolean} verifyduringattempt - boolean value
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
+     * @param {boolean} enablestudentvideo - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -470,7 +471,7 @@ function($, str, ModalFactory) {
                         var teacherroom = getTeacherroom();
                         if (teacherroom !== 'teacher') {
                             $('<canvas>').attr({id: 'canvas', width: '280',
-                                height: '240', 'style': 'display: none;'}).appendTo('body');                            
+                                height: '240', 'style': 'display: none;'}).appendTo('body');
                             $('<video>').attr({
                                 'id': 'video',
                                 'class': 'quizaccess_quizproctoring-video',
