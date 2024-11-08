@@ -59,7 +59,9 @@ function($, str, ModalFactory) {
                     localMediaStream = stream;
                     videoElement.play();
 
-                    let offsetX, offsetY, isDragging = false;
+                    let offsetX;
+                    let offsetY;
+                    let isDragging = false;
 
                     videoElement.addEventListener('mousedown', function(e) {
                         isDragging = true;
