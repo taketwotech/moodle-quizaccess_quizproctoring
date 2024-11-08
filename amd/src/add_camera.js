@@ -193,7 +193,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, setinterval = 300) {
+        teacher, quizid, serviceoption, enablestudentvideo = 0, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -237,7 +237,7 @@ function($, str, ModalFactory) {
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, setinterval, serviceoption, quizid, function() {
+            teacher, enablestudentvideo, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
                 var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
@@ -443,7 +443,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, setinterval, serviceoption, quizid, callback) {
+        teacher, enablestudentvideo, setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {
@@ -470,14 +470,15 @@ function($, str, ModalFactory) {
                         var teacherroom = getTeacherroom();
                         if (teacherroom !== 'teacher') {
                             $('<canvas>').attr({id: 'canvas', width: '280',
-                                height: '240', 'style': 'display: none;'}).appendTo('body');
+                                height: '240', 'style': 'display: none;'}).appendTo('body');                            
                             $('<video>').attr({
                                 'id': 'video',
                                 'class': 'quizaccess_quizproctoring-video',
                                 'width': '280',
                                 'height': '240',
                                 'autoplay': 'autoplay'
-                            }).appendTo('body');
+                            }).css('display', enablestudentvideo ? 'block' : 'none')
+                              .appendTo('body');
                             document.addEventListener('visibilitychange', function() {
                                 if (document.visibilityState === 'visible') {
                                    $.ajax({
