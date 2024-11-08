@@ -218,12 +218,17 @@ function($, str, ModalFactory) {
                 }
             });
         } else {
+            document.addEventListener('keydown', function(event) {
+                if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
+                    event.preventDefault();
+                }
+            });
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
-           setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
             teacher, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
