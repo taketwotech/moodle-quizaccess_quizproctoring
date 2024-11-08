@@ -9,9 +9,9 @@ window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
-$('.quizstartbuttondiv [type=submit]').prop("disabled", true);
 define(['jquery', 'core/str', 'core/modal_factory'],
 function($, str, ModalFactory) {
+    $('.quizstartbuttondiv [type=submit]').prop("disabled", true);
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
         this.video = document.getElementById(this.videoid);
