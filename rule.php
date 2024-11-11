@@ -371,7 +371,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->addElement('selectyesno', 'enablestudentvideo',
                 get_string('enablestudentvideo', 'quizaccess_quizproctoring'));
             $mform->addHelpButton('enablestudentvideo', 'enablestudentvideo', 'quizaccess_quizproctoring');
-            $mform->setDefault('enablestudentvideo', 0);
+            $mform->setDefault('enablestudentvideo', 1);
             $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
         }
 
