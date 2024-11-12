@@ -193,7 +193,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, enablestudentvideo = 0, setinterval = 300) {
+        teacher, quizid, serviceoption, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -241,8 +241,10 @@ function($, str, ModalFactory) {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
                 var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
+                var fullname = userfullname;
 
-                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid, 'type': typet}});
+                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
+                    'type': typet, 'fullname': fullname}});
 
                 // Restore the session state if available
                 if (sessionState) {
@@ -314,10 +316,21 @@ function($, str, ModalFactory) {
                         remoteMedia.attr("muted", "true");
                     }
                     remoteMedia.attr("controls", "");
+                    if ($('#region-main-box .videos-container').length === 0) {
+                        $('#region-main-box').append($("<div>").addClass("videos-container"));
+                    }
+
+                    var studentContainer = $("<div>").addClass("student-container");
+                    var studentNameText = config.userdata && config.userdata.fullname ? config.userdata.fullname : "Unknown Student";
+                    var studentName = $("<span>").addClass("student-name").text(studentNameText);
+
+                    studentContainer.append(remoteMedia);
+                    studentContainer.append(studentName);
+
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
-                        $('#region-main-box').append(remoteMedia);
+                        $('.videos-container').append(studentContainer);
                         attachMediaStream(remoteMedia[0], connectedPeers[peerId].stream);
                     }
                 }
@@ -415,7 +428,7 @@ function($, str, ModalFactory) {
 
                     var remoteMedia = peerMediaElements[peerId];
                     if (remoteMedia) {
-                        remoteMedia.remove();
+                        remoteMedia.closest('.student-container').remove();
                     }
                     // Remove references
                     delete peers[peerId];
