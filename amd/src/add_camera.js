@@ -60,6 +60,13 @@ function($, str, ModalFactory) {
                     localMediaStream = stream;
                     videoElement.play();
 
+                    const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
+                    if (savedPosition) {
+                        videoElement.style.position = 'absolute';
+                        videoElement.style.left = savedPosition.left;
+                        videoElement.style.top = savedPosition.top;
+                    }
+
                     let offsetX;
                     let offsetY;
                     let isDragging = false;
@@ -81,6 +88,12 @@ function($, str, ModalFactory) {
                     document.addEventListener('mouseup', function() {
                         isDragging = false;
                         videoElement.style.zIndex = 9999998;
+
+                        const position = {
+                            left: videoElement.style.left,
+                            top: videoElement.style.top
+                        };
+                        localStorage.setItem('videoPosition', JSON.stringify(position));
                     });
                 }
                 return videoElement;
