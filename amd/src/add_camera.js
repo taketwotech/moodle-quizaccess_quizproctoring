@@ -62,7 +62,6 @@ function($, str, ModalFactory) {
 
                     const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
                     if (savedPosition) {
-                        videoElement.style.position = 'absolute';
                         videoElement.style.left = savedPosition.left;
                         videoElement.style.top = savedPosition.top;
                     }
@@ -228,6 +227,7 @@ function($, str, ModalFactory) {
             }
             camera = new Camera(cmid, mainimage, attemptid, quizid);
             $('.quizstartbuttondiv [type=submit]').on('click', function() {
+                localStorage.removeItem('videoPosition');
                 camera.startcamera();
             });
             // Take picture on button click
@@ -243,11 +243,20 @@ function($, str, ModalFactory) {
             $('#id_cancel').on('click', function() {
                 camera.stopcamera();
                 camera.resetcamera();
+                localStorage.removeItem('videoPosition');
             });
             $(document).on('click', '.closebutton', function() {
                 if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
                     camera.stopcamera();
                     camera.resetcamera();
+                    localStorage.removeItem('videoPosition');
+                }
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    camera.stopcamera();
+                    camera.resetcamera();
+                    localStorage.removeItem('videoPosition');
                 }
             });
         } else {
