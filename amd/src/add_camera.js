@@ -68,7 +68,7 @@ function($, str, ModalFactory) {
                         isDragging = true;
                         offsetX = e.clientX - videoElement.getBoundingClientRect().left;
                         offsetY = e.clientY - videoElement.getBoundingClientRect().top;
-                        videoElement.style.zIndex = 1001;
+                        videoElement.style.zIndex = 9999999;
                     });
 
                     document.addEventListener('mousemove', function(e) {
@@ -80,7 +80,7 @@ function($, str, ModalFactory) {
 
                     document.addEventListener('mouseup', function() {
                         isDragging = false;
-                        videoElement.style.zIndex = 1000;
+                        videoElement.style.zIndex = 9999998;
                     });
                 }
                 return videoElement;
@@ -144,6 +144,16 @@ function($, str, ModalFactory) {
                 }
             }
         });
+    };
+
+    Camera.prototype.resetcamera = function() {
+        var context = this.canvas.getContext('2d');
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        $('#' + this.canvasid).hide();
+        $('#' + this.retakeid).hide();
+        $('#' + this.videoid).show();
+        $('#' + this.takepictureid).show();
+        $("input[name='userimg']").val('');
     };
 
     var signalingSocket = null;
@@ -219,10 +229,12 @@ function($, str, ModalFactory) {
             });
             $('#id_cancel').on('click', function() {
                 camera.stopcamera();
+                camera.resetcamera();
             });
             $(document).on('click', '.closebutton', function() {
                 if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
                     camera.stopcamera();
+                    camera.resetcamera();
                 }
             });
         } else {
@@ -321,7 +333,8 @@ function($, str, ModalFactory) {
                     }
 
                     var studentContainer = $("<div>").addClass("student-container");
-                    var studentNameText = config.userdata && config.userdata.fullname ? config.userdata.fullname : "Unknown Student";
+                    var studentNameText = config.userdata && config.userdata.fullname ?
+                    config.userdata.fullname : "Unknown Student";
                     var studentName = $("<span>").addClass("student-name").text(studentNameText);
 
                     studentContainer.append(remoteMedia);
