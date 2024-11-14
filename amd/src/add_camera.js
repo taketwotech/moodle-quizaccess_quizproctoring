@@ -169,7 +169,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctor-dev.taketwotechnologies.com';
+    var externalserver = 'https://proctoring.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
