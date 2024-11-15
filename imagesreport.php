@@ -37,6 +37,40 @@ $all = optional_param('all', false, PARAM_BOOL);
 $perpage = 10;
 $page = optional_param('page', 0, PARAM_INT);
 
+/**
+ * Creates a quiz object compatible with both old and new Moodle versions.
+ *
+ * @param int $quizid The ID of the quiz.
+ * @param int $userid The ID of the user.
+ * @return stdClass|mod_quiz\quiz_settings Quiz object or fallback equivalent.
+ */
+function create_quiz_object($quizid, $userid) {
+    global $DB;
+
+    if (class_exists('\mod_quiz\quiz_settings')) {
+        return \mod_quiz\quiz_settings::create($quizid, $userid);
+    }
+
+    $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('quiz', $quizid, $quiz->course, false, MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $quiz->course], '*', MUST_EXIST);
+
+    $quizobj = new stdClass();
+    $quizobj->quiz = $quiz;
+    $quizobj->cm = $cm;
+    $quizobj->course = $course;
+
+    $quizobj->get_quiz = function() use ($quiz) {
+        return $quiz;
+    };
+    $quizobj->get_cm = function() use ($cm) {
+        return $cm;
+    };
+    $quizobj->get_course = function() use ($course) {
+        return $course;
+    };
+    return $quizobj;
+}
 // Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
@@ -153,19 +187,20 @@ $sql = "SELECT q.name AS quiz_name, p.quizid, COUNT(DISTINCT p.userid) AS user_c
         ORDER BY q.name ASC";
 $records = $DB->get_records_sql($sql, ['courseid' => $course->id], $page * $perpage, $perpage);
 foreach ($records as $record) {
-    $quizobj = quiz_settings::create($record->quizid, $USER->id);
-    $quiz = $quizobj->get_quiz();
-    $cm = $quizobj->get_cm();
+    $quizobj = create_quiz_object($record->quizid, $USER->id);
+    $quiz = is_callable([$quizobj, 'get_quiz']) ? $quizobj->get_quiz() : $quizobj->quiz;
+    $cm = is_callable([$quizobj, 'get_cm']) ? $quizobj->get_cm() : $quizobj->cm;
+
     $deleteicon = '<a href="#" title="' . get_string('delete') . '"
     class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
     data-quiz="' . $record->quiz_name . '">
     <i class="icon fa fa-trash"></i></a>';
     $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-    'cmid' => $quiz->cmid,
+    'cmid' => $cm->id,
     'quizid' => $record->quizid,
     ]);
     $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
-    $quizname = '<a href="'.$backurl.'" title="'.$helptext.'">'.$record->quiz_name.'</a>';
+    $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quiz_name . '</a>';
     $table->data[] = [$quizname, $record->user_count, $record->image_count, $deleteicon];
 }
 

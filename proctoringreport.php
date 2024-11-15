@@ -22,8 +22,6 @@
  * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-use mod_quiz\quiz_settings;
-
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
@@ -34,18 +32,24 @@ $all = optional_param('all', false, PARAM_BOOL);
 $perpage = 10;
 $page = optional_param('page', 0, PARAM_INT);
 
-// Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
-if ($id) {
-    $quizobj = quiz_settings::create_for_cmid($cmid, $USER->id);
+if (class_exists('\mod_quiz\quiz_settings')) {
+    if ($quizid) {
+        $quizobj = \mod_quiz\quiz_settings::create($quizid, $USER->id);
+    } else {
+        $quizobj = \mod_quiz\quiz_settings::create_for_cmid($cmid, $USER->id);
+    }
+    $quiz = $quizobj->get_quiz();
+    $cm = $quizobj->get_cm();
+    $course = $quizobj->get_course();
 } else {
-    $quizobj = quiz_settings::create($quizid, $USER->id);
+    $cm = get_coursemodule_from_id('quiz', $cmid, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $quiz = $DB->get_record('quiz', ['id' => $cm->instance], '*', MUST_EXIST);
 }
-$quiz = $quizobj->get_quiz();
-$cm = $quizobj->get_cm();
-$course = $quizobj->get_course();
-quiz_view($quiz, $course, $cm, $context);
+
 require_login($course, true, $cm);
+$PAGE->set_context($context);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
