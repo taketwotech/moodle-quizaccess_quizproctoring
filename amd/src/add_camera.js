@@ -60,6 +60,10 @@ function($, str, ModalFactory) {
                     localMediaStream = stream;
                     videoElement.play();
 
+                    videoElement.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                    });
+
                     const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
                     if (savedPosition) {
                         videoElement.style.left = savedPosition.left;
