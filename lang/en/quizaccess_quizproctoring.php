@@ -93,7 +93,6 @@ $string['notcameradetected'] = 'No camera detected.';
 $string['notmatchedprofile'] = 'Your Profile image is not matched with your current image.';
 $string['novideo'] = 'No Videos';
 $string['oneminute'] = '1 minute';
-$string['orderlinesettings'] = 'Orderline Related Settings';
 $string['pluginname'] = 'Proctoring quiz access rule';
 $string['privacy:metadata'] = 'The Proctoring quiz access rule plugin does not store any personal data.';
 $string['proctoring_image_show'] = 'Show Proctoring Images';

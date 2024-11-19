@@ -48,7 +48,6 @@ $string['mainimage'] = 'Image principale';
 $string['multifacesdetected'] = 'Plusieurs visages détectés. {$a}';
 $string['nofacedetected'] = 'Aucun visage détecté.{$a}';
 $string['noimageswarning'] = 'Aucun avertissement détecté';
-$string['orderlinesettings'] = "Paramètres liés à la ligne de commande";
 $string['pluginname'] = "Surveillance de la règle d'accès au quiz";
 $string['privacy:metadata'] = "Le plug-in de règle d'accès au quiz Proctoring ne stocke aucune donnée personnelle.";
 $string['proctoring_videolink'] = "Lien vidéo de surveillance du quiz";

@@ -247,12 +247,14 @@ function($, str, ModalFactory) {
             $('#id_cancel').on('click', function() {
                 camera.stopcamera();
                 camera.resetcamera();
+                $("#id_submitbutton").prop("disabled", true);
                 localStorage.removeItem('videoPosition');
             });
             $(document).on('click', '.closebutton', function() {
                 if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
                     camera.stopcamera();
                     camera.resetcamera();
+                    $("#id_submitbutton").prop("disabled", true);
                     localStorage.removeItem('videoPosition');
                 }
             });
@@ -260,6 +262,7 @@ function($, str, ModalFactory) {
                 if (event.key === 'Escape') {
                     camera.stopcamera();
                     camera.resetcamera();
+                    $("#id_submitbutton").prop("disabled", true);
                     localStorage.removeItem('videoPosition');
                 }
             });
