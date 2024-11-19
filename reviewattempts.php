@@ -96,25 +96,26 @@ if ($proctoringimageshow == 1) {
         new moodle_url('/user/view.php', ['id' => $user->id]),
         $user->email
     );
-    $totalattempts = $DB->count_records('quiz_attempts', ['quiz' => $quizid, 'userid' => $userid]);
+    $totalattempts = $DB->count_records('quizaccess_proctor_data',
+        ['quizid' => $quizid, 'userid' => $userid, 'image_status' => 'M']);
+
     $sortcolumns = [
-        'attempt' => 'qa.attempt',
+        'attempt' => 'attemptid',
     ];
     $sortcolumn = isset($sortcolumns[$sort]) ? $sortcolumns[$sort] : $sortcolumns['attempt'];
 
-    $attempts = $DB->get_records_sql("
-        SELECT qa.*
-        FROM {quiz_attempts} qa
-        JOIN {user} u ON qa.userid = u.id
-        WHERE qa.quiz = :quizid AND qa.userid = :userid
+    $records = $DB->get_records_sql("
+        SELECT *
+        FROM {quizaccess_proctor_data}
+        WHERE quizid = :quizid AND userid = :userid
+        AND image_status = :status AND deleted = 0
         ORDER BY $sortcolumn $dir
-    ", ['quizid' => $quizid, 'userid' => $userid], $page * $perpage, $perpage);
-    foreach ($attempts as $attempt) {
-        $usermages = $DB->get_record('quizaccess_proctor_data', [
-                        'quizid' => $quizid,
-                        'userid' => $user->id,
-                        'attemptid' => $attempt->id,
-                        'image_status' => 'M',
+    ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M']);
+    foreach ($records as $record) {
+        $attempt = $DB->get_record('quiz_attempts', [
+                        'quiz' => $quizid,
+                        'userid' => $userid,
+                        'id' => $record->attemptid,
                     ]);
         $attemptsurl = new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]);
         $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
@@ -128,12 +129,12 @@ if ($proctoringimageshow == 1) {
         data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
         data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
         $pindentity = '';
-        if ($usermages->user_identity && $usermages->user_identity != 0) {
+        if ($record->user_identity && $record->user_identity != 0) {
             $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'"
             data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity',
                 'quizaccess_quizproctoring') . '" alt="icon">';
         }
-        if ($usermages->isautosubmit) {
+        if ($record->isautosubmit) {
             $submit = '<div class="submittag">Yes</div>';
         } else {
             $submit = 'No';
