@@ -50,6 +50,8 @@ function($, str, ModalFactory) {
     Camera.prototype.quizid = false;
 
     Camera.prototype.startcamera = function() {
+        const takePictureButton = $('#' + this.takepictureid);
+        takePictureButton.prop('disabled', true);
         return navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
@@ -63,6 +65,11 @@ function($, str, ModalFactory) {
                     videoElement.addEventListener('contextmenu', function(e) {
                         e.preventDefault();
                     });
+
+                    stream.getVideoTracks()[0].onended = function() {
+                        takePictureButton.prop('disabled', true);
+                        $(document).trigger('popup', 'Camera feed was interrupted. Please restart the camera & microphone.');
+                    };
 
                     const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
                     if (savedPosition) {
@@ -98,11 +105,12 @@ function($, str, ModalFactory) {
                         };
                         localStorage.setItem('videoPosition', JSON.stringify(position));
                     });
+                    takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
             })
             .catch(function() {
-                // Console.log(err);
+                takePictureButton.prop('disabled', true);
             });
     };
 
