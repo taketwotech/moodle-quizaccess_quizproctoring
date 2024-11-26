@@ -280,6 +280,13 @@ function($, str, ModalFactory) {
                     event.preventDefault();
                 }
             });
+            document.addEventListener('dragstart', function(event) {
+                event.preventDefault();
+            });
+
+            document.addEventListener('drop', function(event) {
+                event.preventDefault();
+            });
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
