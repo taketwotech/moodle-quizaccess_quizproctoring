@@ -110,7 +110,7 @@ if ($proctoringimageshow == 1) {
         WHERE quizid = :quizid AND userid = :userid
         AND image_status = :status AND deleted = 0
         ORDER BY $sortcolumn $dir
-    ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M']);
+    ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M'], $page * $perpage, $perpage);
     foreach ($records as $record) {
         $attempt = $DB->get_record('quiz_attempts', [
                         'quiz' => $quizid,

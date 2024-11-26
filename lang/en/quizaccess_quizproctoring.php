@@ -142,7 +142,7 @@ $string['usersimages'] = 'User\'s Images';
 $string['viewproctoringreport'] = 'View Proctoring Report';
 $string['viewstudentonline'] = 'View Online Students';
 $string['warning'] = ' warning';
-$string['warning_threshold'] = 'Warnings Threshold during proctored exam';
+$string['warning_threshold'] = 'Warnings threshold during proctored exam';
 $string['warning_threshold_help'] = 'Number of warnings a user should receive before the user gets disqualified from the proctored exam.';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
 $string['warningopensourse'] = 'Please complete <a href="{$a}">configuration</a> to continue with quiz.';

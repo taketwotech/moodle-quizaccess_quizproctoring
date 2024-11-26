@@ -68,7 +68,7 @@ function($, str, ModalFactory) {
 
                     stream.getVideoTracks()[0].onended = function() {
                         takePictureButton.prop('disabled', true);
-                        $(document).trigger('popup', 'Camera feed was interrupted. Please restart the camera & microphone.');
+                        $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     };
 
                     const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
