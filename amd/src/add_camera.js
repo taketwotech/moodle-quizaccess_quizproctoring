@@ -73,14 +73,11 @@ function($, str, ModalFactory) {
 
                     const audioTrack = stream.getAudioTracks()[0];
                     if (audioTrack) {
-                        audioTrack.onmute = function() {
-                            $(document).trigger('popup', 'Microphone is muted. Please enable it to continue.');
-                        };
                         audioTrack.onended = function() {
-                            $(document).trigger('popup', 'Microphone is disabled. Please enable it to continue.');
+                            $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                         };
                     } else {
-                        $(document).trigger('popup', 'Microphone is not available. Please connect it to continue.');
+                        $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     }
 
                     const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
