@@ -173,11 +173,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $PAGE, $DB, $USER;
 
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
+        $externalserver = get_config('quizaccess_quizproctoring', 'externalserver');
         $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
-                $this->quiz->id, $serviceoption]);
+                $this->quiz->id, $serviceoption, $externalserver]);
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
             $sql = "SELECT * FROM {files} WHERE contextid =

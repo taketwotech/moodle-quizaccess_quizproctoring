@@ -105,4 +105,10 @@ if ($hassiteconfig && !empty($USER->id)) {
             365 => get_string('clear_images_oneyear', 'quizaccess_quizproctoring'),
         ]
     ));
+
+    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/externalserver',
+        get_string('externalserver', 'quizaccess_quizproctoring'),
+        get_string('externalserver_help', 'quizaccess_quizproctoring'),
+        'https://proctoring.taketwotechnologies.com',
+        PARAM_TEXT));
 }

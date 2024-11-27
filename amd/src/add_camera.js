@@ -190,7 +190,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctoring.taketwotechnologies.com';
+    //var externalserver = 'https://proctoring.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -236,7 +236,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
+        teacher, quizid, serviceoption, externalserver, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {

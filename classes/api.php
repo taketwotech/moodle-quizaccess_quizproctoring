@@ -94,7 +94,8 @@ class api {
     public static function proctor_image_api($imagedata, $userid, $quizid) {
         self::init();
         $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/validate';
+        $externalserver = get_config('quizaccess_quizproctoring', 'externalserver');
+        $url = $externalserver.'/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::domain();
