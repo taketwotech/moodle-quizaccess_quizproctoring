@@ -71,6 +71,18 @@ function($, str, ModalFactory) {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     };
 
+                    const audioTrack = stream.getAudioTracks()[0];
+                    if (audioTrack) {
+                        audioTrack.onmute = function() {
+                            $(document).trigger('popup', 'Microphone is muted. Please enable it to continue.');
+                        };
+                        audioTrack.onended = function() {
+                            $(document).trigger('popup', 'Microphone is disabled. Please enable it to continue.');
+                        };
+                    } else {
+                        $(document).trigger('popup', 'Microphone is not available. Please connect it to continue.');
+                    }
+
                     const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
                     if (savedPosition) {
                         videoElement.style.left = savedPosition.left;
