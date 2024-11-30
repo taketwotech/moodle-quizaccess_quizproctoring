@@ -391,7 +391,7 @@ function($, str, ModalFactory) {
                     var studentName = $("<span>").addClass("student-name").text(studentNameText);
 
                     studentContainer.append(remoteMedia);
-                    studentContainer.append(studentName);
+                    //studentContainer.append(studentName);
 
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
