@@ -386,8 +386,7 @@ function($, str, ModalFactory) {
                     }
 
                     var studentContainer = $("<div>").addClass("student-container");
-                    var studentNameText = config.userdata && config.userdata.fullname ?
-                    config.userdata.fullname : "Unknown Student";
+                    var studentNameText = config.fullname ? config.fullname : "Unknown Student";
                     var studentName = $("<span>").addClass("student-name").text(studentNameText);
 
                     studentContainer.append(remoteMedia);
