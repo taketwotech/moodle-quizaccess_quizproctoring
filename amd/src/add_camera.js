@@ -11,6 +11,7 @@ window.addEventListener('beforeunload', function(event) {
 });
 define(['jquery', 'core/str', 'core/modal_factory'],
 function($, str, ModalFactory) {
+    $('.quizstartbuttondiv [type=submit]').prop("disabled", true);
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
         this.video = document.getElementById(this.videoid);
@@ -49,6 +50,8 @@ function($, str, ModalFactory) {
     Camera.prototype.quizid = false;
 
     Camera.prototype.startcamera = function() {
+        const takePictureButton = $('#' + this.takepictureid);
+        takePictureButton.prop('disabled', true);
         return navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
@@ -58,11 +61,65 @@ function($, str, ModalFactory) {
                     videoElement.playsinline = true;
                     localMediaStream = stream;
                     videoElement.play();
+
+                    videoElement.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                    });
+
+                    stream.getVideoTracks()[0].onended = function() {
+                        takePictureButton.prop('disabled', true);
+                        $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
+                    };
+
+                    const audioTrack = stream.getAudioTracks()[0];
+                    if (audioTrack) {
+                        audioTrack.onended = function() {
+                            $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
+                        };
+                    } else {
+                        $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
+                    }
+
+                    const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
+                    if (savedPosition) {
+                        videoElement.style.left = savedPosition.left;
+                        videoElement.style.top = savedPosition.top;
+                    }
+
+                    let offsetX;
+                    let offsetY;
+                    let isDragging = false;
+
+                    videoElement.addEventListener('mousedown', function(e) {
+                        isDragging = true;
+                        offsetX = e.clientX - videoElement.getBoundingClientRect().left;
+                        offsetY = e.clientY - videoElement.getBoundingClientRect().top;
+                        videoElement.style.zIndex = 9999999;
+                    });
+
+                    document.addEventListener('mousemove', function(e) {
+                        if (isDragging) {
+                            videoElement.style.left = `${e.clientX - offsetX}px`;
+                            videoElement.style.top = `${e.clientY - offsetY}px`;
+                        }
+                    });
+
+                    document.addEventListener('mouseup', function() {
+                        isDragging = false;
+                        videoElement.style.zIndex = 9999998;
+
+                        const position = {
+                            left: videoElement.style.left,
+                            top: videoElement.style.top
+                        };
+                        localStorage.setItem('videoPosition', JSON.stringify(position));
+                    });
+                    takePictureButton.prop('disabled', false);
                 }
-                return videoElement; // Return videoElement or stream here
+                return videoElement;
             })
             .catch(function() {
-                // Console.log(err);
+                takePictureButton.prop('disabled', true);
             });
     };
 
@@ -122,6 +179,16 @@ function($, str, ModalFactory) {
         });
     };
 
+    Camera.prototype.resetcamera = function() {
+        var context = this.canvas.getContext('2d');
+        context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        $('#' + this.canvasid).hide();
+        $('#' + this.retakeid).hide();
+        $('#' + this.videoid).show();
+        $('#' + this.takepictureid).show();
+        $("input[name='userimg']").val('');
+    };
+
     var signalingSocket = null;
     var externalserver = 'https://proctoring.taketwotechnologies.com';
     var localMediaStream = null;
@@ -146,9 +213,14 @@ function($, str, ModalFactory) {
         $("#id_submitbutton").prop("disabled", true);
     };
     Camera.prototype.showpopup = function(event, message) {
+        if (this.activeModal) {
+            this.activeModal.hide();
+            this.activeModal.destroy();
+        }
         return ModalFactory.create({
             body: message,
-        }).then(function(modal) {
+        }).then((modal) => {
+            this.activeModal = modal;
             modal.show();
             return null;
         });
@@ -164,11 +236,19 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, setinterval = 300) {
+        teacher, quizid, serviceoption, securewindow = null, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
+            if (document.readyState === 'complete') {
+                $('.quizstartbuttondiv [type=submit]').prop("disabled", false);
+            } else {
+                $(window).on('load', function() {
+                    $('.quizstartbuttondiv [type=submit]').prop("disabled", false);
+                });
+            }
             camera = new Camera(cmid, mainimage, attemptid, quizid);
             $('.quizstartbuttondiv [type=submit]').on('click', function() {
+                localStorage.removeItem('videoPosition');
                 camera.startcamera();
             });
             // Take picture on button click
@@ -183,25 +263,84 @@ function($, str, ModalFactory) {
             });
             $('#id_cancel').on('click', function() {
                 camera.stopcamera();
+                camera.resetcamera();
+                $("#id_submitbutton").prop("disabled", true);
+                localStorage.removeItem('videoPosition');
             });
             $(document).on('click', '.closebutton', function() {
                 if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
                     camera.stopcamera();
+                    camera.resetcamera();
+                    $("#id_submitbutton").prop("disabled", true);
+                    localStorage.removeItem('videoPosition');
                 }
             });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    camera.stopcamera();
+                    camera.resetcamera();
+                    $("#id_submitbutton").prop("disabled", true);
+                    localStorage.removeItem('videoPosition');
+                }
+            });
+            if (securewindow === 'securewindow') {
+                $('#id_submitbutton').on('click', function(e) {
+                    e.preventDefault();
+                    const form = $(this).closest('form');
+                    const actionUrl = form.attr('action'); // Form action URL
+
+                    // Open the quiz in a full-screen popup window
+                    const screenWidth = screen.width;
+                    const screenHeight = screen.height;
+                    const quizWindow = window.open(
+                        '',
+                        'quizPopup',
+                        `width=${screenWidth},height=${screenHeight}`
+                    );
+                    if (quizWindow) {
+                        quizWindow.focus();
+
+                        form.attr('target', 'quizPopup');
+                        form.attr('action', actionUrl);
+                        form.submit();
+
+                        const checkPopupClosed = setInterval(() => {
+                            if (quizWindow.closed) {
+                                clearInterval(checkPopupClosed);
+                                location.reload();
+                            }
+                        }, 500);
+                        $(this).prop('disabled', true);
+                    }
+                });
+            }
         } else {
+            document.addEventListener('keydown', function(event) {
+                if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
+                    event.preventDefault();
+                }
+            });
+            document.addEventListener('dragstart', function(event) {
+                event.preventDefault();
+            });
+
+            document.addEventListener('drop', function(event) {
+                event.preventDefault();
+            });
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
-           setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, setinterval, serviceoption, quizid, function() {
+            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+            teacher, enablestudentvideo, setinterval, serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
                 var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
+                var fullname = userfullname;
 
-                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid, 'type': typet}});
+                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
+                    'type': typet, 'fullname': fullname}});
 
                 // Restore the session state if available
                 if (sessionState) {
@@ -273,10 +412,21 @@ function($, str, ModalFactory) {
                         remoteMedia.attr("muted", "true");
                     }
                     remoteMedia.attr("controls", "");
+                    if ($('#region-main-box .videos-container').length === 0) {
+                        $('#region-main-box').append($("<div>").addClass("videos-container"));
+                    }
+
+                    var studentContainer = $("<div>").addClass("student-container");
+                    var studentNameText = config.fullname ? config.fullname : "Unknown Student";
+                    var studentName = $("<span>").addClass("student-name").text(studentNameText);
+
+                    studentContainer.append(remoteMedia);
+                    //studentContainer.append(studentName);
+
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
-                        $('#region-main-box').append(remoteMedia);
+                        $('.videos-container').append(studentContainer);
                         attachMediaStream(remoteMedia[0], connectedPeers[peerId].stream);
                     }
                 }
@@ -374,7 +524,7 @@ function($, str, ModalFactory) {
 
                     var remoteMedia = peerMediaElements[peerId];
                     if (remoteMedia) {
-                        remoteMedia.remove();
+                        remoteMedia.closest('.student-container').remove();
                     }
                     // Remove references
                     delete peers[peerId];
@@ -395,6 +545,7 @@ function($, str, ModalFactory) {
      * @param {boolean} verifyduringattempt - boolean value
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
+     * @param {boolean} enablestudentvideo - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -402,7 +553,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, setinterval, serviceoption, quizid, callback) {
+        teacher, enablestudentvideo, setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {
@@ -436,7 +587,8 @@ function($, str, ModalFactory) {
                                 'width': '280',
                                 'height': '240',
                                 'autoplay': 'autoplay'
-                            }).appendTo('body');
+                            }).css('display', enablestudentvideo ? 'block' : 'none')
+                              .appendTo('body');
                             document.addEventListener('visibilitychange', function() {
                                 if (document.visibilityState === 'visible') {
                                    $.ajax({
