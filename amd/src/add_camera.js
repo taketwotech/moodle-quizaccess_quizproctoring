@@ -190,7 +190,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    //var externalserver = 'https://proctoring.taketwotechnologies.com';
+    var externalserver = 'https://proctoring.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -236,7 +236,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, externalserver, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
+        teacher, quizid, serviceoption, securewindow = null, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -283,6 +283,37 @@ function($, str, ModalFactory) {
                     localStorage.removeItem('videoPosition');
                 }
             });
+            if (securewindow === 'securewindow') {
+                $('#id_submitbutton').on('click', function(e) {
+                    e.preventDefault();
+                    const form = $(this).closest('form');
+                    const actionUrl = form.attr('action'); // Form action URL
+
+                    // Open the quiz in a full-screen popup window
+                    const screenWidth = screen.width;
+                    const screenHeight = screen.height;
+                    const quizWindow = window.open(
+                        '',
+                        'quizPopup',
+                        `width=${screenWidth},height=${screenHeight}`
+                    );
+                    if (quizWindow) {
+                        quizWindow.focus();
+
+                        form.attr('target', 'quizPopup');
+                        form.attr('action', actionUrl);
+                        form.submit();
+
+                        const checkPopupClosed = setInterval(() => {
+                            if (quizWindow.closed) {
+                                clearInterval(checkPopupClosed);
+                                location.reload();
+                            }
+                        }, 500);
+                        $(this).prop('disabled', true);
+                    }
+                });
+            }
         } else {
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
