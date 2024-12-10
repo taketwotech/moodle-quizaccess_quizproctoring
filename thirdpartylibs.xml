@@ -71,4 +71,36 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+
+    <library>
+        <location>libraries/js/control_utils.js</location>
+        <name>control_utils</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/camera_utils.js</location>
+        <name>camera_utils</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/face_mesh.js</location>
+        <name>face_mesh</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/lightbox.min.js</location>
+        <name>lightbox.min</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
 </libraries>

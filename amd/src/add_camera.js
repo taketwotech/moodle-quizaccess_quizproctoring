@@ -55,6 +55,7 @@ function($, str, ModalFactory) {
         return navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
+                const canvasElement = document.getElementById('canvas');
                 if (videoElement) {
                     videoElement.srcObject = stream;
                     videoElement.muted = true;
@@ -201,6 +202,12 @@ function($, str, ModalFactory) {
     var MUTE_AUDIO_BY_DEFAULT = true;
     var attachMediaStream = null;
     var stream = null;
+    let gazeDirection = null;
+    let gazeTimer = null;
+    const GAZE_THRESHOLD = 2000;
+    let eyeStatus = "Open";
+    let eyeTimer = null;
+    const EYE_THRESHOLD = 3000;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -283,37 +290,6 @@ function($, str, ModalFactory) {
                     localStorage.removeItem('videoPosition');
                 }
             });
-            if (securewindow === 'securewindow') {
-                $('#id_submitbutton').on('click', function(e) {
-                    e.preventDefault();
-                    const form = $(this).closest('form');
-                    const actionUrl = form.attr('action'); // Form action URL
-
-                    // Open the quiz in a full-screen popup window
-                    const screenWidth = screen.width;
-                    const screenHeight = screen.height;
-                    const quizWindow = window.open(
-                        '',
-                        'quizPopup',
-                        `width=${screenWidth},height=${screenHeight}`
-                    );
-                    if (quizWindow) {
-                        quizWindow.focus();
-
-                        form.attr('target', 'quizPopup');
-                        form.attr('action', actionUrl);
-                        form.submit();
-
-                        const checkPopupClosed = setInterval(() => {
-                            if (quizWindow.closed) {
-                                clearInterval(checkPopupClosed);
-                                location.reload();
-                            }
-                        }, 500);
-                        $(this).prop('disabled', true);
-                    }
-                });
-            }
         } else {
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
@@ -614,6 +590,14 @@ function($, str, ModalFactory) {
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
                             camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+
+                            const videoElement = document.getElementById('video');
+                            const canvasElement = document.getElementById('canvas');
+                            function processFrame() {
+                                setupFaceMesh(videoElement, canvasElement);
+                                setTimeout(processFrame, 2000);
+                            }
+                            processFrame();
                         }
                     }
                     return stream;
@@ -737,5 +721,112 @@ function setupPeerConnection(peerConnection, peerId, peer) {
                 }
             );
         });
+}
+
+function setupFaceMesh(videoElement, canvasElement) {
+    const canvasCtx = canvasElement.getContext('2d');
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
+        }
+    });
+    faceMesh.setOptions({
+        maxNumFaces: 5,
+        refineLandmarks: true,
+    });
+    faceMesh.onResults((results) => {
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        if (results.multiFaceLandmarks) {
+            console.log("Number of faces detected: ", results.multiFaceLandmarks.length);
+            results.multiFaceLandmarks.forEach(landmarks => {
+                detectGazeDirection(landmarks);
+                detectEyeStatus(landmarks); // Added eye status detection
+
+            });
+        }
+        canvasCtx.restore();
+    });
+
+    faceMesh.send({image: videoElement});       
+
+    function detectGazeDirection(landmarks) {
+        const leftEye = landmarks[33];
+        const rightEye = landmarks[263];
+        const nose = landmarks[1];
+        const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
+        const noseX = nose.x;
+
+        let currentDirection = "Center"; // Default gaze direction
+
+        if (noseX < eyeMidpointX - 0.02) { // Adjust the threshold as needed
+            currentDirection = "Right";
+        } else if (noseX > eyeMidpointX + 0.02) {
+            currentDirection = "Left";
+        }
+
+        if (currentDirection !== gazeDirection) {
+            gazeDirection = currentDirection;
+
+            if (gazeTimer) {
+                clearTimeout(gazeTimer); // Clear the previous timer
+                gazeTimer = null; // Reset the timer
+            }
+        }
+
+        if (gazeDirection !== "Center") {
+            if (!gazeTimer) {
+                gazeTimer = setTimeout(() => {
+                    console.log("WARNING: Looking " + gazeDirection + " for more than 2 seconds");
+                }, GAZE_THRESHOLD);
+            }
+        } else {
+            // If the gaze is centered, clear the timer
+            if (gazeTimer) {
+                clearTimeout(gazeTimer);
+                gazeTimer = null; // Reset the timer
+            }
+        }
+    }
+
+    function detectEyeStatus(landmarks) {
+        const leftEyeUpper = landmarks[159]; // Upper eyelid landmark
+        const leftEyeLower = landmarks[145]; // Lower eyelid landmark
+        const rightEyeUpper = landmarks[386]; // Upper eyelid landmark
+        const rightEyeLower = landmarks[374]; // Lower eyelid landmark
+
+        // Calculate the vertical distance for both eyes
+        const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
+        const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
+
+        // Define a threshold for eye openness (tweak based on testing)
+        const EYE_OPEN_THRESHOLD = 0.018;
+
+        let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD && rightEyeOpen > EYE_OPEN_THRESHOLD) ? "Open" : "Closed";
+
+        if (currentEyeStatus !== eyeStatus) {
+            eyeStatus = currentEyeStatus;
+
+            if (eyeTimer) {
+                clearTimeout(eyeTimer);
+                eyeTimer = null;
+            }
+        }
+
+        if (eyeStatus === "Closed") {
+            if (!eyeTimer) {
+                eyeTimer = setTimeout(() => {
+                    console.log('"EyesOpen": {"Value": false}');
+                    console.log("WARNING: Eyes closed for more than 3 seconds");
+                }, EYE_THRESHOLD);
+            }
+        } else {
+            if (eyeTimer) {
+                clearTimeout(eyeTimer);
+                eyeTimer = null;
+            }
+        }
+    }
 }
 });
