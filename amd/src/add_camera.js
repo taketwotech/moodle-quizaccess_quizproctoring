@@ -55,7 +55,6 @@ function($, str, ModalFactory) {
         return navigator.mediaDevices.getUserMedia({video: true, audio: true})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
-                const canvasElement = document.getElementById('canvas');
                 if (videoElement) {
                     videoElement.srcObject = stream;
                     videoElement.muted = true;
@@ -727,7 +726,7 @@ function setupFaceMesh(videoElement, canvasElement) {
     const canvasCtx = canvasElement.getContext('2d');
     const faceMesh = new FaceMesh({
         locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
+            return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
         }
     });
     faceMesh.setOptions({
@@ -742,14 +741,14 @@ function setupFaceMesh(videoElement, canvasElement) {
             console.log("Number of faces detected: ", results.multiFaceLandmarks.length);
             results.multiFaceLandmarks.forEach(landmarks => {
                 detectGazeDirection(landmarks);
-                detectEyeStatus(landmarks); // Added eye status detection
+                detectEyeStatus(landmarks);
 
             });
         }
         canvasCtx.restore();
     });
 
-    faceMesh.send({image: videoElement});       
+    faceMesh.send({image: videoElement});
 
     function detectGazeDirection(landmarks) {
         const leftEye = landmarks[33];
@@ -758,9 +757,9 @@ function setupFaceMesh(videoElement, canvasElement) {
         const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
         const noseX = nose.x;
 
-        let currentDirection = "Center"; // Default gaze direction
+        let currentDirection = "Center";
 
-        if (noseX < eyeMidpointX - 0.02) { // Adjust the threshold as needed
+        if (noseX < eyeMidpointX - 0.02) {
             currentDirection = "Right";
         } else if (noseX > eyeMidpointX + 0.02) {
             currentDirection = "Left";
@@ -770,8 +769,8 @@ function setupFaceMesh(videoElement, canvasElement) {
             gazeDirection = currentDirection;
 
             if (gazeTimer) {
-                clearTimeout(gazeTimer); // Clear the previous timer
-                gazeTimer = null; // Reset the timer
+                clearTimeout(gazeTimer);
+                gazeTimer = null;
             }
         }
 
@@ -782,38 +781,33 @@ function setupFaceMesh(videoElement, canvasElement) {
                 }, GAZE_THRESHOLD);
             }
         } else {
-            // If the gaze is centered, clear the timer
             if (gazeTimer) {
                 clearTimeout(gazeTimer);
-                gazeTimer = null; // Reset the timer
+                gazeTimer = null;
             }
         }
     }
 
     function detectEyeStatus(landmarks) {
-        const leftEyeUpper = landmarks[159]; // Upper eyelid landmark
-        const leftEyeLower = landmarks[145]; // Lower eyelid landmark
-        const rightEyeUpper = landmarks[386]; // Upper eyelid landmark
-        const rightEyeLower = landmarks[374]; // Lower eyelid landmark
+        const leftEyeUpper = landmarks[159];
+        const leftEyeLower = landmarks[145];
+        const rightEyeUpper = landmarks[386];
+        const rightEyeLower = landmarks[374];
 
-        // Calculate the vertical distance for both eyes
         const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
         const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
 
-        // Define a threshold for eye openness (tweak based on testing)
         const EYE_OPEN_THRESHOLD = 0.018;
 
-        let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD && rightEyeOpen > EYE_OPEN_THRESHOLD) ? "Open" : "Closed";
-
+        let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD &&
+            rightEyeOpen > EYE_OPEN_THRESHOLD) ? "Open" : "Closed";
         if (currentEyeStatus !== eyeStatus) {
             eyeStatus = currentEyeStatus;
-
             if (eyeTimer) {
                 clearTimeout(eyeTimer);
                 eyeTimer = null;
             }
         }
-
         if (eyeStatus === "Closed") {
             if (!eyeTimer) {
                 eyeTimer = setTimeout(() => {
