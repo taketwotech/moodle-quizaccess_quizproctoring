@@ -59,8 +59,10 @@ $totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
 $totalrecord = count($totalimages);
 $totalpages = ceil($totalrecord / $perpage);
+$tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
 
 foreach ($getimages as $img) {
+    $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
         $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
         if (file_exists($imagepath)) {
@@ -73,7 +75,15 @@ foreach ($getimages as $img) {
         $context = $quizobj->get_context();
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
-        $target = $f1->get_content();
+        if (!$f1) {
+            $imagepath = $tmpdir . '/' . $img->userimg;
+            $imageData = file_get_contents($imagepath);
+            if ($imageData) {
+                $target = 'data:image/png;base64,' . base64_encode($imageData);
+            }
+        } else {
+            $target = $f1->get_content();
+        }
     } else {
         $target = $img->userimg;
     }

@@ -593,10 +593,19 @@ function($, str, ModalFactory) {
                             const videoElement = document.getElementById('video');
                             const canvasElement = document.getElementById('canvas');
                             function processFrame() {
-                                setupFaceMesh(videoElement, canvasElement);
+                                if (videoElement.readyState < 2) {
+                                    setTimeout(processFrame, 2000);
+                                    return;
+                                }
+                                setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage);
                                 setTimeout(processFrame, 2000);
                             }
-                            processFrame();
+                            if (videoElement && canvasElement) {
+                                videoElement.addEventListener('loadeddata', () => {
+                                    videoElement.play();
+                                    processFrame();
+                                });
+                            }
                         }
                     }
                     return stream;
@@ -722,7 +731,16 @@ function setupPeerConnection(peerConnection, peerId, peer) {
         });
 }
 
-function setupFaceMesh(videoElement, canvasElement) {
+/**
+ * SetupFaceMesh
+ *
+ * @param {Longtext} videoElement videoElement
+ * @param {Longtext} canvasElement canvasElement
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ */
+function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage) {
     const canvasCtx = canvasElement.getContext('2d');
     const faceMesh = new FaceMesh({
         locateFile: (file) => {
@@ -737,18 +755,53 @@ function setupFaceMesh(videoElement, canvasElement) {
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
         canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-        if (results.multiFaceLandmarks) {
-            console.log("Number of faces detected: ", results.multiFaceLandmarks.length);
-            results.multiFaceLandmarks.forEach(landmarks => {
-                detectGazeDirection(landmarks);
-                detectEyeStatus(landmarks);
+        var data = canvasElement.toDataURL('image/png');            
+        if (typeof results.multiFaceLandmarks === 'undefined') {
+            realtimeDetection(cmid, attemptid, mainimage, 'noface', data);
+        } else {
+            if (results.multiFaceLandmarks) {
+                console.log("Number of faces detected: ", results.multiFaceLandmarks.length);
+                if(results.multiFaceLandmarks.length > 1) {                    
+                    realtimeDetection(cmid, attemptid, mainimage, 'multiface', data);
+                }
+                results.multiFaceLandmarks.forEach(landmarks => {
+                    detectGazeDirection(landmarks);
+                    detectEyeStatus(landmarks);
 
-            });
+                });
+            }
         }
         canvasCtx.restore();
     });
-
     faceMesh.send({image: videoElement});
+
+    function realtimeDetection(cmid, attemptid, mainimage, face, data) {
+        var requestData = {
+            cmid: cmid,
+            attemptid: attemptid,
+            mainimage: mainimage,
+            validate: face,
+            imgBase64: data,
+        };
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+            method: 'POST',
+            data: requestData,
+            success: function(response) {
+                if (response && response.errorcode) {
+                    $(document).trigger('popup', response.error);
+                } else {
+                    if (response.redirect && response.url) {
+                        window.onbeforeunload = null;
+                        $(document).trigger('popup', response.msg);
+                        setTimeout(function() {
+                            window.location.href = encodeURI(response.url);
+                        }, 3000);
+                    }
+                }
+            }
+        });
+    }
 
     function detectGazeDirection(landmarks) {
         const leftEye = landmarks[33];

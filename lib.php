@@ -144,10 +144,6 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
         }
     }
     $imagename = '';
-    if ($data) {
-        $imagename = $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-    }
-
     $record = new stdClass();
     $record->userid = $user->id;
     $record->quizid = $quizid;
@@ -159,38 +155,20 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->attemptid = $attemptid;
     $record->status = $status;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
-    if (($status != '') || ($storeallimg && $status == '')) {
-        if ($data) {
-            $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-        }
+
+    if ($data) {
+        $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
         $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
         $proctoreddata->userimg = $imagename;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
-    }
-    if ($data) {
+
+        $base64String = preg_replace('/^data:image\/\w+;base64,/', '', $data);
+        $imageData = base64_decode($base64String);
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-        file_put_contents($tmpdir . $imagename, $data);
-
-        $fs = get_file_storage();
-        // Prepare file record object.
-        $context = context_module::instance($cmid);
-        $fileinfo = [
-            'contextid' => $context->id,
-            'component' => 'quizaccess_quizproctoring',
-            'filearea' => 'cameraimages',
-            'itemid' => $id,
-            'filepath' => '/',
-            'filename' => $imagename,
-        ];
-        $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
-                $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
-        if ($file) {
-            $file->delete();
-        }
-        $fs->create_file_from_pathname($fileinfo, $tmpdir . $imagename);
+        file_put_contents($tmpdir . $imagename, $imageData);
     }
 
-    if ( !$mainimage ) {
+    if ( !$mainimage && $status != '') {
         $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
         $errorstring = '';

@@ -37,6 +37,8 @@ $tab = optional_param('tab', false, PARAM_BOOL);
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
+$tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+$service = get_config('quizaccess_quizproctoring', 'serviceoption');
 $mainentry = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,
@@ -65,7 +67,15 @@ if (!$mainentry->isautosubmit) {
             $fs = get_file_storage();
             $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring',
                 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
-            $target = $f1->get_content();
+            if (!$f1) {
+                $imagepath = $tmpdir . '/' . $mainentry->userimg;
+                $imageData = file_get_contents($imagepath);
+                if ($imageData) {
+                    $target = 'data:image/png;base64,' . base64_encode($imageData);
+                }
+            } else {
+                $target = $f1->get_content();
+            }
         }
     } else {
         $context = context_user::instance($USER->id);
@@ -88,8 +98,7 @@ if (!$mainentry->isautosubmit) {
             );
             $profileimage = $file->get_content();
         }
-    }
-    $service = get_config('quizaccess_quizproctoring', 'serviceoption');
+    }    
     if ($service === 'AWS') {
         // Validate image.
         \quizaccess_quizproctoring\aws\camera::init();
