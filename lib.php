@@ -97,6 +97,13 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+    if ($serviceoption != 'AWS') {
+        $enablevideo = $proctorrecord->enablestudentvideo;
+        $enablestrict = $proctorrecord->enablestrictcheck;
+    } else {
+        $enablevideo = 1;
+        $enablestrict = 0;
+    }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/camera_utils.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/control_utils.js', true);
@@ -106,8 +113,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname', $proctorrecord->enablestudentvideo,
-        $proctorrecord->time_interval);
+        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
+        $enablevideo, $enablestrict, $proctorrecord->time_interval);
     });
     M.util.js_complete();", true);
 }
@@ -162,10 +169,10 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
         $proctoreddata->userimg = $imagename;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
 
-        $base64String = preg_replace('/^data:image\/\w+;base64,/', '', $data);
-        $imageData = base64_decode($base64String);
+        $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
+        $imagedata = base64_decode($base64string);
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-        file_put_contents($tmpdir . $imagename, $imageData);
+        file_put_contents($tmpdir . $imagename, $imagedata);
     }
 
     if ( !$mainimage && $status != '') {

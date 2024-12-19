@@ -242,7 +242,8 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, securewindow = null, userfullname = null, enablestudentvideo = 0, setinterval = 300) {
+        teacher, quizid, serviceoption, securewindow = null, userfullname = null,
+        enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -308,7 +309,8 @@ function($, str, ModalFactory) {
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, setinterval, serviceoption, quizid, function() {
+            teacher, enablestudentvideo, enablestrictcheck, setinterval,
+            serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
                 var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
@@ -521,6 +523,7 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablestrictcheck - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -528,7 +531,8 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo, setinterval, serviceoption, quizid, callback) {
+        teacher, enablestudentvideo, enablestrictcheck,
+        setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {
@@ -589,27 +593,29 @@ function($, str, ModalFactory) {
                             var camera = new Camera(cmid, mainimage, attemptid, quizid);
                             camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
-
-                            const videoElement = document.getElementById('video');
-                            const canvasElement = document.getElementById('canvas');
-                            /**
-                             * Get process frame
-                             *
-                             * @return {void} This function does not return a value.
-                             */
-                            function processFrame() {
-                                if (videoElement.readyState < 2) {
-                                    setTimeout(processFrame, 1000);
-                                    return;
+                            if (serviceoption != 'AWS') {
+                                const videoElement = document.getElementById('video');
+                                const canvasElement = document.getElementById('canvas');
+                                /**
+                                 * Get process frame
+                                 *
+                                 * @return {void} This function does not return a value.
+                                 */
+                                function processFrame() {
+                                    if (videoElement.readyState < 2) {
+                                        setTimeout(processFrame, 1000);
+                                        return;
+                                    }
+                                    setupFaceMesh(videoElement, canvasElement, cmid,
+                                        attemptid, mainimage, enablestrictcheck);
+                                    setTimeout(processFrame, 2000);
                                 }
-                                setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage);
-                                setTimeout(processFrame, 500);
-                            }
-                            if (videoElement && canvasElement) {
-                                videoElement.addEventListener('loadeddata', () => {
-                                    videoElement.play();
-                                    processFrame();
-                                });
+                                if (videoElement && canvasElement) {
+                                    videoElement.addEventListener('loadeddata', () => {
+                                        videoElement.play();
+                                        processFrame();
+                                    });
+                                }
                             }
                         }
                     }
@@ -744,8 +750,9 @@ function setupPeerConnection(peerConnection, peerId, peer) {
  * @param {int} cmid - cmid
  * @param {int} attemptid - Attempt Id
  * @param {boolean} mainimage - boolean value
+ * @param {boolean} enablestrictcheck - boolean value
  */
-function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage) {
+function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, enablestrictcheck) {
     const canvasCtx = canvasElement.getContext('2d');
     const faceMesh = new FaceMesh({
         locateFile: (file) => {
@@ -768,11 +775,13 @@ function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage) 
                 if (results.multiFaceLandmarks.length > 1) {
                     realtimeDetection(cmid, attemptid, mainimage, 'multiface', data);
                 }
-                results.multiFaceLandmarks.forEach(landmarks => {
-                    detectGazeDirection(landmarks, cmid, attemptid, mainimage, data);
-                    detectEyeStatus(landmarks, cmid, attemptid, mainimage, data);
+                if (enablestrictcheck === 1) {
+                    results.multiFaceLandmarks.forEach(landmarks => {
+                        detectGazeDirection(landmarks, cmid, attemptid, mainimage, data);
+                        detectEyeStatus(landmarks, cmid, attemptid, mainimage, data);
 
-                });
+                    });
+                }
             }
         }
         canvasCtx.restore();
@@ -790,7 +799,6 @@ function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage) 
  * @param {Longtext} data video
  * @return {void}
  */
-
 function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     var requestData = {
         cmid: cmid,
@@ -826,7 +834,6 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
  * @param {int} cmid - cmid
  * @param {int} attemptid - Attempt Id
  * @param {boolean} mainimage - boolean value
- * @param {string} face string value
  * @param {Longtext} data video
  * @return {void}
  */
@@ -857,8 +864,7 @@ function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data) {
     if (gazeDirection !== "Center") {
         if (!gazeTimer) {
             gazeTimer = setTimeout(() => {
-                console.log("WARNING: Looking " + gazeDirection + " for more than 2 seconds");
-                //realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
+                realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
             }, GAZE_THRESHOLD);
         }
     } else {
@@ -876,7 +882,6 @@ function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data) {
  * @param {int} cmid - cmid
  * @param {int} attemptid - Attempt Id
  * @param {boolean} mainimage - boolean value
- * @param {string} face string value
  * @param {Longtext} data video
  * @return {void}
  */
@@ -903,8 +908,7 @@ function detectEyeStatus(landmarks, cmid, attemptid, mainimage, data) {
     if (eyeStatus === "Closed") {
         if (!eyeTimer) {
             eyeTimer = setTimeout(() => {
-                console.log("WARNING: Eyes closed for more than 3 seconds");
-                //realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
+                realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
             }, EYE_THRESHOLD);
         }
     } else {

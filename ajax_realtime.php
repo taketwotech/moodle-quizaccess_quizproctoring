@@ -44,7 +44,7 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
 }
 $service = get_config('quizaccess_quizproctoring', 'serviceoption');
 if (!$mainentry->isautosubmit) {
-	switch ($validate) {
+    switch ($validate) {
         case 'noface':
             if (!$mainimage) {
                 quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
@@ -69,6 +69,6 @@ if (!$mainentry->isautosubmit) {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
             }
             break;
-    }
+	}
     die();
 }

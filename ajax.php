@@ -69,9 +69,9 @@ if (!$mainentry->isautosubmit) {
                 'cameraimages', $mainentry->id, '/', $mainentry->userimg);
             if (!$f1) {
                 $imagepath = $tmpdir . '/' . $mainentry->userimg;
-                $imageData = file_get_contents($imagepath);
-                if ($imageData) {
-                    $target = 'data:image/png;base64,' . base64_encode($imageData);
+                $imagedata = file_get_contents($imagepath);
+                if ($imagedata) {
+                    $target = 'data:image/png;base64,' . base64_encode($imagedata);
                 }
             } else {
                 $target = $f1->get_content();
@@ -98,7 +98,7 @@ if (!$mainentry->isautosubmit) {
             );
             $profileimage = $file->get_content();
         }
-    }    
+    }
     if ($service === 'AWS') {
         // Validate image.
         \quizaccess_quizproctoring\aws\camera::init();
@@ -206,7 +206,7 @@ if (!$mainentry->isautosubmit) {
              break;
     }
     if (($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $cm->instance,
-                'storeallimages' => 1])) && !$mainimage) {
+                'storeallimages' => 1])) && !$mainimage && $service != 'AWS') {
         quizproctoring_storeimage($img, $cmid, $attemptid,
         $cm->instance, $mainimage, $service, '', true);
     }

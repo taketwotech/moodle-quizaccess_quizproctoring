@@ -77,9 +77,9 @@ foreach ($getimages as $img) {
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
         if (!$f1) {
             $imagepath = $tmpdir . '/' . $img->userimg;
-            $imageData = file_get_contents($imagepath);
-            if ($imageData) {
-                $target = 'data:image/png;base64,' . base64_encode($imageData);
+            $imagedata = file_get_contents($imagepath);
+            if ($imagedata) {
+                $target = 'data:image/png;base64,' . base64_encode($imagedata);
             }
         } else {
             $target = $f1->get_content();
