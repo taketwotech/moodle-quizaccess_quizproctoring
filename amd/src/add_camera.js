@@ -203,7 +203,7 @@ function($, str, ModalFactory) {
     var stream = null;
     let gazeDirection = null;
     let gazeTimer = null;
-    const GAZE_THRESHOLD = 2000;
+    const GAZE_THRESHOLD = 1000;
     let eyeStatus = "Open";
     let eyeTimer = null;
     const EYE_THRESHOLD = 3000;
@@ -608,7 +608,7 @@ function($, str, ModalFactory) {
                                     }
                                     setupFaceMesh(videoElement, canvasElement, cmid,
                                         attemptid, mainimage, enablestrictcheck);
-                                    setTimeout(processFrame, 2000);
+                                    setTimeout(processFrame, 500);
                                 }
                                 if (videoElement && canvasElement) {
                                     videoElement.addEventListener('loadeddata', () => {
@@ -864,7 +864,7 @@ function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data) {
     if (gazeDirection !== "Center") {
         if (!gazeTimer) {
             gazeTimer = setTimeout(() => {
-                realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
+                realtimeDetection(cmid, attemptid, mainimage, '' + gazeDirection + '', data);
             }, GAZE_THRESHOLD);
         }
     } else {

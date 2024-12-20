@@ -69,6 +69,22 @@ if (!$mainentry->isautosubmit) {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
             }
             break;
-	}
+        case 'Left':
+            if (!$mainimage) {
+                quizproctoring_storeimage($img, $cmid, $attemptid,
+                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED);
+            } else {
+                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED, 'quizaccess_quizproctoring', '', '');
+            }
+            break;
+        case 'Right':
+            if (!$mainimage) {
+                quizproctoring_storeimage($img, $cmid, $attemptid,
+                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED);
+            } else {
+                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED, 'quizaccess_quizproctoring', '', '');
+            }
+            break;
+    }
     die();
 }

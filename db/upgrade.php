@@ -315,7 +315,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Define field enablestrictcheck to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
+        $field = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1',
+            null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
 
         // Conditionally launch add field enablestrictcheck.
         if (!$dbman->field_exists($table, $field)) {
