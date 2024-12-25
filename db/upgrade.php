@@ -311,7 +311,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2024103002, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2024121900) {
+    if ($oldversion < 2024121902) {
 
         // Define field enablestrictcheck to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
@@ -324,7 +324,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2024121900, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2024121902, 'quizaccess', 'quizproctoring');
     }
     return true;
 }
