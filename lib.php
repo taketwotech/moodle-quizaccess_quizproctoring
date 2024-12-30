@@ -93,6 +93,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
+    $securewindow = $DB->get_record('quiz', array('id' => $quizid));
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
@@ -100,7 +101,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', $interval->time_interval);
+        $quizid, '$serviceoption', '$securewindow->browsersecurity', $interval->time_interval);
     });
     M.util.js_complete();", true);
 }

@@ -171,13 +171,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
         global $PAGE, $DB, $USER;
-
+        $securewindow = $DB->get_record('quiz', array('id' => $this->quiz->id));
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
-                $this->quiz->id, $serviceoption]);
+                $this->quiz->id, $serviceoption, $securewindow->browsersecurity]);
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
             $sql = "SELECT * FROM {files} WHERE contextid =

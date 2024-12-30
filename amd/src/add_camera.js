@@ -164,7 +164,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, setinterval = 300) {
+        teacher, quizid, serviceoption, securewindow = null, setinterval = 300) {
         if (!verifyduringattempt) {
             var camera;
             camera = new Camera(cmid, mainimage, attemptid, quizid);
@@ -189,6 +189,12 @@ function($, str, ModalFactory) {
                     camera.stopcamera();
                 }
             });
+            if (securewindow === 'securewindow') {
+                const currentUrl = window.location.href;
+                if (currentUrl.includes('startattempt.php')) {
+                    camera.startcamera();
+                }
+            }
         } else {
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
