@@ -93,6 +93,7 @@ $string['nofacedetected'] = 'No face detected. {$a}';
 $string['noimages'] = 'No images';
 $string['noimageswarning'] = 'No warning images were found during the exam';
 $string['notcameradetected'] = 'No camera detected.';
+$string['notice'] = 'Notice - ensure you are in a well-lit environment with your face clearly visible and free from shadows. Sit in front of a plain or uncluttered background without any movement or distractions. Position your camera at eye level to capture your full face clearly, avoiding any obstructions.';
 $string['notmatchedprofile'] = 'Your profile image does not match your current image.';
 $string['novideo'] = 'No Videos';
 $string['oneminute'] = '1 minute';
@@ -154,6 +155,4 @@ $string['warnings'] = ' warnings';
 $string['warningsleft'] = 'You have only {$a} left.';
 $string['warningstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
 $string['yes'] = 'Yes';
-
-
 
