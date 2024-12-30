@@ -290,6 +290,12 @@ function($, str, ModalFactory) {
                     localStorage.removeItem('videoPosition');
                 }
             });
+            if (securewindow === 'securewindow') {
+                const currentUrl = window.location.href;
+                if (currentUrl.includes('startattempt.php')) {
+                    camera.startcamera();
+                }
+            }
         } else {
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
