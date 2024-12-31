@@ -87,6 +87,12 @@ button.proctoridentity {
     width: 5%;
     z-index: 9999999;
 }
+#nostudentonline {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    display: block;
+}
 
 .headtitle {
     display: flex;

@@ -201,6 +201,7 @@ function($, str, ModalFactory) {
     var MUTE_AUDIO_BY_DEFAULT = true;
     var attachMediaStream = null;
     var stream = null;
+    var total = 0;
     let gazeDirection = null;
     let gazeTimer = null;
     const GAZE_THRESHOLD = 1000;
@@ -244,6 +245,7 @@ function($, str, ModalFactory) {
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, securewindow = null, userfullname = null,
         enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
+        const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -406,6 +408,7 @@ function($, str, ModalFactory) {
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === 'teacher') {
+                        total = total + 1;
                         $('.videos-container').append(studentContainer);
                         remoteMedia[0].srcObject = connectedPeers[peerId].stream;
                     }
@@ -413,6 +416,9 @@ function($, str, ModalFactory) {
             };
             // Add our local stream
             if (localMediaStream) {
+                if (noStudentOnlineDiv) {
+                    noStudentOnlineDiv.style.display = 'none';
+                }
                 peerConnection.addStream(localMediaStream);
             }
             if (config.should_create_offer) {
@@ -505,6 +511,10 @@ function($, str, ModalFactory) {
 
                     var remoteMedia = peerMediaElements[peerId];
                     if (remoteMedia) {
+                        total = total - 1;
+                        if (total === 0) {
+                            noStudentOnlineDiv.style.display = 'block';
+                        }
                         remoteMedia.closest('.student-container').remove();
                     }
                     // Remove references
