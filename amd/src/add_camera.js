@@ -202,12 +202,6 @@ function($, str, ModalFactory) {
     var attachMediaStream = null;
     var stream = null;
     var total = 0;
-    let gazeDirection = null;
-    let gazeTimer = null;
-    const GAZE_THRESHOLD = 1000;
-    let eyeStatus = "Open";
-    let eyeTimer = null;
-    const EYE_THRESHOLD = 3000;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -399,11 +393,7 @@ function($, str, ModalFactory) {
                     }
 
                     var studentContainer = $("<div>").addClass("student-container");
-                    var studentNameText = config.fullname ? config.fullname : "Unknown Student";
-                    var studentName = $("<span>").addClass("student-name").text(studentNameText);
-
                     studentContainer.append(remoteMedia);
-                    //studentContainer.append(studentName);
 
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
