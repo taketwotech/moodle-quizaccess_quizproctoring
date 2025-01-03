@@ -594,7 +594,7 @@ function($, str, ModalFactory) {
                         });
                         var camera = new Camera(cmid, mainimage, attemptid, quizid);
                         camera.startcamera();
-                        setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);                        
+                        setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                     }
                     return stream;
                 })
@@ -639,7 +639,7 @@ function($, str, ModalFactory) {
         dummyStream.addTrack(dummyVideo.getVideoTracks()[0]);
         return dummyStream;
     }
-                
+
     /**
      * Get Teacher room
      *
