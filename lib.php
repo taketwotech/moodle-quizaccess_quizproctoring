@@ -101,10 +101,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     if ($serviceoption != 'AWS') {
         $enablevideo = $proctorrecord->enablestudentvideo;
-        $enablestrict = $proctorrecord->enablestrictcheck;
     } else {
         $enablevideo = 1;
-        $enablestrict = 0;
     }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/camera_utils.js', true);
@@ -116,7 +114,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
         $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
-        $enablevideo, $enablestrict, $proctorrecord->time_interval);
+        $enablevideo, $proctorrecord->time_interval);
     });
     M.util.js_complete();", true);
 }
