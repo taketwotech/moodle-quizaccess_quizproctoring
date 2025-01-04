@@ -90,6 +90,20 @@ function($, str, ModalFactory) {
                     let offsetY;
                     let isDragging = false;
 
+                    const stopDragging = function() {
+                        if (isDragging) {
+                            isDragging = false;
+                            videoElement.style.zIndex = 9999998;
+
+                            // Save position
+                            const position = {
+                                left: videoElement.style.left,
+                                top: videoElement.style.top,
+                            };
+                            localStorage.setItem('videoPosition', JSON.stringify(position));
+                        }
+                    };
+
                     videoElement.addEventListener('mousedown', function(e) {
                         isDragging = true;
                         offsetX = e.clientX - videoElement.getBoundingClientRect().left;
@@ -97,23 +111,25 @@ function($, str, ModalFactory) {
                         videoElement.style.zIndex = 9999999;
                     });
 
-                    document.addEventListener('mousemove', function(e) {
+                    window.addEventListener('mousemove', function(e) {
                         if (isDragging) {
                             videoElement.style.left = `${e.clientX - offsetX}px`;
                             videoElement.style.top = `${e.clientY - offsetY}px`;
                         }
                     });
 
-                    document.addEventListener('mouseup', function() {
-                        isDragging = false;
-                        videoElement.style.zIndex = 9999998;
+                    window.addEventListener('mouseup', stopDragging);
 
-                        const position = {
-                            left: videoElement.style.left,
-                            top: videoElement.style.top
-                        };
-                        localStorage.setItem('videoPosition', JSON.stringify(position));
-                    });
+                    // Additional safeguard: Cancel dragging if the mouse leaves the viewport
+                    window.addEventListener('mouseout', stopDragging);
+
+                    // Timeout fallback to stop dragging after a delay
+                    setInterval(() => {
+                        if (isDragging) {
+                            stopDragging();
+                        }
+                    }, 2000);
+
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
