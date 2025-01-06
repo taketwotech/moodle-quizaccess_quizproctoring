@@ -33,7 +33,6 @@ if ($hassiteconfig && !empty($USER->id)) {
 
     $choices = [
         'take2' => 'Take2 Proctoring',
-        'AWS' => 'AWS',
     ];
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
         get_string('serviceoption', 'quizaccess_quizproctoring'),
@@ -41,18 +40,6 @@ if ($hassiteconfig && !empty($USER->id)) {
         'take2',
         $choices
     ));
-
-    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/aws_key',
-        get_string('awskey', 'quizaccess_quizproctoring'),
-        get_string('awskey_help', 'quizaccess_quizproctoring'),
-        '',
-        PARAM_TEXT));
-
-    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/aws_secret',
-        get_string('awssecret', 'quizaccess_quizproctoring'),
-        get_string('awssecret_help', 'quizaccess_quizproctoring'),
-        '',
-        PARAM_TEXT));
 
     $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/accesstoken',
         get_string('accesstoken', 'quizaccess_quizproctoring'),
@@ -63,21 +50,6 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('accesstokensecret', 'quizaccess_quizproctoring'),
         get_string('accesstokensecret_help', 'quizaccess_quizproctoring'),
         PARAM_TEXT));
-
-    $settings->hide_if('quizaccess_quizproctoring/end_point', 'quizaccess_quizproctoring/serviceoption',
-                'eq', 'AWS');
-
-    $settings->hide_if('quizaccess_quizproctoring/accesstoken', 'quizaccess_quizproctoring/serviceoption',
-                'eq', 'AWS');
-
-    $settings->hide_if('quizaccess_quizproctoring/accesstokensecret', 'quizaccess_quizproctoring/serviceoption',
-                'eq', 'AWS');
-
-    $settings->hide_if('quizaccess_quizproctoring/aws_key', 'quizaccess_quizproctoring/serviceoption',
-                'neq', 'AWS');
-
-    $settings->hide_if('quizaccess_quizproctoring/aws_secret', 'quizaccess_quizproctoring/serviceoption',
-                'neq', 'AWS');
 
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/img_check_time',
         get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),

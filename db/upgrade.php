@@ -310,5 +310,14 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024103002, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025010600) {
+        // Update the default value for the serviceoption setting.
+        set_config('serviceoption', 'take2', 'quizaccess_quizproctoring');
+
+        // Update the plugin version to mark the change as complete.
+        upgrade_plugin_savepoint(true, 2025010600, 'quizaccess', 'quizproctoring');
+    }
+    
     return true;
 }
