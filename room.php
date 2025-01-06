@@ -45,5 +45,7 @@ $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
 echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
 'init', [$cmid, false, true, null, true, $room, $serviceoption]);
-
+echo '<div id="nostudentonline">';
+echo get_string('nostudentonline', 'quizaccess_quizproctoring');
+echo '</div>';
 echo $OUTPUT->footer();
