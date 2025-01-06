@@ -318,6 +318,5 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Update the plugin version to mark the change as complete.
         upgrade_plugin_savepoint(true, 2025010600, 'quizaccess', 'quizproctoring');
     }
-    
     return true;
 }
