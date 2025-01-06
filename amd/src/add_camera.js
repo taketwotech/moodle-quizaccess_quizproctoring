@@ -614,7 +614,7 @@ function($, str, ModalFactory) {
                     }
                     return stream;
                 })
-                .catch(function() {
+                .catch(function(error) {
                     // Handle the case where permission is denied
                     if (verifyduringattempt) {
                         var teacherroom = getTeacherroom();
@@ -624,6 +624,7 @@ function($, str, ModalFactory) {
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
                     }
+                    throw error;
                 })
                 .finally(function() {
                     if (callback) {
