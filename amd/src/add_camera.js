@@ -218,6 +218,7 @@ function($, str, ModalFactory) {
     var attachMediaStream = null;
     var stream = null;
     var total = 0;
+    let cachedStudentData = null;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -253,7 +254,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, securewindow = null, userfullname = null,
+        teacher, quizid, serviceoption, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
@@ -360,6 +361,22 @@ function($, str, ModalFactory) {
         });
 
         signalingSocket.on('addPeer', function(config) {
+            if (!config.studentData || config.studentData.length === 0) {
+                //No studentData received or it is empty
+            } else {
+                cachedStudentData = config.studentData;
+            }
+
+            if (cachedStudentData) {
+                const existingStudent = cachedStudentData.find(student => student.id === config.peer_id);
+                if (!existingStudent) {
+                    cachedStudentData.push({ id: config.peer_id, fullname: config.fullname });
+                }
+            } else {
+                cachedStudentData = [];
+            }
+
+
             var peerId = config.peer_id;
 
             if (peerId in peers) {
@@ -409,7 +426,13 @@ function($, str, ModalFactory) {
                     }
 
                     var studentContainer = $("<div>").addClass("student-container");
+                    const studentData = cachedStudentData.find(sd => sd.id === peerId);
+                    const studentNameText = studentData ? studentData.fullname :
+                    config.fullname || "";
+
+                    const studentName = $("<span>").addClass("student-name").text(studentNameText);
                     studentContainer.append(remoteMedia);
+                    studentContainer.append(studentName);
 
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
