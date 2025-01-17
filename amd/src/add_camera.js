@@ -223,7 +223,7 @@ function($, str, ModalFactory) {
     const GAZE_THRESHOLD = 1000;
     let eyeStatus = "Open";
     let eyeTimer = null;
-    const EYE_THRESHOLD = 3000;
+    const EYE_THRESHOLD = 4000;
     let lastDetectionTime = Date.now();
     let lastDetection = Date.now();
 
@@ -819,7 +819,7 @@ function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, 
         canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
         var data = canvasElement.toDataURL('image/png');
         const currentTime = Date.now();
-        if (currentTime - lastDetectionTime >= 5000) {console.log('5 sec');
+        if (currentTime - lastDetectionTime >= 5000) {
             if (typeof results.multiFaceLandmarks === 'undefined') {
                 realtimeDetection(cmid, attemptid, mainimage, 'noface', data);
             } else {
@@ -834,10 +834,7 @@ function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, 
         if (enablestrictcheck === 1 && results.multiFaceLandmarks.length === 1) {
             results.multiFaceLandmarks.forEach(landmarks => {
                 detectGazeDirection(landmarks, cmid, attemptid, mainimage, data);
-                if (currentTime - lastDetection >= 4000) {console.log('4 sec');
-                    detectEyeStatus(landmarks, cmid, attemptid, mainimage, data);
-                    lastDetection = currentTime;
-                }
+                detectEyeStatus(landmarks, cmid, attemptid, mainimage, data);
             });
         }
         canvasCtx.restore();
