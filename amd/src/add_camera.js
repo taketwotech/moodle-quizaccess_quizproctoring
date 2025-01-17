@@ -218,6 +218,14 @@ function($, str, ModalFactory) {
     var attachMediaStream = null;
     var stream = null;
     var total = 0;
+    let gazeDirection = null;
+    let gazeTimer = null;
+    const GAZE_THRESHOLD = 1000;
+    let eyeStatus = "Open";
+    let eyeTimer = null;
+    const EYE_THRESHOLD = 3000;
+    let lastDetectionTime = Date.now();
+    let lastDetection = Date.now();
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -254,7 +262,7 @@ function($, str, ModalFactory) {
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, securewindow = null, userfullname = null,
-        enablestudentvideo = 1, setinterval = 300) {
+        enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -327,7 +335,7 @@ function($, str, ModalFactory) {
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, setinterval,
+            teacher, enablestudentvideo, enablestrictcheck, setinterval,
             serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
@@ -543,6 +551,7 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablestrictcheck - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -550,7 +559,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo,
+        teacher, enablestudentvideo,  enablestrictcheck,
         setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
@@ -611,6 +620,30 @@ function($, str, ModalFactory) {
                         var camera = new Camera(cmid, mainimage, attemptid, quizid);
                         camera.startcamera();
                         setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+                        if (serviceoption != 'AWS') {
+                            const videoElement = document.getElementById('video');
+                            const canvasElement = document.getElementById('canvas');
+                            /**
+                             * Get process frame
+                             *
+                             * @return {void} This function does not return a value.
+                             */
+                            function processFrame() {
+                                if (videoElement.readyState < 2) {
+                                    setTimeout(processFrame, 1000);
+                                    return;
+                                }
+                                setupFaceMesh(videoElement, canvasElement, cmid,
+                                    attemptid, mainimage, enablestrictcheck);
+                                setTimeout(processFrame, 500);
+                            }
+                            if (videoElement && canvasElement) {
+                                videoElement.addEventListener('loadeddata', () => {
+                                    videoElement.play();
+                                    processFrame();
+                                });
+                            }
+                        }
                     }
                     return stream;
                 })
@@ -757,5 +790,188 @@ function setupPeerConnection(peerConnection, peerId, peer) {
                 }
             );
         });
+}
+
+/**
+ * SetupFaceMesh
+ *
+ * @param {Longtext} videoElement videoElement
+ * @param {Longtext} canvasElement canvasElement
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {boolean} enablestrictcheck - boolean value
+ */
+function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, enablestrictcheck) {
+    const canvasCtx = canvasElement.getContext('2d');
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
+        }
+    });
+    faceMesh.setOptions({
+        maxNumFaces: 5,
+        refineLandmarks: true,
+    });
+    faceMesh.onResults((results) => {
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        var data = canvasElement.toDataURL('image/png');
+        const currentTime = Date.now();
+        if (currentTime - lastDetectionTime >= 5000) {console.log('5 sec');
+            if (typeof results.multiFaceLandmarks === 'undefined') {
+                realtimeDetection(cmid, attemptid, mainimage, 'noface', data);
+            } else {
+                if (results.multiFaceLandmarks) {
+                    if (results.multiFaceLandmarks.length > 1) {
+                        realtimeDetection(cmid, attemptid, mainimage, 'multiface', data);
+                    }                    
+                }
+            }
+            lastDetectionTime = currentTime;
+        }
+        if (enablestrictcheck === 1 && results.multiFaceLandmarks.length === 1) {
+            results.multiFaceLandmarks.forEach(landmarks => {
+                detectGazeDirection(landmarks, cmid, attemptid, mainimage, data);
+                if (currentTime - lastDetection >= 4000) {console.log('4 sec');
+                    detectEyeStatus(landmarks, cmid, attemptid, mainimage, data);
+                    lastDetection = currentTime;
+                }
+            });
+        }
+        canvasCtx.restore();
+    });
+    faceMesh.send({image: videoElement});
+}
+
+/**
+ * Realtime Detection Ajax call
+ *
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {string} face string value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function realtimeDetection(cmid, attemptid, mainimage, face, data) {
+    var requestData = {
+        cmid: cmid,
+        attemptid: attemptid,
+        mainimage: mainimage,
+        validate: face,
+        imgBase64: data,
+    };
+    $.ajax({
+        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+        method: 'POST',
+        data: requestData,
+        success: function(response) {
+            if (response && response.errorcode) {
+                $(document).trigger('popup', response.error);
+            } else {
+                if (response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Detect Gaze Direction
+ *
+ * @param {Longtext} landmarks - landmarks
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data) {
+    const leftEye = landmarks[33];
+    const rightEye = landmarks[263];
+    const nose = landmarks[1];
+    const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
+    const noseX = nose.x;
+
+    let currentDirection = "Center";
+
+    if (noseX < eyeMidpointX - 0.02) {
+        currentDirection = "Right";
+    } else if (noseX > eyeMidpointX + 0.02) {
+        currentDirection = "Left";
+    }
+
+    if (currentDirection !== gazeDirection) {
+        gazeDirection = currentDirection;
+
+        if (gazeTimer) {
+            clearTimeout(gazeTimer);
+            gazeTimer = null;
+        }
+    }
+
+    if (gazeDirection !== "Center") {
+        if (!gazeTimer) {
+            gazeTimer = setTimeout(() => {
+                realtimeDetection(cmid, attemptid, mainimage, '' + gazeDirection + '', data);
+            }, GAZE_THRESHOLD);
+        }
+    } else {
+        if (gazeTimer) {
+            clearTimeout(gazeTimer);
+            gazeTimer = null;
+        }
+    }
+}
+
+/**
+ * Detect Eye Status
+ *
+ * @param {Longtext} landmarks - landmarks
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function detectEyeStatus(landmarks, cmid, attemptid, mainimage, data) {
+    const leftEyeUpper = landmarks[159];
+    const leftEyeLower = landmarks[145];
+    const rightEyeUpper = landmarks[386];
+    const rightEyeLower = landmarks[374];
+
+    const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
+    const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
+
+    const EYE_OPEN_THRESHOLD = 0.018;
+
+    let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD &&
+        rightEyeOpen > EYE_OPEN_THRESHOLD) ? "Open" : "Closed";
+    if (currentEyeStatus !== eyeStatus) {
+        eyeStatus = currentEyeStatus;
+        if (eyeTimer) {
+            clearTimeout(eyeTimer);
+            eyeTimer = null;
+        }
+    }
+    if (eyeStatus === "Closed") {
+        if (!eyeTimer) {
+            eyeTimer = setTimeout(() => {
+                realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
+            }, EYE_THRESHOLD);
+        }
+    } else {
+        if (eyeTimer) {
+            clearTimeout(eyeTimer);
+            eyeTimer = null;
+        }
+    }
 }
 });

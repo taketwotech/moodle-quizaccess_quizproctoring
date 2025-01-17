@@ -71,4 +71,116 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+
+        <library>
+        <location>libraries/js/control_utils.js</location>
+        <name>control_utils</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/camera_utils.js</location>
+        <name>camera_utils</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/face_mesh.js</location>
+        <name>face_mesh</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/js/drawing_utils.js</location>
+        <name>drawing_utils</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh.binarypb</location>
+        <name>face_mesh</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh.js</location>
+        <name>face_mesh</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh_solution_packed_assets.data</location>
+        <name>face_mesh_solution_packed_assets</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh_solution_packed_assets_loader.js</location>
+        <name>face_mesh_solution_packed_assets_loader</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh_solution_simd_wasm_bin.js</location>
+        <name>face_mesh_solution_simd_wasm_bin</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh_solution_simd_wasm_bin.wasm</location>
+        <name>face_mesh_solution_simd_wasm_bin</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh_solution_wasm_bin.js</location>
+        <name>face_mesh_solution_wasm_bin</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/face_mesh_solution_wasm_bin.wasm</location>
+        <name>face_mesh_solution_wasm_bin</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/index.d.ts</location>
+        <name>index.d</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
+
+    <library>
+        <location>libraries/facemesh/package.json</location>
+        <name>package</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
 </libraries>

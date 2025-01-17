@@ -318,5 +318,22 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Update the plugin version to mark the change as complete.
         upgrade_plugin_savepoint(true, 2025010600, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025010601) {
+
+        // Define field enablestrictcheck to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1',
+            null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
+
+        // Conditionally launch add field enablestrictcheck.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025010601, 'quizaccess', 'quizproctoring');
+    }
+    
     return true;
 }
