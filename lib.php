@@ -95,7 +95,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
-    $fullname = $user->firstname .''.$user->lastname;
+    $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
