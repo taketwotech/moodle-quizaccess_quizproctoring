@@ -225,7 +225,6 @@ function($, str, ModalFactory) {
     let eyeTimer = null;
     const EYE_THRESHOLD = 4000;
     let lastDetectionTime = Date.now();
-    let lastDetection = Date.now();
     let cachedStudentData = null;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
@@ -370,7 +369,7 @@ function($, str, ModalFactory) {
 
         signalingSocket.on('addPeer', function(config) {
             if (!config.studentData || config.studentData.length === 0) {
-                //No studentData received or it is empty
+                // No studentData received or it is empty
             } else {
                 cachedStudentData = config.studentData;
             }
@@ -378,7 +377,7 @@ function($, str, ModalFactory) {
             if (cachedStudentData) {
                 const existingStudent = cachedStudentData.find(student => student.id === config.peer_id);
                 if (!existingStudent) {
-                    cachedStudentData.push({ id: config.peer_id, fullname: config.fullname });
+                    cachedStudentData.push({id: config.peer_id, fullname: config.fullname});
                 }
             } else {
                 cachedStudentData = [];
@@ -582,7 +581,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo,  enablestrictcheck,
+        teacher, enablestudentvideo, enablestrictcheck,
         setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
@@ -646,24 +645,12 @@ function($, str, ModalFactory) {
                         if (serviceoption != 'AWS') {
                             const videoElement = document.getElementById('video');
                             const canvasElement = document.getElementById('canvas');
-                            /**
-                             * Get process frame
-                             *
-                             * @return {void} This function does not return a value.
-                             */
-                            function processFrame() {
-                                if (videoElement.readyState < 2) {
-                                    setTimeout(processFrame, 1000);
-                                    return;
-                                }
-                                setupFaceMesh(videoElement, canvasElement, cmid,
-                                    attemptid, mainimage, enablestrictcheck);
-                                setTimeout(processFrame, 500);
-                            }
+                            
                             if (videoElement && canvasElement) {
                                 videoElement.addEventListener('loadeddata', () => {
                                     videoElement.play();
-                                    processFrame();
+                                    processFrame(videoElement, canvasElement, cmid,
+                                    attemptid, mainimage, enablestrictcheck);
                                 });
                             }
                         }
@@ -694,6 +681,29 @@ function($, str, ModalFactory) {
                 }
             }
         });
+    }
+
+    /**
+     * Get process frame
+     *
+     * @param {Longtext} videoElement - video Element value
+     * @param {Longtext} canvasElement - canvas Element value
+     * @param {int} cmid - cm Id
+     * @param {int} attemptid - Attempt Id
+     * @param {Longtext} mainimage - mainimage value
+     * @param {boolean} enablestrictcheck - boolean value
+     * @return {void} This function does not return a value.
+     */
+    function processFrame(videoElement, canvasElement, cmid, attemptid, mainimage, enablestrictcheck) {
+        if (!videoElement || videoElement.readyState < 2) {
+            setTimeout(() => processFrame(videoElement, canvasElement, cmid,
+                attemptid, mainimage, enablestrictcheck), 1000);
+            return;
+        }
+        setupFaceMesh(videoElement, canvasElement, cmid,
+            attemptid, mainimage, enablestrictcheck);
+        setTimeout(() => processFrame(videoElement, canvasElement, cmid,
+            attemptid, mainimage, enablestrictcheck), 500);
     }
 
     /**
