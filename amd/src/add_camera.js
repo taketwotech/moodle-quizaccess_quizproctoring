@@ -248,7 +248,7 @@ function($, str, ModalFactory) {
             this.activeModal = modal;
             modal.show();
             return null;
-        }).catch((error) => {
+        }).catch(() => {
             showCustomModal(message);
         });
     };
