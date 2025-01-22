@@ -566,7 +566,13 @@ function($, str, ModalFactory) {
         init: init
     };
 
-    function showCustomModal(message) {
+    /**
+     * Setup show Custom Modal
+     *
+     * @param {Longtext} message - string value
+     * @return {void}
+     */
+     function showCustomModal(message) {
         $('.custom-modal').remove();
         const modalHtml = `
             <div class="custom-modal show" role="dialog" aria-modal="true" tabindex="-1">
@@ -585,27 +591,33 @@ function($, str, ModalFactory) {
         `;
         $('body').append(modalHtml);
         $('.custom-modal').fadeIn();
-        $('.custom-close-btn').click(function () {
+        $('.custom-close-btn').click(function() {
             closeCustomModal();
         });
-        $(document).on('click', function (e) {
+        $(document).on('click', function(e) {
             const $modalContent = $('.custom-modal-content');
             if (!$modalContent.is(e.target) && $modalContent.has(e.target).length === 0) {
                 closeCustomModal();
             }
         });
-        $(document).on('keydown', function (e) {
+        $(document).on('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeCustomModal();
             }
         });
-        function closeCustomModal() {
-            $('.custom-modal').fadeOut(function () {
-                $(this).remove();
-            });
-            $(document).off('click');
-            $(document).off('keydown');
-        }
+    }
+
+    /**
+     * Setup close Custom Modal
+     *
+     * @return {void}
+     */
+    function closeCustomModal() {
+        $('.custom-modal').fadeOut(function() {
+            $(this).remove();
+        });
+        $(document).off('click');
+        $(document).off('keydown');
     }
 
     /**
