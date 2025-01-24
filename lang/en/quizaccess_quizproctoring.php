@@ -151,6 +151,7 @@ $string['warning'] = ' warning';
 $string['warning_threshold'] = 'Warnings threshold during proctored exam';
 $string['warning_threshold_help'] = 'Number of warnings a user should receive before the user gets disqualified from the proctored exam.';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
+$string['warningexpire'] = 'The token for your Take2 proctoring service has expired. Please reach out to us at <a href="mailto:ms@taketwotechnologies.com">ms@taketwotechnologies.com</a> to renew or generate a new token to ensure uninterrupted access.';
 $string['warningopensourse'] = 'Please complete <a href="{$a}">configuration</a> to continue with quiz.';
 $string['warnings'] = ' warnings';
 $string['warningsleft'] = 'You have only {$a} left.';

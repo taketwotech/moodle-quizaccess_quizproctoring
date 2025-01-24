@@ -78,8 +78,17 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 }
             }
         } else {
+            $response = \quizaccess_quizproctoring\api::getuserinfo();
+            $responseData = json_decode($response, true);
             $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
             $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+            if (!$responseData['active']) {
+                if ($isadmin) {
+                    return '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
+                } else {
+                    return get_string('warningstudent', 'quizaccess_quizproctoring');
+                }
+            }
             if (empty($accesstoken) || empty($accesstokensecret)) {
                 if ($isadmin) {
                     return get_string('warningopensourse', 'quizaccess_quizproctoring', $url);
