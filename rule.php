@@ -79,10 +79,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             }
         } else {
             $response = \quizaccess_quizproctoring\api::getuserinfo();
-            $responseData = json_decode($response, true);
+            $responsedata = json_decode($response, true);
             $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
             $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
-            if (!$responseData['active']) {
+            if (!$responsedata['active']) {
                 if ($isadmin) {
                     return '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
                 } else {
