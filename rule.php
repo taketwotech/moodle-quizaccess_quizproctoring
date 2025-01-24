@@ -84,7 +84,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
             if (!$responsedata['active']) {
                 if ($isadmin) {
-                    return '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
+                    return false;
                 } else {
                     return get_string('warningstudent', 'quizaccess_quizproctoring');
                 }
@@ -142,7 +142,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'get'
                 );
         }
-        return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
+        $response = \quizaccess_quizproctoring\api::getuserinfo();
+        $responsedata = json_decode($response, true);
+        if (!$responsedata['active']) {
+            if ($isadmin) {
+                $notice = '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
+            }
+        }
+        return get_string('proctoringnotice', 'quizaccess_quizproctoring').'<br>'.$notice.$button;
     }
 
     /**
