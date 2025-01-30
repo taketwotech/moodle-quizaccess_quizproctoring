@@ -106,19 +106,25 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $enablevideo = 1;
         $enablestrict = 0;
     }
+    $env = load_env(__DIR__ . '/.env');
+    if (!empty($env['API_URL'])) {
+        $apiurl = $env['API_URL'];
+    }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/camera_utils.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/control_utils.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/drawing_utils.js', true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/face_mesh.js', true);
+    $PAGE->requires->jquery();
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
+        $quizid, '$serviceoption', '$apiurl', '$securewindow->browsersecurity', '$fullname',
         $enablevideo, $enablestrict, $proctorrecord->time_interval);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh.js', true);
 }
 
 /**
@@ -289,3 +295,30 @@ function clean_images_task() {
         }
     }
 }
+
+/**
+ * Load environment file and return key-value pairs.
+ *
+ * @param string $file Path to the .env file
+ * @return array Associative array of environment variables
+ */
+function load_env($file) {
+    if (!file_exists($file)) {
+        return [];
+    }
+
+    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $env = [];
+
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+
+        list($key, $value) = explode('=', $line, 2);
+        $env[trim($key)] = trim($value);
+    }
+
+    return $env;
+}
+

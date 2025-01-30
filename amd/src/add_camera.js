@@ -206,7 +206,6 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctoring.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -218,14 +217,8 @@ function($, str, ModalFactory) {
     var attachMediaStream = null;
     var stream = null;
     var total = 0;
-    let gazeDirection = null;
-    let gazeTimer = null;
-    const GAZE_THRESHOLD = 1000;
-    let eyeStatus = "Open";
-    let eyeTimer = null;
-    const EYE_THRESHOLD = 4000;
-    let lastDetectionTime = Date.now();
     let cachedStudentData = null;
+    var result = null;
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -263,7 +256,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, securewindow = null, userfullname,
+        teacher, quizid, serviceoption, externalserver, securewindow = null, userfullname,
         enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
@@ -704,8 +697,16 @@ function($, str, ModalFactory) {
                             if (videoElement && canvasElement) {
                                 videoElement.addEventListener('loadeddata', () => {
                                     videoElement.play();
-                                    processFrame(videoElement, canvasElement, cmid,
-                                    attemptid, mainimage, enablestrictcheck);
+                                    if (typeof facemesh !== 'undefined') {
+                                        facemesh.processFrame(videoElement, canvasElement,
+                                            cmid, attemptid, mainimage, enablestrictcheck,
+                                            function(result) {
+                                            if (result.status) {
+                                                realtimeDetection(cmid, attemptid,
+                                                    mainimage, result.status, result.data);
+                                            }
+                                        });
+                                    }
                                 });
                             }
                         }
@@ -736,29 +737,6 @@ function($, str, ModalFactory) {
                 }
             }
         });
-    }
-
-    /**
-     * Get process frame
-     *
-     * @param {Longtext} videoElement - video Element value
-     * @param {Longtext} canvasElement - canvas Element value
-     * @param {int} cmid - cm Id
-     * @param {int} attemptid - Attempt Id
-     * @param {Longtext} mainimage - mainimage value
-     * @param {boolean} enablestrictcheck - boolean value
-     * @return {void} This function does not return a value.
-     */
-    function processFrame(videoElement, canvasElement, cmid, attemptid, mainimage, enablestrictcheck) {
-        if (!videoElement || videoElement.readyState < 2) {
-            setTimeout(() => processFrame(videoElement, canvasElement, cmid,
-                attemptid, mainimage, enablestrictcheck), 1000);
-            return;
-        }
-        setupFaceMesh(videoElement, canvasElement, cmid,
-            attemptid, mainimage, enablestrictcheck);
-        setTimeout(() => processFrame(videoElement, canvasElement, cmid,
-            attemptid, mainimage, enablestrictcheck), 500);
     }
 
     /**
@@ -881,56 +859,6 @@ function setupPeerConnection(peerConnection, peerId, peer) {
 }
 
 /**
- * SetupFaceMesh
- *
- * @param {Longtext} videoElement videoElement
- * @param {Longtext} canvasElement canvasElement
- * @param {int} cmid - cmid
- * @param {int} attemptid - Attempt Id
- * @param {boolean} mainimage - boolean value
- * @param {boolean} enablestrictcheck - boolean value
- */
-function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, enablestrictcheck) {
-    const canvasCtx = canvasElement.getContext('2d');
-    const faceMesh = new FaceMesh({
-        locateFile: (file) => {
-            return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
-        }
-    });
-    faceMesh.setOptions({
-        maxNumFaces: 5,
-        refineLandmarks: true,
-    });
-    faceMesh.onResults((results) => {
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-        var data = canvasElement.toDataURL('image/png');
-        const currentTime = Date.now();
-        if (currentTime - lastDetectionTime >= 5000) {
-            if (typeof results.multiFaceLandmarks === 'undefined') {
-                realtimeDetection(cmid, attemptid, mainimage, 'noface', data);
-            } else {
-                if (results.multiFaceLandmarks) {
-                    if (results.multiFaceLandmarks.length > 1) {
-                        realtimeDetection(cmid, attemptid, mainimage, 'multiface', data);
-                    }
-                }
-            }
-            lastDetectionTime = currentTime;
-        }
-        if (enablestrictcheck === 1 && results.multiFaceLandmarks.length === 1) {
-            results.multiFaceLandmarks.forEach(landmarks => {
-                detectGazeDirection(landmarks, cmid, attemptid, mainimage, data);
-                detectEyeStatus(landmarks, cmid, attemptid, mainimage, data);
-            });
-        }
-        canvasCtx.restore();
-    });
-    faceMesh.send({image: videoElement});
-}
-
-/**
  * Realtime Detection Ajax call
  *
  * @param {int} cmid - cmid
@@ -966,97 +894,5 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
             }
         }
     });
-}
-
-/**
- * Detect Gaze Direction
- *
- * @param {Longtext} landmarks - landmarks
- * @param {int} cmid - cmid
- * @param {int} attemptid - Attempt Id
- * @param {boolean} mainimage - boolean value
- * @param {Longtext} data video
- * @return {void}
- */
-function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data) {
-    const leftEye = landmarks[33];
-    const rightEye = landmarks[263];
-    const nose = landmarks[1];
-    const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
-    const noseX = nose.x;
-
-    let currentDirection = "Center";
-
-    if (noseX < eyeMidpointX - 0.02) {
-        currentDirection = "Right";
-    } else if (noseX > eyeMidpointX + 0.02) {
-        currentDirection = "Left";
-    }
-
-    if (currentDirection !== gazeDirection) {
-        gazeDirection = currentDirection;
-
-        if (gazeTimer) {
-            clearTimeout(gazeTimer);
-            gazeTimer = null;
-        }
-    }
-
-    if (gazeDirection !== "Center") {
-        if (!gazeTimer) {
-            gazeTimer = setTimeout(() => {
-                realtimeDetection(cmid, attemptid, mainimage, '' + gazeDirection + '', data);
-            }, GAZE_THRESHOLD);
-        }
-    } else {
-        if (gazeTimer) {
-            clearTimeout(gazeTimer);
-            gazeTimer = null;
-        }
-    }
-}
-
-/**
- * Detect Eye Status
- *
- * @param {Longtext} landmarks - landmarks
- * @param {int} cmid - cmid
- * @param {int} attemptid - Attempt Id
- * @param {boolean} mainimage - boolean value
- * @param {Longtext} data video
- * @return {void}
- */
-function detectEyeStatus(landmarks, cmid, attemptid, mainimage, data) {
-    const leftEyeUpper = landmarks[159];
-    const leftEyeLower = landmarks[145];
-    const rightEyeUpper = landmarks[386];
-    const rightEyeLower = landmarks[374];
-
-    const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
-    const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
-
-    const EYE_OPEN_THRESHOLD = 0.018;
-
-    let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD &&
-        rightEyeOpen > EYE_OPEN_THRESHOLD) ? "Open" : "Closed";
-    if (currentEyeStatus !== eyeStatus) {
-        eyeStatus = currentEyeStatus;
-        if (eyeTimer) {
-            clearTimeout(eyeTimer);
-            eyeTimer = null;
-        }
-    }
-    if (eyeStatus === "Closed") {
-        if (!eyeTimer) {
-            eyeTimer = setTimeout(() => {
-                realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', data);
-            }, EYE_THRESHOLD);
-        }
-    } else {
-        if (eyeTimer) {
-            clearTimeout(eyeTimer);
-            eyeTimer = null;
-        }
-    }
 }
 });
