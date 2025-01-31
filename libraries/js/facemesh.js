@@ -13,7 +13,7 @@
 
         const faceMesh = new FaceMesh({
             locateFile: (file) => {
-                return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
             }
         });
 
