@@ -360,7 +360,7 @@ function($, str, ModalFactory) {
 
             if (vElement && cElement) {
                 clearInterval(waitForElements);
-                realfacemesh.setupFaceMesh(enablestrictcheck,
+                setupFaceMesh(enablestrictcheck,
                     function(result) {
                     if (result.status) {
                         realtimeDetection(cmid, attemptid,
