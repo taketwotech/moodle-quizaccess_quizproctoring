@@ -6,16 +6,10 @@
     const GAZE_THRESHOLD = 1000;
     const EYE_THRESHOLD = 4000;
     let lastDetectionTime = Date.now();
-    function setupFaceMesh(enablestrictcheck, callback) {
+    function setupFaceMesh(faceMesh, enablestrictcheck, callback) {
         const videoElement = document.getElementById('video');
         const canvasElement = document.getElementById('canvas');
         const canvasCtx = canvasElement.getContext('2d');
-
-        const faceMesh = new FaceMesh({
-            locateFile: (file) => {
-                return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
-            }
-        });
 
         faceMesh.setOptions({
             maxNumFaces: 5,

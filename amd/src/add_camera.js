@@ -360,7 +360,12 @@ function($, str, ModalFactory) {
 
             if (vElement && cElement) {
                 clearInterval(waitForElements);
-                setupFaceMesh(enablestrictcheck,
+                const faceMesh = new FaceMesh({
+                    locateFile: (file) => {
+                        return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
+                    }
+                });
+                setupFaceMesh(faceMesh, enablestrictcheck,
                     function(result) {
                     if (result.status) {
                         realtimeDetection(cmid, attemptid,
