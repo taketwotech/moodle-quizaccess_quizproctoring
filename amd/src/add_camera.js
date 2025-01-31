@@ -219,6 +219,13 @@ function($, str, ModalFactory) {
     var total = 0;
     let cachedStudentData = null;
     var result = null;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let db; // For IndexedDB
+    let isRecording = false; // Flag to track recording state
+    let uploadQueue = []; // Queue for uploads
+    let isUploading = false; // Flag to track upload state
+    let activeUploads = new Set();
 
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
@@ -257,7 +264,7 @@ function($, str, ModalFactory) {
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, externalserver, securewindow = null, userfullname,
-        enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
+        userid, enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -345,7 +352,23 @@ function($, str, ModalFactory) {
                     restoreSessionState(sessionState);
                 }
             });
+            //setupIndexedDB();
         });
+        const waitForElements = setInterval(() => {
+            const vElement = document.getElementById('video');
+            const cElement = document.getElementById('canvas');
+
+            if (vElement && cElement) {
+                clearInterval(waitForElements);
+                realfacemesh.setupFaceMesh(enablestrictcheck,
+                    function(result) {
+                    if (result.status) {
+                        realtimeDetection(cmid, attemptid,
+                            mainimage, result.status, result.data);
+                    }
+                });
+            }
+        }, 500);
 
         signalingSocket.on('disconnect', function() {
             /* Tear down all of our peer connections and remove all
@@ -552,6 +575,16 @@ function($, str, ModalFactory) {
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
                 });
+
+            $('#mod_quiz-next-nav').click(function(event) {
+            /*$('#responseform').append('<input type="hidden" name="next" value="Next page">');
+            event.preventDefault();
+            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
+            $('#loading').show();
+            $("#mod_quiz-prev-nav").prop("disabled", true);
+            $("#mod_quiz-next-nav").prop("disabled", true);*/
+            stopRecording(userid, quizid);
+        });
     }
 
     };
@@ -655,6 +688,7 @@ function($, str, ModalFactory) {
                 navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
                     localMediaStream = stream;
+                    //startRecording();
                     if (verifyduringattempt) {
                         $('<canvas>').attr({id: 'canvas', width: '280',
                             height: '240', 'style': 'display: none;'}).appendTo('body');
@@ -691,25 +725,6 @@ function($, str, ModalFactory) {
                         var camera = new Camera(cmid, mainimage, attemptid, quizid);
                         camera.startcamera();
                         setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
-                        if (serviceoption != 'AWS') {
-                            const videoElement = document.getElementById('video');
-                            const canvasElement = document.getElementById('canvas');
-                            if (videoElement && canvasElement) {
-                                videoElement.addEventListener('loadeddata', () => {
-                                    videoElement.play();
-                                    if (typeof facemesh !== 'undefined') {
-                                        facemesh.processFrame(videoElement, canvasElement,
-                                            cmid, attemptid, mainimage, enablestrictcheck,
-                                            function(result) {
-                                            if (result.status) {
-                                                realtimeDetection(cmid, attemptid,
-                                                    mainimage, result.status, result.data);
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        }
                     }
                     return stream;
                 })
@@ -894,5 +909,230 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
             }
         }
     });
+}
+// Setup IndexedDB
+function setupIndexedDB() {
+    const request = indexedDB.open("VideoDB", 1);
+
+    request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains("videos")) {
+            db.createObjectStore("videos", {
+                keyPath: "id",
+                autoIncrement: true,
+            });
+        }
+    };
+
+    request.onsuccess = (event) => {
+        db = event.target.result;
+        console.log("IndexedDB is ready!");
+        resumeUploads(); // Resume uploads if any
+    };
+
+    request.onerror = (event) => {
+        console.error("Error opening IndexedDB:", event.target.error);
+    };
+}
+
+// Save video to IndexedDB
+function saveVideoToIndexedDB(blob, userid, quizid) {
+    if (!db) {
+        console.error("IndexedDB is not initialized");
+        return;
+    }
+
+    const transaction = db.transaction("videos", "readwrite");
+    const store = transaction.objectStore("videos");
+
+    const videoEntry = {
+        timestamp: new Date().toISOString(),
+        blob: blob,
+        status: 'pending' // Track upload status
+    };
+
+    const request = store.add(videoEntry);
+
+    request.onsuccess = (event) => {
+        const id = event.target.result; // Get the ID of the newly created entry
+        console.log("Video saved to IndexedDB successfully with ID:", id);
+        videoEntry.id = id; // Assign the ID to the videoEntry
+        uploadQueue.push(videoEntry); // Add to upload queue
+        processUploadQueue(userid, quizid); // Start processing the queue
+    };
+
+    request.onerror = (event) => {
+        console.error("Error saving video to IndexedDB:", event.target.error);
+    };
+}
+
+// Update the status of a video in IndexedDB
+function updateVideoStatusInIndexedDB(id, status) {
+    if (!db) {
+        console.error("IndexedDB is not initialized");
+        return;
+    }
+
+    const transaction = db.transaction("videos", "readwrite");
+    const store = transaction.objectStore("videos");
+
+    const request = store.get(id);
+
+    request.onsuccess = (event) => {
+        const videoData = event.target.result;
+        if (videoData) {
+            videoData.status = status; // Update the status
+            const updateRequest = store.put(videoData);
+
+            updateRequest.onsuccess = () => {
+                console.log(`Video ID ${id} status updated to "${status}"`);
+            };
+
+            updateRequest.onerror = (event) => {
+                console.error(`Error updating video ID ${id} status:`, event.target.error);
+            };
+        } else {
+            console.error(`Video with ID ${id} not found in IndexedDB`);
+        }
+    };
+
+    request.onerror = (event) => {
+        console.error(`Error retrieving video ID ${id}:`, event.target.error);
+    };
+}
+
+// Process the upload queue
+function processUploadQueue(userid, quizid) {
+    if (isUploading || uploadQueue.length === 0) {
+        return; // Exit if already uploading or queue is empty
+    }
+
+    const videoData = uploadQueue.shift(); // Get the next video to upload
+    if (activeUploads.has(videoData.id)) {
+        processUploadQueue(); // Skip if already uploading
+        return;
+    }
+
+    activeUploads.add(videoData.id); // Mark as active upload
+    updateVideoStatusInIndexedDB(videoData.id, "uploading"); // Set status to 'uploading'
+
+    const formData = new FormData();
+    formData.append("video", videoData.blob, `userid_quizid.webm`);
+
+    fetch("/upload", {
+        method: "POST",
+        body: formData,
+    })
+        .then((response) => {
+            if (response.ok) {
+                console.log(`Uploaded video: ${videoData.timestamp}`);
+                updateVideoStatusInIndexedDB(videoData.id, "uploaded"); // Update status to 'uploaded'
+                deleteVideoFromIndexedDB(videoData.id); // Delete video from IndexedDB
+            } else {
+                console.error("Upload failed:", response.statusText);
+                updateVideoStatusInIndexedDB(videoData.id, "pending"); // Reset status to 'pending'
+                uploadQueue.push(videoData); // Re-add to the queue
+            }
+        })
+        .catch((error) => {
+            console.error("Error uploading video:", error);
+            updateVideoStatusInIndexedDB(videoData.id, "pending"); // Reset status to 'pending'
+            uploadQueue.push(videoData); // Re-add to the queue
+        })
+        .finally(() => {
+            activeUploads.delete(videoData.id); // Remove from active uploads
+            processUploadQueue(); // Process the next upload
+        });
+}
+
+// Resume uploads from IndexedDB
+function resumeUploads() {
+    if (!db) {
+        console.error("IndexedDB is not initialized");
+        return;
+    }
+
+    const transaction = db.transaction("videos", "readwrite");
+    const store = transaction.objectStore("videos");
+
+    const request = store.openCursor();
+
+    request.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor) {
+            const videoData = cursor.value;
+
+            if (videoData.status === "pending") {
+                // Add to queue if not already queued
+                const existing = uploadQueue.some((video) => video.id === videoData.id);
+                if (!existing) {
+                    uploadQueue.push(videoData);
+                }
+            } else if (videoData.status === "uploading") {
+                // Assume it's uploaded and delete it
+                console.log(`Assuming video ID ${videoData.id} was successfully uploaded. Deleting from IndexedDB.`);
+                deleteVideoFromIndexedDB(videoData.id);
+            }
+
+            cursor.continue(); // Move to the next video
+        } else {
+            console.log("All pending and uploading videos processed.");
+            processUploadQueue(); // Start processing the queue
+        }
+    };
+
+    request.onerror = (event) => {
+        console.error("Error retrieving videos:", event.target.error);
+    };
+}
+
+// Delete video from IndexedDB after upload
+function deleteVideoFromIndexedDB(id) {
+    if (!id) {
+        console.error("No ID provided for deletion");
+        return; // Exit if no ID is provided
+    }
+
+    const transaction = db.transaction("videos", "readwrite");
+    const store = transaction.objectStore("videos");
+
+    const request = store.delete(id);
+
+    request.onsuccess = () => {
+        console.log(`Video with ID ${id} deleted from IndexedDB`);
+    };
+
+    request.onerror = (event) => {
+        console.error("Error deleting video from IndexedDB:", event.target.error);
+    };
+}
+
+function startRecording() {
+    recordRTC = RecordRTC(localMediaStream, {
+        type: 'video'
+    });
+    recordRTC.startRecording();
+    recording = true;               
+}
+
+ function stopRecording(userid, quizid) {
+    // Stop recording for the local user
+    if (recordRTC) {
+        recordRTC.stopRecording(function (videoURL) {
+        // videoURL contains the recorded video data
+        console.log(videoURL);
+
+       
+        fetch(videoURL)
+            .then(response => response.blob())
+            .then(blob => {
+                saveVideoToIndexedDB(blob, userid, quizid);
+            })
+            .catch(error => {
+                console.error("Error fetching video URL:", error);
+            });
+        });
+    }
+recording = false;
 }
 });

@@ -1,30 +1,19 @@
 (function($, str) {
-    let gazeDirection = null;
-    let gazeTimer = null;
-    const GAZE_THRESHOLD = 1000;
-    let eyeStatus = "Open";
-    let eyeTimer = null;
-    const EYE_THRESHOLD = 4000;
-    let lastDetectionTime = Date.now();
+let gazeDirection = null;
+let gazeTimer = null;
+const GAZE_THRESHOLD = 1000;
+let eyeStatus = "Open";
+let eyeTimer = null;
+const EYE_THRESHOLD = 4000;
+let lastDetectionTime = Date.now();
 
-function processFrame(videoElement, canvasElement, cmid, attemptid,
-    mainimage, enablestrictcheck, callback) {
-    if (!videoElement || videoElement.readyState < 2) {
-        setTimeout(() => processFrame(videoElement, canvasElement,
-            cmid, attemptid, mainimage, enablestrictcheck, callback), 1000);
-        return;
-    }
-    setupFaceMesh(videoElement, canvasElement, cmid,
-        attemptid, mainimage, enablestrictcheck, callback);
-    setTimeout(() => processFrame(videoElement, canvasElement,
-        cmid, attemptid, mainimage, enablestrictcheck, callback), 500);
-}
-
-function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, enablestrictcheck, callback) {
+function setupFaceMesh(enablestrictcheck, callback) {
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
     const canvasCtx = canvasElement.getContext('2d');
     const faceMesh = new FaceMesh({
         locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
+            return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
         }
     });
     faceMesh.setOptions({
@@ -53,18 +42,20 @@ function setupFaceMesh(videoElement, canvasElement, cmid, attemptid, mainimage, 
         if (enablestrictcheck === 1 && typeof results.multiFaceLandmarks != 'undefined'
             && results.multiFaceLandmarks.length === 1) {
             results.multiFaceLandmarks.forEach(landmarks => {
-                detectGazeDirection(landmarks, cmid, attemptid, mainimage, data, callback);
-                detectEyeStatus(landmarks, cmid, attemptid, mainimage, data, callback);
+                detectGazeDirection(landmarks, data, callback);
+                detectEyeStatus(landmarks, data, callback);
             });
         }
         canvasCtx.restore();
         callback(returnData);
     });
 
-    faceMesh.send({image: videoElement});
+    setInterval(async () => {
+        await faceMesh.send({ image: videoElement });
+    }, 500);
 }
 
-function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data, callback) {
+function detectGazeDirection(landmarks, data, callback) {
     const leftEye = landmarks[33];
     const rightEye = landmarks[263];
     const nose = landmarks[1];
@@ -103,7 +94,7 @@ function detectGazeDirection(landmarks, cmid, attemptid, mainimage, data, callba
     }
 }
 
-function detectEyeStatus(landmarks, cmid, attemptid, mainimage, data, callback) {
+function detectEyeStatus(landmarks, data, callback) {
     const leftEyeUpper = landmarks[159];
     const leftEyeLower = landmarks[145];
     const rightEyeUpper = landmarks[386];
@@ -138,7 +129,7 @@ function detectEyeStatus(landmarks, cmid, attemptid, mainimage, data, callback) 
         }
     }
 }
-window.facemesh = {
-        processFrame: processFrame,
+window.realfacemesh = {
+        setupFaceMesh: setupFaceMesh,
     };
 })(jQuery, M.util.get_string);

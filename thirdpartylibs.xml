@@ -183,4 +183,12 @@
         <license>MIT</license>
         <licenseversion></licenseversion>
     </library>
+
+    <library>
+        <location>libraries/js/RecordRTC.js</location>
+        <name>package</name>
+        <version>2.0</version>
+        <license>MIT</license>
+        <licenseversion></licenseversion>
+    </library>
 </libraries>
