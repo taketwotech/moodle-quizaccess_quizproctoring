@@ -125,7 +125,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $enablevideo, $enablestrict, $proctorrecord->time_interval);
     });
     M.util.js_complete();", true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh-v1.0.min.js', true);
 }
 
 /**
