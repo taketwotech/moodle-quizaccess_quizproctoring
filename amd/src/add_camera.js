@@ -218,11 +218,8 @@ function($, str, ModalFactory) {
     var stream = null;
     var total = 0;
     let cachedStudentData = null;
-    var result = null;
-    let mediaRecorder;
-    let recordedChunks = [];
     let db; // For IndexedDB
-    let isRecording = false; // Flag to track recording state
+    let recording = false;
     let uploadQueue = []; // Queue for uploads
     let isUploading = false; // Flag to track upload state
     let activeUploads = new Set();
@@ -588,8 +585,17 @@ function($, str, ModalFactory) {
             $('#loading').show();
             $("#mod_quiz-prev-nav").prop("disabled", true);
             $("#mod_quiz-next-nav").prop("disabled", true);*/
-            stopRecording(userid, quizid);
+            stopRecording();
         });
+
+            var recordButton = $("<button class='start-recording'>").text("Start Recording").click(function() {
+                    if (recording) {                       
+                        stopRecording();
+                        $(this).removeClass("stop-recording").addClass("start-recording").text("Start Recording");
+                    }
+                });
+                // Append the recordButton to the buttons container
+                $('footer').append(recordButton);
     }
 
     };
@@ -941,7 +947,7 @@ function setupIndexedDB() {
 }
 
 // Save video to IndexedDB
-function saveVideoToIndexedDB(blob, userid, quizid) {
+function saveVideoToIndexedDB(blob) {
     if (!db) {
         console.error("IndexedDB is not initialized");
         return;
@@ -963,7 +969,7 @@ function saveVideoToIndexedDB(blob, userid, quizid) {
         console.log("Video saved to IndexedDB successfully with ID:", id);
         videoEntry.id = id; // Assign the ID to the videoEntry
         uploadQueue.push(videoEntry); // Add to upload queue
-        processUploadQueue(userid, quizid); // Start processing the queue
+        processUploadQueue(); // Start processing the queue
     };
 
     request.onerror = (event) => {
@@ -1007,7 +1013,7 @@ function updateVideoStatusInIndexedDB(id, status) {
 }
 
 // Process the upload queue
-function processUploadQueue(userid, quizid) {
+function processUploadQueue() {
     if (isUploading || uploadQueue.length === 0) {
         return; // Exit if already uploading or queue is empty
     }
@@ -1022,7 +1028,10 @@ function processUploadQueue(userid, quizid) {
     updateVideoStatusInIndexedDB(videoData.id, "uploading"); // Set status to 'uploading'
 
     const formData = new FormData();
-    formData.append("video", videoData.blob, `userid_quizid.webm`);
+    var fileName = Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const videoname = `${fileName}.webm`;
+    formData.append("video", videoData.blob, videoname);
+    formData.append("filepath", "/mod/quiz/accessrule/quizproctoring/upload/");
 
     fetch("/upload", {
         method: "POST",
@@ -1120,7 +1129,7 @@ function startRecording() {
     recording = true;               
 }
 
- function stopRecording(userid, quizid) {
+ function stopRecording() {
     // Stop recording for the local user
     if (recordRTC) {
         recordRTC.stopRecording(function (videoURL) {
@@ -1131,7 +1140,7 @@ function startRecording() {
         fetch(videoURL)
             .then(response => response.blob())
             .then(blob => {
-                saveVideoToIndexedDB(blob, userid, quizid);
+                saveVideoToIndexedDB(blob);
             })
             .catch(error => {
                 console.error("Error fetching video URL:", error);
