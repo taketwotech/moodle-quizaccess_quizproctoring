@@ -220,6 +220,7 @@ function($, str, ModalFactory) {
     let cachedStudentData = null;
     let db; // For IndexedDB
     let recording = false;
+    var recordRTC;
     let uploadQueue = []; // Queue for uploads
     let isUploading = false; // Flag to track upload state
     let activeUploads = new Set();
@@ -362,13 +363,15 @@ function($, str, ModalFactory) {
                         return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
                     }
                 });
-                setupFaceMesh(faceMesh, enablestrictcheck,
-                    function(result) {
-                    if (result.status) {
-                        realtimeDetection(cmid, attemptid,
-                            mainimage, result.status, result.data);
-                    }
-                });
+                if (typeof setupFaceMesh !== 'undefined') {
+                    setupFaceMesh(faceMesh, enablestrictcheck,
+                        function(result) {
+                        if (result.status) {
+                            realtimeDetection(cmid, attemptid,
+                                mainimage, result.status, result.data);
+                        }
+                    });
+                }
             }
         }, 500);
 
@@ -1126,17 +1129,15 @@ function startRecording() {
         type: 'video'
     });
     recordRTC.startRecording();
-    recording = true;               
+    recording = true;
 }
 
  function stopRecording() {
     // Stop recording for the local user
     if (recordRTC) {
-        recordRTC.stopRecording(function (videoURL) {
+        recordRTC.stopRecording(function(videoURL) {
         // videoURL contains the recorded video data
         console.log(videoURL);
-
-       
         fetch(videoURL)
             .then(response => response.blob())
             .then(blob => {

@@ -399,6 +399,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->setDefault('enablestudentvideo', 1);
             $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
 
+            // Allow admin or teacher to setup strict check of eyes detection during exam.
+            $mform->addElement('selectyesno', 'enablestricteyecheck',
+                get_string('enablestricteyecheck', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('enablestricteyecheck', 'enablestricteyecheck', 'quizaccess_quizproctoring');
+            $mform->setDefault('enablestricteyecheck', 0);
+            $mform->hideIf('enablestricteyecheck', 'enableproctoring', 'eq', '0');
+
             // Allow admin or teacher to setup strict check during exam.
             $mform->addElement('selectyesno', 'enablestrictcheck',
                 get_string('enablestrictcheck', 'quizaccess_quizproctoring'));
@@ -458,6 +465,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enableprofilematch = 0;
             $record->enablestudentvideo = 1;
             $record->enablestrictcheck = 0;
+            $record->enablestricteyecheck = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -471,12 +479,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $enablestudentvideo = 1;
                 $storeallimages = 0;
                 $enablestrictcheck = 0;
+                $enablestricteyecheck = 0;
             } else {
                 $enableteacherproctor = $quiz->enableteacherproctor;
                 $enableprofilematch = $quiz->enableprofilematch;
                 $enablestudentvideo = $quiz->enablestudentvideo;
                 $storeallimages = $quiz->storeallimages;
                 $enablestrictcheck = $quiz->enablestrictcheck;
+                $enablestricteyecheck = $quiz->enablestricteyecheck;
             }
             $interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
@@ -488,6 +498,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enablestudentvideo = $enablestudentvideo;
             $record->storeallimages = $storeallimages;
             $record->enablestrictcheck = $enablestrictcheck;
+            $record->enablestricteyecheck = $enablestricteyecheck;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -514,7 +525,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public static function get_settings_sql($quizid) {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
-            enablestudentvideo,enablestrictcheck,time_interval,warning_threshold,proctoringvideo_link',
+            enablestudentvideo,enablestrictcheck,enablestricteyecheck,time_interval,
+            warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             [],
         ];
