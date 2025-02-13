@@ -186,20 +186,15 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      */
     public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
-        global $PAGE, $DB, $USER, $CFG;
+        global $PAGE, $DB, $USER;
 
-        require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $securewindow = $DB->get_record('quiz', array('id' => $this->quiz->id));
         $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
-        $env = load_env(__DIR__ . '/.env');
-        if (!empty($env['API_URL'])) {
-            $apiurl = $env['API_URL'];
-        }
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
-                $this->quiz->id, $serviceoption, $apiurl, $securewindow->browsersecurity]);
+                $this->quiz->id, $serviceoption, $securewindow->browsersecurity]);
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);

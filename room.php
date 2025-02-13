@@ -24,7 +24,6 @@
  */
 
 require_once(__DIR__ . '/../../../../config.php');
-require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 require_login();
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php'));
@@ -41,14 +40,10 @@ $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('report');
 echo $OUTPUT->header();
 $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-$env = load_env(__DIR__ . '/.env');
-if (!empty($env['API_URL'])) {
-    $apiurl = $env['API_URL'];
-}
 // Include js module.
 echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
-'init', [$cmid, false, true, null, true, $room, $serviceoption, $apiurl]);
+'init', [$cmid, false, true, null, true, $room, $serviceoption]);
 echo '<div id="nostudentonline">';
 echo get_string('nostudentonline', 'quizaccess_quizproctoring');
 echo '</div>';

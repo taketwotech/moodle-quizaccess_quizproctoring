@@ -53,9 +53,6 @@ class api {
     /** @var API accesstokensecret */
     private static $accesstokensecret = null;
 
-    /** @var API apiurl */
-    private static $apiurl;
-
     /**
      * Initialize Facematch Endpoint
      *
@@ -63,10 +60,6 @@ class api {
      */
     public static function init() {
         global $CFG;
-        $env = load_env(__DIR__ . '/../.env');
-        if (!empty($env['API_URL'])) {
-            self::$apiurl = $env['API_URL'];
-        }
         self::$accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         self::$accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
     }
@@ -101,7 +94,7 @@ class api {
     public static function proctor_image_api($imagedata, $userid, $quizid) {
         self::init();
         $curl = new \curl();
-        $url = self::$apiurl . '/validate';
+        $url = 'https://proctoring.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::domain();
@@ -126,7 +119,7 @@ class api {
     public static function getuserinfo() {
         self::init();
         $curl = new \curl();
-        $url = self::$apiurl . '/getuserinfo';
+        $url = 'https://proctoring.taketwotechnologies.com/getuserinfo';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $header = [
