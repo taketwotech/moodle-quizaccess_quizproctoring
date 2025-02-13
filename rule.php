@@ -544,36 +544,4 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             unset($SESSION->proctoringcheckedquizzes[$this->quiz->id]);
         }
     }
-
-    /**
-     * Sets up the attempt (review or summary) page with any properties required
-     * by the access rules.
-     *
-     * @param moodle_page $page the page object to initialise.
-     */
-    public function setup_attempt_page($page) {
-        global $PAGE, $DB, $CFG;
-        $url = $PAGE->url;
-        $urlname = pathinfo($url, PATHINFO_FILENAME);
-        if ($urlname == 'review') {
-            $attemptid = required_param('attempt', PARAM_INT);
-            $cmid      = optional_param('cmid', null, PARAM_INT);
-            $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
-            $quiz = $attemptobj->get_quiz();
-            $userid = $attemptobj->get_userid();
-            $release = get_config('moodle', 'release');
-            $compareversion = '4.3';
-            $context = context_module::instance($quiz->cmid);
-            $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
-            if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
-                $quizinfo = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
-                $usermages = $DB->get_record('quizaccess_proctor_data', [
-                    'quizid' => $quiz->id,
-                    'userid' => $userid,
-                    'attemptid' => $attemptid,
-                    'image_status' => 'M',
-                ]);
-            }
-        }
-    }
 }
