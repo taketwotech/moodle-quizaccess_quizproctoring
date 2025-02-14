@@ -319,36 +319,30 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025010600, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025010601) {
+    if ($oldversion < 2025021300) {
 
-        // Define field enablestrictcheck to be added to quizaccess_quizproctoring.
+        // Define the table.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1',
-            null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
 
-        // Conditionally launch add field enablestrictcheck.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+        // Define field enablestrictcheck.
+        $field1 = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
+
+        // Conditionally add field enablestrictcheck.
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+
+        // Define field enablestricteyecheck.
+        $field2 = new xmldb_field('enablestricteyecheck', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enablestrictcheck');
+
+        // Conditionally add field enablestricteyecheck.
+        if (!$dbman->field_exists($table, $field2)) {
+            $dbman->add_field($table, $field2);
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025010601, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025021300, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025021100) {
-
-        // Define field enablestricteyecheck to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablestricteyecheck', XMLDB_TYPE_INTEGER, '1',
-            null, XMLDB_NOTNULL, null, '0', 'enablestrictcheck');
-
-        // Conditionally launch add field enablestricteyecheck.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025021100, 'quizaccess', 'quizproctoring');
-    }
     return true;
 }
