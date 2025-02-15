@@ -325,7 +325,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $table = new xmldb_table('quizaccess_quizproctoring');
 
         // Define field enablestrictcheck.
-        $field1 = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
+        $field1 = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER,
+            '1', null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
 
         // Conditionally add field enablestrictcheck.
         if (!$dbman->field_exists($table, $field1)) {
@@ -333,7 +334,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Define field enablestricteyecheck.
-        $field2 = new xmldb_field('enablestricteyecheck', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enablestrictcheck');
+        $field2 = new xmldb_field('enablestricteyecheck', XMLDB_TYPE_INTEGER,
+            '1', null, XMLDB_NOTNULL, null, '0', 'enablestrictcheck');
 
         // Conditionally add field enablestricteyecheck.
         if (!$dbman->field_exists($table, $field2)) {

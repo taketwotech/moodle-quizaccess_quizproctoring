@@ -78,7 +78,7 @@ function($, str, ModalFactory) {
                         };
                     } else {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
-                    }             
+                    }
 
                     restoreVideoPosition(videoElement);
                     makeDraggable(videoElement);
@@ -275,6 +275,7 @@ function($, str, ModalFactory) {
             document.addEventListener('drop', function(event) {
                 event.preventDefault();
             });
+            // eslint-disable-next-line no-undef
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
@@ -303,12 +304,14 @@ function($, str, ModalFactory) {
 
             if (vElement && cElement) {
                 clearInterval(waitForElements);
+                // eslint-disable-next-line no-undef
                 const faceMesh = new FaceMesh({
                     locateFile: (file) => {
                         return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
                     }
                 });
                 if (typeof setupFaceMesh !== 'undefined') {
+                    // eslint-disable-next-line no-undef
                     setupFaceMesh(faceMesh, enablestrictcheck,
                         function(result) {
                         if (result.status) {
@@ -853,7 +856,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
 /**
  * Restore Video Position
  *
- * @param {Longtext} data video
+ * @param {HTMLElement} element - The video element whose position should be restored.
  * @return {void}
  */
 function restoreVideoPosition(element) {
@@ -868,33 +871,33 @@ function restoreVideoPosition(element) {
 /**
  * Draggable Video Position
  *
- * @param {Longtext} data video
+ * @param {HTMLElement} element - The video element 
  * @return {void}
  */
 function makeDraggable(element) {
-    let offsetX = 0, offsetY = 0, isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
 
-    element.addEventListener('mousedown', function (e) {
+    element.addEventListener('mousedown', function(e) {
         isDragging = true;
         offsetX = e.clientX - element.getBoundingClientRect().left;
         offsetY = e.clientY - element.getBoundingClientRect().top;
         element.style.cursor = 'grabbing';
     });
 
-    document.addEventListener('mousemove', function (e) {
+    document.addEventListener('mousemove', function(e) {
         if (!isDragging) return;
 
         requestAnimationFrame(() => {
             let newLeft = e.clientX - offsetX;
             let newTop = e.clientY - offsetY;
 
-            // Prevent dragging out of the viewport
             const maxLeft = window.innerWidth - element.offsetWidth;
             const maxTop = window.innerHeight - element.offsetHeight;
             newLeft = Math.max(0, Math.min(newLeft, maxLeft));
             newTop = Math.max(0, Math.min(newTop, maxTop));
-
-            // 🚀 Once user moves it, switch to `fixed` so it sticks while scrolling
+            
             if (element.style.position !== 'fixed') {
                 element.style.position = 'fixed';
             }
@@ -904,12 +907,10 @@ function makeDraggable(element) {
         });
     });
 
-    document.addEventListener('mouseup', function () {
+    document.addEventListener('mouseup', function() {
         if (isDragging) {
             isDragging = false;
             element.style.cursor = 'grab';
-
-            // Save position to localStorage
             localStorage.setItem('videoPosition', JSON.stringify({
                 left: parseInt(element.style.left, 10),
                 top: parseInt(element.style.top, 10)
