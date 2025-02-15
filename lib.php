@@ -95,24 +95,33 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     }
-    $fullname = $user->firstname .''.$user->lastname;
+    $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     if ($serviceoption != 'AWS') {
         $enablevideo = $proctorrecord->enablestudentvideo;
+        $enablestrict = $proctorrecord->enablestrictcheck;
     } else {
         $enablevideo = 1;
+        $enablestrict = 0;
     }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/camera_utils.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/control_utils.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/drawing_utils.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/face_mesh.js', true);
+    $PAGE->requires->jquery();
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/RecordRTC.js', true);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
-        $enablevideo, $proctorrecord->time_interval);
+        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname', $user->id,
+        $enablevideo, $enablestrict, $proctorrecord->time_interval);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh-v1.0.min.js', true);
 }
 
 /**
@@ -283,3 +292,4 @@ function clean_images_task() {
         }
     }
 }
+

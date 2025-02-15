@@ -80,56 +80,8 @@ function($, str, ModalFactory) {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     }
 
-                    const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
-                    if (savedPosition) {
-                        videoElement.style.left = savedPosition.left;
-                        videoElement.style.top = savedPosition.top;
-                    }
-
-                    let offsetX;
-                    let offsetY;
-                    let isDragging = false;
-
-                    const stopDragging = function() {
-                        if (isDragging) {
-                            isDragging = false;
-                            videoElement.style.zIndex = 9999998;
-
-                            // Save position
-                            const position = {
-                                left: videoElement.style.left,
-                                top: videoElement.style.top,
-                            };
-                            localStorage.setItem('videoPosition', JSON.stringify(position));
-                        }
-                    };
-
-                    videoElement.addEventListener('mousedown', function(e) {
-                        isDragging = true;
-                        offsetX = e.clientX - videoElement.getBoundingClientRect().left;
-                        offsetY = e.clientY - videoElement.getBoundingClientRect().top;
-                        videoElement.style.zIndex = 9999999;
-                    });
-
-                    window.addEventListener('mousemove', function(e) {
-                        if (isDragging) {
-                            videoElement.style.left = `${e.clientX - offsetX}px`;
-                            videoElement.style.top = `${e.clientY - offsetY}px`;
-                        }
-                    });
-
-                    window.addEventListener('mouseup', stopDragging);
-
-                    // Additional safeguard: Cancel dragging if the mouse leaves the viewport
-                    window.addEventListener('mouseout', stopDragging);
-
-                    // Timeout fallback to stop dragging after a delay
-                    setInterval(() => {
-                        if (isDragging) {
-                            stopDragging();
-                        }
-                    }, 2000);
-
+                    restoreVideoPosition(videoElement);
+                    makeDraggable(videoElement);
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
@@ -206,7 +158,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctoring.taketwotechnologies.com';
+    var externalserver = 'https://proctor-dev.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -218,7 +170,7 @@ function($, str, ModalFactory) {
     var attachMediaStream = null;
     var stream = null;
     var total = 0;
-
+    let cachedStudentData = null;
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
@@ -235,11 +187,13 @@ function($, str, ModalFactory) {
             this.activeModal.destroy();
         }
         return ModalFactory.create({
-            body: message,
+        body: message,
         }).then((modal) => {
             this.activeModal = modal;
             modal.show();
             return null;
+        }).catch(() => {
+            showCustomModal(message);
         });
     };
 
@@ -253,8 +207,8 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, securewindow = null, userfullname = null,
-        enablestudentvideo = 1, setinterval = 300) {
+        teacher, quizid, serviceoption, securewindow = null, userfullname,
+        userid, enablestudentvideo = 1, enablestrictcheck = 0, setinterval = 300) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -321,13 +275,14 @@ function($, str, ModalFactory) {
             document.addEventListener('drop', function(event) {
                 event.preventDefault();
             });
+            // eslint-disable-next-line no-undef
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, setinterval,
+            teacher, enablestudentvideo, enablestrictcheck, setinterval,
             serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
@@ -343,6 +298,30 @@ function($, str, ModalFactory) {
                 }
             });
         });
+        const waitForElements = setInterval(() => {
+            const vElement = document.getElementById('video');
+            const cElement = document.getElementById('canvas');
+
+            if (vElement && cElement) {
+                clearInterval(waitForElements);
+                // eslint-disable-next-line no-undef
+                const faceMesh = new FaceMesh({
+                    locateFile: (file) => {
+                        return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
+                    }
+                });
+                if (typeof setupFaceMesh !== 'undefined') {
+                    // eslint-disable-next-line no-undef
+                    setupFaceMesh(faceMesh, enablestrictcheck,
+                        function(result) {
+                        if (result.status) {
+                            realtimeDetection(cmid, attemptid,
+                                mainimage, result.status, result.data);
+                        }
+                    });
+                }
+            }
+        }, 500);
 
         signalingSocket.on('disconnect', function() {
             /* Tear down all of our peer connections and remove all
@@ -360,6 +339,22 @@ function($, str, ModalFactory) {
         });
 
         signalingSocket.on('addPeer', function(config) {
+            if (!config.studentData || config.studentData.length === 0) {
+                // No studentData received or it is empty
+            } else {
+                cachedStudentData = config.studentData;
+            }
+
+            if (cachedStudentData) {
+                const existingStudent = cachedStudentData.find(student => student.id === config.peer_id);
+                if (!existingStudent) {
+                    cachedStudentData.push({id: config.peer_id, fullname: config.fullname});
+                }
+            } else {
+                cachedStudentData = [];
+            }
+
+
             var peerId = config.peer_id;
 
             if (peerId in peers) {
@@ -409,7 +404,13 @@ function($, str, ModalFactory) {
                     }
 
                     var studentContainer = $("<div>").addClass("student-container");
+                    const studentData = cachedStudentData.find(sd => sd.id === peerId);
+                    const studentNameText = studentData ? studentData.fullname :
+                    config.fullname || "";
+
+                    const studentName = $("<span>").addClass("student-name").text(studentNameText);
                     studentContainer.append(remoteMedia);
+                    studentContainer.append(studentName);
 
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
@@ -535,6 +536,60 @@ function($, str, ModalFactory) {
     };
 
     /**
+     * Setup show Custom Modal
+     *
+     * @param {Longtext} message - string value
+     * @return {void}
+     */
+     function showCustomModal(message) {
+        $('.custom-modal').remove();
+        const modalHtml = `
+            <div class="custom-modal show" role="dialog" aria-modal="true" tabindex="-1">
+                <div class="custom-modal-dialog modal-dialog-scrollable">
+                    <div class="custom-modal-content">
+                        <div class="custom-modal-header">
+                            <h5 class="custom-modal-title"></h5>
+                            <button type="button" class="custom-close-btn" aria-label="Close">&times;</button>
+                        </div>
+                        <div class="custom-modal-body">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHtml);
+        $('.custom-modal').fadeIn();
+        $('.custom-close-btn').click(function() {
+            closeCustomModal();
+        });
+        $(document).on('click', function(e) {
+            const $modalContent = $('.custom-modal-content');
+            if (!$modalContent.is(e.target) && $modalContent.has(e.target).length === 0) {
+                closeCustomModal();
+            }
+        });
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCustomModal();
+            }
+        });
+    }
+
+    /**
+     * Setup close Custom Modal
+     *
+     * @return {void}
+     */
+    function closeCustomModal() {
+        $('.custom-modal').fadeOut(function() {
+            $(this).remove();
+        });
+        $(document).off('click');
+        $(document).off('keydown');
+    }
+
+    /**
      * Setup Local Media
      *
      * @param {int} cmid - cmid
@@ -543,6 +598,7 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablestrictcheck - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -550,7 +606,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo,
+        teacher, enablestudentvideo, enablestrictcheck,
         setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
@@ -757,5 +813,109 @@ function setupPeerConnection(peerConnection, peerId, peer) {
                 }
             );
         });
+}
+
+/**
+ * Realtime Detection Ajax call
+ *
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {string} face string value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function realtimeDetection(cmid, attemptid, mainimage, face, data) {
+    var requestData = {
+        cmid: cmid,
+        attemptid: attemptid,
+        mainimage: mainimage,
+        validate: face,
+        imgBase64: data,
+    };
+    $.ajax({
+        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+        method: 'POST',
+        data: requestData,
+        success: function(response) {
+            if (response && response.errorcode) {
+                $(document).trigger('popup', response.error);
+            } else {
+                if (response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Restore Video Position
+ *
+ * @param {HTMLElement} element - The video element whose position should be restored.
+ * @return {void}
+ */
+function restoreVideoPosition(element) {
+    const savedPosition = localStorage.getItem('videoPosition');
+    if (savedPosition) {
+        const { left, top } = JSON.parse(savedPosition);
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
+    }
+}
+
+/**
+ * Draggable Video Position
+ *
+ * @param {HTMLElement} element - The video element 
+ * @return {void}
+ */
+function makeDraggable(element) {
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+
+    element.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        offsetX = e.clientX - element.getBoundingClientRect().left;
+        offsetY = e.clientY - element.getBoundingClientRect().top;
+        element.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+
+        requestAnimationFrame(() => {
+            let newLeft = e.clientX - offsetX;
+            let newTop = e.clientY - offsetY;
+
+            const maxLeft = window.innerWidth - element.offsetWidth;
+            const maxTop = window.innerHeight - element.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+            
+            if (element.style.position !== 'fixed') {
+                element.style.position = 'fixed';
+            }
+
+            element.style.left = `${newLeft}px`;
+            element.style.top = `${newTop}px`;
+        });
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            element.style.cursor = 'grab';
+            localStorage.setItem('videoPosition', JSON.stringify({
+                left: parseInt(element.style.left, 10),
+                top: parseInt(element.style.top, 10)
+            }));
+        }
+    });
 }
 });

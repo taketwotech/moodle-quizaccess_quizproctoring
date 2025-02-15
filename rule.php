@@ -78,8 +78,17 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 }
             }
         } else {
+            $response = \quizaccess_quizproctoring\api::getuserinfo();
+            $responsedata = json_decode($response, true);
             $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
             $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+            if (!$responsedata['active']) {
+                if ($isadmin) {
+                    return false;
+                } else {
+                    return get_string('warningstudent', 'quizaccess_quizproctoring');
+                }
+            }
             if (empty($accesstoken) || empty($accesstokensecret)) {
                 if ($isadmin) {
                     return get_string('warningopensourse', 'quizaccess_quizproctoring', $url);
@@ -133,7 +142,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                     'get'
                 );
         }
-        return get_string('proctoringnotice', 'quizaccess_quizproctoring').$button;
+        $response = \quizaccess_quizproctoring\api::getuserinfo();
+        $responsedata = json_decode($response, true);
+        if (!$responsedata['active']) {
+            if ($isadmin) {
+                $notice = '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
+            }
+        }
+        return get_string('proctoringnotice', 'quizaccess_quizproctoring').'<br>'.$notice.$button;
     }
 
     /**
@@ -377,6 +393,20 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->addHelpButton('enablestudentvideo', 'enablestudentvideo', 'quizaccess_quizproctoring');
             $mform->setDefault('enablestudentvideo', 1);
             $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
+
+            // Allow admin or teacher to setup strict check of eyes detection during exam.
+            $mform->addElement('selectyesno', 'enablestricteyecheck',
+                get_string('enablestricteyecheck', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('enablestricteyecheck', 'enablestricteyecheck', 'quizaccess_quizproctoring');
+            $mform->setDefault('enablestricteyecheck', 0);
+            $mform->hideIf('enablestricteyecheck', 'enableproctoring', 'eq', '0');
+
+            // Allow admin or teacher to setup strict check during exam.
+            $mform->addElement('selectyesno', 'enablestrictcheck',
+                get_string('enablestrictcheck', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('enablestrictcheck', 'enablestrictcheck', 'quizaccess_quizproctoring');
+            $mform->setDefault('enablestrictcheck', 0);
+            $mform->hideIf('enablestrictcheck', 'enableproctoring', 'eq', '0');
         }
 
         // Time interval set for proctoring image.
@@ -429,6 +459,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enableteacherproctor = 0;
             $record->enableprofilematch = 0;
             $record->enablestudentvideo = 1;
+            $record->enablestrictcheck = 0;
+            $record->enablestricteyecheck = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -441,11 +473,15 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $enableprofilematch = 0;
                 $enablestudentvideo = 1;
                 $storeallimages = 0;
+                $enablestrictcheck = 0;
+                $enablestricteyecheck = 0;
             } else {
                 $enableteacherproctor = $quiz->enableteacherproctor;
                 $enableprofilematch = $quiz->enableprofilematch;
                 $enablestudentvideo = $quiz->enablestudentvideo;
                 $storeallimages = $quiz->storeallimages;
+                $enablestrictcheck = $quiz->enablestrictcheck;
+                $enablestricteyecheck = $quiz->enablestricteyecheck;
             }
             $interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
@@ -456,6 +492,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enableprofilematch = $enableprofilematch;
             $record->enablestudentvideo = $enablestudentvideo;
             $record->storeallimages = $storeallimages;
+            $record->enablestrictcheck = $enablestrictcheck;
+            $record->enablestricteyecheck = $enablestricteyecheck;
             $record->time_interval = $interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
@@ -482,7 +520,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public static function get_settings_sql($quizid) {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
-            enablestudentvideo,time_interval,warning_threshold,proctoringvideo_link',
+            enablestudentvideo,enablestrictcheck,enablestricteyecheck,time_interval,
+            warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             [],
         ];
@@ -498,38 +537,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         // Entered the password for this quiz.
         if (!empty($SESSION->proctoringcheckedquizzes[$this->quiz->id])) {
             unset($SESSION->proctoringcheckedquizzes[$this->quiz->id]);
-        }
-    }
-
-    /**
-     * Sets up the attempt (review or summary) page with any properties required
-     * by the access rules.
-     *
-     * @param moodle_page $page the page object to initialise.
-     */
-    public function setup_attempt_page($page) {
-        global $PAGE, $DB, $CFG;
-        $url = $PAGE->url;
-        $urlname = pathinfo($url, PATHINFO_FILENAME);
-        if ($urlname == 'review') {
-            $attemptid = required_param('attempt', PARAM_INT);
-            $cmid      = optional_param('cmid', null, PARAM_INT);
-            $attemptobj = quiz_create_attempt_handling_errors($attemptid, $cmid);
-            $quiz = $attemptobj->get_quiz();
-            $userid = $attemptobj->get_userid();
-            $release = get_config('moodle', 'release');
-            $compareversion = '4.3';
-            $context = context_module::instance($quiz->cmid);
-            $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
-            if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
-                $quizinfo = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
-                $usermages = $DB->get_record('quizaccess_proctor_data', [
-                    'quizid' => $quiz->id,
-                    'userid' => $userid,
-                    'attemptid' => $attemptid,
-                    'image_status' => 'M',
-                ]);
-            }
         }
     }
 }

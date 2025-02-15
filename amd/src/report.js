@@ -237,13 +237,35 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         modal.getBody().find('.image-content').html(renderedHtml);
                                         // eslint-disable-next-line no-undef
                                         lightbox.init();
-                                        $('.image-link').on('click', function() {
-                                            var titleElement = $(this).next('.image-title');
-                                            var timeElement = $(this).next('.image-time');
-                                            titleElement.show();
-                                            timeElement.show();
+                                        var imagesInThisModal = modal.getBody().find('.image-link');
+                                        var totalImages = imagesInThisModal.length;
+
+                                        $('.image-link').on('click', function(event) {
+                                            event.preventDefault();
+                                            var index = imagesInThisModal.index($(this));
+                                            if (index === -1) {
+                                                return;
+                                            }
+                                            $('.lb-caption').each(function() {
+                                                if ($(this).next('.lb-num').length === 0) {
+                                                    $(this).after('<span class="lb-num"></span>');
+                                                }
+                                            });
+                                            $('.lb-num').text('Image ' + (index + 1) + ' of ' + totalImages);
+
                                             // eslint-disable-next-line no-undef
                                             lightbox.start($(this));
+                                            $('.lb-next, .lb-prev').off('click').on('click', function(event) {
+                                                event.preventDefault();
+                                                if ($(this).hasClass('lb-next')) {
+                                                    index = (index + 1) % totalImages;
+                                                } else if ($(this).hasClass('lb-prev')) {
+                                                    index = (index - 1 + totalImages) % totalImages;
+                                                }
+                                                var newImageSrc = imagesInThisModal.eq(index).attr('href');
+                                                $('.lb-image').attr('src', newImageSrc);
+                                                $('.lb-num').text('Image ' + (index + 1) + ' of ' + totalImages);
+                                            });
                                         });
                                         $('.image-link').on('lightbox:open', function() {
                                             $(this).next('.image-title').hide();
@@ -296,7 +318,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             + ' of ' + totalPages + ' ' + nextButton + '</div>';
                     }
 
-                    // Event handler for previous page
                     modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {
                         if (currentPage > 1) {
                             currentPage--;
@@ -304,7 +325,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     });
 
-                    // Event handler for next page
                     modal.getBody().off('click', '.next-page').on('click', '.next-page', function() {
                         if (currentPage < totalPages) {
                             currentPage++;
