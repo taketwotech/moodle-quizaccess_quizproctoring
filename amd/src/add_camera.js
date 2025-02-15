@@ -78,58 +78,10 @@ function($, str, ModalFactory) {
                         };
                     } else {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
-                    }
+                    }             
 
-                    const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
-                    if (savedPosition) {
-                        videoElement.style.left = savedPosition.left;
-                        videoElement.style.top = savedPosition.top;
-                    }
-
-                    let offsetX;
-                    let offsetY;
-                    let isDragging = false;
-
-                    const stopDragging = function() {
-                        if (isDragging) {
-                            isDragging = false;
-                            videoElement.style.zIndex = 9999998;
-
-                            // Save position
-                            const position = {
-                                left: videoElement.style.left,
-                                top: videoElement.style.top,
-                            };
-                            localStorage.setItem('videoPosition', JSON.stringify(position));
-                        }
-                    };
-
-                    videoElement.addEventListener('mousedown', function(e) {
-                        isDragging = true;
-                        offsetX = e.clientX - videoElement.getBoundingClientRect().left;
-                        offsetY = e.clientY - videoElement.getBoundingClientRect().top;
-                        videoElement.style.zIndex = 9999999;
-                    });
-
-                    window.addEventListener('mousemove', function(e) {
-                        if (isDragging) {
-                            videoElement.style.left = `${e.clientX - offsetX}px`;
-                            videoElement.style.top = `${e.clientY - offsetY}px`;
-                        }
-                    });
-
-                    window.addEventListener('mouseup', stopDragging);
-
-                    // Additional safeguard: Cancel dragging if the mouse leaves the viewport
-                    window.addEventListener('mouseout', stopDragging);
-
-                    // Timeout fallback to stop dragging after a delay
-                    setInterval(() => {
-                        if (isDragging) {
-                            stopDragging();
-                        }
-                    }, 2000);
-
+                    restoreVideoPosition(videoElement);
+                    makeDraggable(videoElement);
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
@@ -219,13 +171,6 @@ function($, str, ModalFactory) {
     var stream = null;
     var total = 0;
     let cachedStudentData = null;
-    let db; // For IndexedDB
-    let recording = false;
-    var recordRTC;
-    let uploadQueue = []; // Queue for uploads
-    let isUploading = false; // Flag to track upload state
-    let activeUploads = new Set();
-
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
@@ -351,7 +296,6 @@ function($, str, ModalFactory) {
                     restoreSessionState(sessionState);
                 }
             });
-            //setupIndexedDB();
         });
         const waitForElements = setInterval(() => {
             const vElement = document.getElementById('video');
@@ -581,25 +525,6 @@ function($, str, ModalFactory) {
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
                 });
-
-            $('#mod_quiz-next-nav').click(function(event) {
-            /*$('#responseform').append('<input type="hidden" name="next" value="Next page">');
-            event.preventDefault();
-            $('#page-wrapper').append('<img src="/mod/quiz/accessrule/quizproctoring/pix/loading.gif" id="loading">');
-            $('#loading').show();
-            $("#mod_quiz-prev-nav").prop("disabled", true);
-            $("#mod_quiz-next-nav").prop("disabled", true);*/
-            stopRecording();
-        });
-
-            var recordButton = $("<button class='start-recording'>").text("Start Recording").click(function() {
-                    if (recording) {                       
-                        stopRecording();
-                        $(this).removeClass("stop-recording").addClass("start-recording").text("Start Recording");
-                    }
-                });
-                // Append the recordButton to the buttons container
-                $('footer').append(recordButton);
     }
 
     };
@@ -703,7 +628,6 @@ function($, str, ModalFactory) {
                 navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
                     localMediaStream = stream;
-                    //startRecording();
                     if (verifyduringattempt) {
                         $('<canvas>').attr({id: 'canvas', width: '280',
                             height: '240', 'style': 'display: none;'}).appendTo('body');
@@ -925,230 +849,72 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
         }
     });
 }
-// Setup IndexedDB
-function setupIndexedDB() {
-    const request = indexedDB.open("VideoDB", 1);
 
-    request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains("videos")) {
-            db.createObjectStore("videos", {
-                keyPath: "id",
-                autoIncrement: true,
-            });
-        }
-    };
-
-    request.onsuccess = (event) => {
-        db = event.target.result;
-        console.log("IndexedDB is ready!");
-        resumeUploads(); // Resume uploads if any
-    };
-
-    request.onerror = (event) => {
-        console.error("Error opening IndexedDB:", event.target.error);
-    };
+/**
+ * Restore Video Position
+ *
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function restoreVideoPosition(element) {
+    const savedPosition = localStorage.getItem('videoPosition');
+    if (savedPosition) {
+        const { left, top } = JSON.parse(savedPosition);
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
+    }
 }
 
-// Save video to IndexedDB
-function saveVideoToIndexedDB(blob) {
-    if (!db) {
-        console.error("IndexedDB is not initialized");
-        return;
-    }
+/**
+ * Draggable Video Position
+ *
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function makeDraggable(element) {
+    let offsetX = 0, offsetY = 0, isDragging = false;
 
-    const transaction = db.transaction("videos", "readwrite");
-    const store = transaction.objectStore("videos");
-
-    const videoEntry = {
-        timestamp: new Date().toISOString(),
-        blob: blob,
-        status: 'pending' // Track upload status
-    };
-
-    const request = store.add(videoEntry);
-
-    request.onsuccess = (event) => {
-        const id = event.target.result; // Get the ID of the newly created entry
-        console.log("Video saved to IndexedDB successfully with ID:", id);
-        videoEntry.id = id; // Assign the ID to the videoEntry
-        uploadQueue.push(videoEntry); // Add to upload queue
-        processUploadQueue(); // Start processing the queue
-    };
-
-    request.onerror = (event) => {
-        console.error("Error saving video to IndexedDB:", event.target.error);
-    };
-}
-
-// Update the status of a video in IndexedDB
-function updateVideoStatusInIndexedDB(id, status) {
-    if (!db) {
-        console.error("IndexedDB is not initialized");
-        return;
-    }
-
-    const transaction = db.transaction("videos", "readwrite");
-    const store = transaction.objectStore("videos");
-
-    const request = store.get(id);
-
-    request.onsuccess = (event) => {
-        const videoData = event.target.result;
-        if (videoData) {
-            videoData.status = status; // Update the status
-            const updateRequest = store.put(videoData);
-
-            updateRequest.onsuccess = () => {
-                console.log(`Video ID ${id} status updated to "${status}"`);
-            };
-
-            updateRequest.onerror = (event) => {
-                console.error(`Error updating video ID ${id} status:`, event.target.error);
-            };
-        } else {
-            console.error(`Video with ID ${id} not found in IndexedDB`);
-        }
-    };
-
-    request.onerror = (event) => {
-        console.error(`Error retrieving video ID ${id}:`, event.target.error);
-    };
-}
-
-// Process the upload queue
-function processUploadQueue() {
-    if (isUploading || uploadQueue.length === 0) {
-        return; // Exit if already uploading or queue is empty
-    }
-
-    const videoData = uploadQueue.shift(); // Get the next video to upload
-    if (activeUploads.has(videoData.id)) {
-        processUploadQueue(); // Skip if already uploading
-        return;
-    }
-
-    activeUploads.add(videoData.id); // Mark as active upload
-    updateVideoStatusInIndexedDB(videoData.id, "uploading"); // Set status to 'uploading'
-
-    const formData = new FormData();
-    var fileName = Date.now() + '_' + Math.floor(Math.random() * 1000);
-    const videoname = `${fileName}.webm`;
-    formData.append("video", videoData.blob, videoname);
-    formData.append("filepath", "/mod/quiz/accessrule/quizproctoring/upload/");
-
-    fetch("/upload", {
-        method: "POST",
-        body: formData,
-    })
-        .then((response) => {
-            if (response.ok) {
-                console.log(`Uploaded video: ${videoData.timestamp}`);
-                updateVideoStatusInIndexedDB(videoData.id, "uploaded"); // Update status to 'uploaded'
-                deleteVideoFromIndexedDB(videoData.id); // Delete video from IndexedDB
-            } else {
-                console.error("Upload failed:", response.statusText);
-                updateVideoStatusInIndexedDB(videoData.id, "pending"); // Reset status to 'pending'
-                uploadQueue.push(videoData); // Re-add to the queue
-            }
-        })
-        .catch((error) => {
-            console.error("Error uploading video:", error);
-            updateVideoStatusInIndexedDB(videoData.id, "pending"); // Reset status to 'pending'
-            uploadQueue.push(videoData); // Re-add to the queue
-        })
-        .finally(() => {
-            activeUploads.delete(videoData.id); // Remove from active uploads
-            processUploadQueue(); // Process the next upload
-        });
-}
-
-// Resume uploads from IndexedDB
-function resumeUploads() {
-    if (!db) {
-        console.error("IndexedDB is not initialized");
-        return;
-    }
-
-    const transaction = db.transaction("videos", "readwrite");
-    const store = transaction.objectStore("videos");
-
-    const request = store.openCursor();
-
-    request.onsuccess = (event) => {
-        const cursor = event.target.result;
-        if (cursor) {
-            const videoData = cursor.value;
-
-            if (videoData.status === "pending") {
-                // Add to queue if not already queued
-                const existing = uploadQueue.some((video) => video.id === videoData.id);
-                if (!existing) {
-                    uploadQueue.push(videoData);
-                }
-            } else if (videoData.status === "uploading") {
-                // Assume it's uploaded and delete it
-                console.log(`Assuming video ID ${videoData.id} was successfully uploaded. Deleting from IndexedDB.`);
-                deleteVideoFromIndexedDB(videoData.id);
-            }
-
-            cursor.continue(); // Move to the next video
-        } else {
-            console.log("All pending and uploading videos processed.");
-            processUploadQueue(); // Start processing the queue
-        }
-    };
-
-    request.onerror = (event) => {
-        console.error("Error retrieving videos:", event.target.error);
-    };
-}
-
-// Delete video from IndexedDB after upload
-function deleteVideoFromIndexedDB(id) {
-    if (!id) {
-        console.error("No ID provided for deletion");
-        return; // Exit if no ID is provided
-    }
-
-    const transaction = db.transaction("videos", "readwrite");
-    const store = transaction.objectStore("videos");
-
-    const request = store.delete(id);
-
-    request.onsuccess = () => {
-        console.log(`Video with ID ${id} deleted from IndexedDB`);
-    };
-
-    request.onerror = (event) => {
-        console.error("Error deleting video from IndexedDB:", event.target.error);
-    };
-}
-
-function startRecording() {
-    recordRTC = RecordRTC(localMediaStream, {
-        type: 'video'
+    element.addEventListener('mousedown', function (e) {
+        isDragging = true;
+        offsetX = e.clientX - element.getBoundingClientRect().left;
+        offsetY = e.clientY - element.getBoundingClientRect().top;
+        element.style.cursor = 'grabbing';
     });
-    recordRTC.startRecording();
-    recording = true;
-}
 
- function stopRecording() {
-    // Stop recording for the local user
-    if (recordRTC) {
-        recordRTC.stopRecording(function(videoURL) {
-        // videoURL contains the recorded video data
-        console.log(videoURL);
-        fetch(videoURL)
-            .then(response => response.blob())
-            .then(blob => {
-                saveVideoToIndexedDB(blob);
-            })
-            .catch(error => {
-                console.error("Error fetching video URL:", error);
-            });
+    document.addEventListener('mousemove', function (e) {
+        if (!isDragging) return;
+
+        requestAnimationFrame(() => {
+            let newLeft = e.clientX - offsetX;
+            let newTop = e.clientY - offsetY;
+
+            // Prevent dragging out of the viewport
+            const maxLeft = window.innerWidth - element.offsetWidth;
+            const maxTop = window.innerHeight - element.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+
+            // 🚀 Once user moves it, switch to `fixed` so it sticks while scrolling
+            if (element.style.position !== 'fixed') {
+                element.style.position = 'fixed';
+            }
+
+            element.style.left = `${newLeft}px`;
+            element.style.top = `${newTop}px`;
         });
-    }
-recording = false;
+    });
+
+    document.addEventListener('mouseup', function () {
+        if (isDragging) {
+            isDragging = false;
+            element.style.cursor = 'grab';
+
+            // Save position to localStorage
+            localStorage.setItem('videoPosition', JSON.stringify({
+                left: parseInt(element.style.left, 10),
+                top: parseInt(element.style.top, 10)
+            }));
+        }
+    });
 }
 });
