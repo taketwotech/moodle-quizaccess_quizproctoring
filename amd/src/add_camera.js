@@ -862,7 +862,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
 function restoreVideoPosition(element) {
     const savedPosition = localStorage.getItem('videoPosition');
     if (savedPosition) {
-        const { left, top } = JSON.parse(savedPosition);
+        const {left, top} = JSON.parse(savedPosition);
         element.style.left = `${left}px`;
         element.style.top = `${top}px`;
     }
@@ -871,7 +871,7 @@ function restoreVideoPosition(element) {
 /**
  * Draggable Video Position
  *
- * @param {HTMLElement} element - The video element 
+ * @param {HTMLElement} element - The video element
  * @return {void}
  */
 function makeDraggable(element) {
@@ -887,7 +887,9 @@ function makeDraggable(element) {
     });
 
     document.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
+        if (!isDragging) {
+            return;
+        }
 
         requestAnimationFrame(() => {
             let newLeft = e.clientX - offsetX;
@@ -897,7 +899,6 @@ function makeDraggable(element) {
             const maxTop = window.innerHeight - element.offsetHeight;
             newLeft = Math.max(0, Math.min(newLeft, maxLeft));
             newTop = Math.max(0, Math.min(newTop, maxTop));
-            
             if (element.style.position !== 'fixed') {
                 element.style.position = 'fixed';
             }
