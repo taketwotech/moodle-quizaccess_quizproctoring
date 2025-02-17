@@ -394,13 +394,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->setDefault('enablestudentvideo', 1);
             $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
 
-            // Allow admin or teacher to setup strict check of eyes detection during exam.
-            $mform->addElement('selectyesno', 'enablestricteyecheck',
-                get_string('enablestricteyecheck', 'quizaccess_quizproctoring'));
-            $mform->addHelpButton('enablestricteyecheck', 'enablestricteyecheck', 'quizaccess_quizproctoring');
-            $mform->setDefault('enablestricteyecheck', 0);
-            $mform->hideIf('enablestricteyecheck', 'enableproctoring', 'eq', '0');
-
             // Allow admin or teacher to setup strict check during exam.
             $mform->addElement('selectyesno', 'enablestrictcheck',
                 get_string('enablestrictcheck', 'quizaccess_quizproctoring'));
@@ -410,7 +403,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         }
 
         // Time interval set for proctoring image.
-        $mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), [
+        /*$mform->addElement('select', 'time_interval', get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), [
             "5" => get_string('fiveseconds', 'quizaccess_quizproctoring'),
             "10" => get_string('tenseconds', 'quizaccess_quizproctoring'),
             "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
@@ -423,7 +416,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]);
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
-        $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
+        $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');*/
 
         $thresholds = [];
         for ($i = 0; $i <= 20; $i++) {
@@ -460,7 +453,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enableprofilematch = 0;
             $record->enablestudentvideo = 1;
             $record->enablestrictcheck = 0;
-            $record->enablestricteyecheck = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -474,16 +466,14 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $enablestudentvideo = 1;
                 $storeallimages = 0;
                 $enablestrictcheck = 0;
-                $enablestricteyecheck = 0;
             } else {
                 $enableteacherproctor = $quiz->enableteacherproctor;
                 $enableprofilematch = $quiz->enableprofilematch;
                 $enablestudentvideo = $quiz->enablestudentvideo;
                 $storeallimages = $quiz->storeallimages;
                 $enablestrictcheck = $quiz->enablestrictcheck;
-                $enablestricteyecheck = $quiz->enablestricteyecheck;
             }
-            $interval = required_param('time_interval', PARAM_INT);
+            //$interval = required_param('time_interval', PARAM_INT);
             $DB->delete_records('quizaccess_quizproctoring', ['quizid' => $quiz->id]);
             $record = new stdClass();
             $record->quizid = $quiz->id;
@@ -493,8 +483,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enablestudentvideo = $enablestudentvideo;
             $record->storeallimages = $storeallimages;
             $record->enablestrictcheck = $enablestrictcheck;
-            $record->enablestricteyecheck = $enablestricteyecheck;
-            $record->time_interval = $interval;
+            $record->time_interval = 60;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
@@ -520,7 +509,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public static function get_settings_sql($quizid) {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
-            enablestudentvideo,enablestrictcheck,enablestricteyecheck,time_interval,
+            enablestudentvideo,enablestrictcheck,time_interval,
             warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             [],

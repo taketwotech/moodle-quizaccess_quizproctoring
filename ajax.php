@@ -113,15 +113,9 @@ if (!$mainentry->isautosubmit) {
         if ($target !== '') {
             $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
             $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
-            $imagedata = ["primary" => $tdata, "target" => $data];
-            $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
+            $imagedata = ["primary" => $tdata, "target" => $data, "type" => "facematches"];
+            $validate = \quizaccess_quizproctoring\api::proctor_eye_api(json_encode($imagedata),
                 $USER->id, $cm->instance);
-            if ($response == 'Unauthorized') {
-                throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
-                die();
-            } else {
-                $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
-            }
         } else {
             $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
             $imagedata = ["primary" => $data1];
@@ -183,12 +177,9 @@ if (!$mainentry->isautosubmit) {
             }
             break;
         case QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED:
-            if (!$mainimage) {
-                if (($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $cm->instance,
-                'enablestricteyecheck' => 1])) && $service != 'AWS') {
-                    quizproctoring_storeimage($img, $cmid, $attemptid,
-                    $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED);
-                }
+            if (!$mainimage) {                
+                quizproctoring_storeimage($img, $cmid, $attemptid,
+                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED);
             } else {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
             }
