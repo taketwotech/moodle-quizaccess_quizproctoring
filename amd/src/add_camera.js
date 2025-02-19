@@ -263,7 +263,6 @@ function($, str, ModalFactory) {
                 }
             }
         } else {
-            const savedwarnings = JSON.parse(localStorage.getItem('warningThreshold'));
             localStorage.setItem('warningThreshold', JSON.stringify(warnings));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
@@ -757,7 +756,7 @@ function restoreVideoPosition(element) {
 /**
  * Draggable Video Position
  *
- * @param {HTMLElement} element - The video element 
+ * @param {HTMLElement} element - The video element
  * @return {void}
  */
 function makeDraggable(element) {
