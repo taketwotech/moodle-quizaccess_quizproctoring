@@ -181,6 +181,9 @@ function($, str, ModalFactory) {
             data: requestData,
             success: function(response) {
                 if (response && response.errorcode) {
+                    var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                    var leftwarnings = Math.max(warningsl - 1, 0);
+                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                     $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
@@ -254,7 +257,7 @@ function($, str, ModalFactory) {
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, securewindow = null, userfullname = null,
-        enablestudentvideo = 1, setinterval = 300) {
+        enablestudentvideo = 1, setinterval = 300, warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -309,6 +312,8 @@ function($, str, ModalFactory) {
                 }
             }
         } else {
+            const savedwarnings = JSON.parse(localStorage.getItem('warningThreshold'));
+            localStorage.setItem('warningThreshold', JSON.stringify(warnings));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -588,21 +593,27 @@ function($, str, ModalFactory) {
                           .appendTo('body');
                         document.addEventListener('visibilitychange', function() {
                             if (document.visibilityState === 'visible') {
-                               $.ajax({
+                                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                var leftwarnings = Math.max(warningsl - 1, 0);
+                                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                var message = "Do not move away from active tab.";
+                                if (leftwarnings === 1) {
+                                    message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
+                                } else if (leftwarnings > 1) {
+                                    message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
+                                }
+                                $(document).trigger('popup', message);
+                                $.ajax({
                                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                 method: 'POST',
                                 data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
-                                    success: function(response) {
-                                        if (response && response.errorcode) {
-                                            $(document).trigger('popup', response.error);
-                                        } else {
-                                            if (response.redirect && response.url) {
-                                                window.onbeforeunload = null;
-                                                $(document).trigger('popup', response.msg);
-                                                setTimeout(function() {
-                                                    window.location.href = encodeURI(response.url);
-                                                }, 3000);
-                                            }
+                                    success: function(response) {                                        
+                                        if (response.redirect && response.url) {
+                                            window.onbeforeunload = null;
+                                            $(document).trigger('popup', response.msg);
+                                            setTimeout(function() {
+                                                window.location.href = encodeURI(response.url);
+                                            }, 3000);
                                         }
                                     }
                                 });
