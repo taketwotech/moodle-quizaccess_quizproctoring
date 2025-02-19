@@ -171,7 +171,6 @@ function($, str, ModalFactory) {
     var stream = null;
     var total = 0;
     let cachedStudentData = null;
-    let faceMeshLoaded = false;
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
@@ -304,35 +303,20 @@ function($, str, ModalFactory) {
             const cElement = document.getElementById('canvas');
 
             if (vElement && cElement) {
-                clearInterval(waitForElements);                
-
-                const faceMeshTimeout = setTimeout(() => {
-                    if (!faceMeshLoaded) {
-                        console.error("FaceMesh failed to load within the timeout period.");
+                clearInterval(waitForElements);
+                // eslint-disable-next-line no-undef
+                const faceMesh = new FaceMesh({
+                    locateFile: (file) => {
+                        return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
                     }
-                }, 500);
-
-                try {
+                });
+                if (typeof setupFaceMesh !== 'undefined') {
                     // eslint-disable-next-line no-undef
-                    const faceMesh = new FaceMesh({
-                        locateFile: (file) => {
-                            return `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/libraries/facemesh/${file}`;
+                    setupFaceMesh(faceMesh, enablestrictcheck, function (result) {
+                        if (result.status) {
+                            realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
                         }
                     });
-
-                    faceMeshLoaded = true;
-                    clearTimeout(faceMeshTimeout);
-
-                    if (typeof setupFaceMesh !== 'undefined') {
-                        // eslint-disable-next-line no-undef
-                        setupFaceMesh(faceMesh, enablestrictcheck, function (result) {
-                            if (result.status) {
-                                realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
-                            }
-                        });
-                    }
-                } catch (error) {
-                    throw error;
                 }
             }
         }, 500);
