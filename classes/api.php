@@ -112,6 +112,31 @@ class api {
     }
 
     /**
+     * Get the token is activated or not
+     *
+     * @return string
+     */
+    public static function getuserinfo() {
+        self::init();
+        $curl = new \curl();
+        $url = 'https://proctoring.taketwotechnologies.com/getuserinfo';
+        $accesstoken = self::$accesstoken;
+        $accesstokensecret = self::$accesstokensecret;
+        $header = [
+            'Content-Type: application/json',
+            'access-token: ' . $accesstoken,
+            'secret-token: ' . $accesstokensecret,
+        ];
+        $curl->setHeader($header);
+        $response = $curl->post($url);
+        if ($response === false) {
+            echo 'Curl error: ' . $curl->error();
+            return null;
+        }
+        return $response;
+    }
+
+    /**
      * Get the Domain Name captured
      *
      * @return string
