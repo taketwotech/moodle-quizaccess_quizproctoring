@@ -576,7 +576,7 @@ function($, str, ModalFactory) {
                                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                 method: 'POST',
                                 data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
-                                    success: function(response) {                                        
+                                    success: function(response) {
                                         if (response.redirect && response.url) {
                                             window.onbeforeunload = null;
                                             $(document).trigger('popup', response.msg);
@@ -742,13 +742,13 @@ function setupPeerConnection(peerConnection, peerId, peer) {
 /**
  * Restore Video Position
  *
- * @param {Longtext} data video
+ * @param {HTMLElement} element - The video element whose position should be restored.
  * @return {void}
  */
 function restoreVideoPosition(element) {
     const savedPosition = localStorage.getItem('videoPosition');
     if (savedPosition) {
-        const { left, top } = JSON.parse(savedPosition);
+        const {left, top} = JSON.parse(savedPosition);
         element.style.left = `${left}px`;
         element.style.top = `${top}px`;
     }
@@ -757,11 +757,13 @@ function restoreVideoPosition(element) {
 /**
  * Draggable Video Position
  *
- * @param {Longtext} data video
+ * @param {HTMLElement} element - The video element 
  * @return {void}
  */
 function makeDraggable(element) {
-    let offsetX = 0, offsetY = 0, isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
     element.addEventListener('mousedown', function(e) {
         isDragging = true;
         offsetX = e.clientX - element.getBoundingClientRect().left;
@@ -786,7 +788,7 @@ function makeDraggable(element) {
             element.style.top = `${newTop}px`;
         });
     });
-    document.addEventListener('mouseup', function () {
+    document.addEventListener('mouseup', function() {
         if (isDragging) {
             isDragging = false;
             element.style.cursor = 'grab';
