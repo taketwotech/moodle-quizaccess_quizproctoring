@@ -79,57 +79,8 @@ function($, str, ModalFactory) {
                     } else {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     }
-
-                    const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
-                    if (savedPosition) {
-                        videoElement.style.left = savedPosition.left;
-                        videoElement.style.top = savedPosition.top;
-                    }
-
-                    let offsetX;
-                    let offsetY;
-                    let isDragging = false;
-
-                    const stopDragging = function() {
-                        if (isDragging) {
-                            isDragging = false;
-                            videoElement.style.zIndex = 9999998;
-
-                            // Save position
-                            const position = {
-                                left: videoElement.style.left,
-                                top: videoElement.style.top,
-                            };
-                            localStorage.setItem('videoPosition', JSON.stringify(position));
-                        }
-                    };
-
-                    videoElement.addEventListener('mousedown', function(e) {
-                        isDragging = true;
-                        offsetX = e.clientX - videoElement.getBoundingClientRect().left;
-                        offsetY = e.clientY - videoElement.getBoundingClientRect().top;
-                        videoElement.style.zIndex = 9999999;
-                    });
-
-                    window.addEventListener('mousemove', function(e) {
-                        if (isDragging) {
-                            videoElement.style.left = `${e.clientX - offsetX}px`;
-                            videoElement.style.top = `${e.clientY - offsetY}px`;
-                        }
-                    });
-
-                    window.addEventListener('mouseup', stopDragging);
-
-                    // Additional safeguard: Cancel dragging if the mouse leaves the viewport
-                    window.addEventListener('mouseout', stopDragging);
-
-                    // Timeout fallback to stop dragging after a delay
-                    setInterval(() => {
-                        if (isDragging) {
-                            stopDragging();
-                        }
-                    }, 2000);
-
+                    restoreVideoPosition(videoElement);
+                    makeDraggable(videoElement);
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
@@ -768,5 +719,64 @@ function setupPeerConnection(peerConnection, peerId, peer) {
                 }
             );
         });
+}
+
+/**
+ * Restore Video Position
+ *
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function restoreVideoPosition(element) {
+    const savedPosition = localStorage.getItem('videoPosition');
+    if (savedPosition) {
+        const { left, top } = JSON.parse(savedPosition);
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
+    }
+}
+
+/**
+ * Draggable Video Position
+ *
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function makeDraggable(element) {
+    let offsetX = 0, offsetY = 0, isDragging = false;
+    element.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        offsetX = e.clientX - element.getBoundingClientRect().left;
+        offsetY = e.clientY - element.getBoundingClientRect().top;
+        element.style.cursor = 'grabbing';
+    });
+    document.addEventListener('mousemove', function(e) {
+    if (!isDragging) {
+        return;
+    }
+         requestAnimationFrame(() => {
+            let newLeft = e.clientX - offsetX;
+            let newTop = e.clientY - offsetY;
+            const maxLeft = window.innerWidth - element.offsetWidth;
+            const maxTop = window.innerHeight - element.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+            if (element.style.position !== 'fixed') {
+                element.style.position = 'fixed';
+            }
+             element.style.left = `${newLeft}px`;
+            element.style.top = `${newTop}px`;
+        });
+    });
+    document.addEventListener('mouseup', function () {
+        if (isDragging) {
+            isDragging = false;
+            element.style.cursor = 'grab';
+            localStorage.setItem('videoPosition', JSON.stringify({
+                left: parseInt(element.style.left, 10),
+                top: parseInt(element.style.top, 10)
+            }));
+        }
+    });
 }
 });
