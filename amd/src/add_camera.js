@@ -208,7 +208,7 @@ function($, str, ModalFactory) {
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, securewindow = null, userfullname,
-        enablestudentvideo = 1, setinterval = 300, warnings = 0) {
+        enablestudentvideo = 1, setinterval = 300, enablestrictcheck = 0, warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -276,13 +276,14 @@ function($, str, ModalFactory) {
             document.addEventListener('drop', function(event) {
                 event.preventDefault();
             });
+            // eslint-disable-next-line no-undef
             signalingSocket = io(externalserver);
             signalingSocket.on('connect', function() {
             // Retrieve the session state from localStorage
             var storedSession = localStorage.getItem('sessionState');
             var sessionState = storedSession ? JSON.parse(storedSession) : null;
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, setinterval,
+            teacher, enablestudentvideo, enablestrictcheck, setinterval,
             serviceoption, quizid, function() {
                 // Once User gives access to mic/cam, join the channel and start peering up
                 var teacherroom = getTeacherroom();
@@ -298,6 +299,29 @@ function($, str, ModalFactory) {
                 }
             });
         });
+
+        const waitForElements = setInterval(() => {
+            const vElement = document.getElementById('video');
+            const cElement = document.getElementById('canvas');
+
+            if (vElement && cElement) {
+                clearInterval(waitForElements);
+                // eslint-disable-next-line no-undef
+                const faceMesh = new FaceMesh({
+                    locateFile: (file) => {
+                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
+                    }
+                });
+                if (typeof setupFaceMesh !== 'undefined') {
+                    // eslint-disable-next-line no-undef
+                    setupFaceMesh(faceMesh, enablestrictcheck, function (result) {
+                        if (result.status) {
+                            realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
+                        }
+                    });
+                }
+            }
+        }, 500);
 
         signalingSocket.on('disconnect', function() {
             /* Tear down all of our peer connections and remove all
@@ -516,6 +540,7 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablestrictcheck - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -523,7 +548,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo,
+        teacher, enablestudentvideo, enablestrictcheck,
         setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
@@ -795,6 +820,44 @@ function makeDraggable(element) {
                 left: parseInt(element.style.left, 10),
                 top: parseInt(element.style.top, 10)
             }));
+        }
+    });
+}
+
+/**
+ * Realtime Detection Ajax call
+ *
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {string} face string value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function realtimeDetection(cmid, attemptid, mainimage, face, data) {
+    var requestData = {
+        cmid: cmid,
+        attemptid: attemptid,
+        mainimage: mainimage,
+        validate: face,
+        imgBase64: data,
+    };
+    $.ajax({
+        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+        method: 'POST',
+        data: requestData,
+        success: function(response) {
+            if (response && response.errorcode) {
+                $(document).trigger('popup', response.error);
+            } else {
+                if (response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
+                }
+            }
         }
     });
 }

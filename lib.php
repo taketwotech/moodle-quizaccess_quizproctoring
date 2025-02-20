@@ -101,18 +101,37 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     if ($serviceoption != 'AWS') {
         $enablevideo = $proctorrecord->enablestudentvideo;
+        $enablestrict = $proctorrecord->enablestrictcheck;
     } else {
         $enablevideo = 1;
+        $enablestrict = 0;
     }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
+    echo html_writer::tag('script', '', [
+    'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js',
+    'crossorigin' => 'anonymous'
+    ]);
+    echo html_writer::tag('script', '', [
+    'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js',
+    'crossorigin' => 'anonymous'
+    ]);
+    echo html_writer::tag('script', '', [
+    'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js',
+    'crossorigin' => 'anonymous'
+    ]);
+    echo html_writer::tag('script', '', [
+    'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/face_mesh.js',
+    'crossorigin' => 'anonymous'
+    ]);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
         $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
-        $enablevideo, $proctorrecord->time_interval, $proctorrecord->warning_threshold);
+        $enablevideo, $proctorrecord->time_interval, $enablestrict, $proctorrecord->warning_threshold);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh.js', true);
 }
 
 /**
