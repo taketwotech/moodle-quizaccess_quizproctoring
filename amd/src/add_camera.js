@@ -305,10 +305,10 @@ function($, str, ModalFactory) {
             const cElement = document.getElementById('canvas');
 
             if (vElement && cElement) {
-                clearInterval(waitForElements);                
+                clearInterval(waitForElements);
                 if (typeof setupFaceMesh !== 'undefined') {
                     // eslint-disable-next-line no-undef
-                    setupFaceMesh(enablestrictcheck, function (result) {
+                    setupFaceMesh(enablestrictcheck, function(result) {
                         if (result.status) {
                             realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
                         }
