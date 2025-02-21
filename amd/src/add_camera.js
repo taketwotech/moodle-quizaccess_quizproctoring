@@ -842,6 +842,9 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
         data: requestData,
         success: function(response) {
             if (response && response.errorcode) {
+                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                var leftwarnings = Math.max(warningsl - 1, 0);
+                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                 $(document).trigger('popup', response.error);
             } else {
                 if (response.redirect && response.url) {

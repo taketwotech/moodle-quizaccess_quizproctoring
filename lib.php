@@ -86,6 +86,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER;
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+    $warningsleft = 0;
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $user->id,
     'quizid' => $quizid,
@@ -94,6 +95,30 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     ])) {
         $proctoreddata->attemptid = $attemptid;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
+    } else {
+        $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+        if (isset($quizaproctoring->warning_threshold) && $quizaproctoring->warning_threshold != 0) {
+            $inparams = [
+                'param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
+                'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
+                'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
+                'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
+                'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
+                'param6' => QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
+                'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
+                'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'userid' => $user->id,
+                'quizid' => $quizid,
+                'attemptid' => $attemptid,
+                'image_status' => 'A',
+            ];
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
+            quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9)";
+            $errorrecords = $DB->get_records_sql($sql, $inparams);
+            $warningsleft = $quizaproctoring->warning_threshold - count($errorrecords);
+        }
     }
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
@@ -107,7 +132,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $enablestrict = 0;
     }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-    /*echo html_writer::tag('script', '', [
+    echo html_writer::tag('script', '', [
     'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js',
     'crossorigin' => 'anonymous'
     ]);
@@ -122,17 +147,14 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     echo html_writer::tag('script', '', [
     'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/face_mesh.js',
     'crossorigin' => 'anonymous'
-    ]);*/
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/camera_utils.js', true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/control_utils.js', true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/drawing_utils.js', true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/face_mesh.js', true);
+    ]);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
         $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
-        $enablevideo, $proctorrecord->time_interval, $enablestrict, $proctorrecord->warning_threshold);
+        $enablevideo, $proctorrecord->time_interval, $enablestrict,
+        $warningsleft);
     });
     M.util.js_complete();", true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh.js', true);
