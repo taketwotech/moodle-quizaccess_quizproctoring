@@ -87,6 +87,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $warningsleft = 0;
+    $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);        
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $user->id,
     'quizid' => $quizid,
@@ -94,9 +95,9 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     'attemptid' => 0,
     ])) {
         $proctoreddata->attemptid = $attemptid;
+        $warningsleft = $quizaproctoring->warning_threshold;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
     } else {
-        $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
         if (isset($quizaproctoring->warning_threshold) && $quizaproctoring->warning_threshold != 0) {
             $inparams = [
                 'param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
