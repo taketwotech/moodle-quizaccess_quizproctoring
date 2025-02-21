@@ -107,7 +107,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $enablestrict = 0;
     }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-    echo html_writer::tag('script', '', [
+    /*echo html_writer::tag('script', '', [
     'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js',
     'crossorigin' => 'anonymous'
     ]);
@@ -122,7 +122,11 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     echo html_writer::tag('script', '', [
     'src' => 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/face_mesh.js',
     'crossorigin' => 'anonymous'
-    ]);
+    ]);*/
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/camera_utils.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/control_utils.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/drawing_utils.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/face_mesh.js', true);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {

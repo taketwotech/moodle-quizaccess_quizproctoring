@@ -6,51 +6,60 @@
     const GAZE_THRESHOLD = 1000;
     const EYE_THRESHOLD = 4000;
     let lastDetectionTime = Date.now();
-    function setupFaceMesh(faceMesh, enablestrictcheck, callback) {
-        const videoElement = document.getElementById('video');
-        const canvasElement = document.getElementById('canvas');
-        const canvasCtx = canvasElement.getContext('2d');
 
-        faceMesh.setOptions({
-            maxNumFaces: 5,
-            refineLandmarks: true,
-        });
+function setupFaceMesh(enablestrictcheck, callback) {
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
+    const canvasCtx = canvasElement.getContext('2d');
 
-        faceMesh.onResults((results) => {
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            let data = canvasElement.toDataURL('image/png');
-            const currentTime = Date.now();
-            let returnData = { status: '', data: data };
+    const faceMesh = new FaceMesh({
+        locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
+        }
+    });
 
-            if (currentTime - lastDetectionTime >= 5000) {
-                if (!results.multiFaceLandmarks) {
-                    returnData.status = 'noface';
-                } else if (results.multiFaceLandmarks.length > 1) {
-                    returnData.status = 'multiface';
-                }
-                lastDetectionTime = currentTime;
+    faceMesh.setOptions({
+        maxNumFaces: 5,
+        refineLandmarks: true,
+    });
+
+    faceMesh.onResults((results) => {
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+        let data = canvasElement.toDataURL('image/png');
+        const currentTime = Date.now();
+        let returnData = { status: '', data: data };
+
+        if (currentTime - lastDetectionTime >= 5000) {
+            if (!results.multiFaceLandmarks) {
+                returnData.status = 'noface';
+            } else if (results.multiFaceLandmarks.length > 1) {
+                returnData.status = 'multiface';
             }
-
-            if (results.multiFaceLandmarks?.length === 1) {
-                results.multiFaceLandmarks.forEach(landmarks => {
-                    if (enablestrictcheck === 1) {
-                        detectGazeDirection(landmarks, data, callback);
-                    }
-                    detectEyeStatus(landmarks, data, callback);
-                });
-            }
-            canvasCtx.restore();
-            callback(returnData);
-        });
-
-        async function sendFaceMeshData() {
-            await faceMesh.send({ image: videoElement });
+            lastDetectionTime = currentTime;
         }
 
-        setInterval(sendFaceMeshData, 500);
+        if (results.multiFaceLandmarks?.length === 1) {
+            results.multiFaceLandmarks.forEach(landmarks => {
+                if (enablestrictcheck === 1) {
+                    detectGazeDirection(landmarks, data, callback);
+                }
+                detectEyeStatus(landmarks, data, callback);
+            });
+        }
+
+        canvasCtx.restore();
+        callback(returnData);
+    });
+
+    async function sendFaceMeshData() {
+        await faceMesh.send({ image: videoElement });
+        requestAnimationFrame(sendFaceMeshData);
     }
+    sendFaceMeshData();
+}
+
 
     function detectGazeDirection(landmarks, data, callback) {
         const leftEye = landmarks[33];

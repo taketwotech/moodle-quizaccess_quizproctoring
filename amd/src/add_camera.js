@@ -305,16 +305,10 @@ function($, str, ModalFactory) {
             const cElement = document.getElementById('canvas');
 
             if (vElement && cElement) {
-                clearInterval(waitForElements);
-                // eslint-disable-next-line no-undef
-                const faceMesh = new FaceMesh({
-                    locateFile: (file) => {
-                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
-                    }
-                });
+                clearInterval(waitForElements);                
                 if (typeof setupFaceMesh !== 'undefined') {
                     // eslint-disable-next-line no-undef
-                    setupFaceMesh(faceMesh, enablestrictcheck, function (result) {
+                    setupFaceMesh(enablestrictcheck, function (result) {
                         if (result.status) {
                             realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
                         }
