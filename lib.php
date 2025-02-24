@@ -87,7 +87,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $warningsleft = 0;
-    $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);        
+    $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $user->id,
     'quizid' => $quizid,

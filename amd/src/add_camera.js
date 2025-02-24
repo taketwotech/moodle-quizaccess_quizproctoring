@@ -895,14 +895,14 @@ function showCustomModal(message) {
             closeCustomModal();
         }
     });
-    $(document).on('keydown', function (e) {
+    $(document).on('keydown', function(e) {
         if (e.key === 'Escape') {
             closeCustomModal();
         }
     });
 }
 
- /**
+/**
  * Setup close Custom Modal
  *
  * @return {void}
