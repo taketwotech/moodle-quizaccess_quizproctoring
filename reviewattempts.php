@@ -61,6 +61,7 @@ if ($proctoringimageshow == 1) {
     $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
     $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
+    echo '<input type="hidden" id="storeallimages" name="storeallimages" value="'.$storerecord->storeallimages.'" />';
     $table = new html_table();
     $headers = [
         get_string("email", "quizaccess_quizproctoring"),
@@ -69,9 +70,7 @@ if ($proctoringimageshow == 1) {
         get_string("started", "quizaccess_quizproctoring"),
         get_string("submitted", "quizaccess_quizproctoring"),
         get_string("duration", "quizaccess_quizproctoring"),
-        get_string("proctoringimages", "quizaccess_quizproctoring") .
-        ($storerecord->storeallimages ? '
-        <input type="checkbox" id="storeallimages" name="storeallimages" value="1" />' : ''),
+        get_string("proctoringimages", "quizaccess_quizproctoring"),
         get_string("proctoringidentity", "quizaccess_quizproctoring"),
         get_string("isautosubmit", "quizaccess_quizproctoring"),
     ];

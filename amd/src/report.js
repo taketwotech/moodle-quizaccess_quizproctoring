@@ -174,10 +174,9 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 var quizid = $(this).data('quizid');
                 var userid = $(this).data('userid');
                 var startdate = $(this).data('startdate');
-                var all = $('#storeallimages').is(':checked') ? 'true' : 'false';
-
-                var modaltitle = all === 'true' ? M.util.get_string('allimages', 'quizaccess_quizproctoring') :
-                    M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
+                var storeallimages = $('#storeallimages').val();
+                var all = false;
+                var modaltitle = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
 
                 ModalFactory.create({
                     type: ModalFactory.types.DEFAULT,
@@ -186,7 +185,22 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     large: true,
                 }).then(function(modal) {
                     modal.show();
-
+                    $('.imgcheckbox').prop('checked', false);
+                    var storeAllImages = $('#storeallimages').val();
+                    var checkboxContainer = `
+                        <div class="checkbox-container" style="display: none;">
+                            <input type="checkbox" class="imgcheckbox">
+                            <label for="checkbox" class="image-checkbox">
+                                To view all images saved from the exam, please select the checkbox.
+                            </label>
+                        </div>
+                    `;
+                    modal.getBody().prepend(checkboxContainer);
+                    if (storeAllImages === '1') {
+                        modal.getBody().find('.checkbox-container').show();
+                    } else {
+                        modal.getBody().find('.checkbox-container').hide();
+                    }
                     var perpage = 35;
                     var currentPage = 1;
                     var totalPages = 1;
@@ -203,7 +217,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 attemptid: attemptid,
                                 userid: userid,
                                 quizid: quizid,
-                                all: all,
+                                all: all.toString(),
                                 page: page,
                                 perpage: perpage,
                             },
@@ -270,6 +284,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         $('.image-link').on('lightbox:open', function() {
                                             $(this).next('.image-title').hide();
                                         });
+
+                                        $('.imgcheckbox').prop('checked', all);
                                         if (images.length > 0) {
                                             modal.getBody().find('.pagination-controls')
                                             .html(getPaginationControls(response.currentPage, response.totalPages));
@@ -318,6 +334,18 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             + ' of ' + totalPages + ' ' + nextButton + '</div>';
                     }
 
+                    modal.getRoot().on('hidden.bs.modal', function() {
+                        $('.imgcheckbox').prop('checked', false);
+                    });
+
+                    modal.getBody().on('change', '.imgcheckbox', function() {
+                        all = $(this).is(':checked'); // Store boolean directly
+                        modaltitle = all ? M.util.get_string('allimages', 'quizaccess_quizproctoring')
+                                         : M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
+                        modal.setTitle(modaltitle);
+                        loadImages(currentPage);
+                    });
+
                     modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {
                         if (currentPage > 1) {
                             currentPage--;
@@ -332,6 +360,10 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     });
                     loadImages(currentPage);
+
+                    modal.getBody().on('click', '.close', function() {
+                        $('.imgcheckbox').prop('checked', false);
+                    });
 
                     let escapePressed = false;
                     $(document).on('keydown', function(event) {
@@ -349,6 +381,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 escapePressed = false;
                             }, 50);
                             event.stopPropagation();
+                            $('.imgcheckbox').prop('checked', false); // Reset checkbox
                         }
                     });
                     return undefined;

@@ -374,6 +374,11 @@ button.proctoridentity {
     display: none;
 }
 
+.image-checkbox {
+    margin-left: 5px;
+    font-weight: bold;
+}
+
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
