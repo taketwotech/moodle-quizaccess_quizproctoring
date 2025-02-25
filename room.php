@@ -30,22 +30,25 @@ $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php'));
 
 $room = required_param('room', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
+$proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $room]);
+if ($proctorrecord->enableteacherproctor) {
+	$context = context_module::instance($cmid);
+	if (!has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
+	    redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
+	}
+	$PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
+	$PAGE->set_pagelayout('report');
+	echo $OUTPUT->header();
+	$serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
 
-$context = context_module::instance($cmid);
-if (!has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
-    redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
+	// Include js module.
+	echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
+	$PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
+	'init', [$cmid, false, true, null, true, $room, $serviceoption, $proctorrecord->enableteacherproctor]);
+	echo '<div id="nostudentonline">';
+	echo get_string('nostudentonline', 'quizaccess_quizproctoring');
+	echo '</div>';
+	echo $OUTPUT->footer();
+} else {
+	redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
 }
-
-$PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
-$PAGE->set_pagelayout('report');
-echo $OUTPUT->header();
-$serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-
-// Include js module.
-echo html_writer::script('', $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-$PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
-'init', [$cmid, false, true, null, true, $room, $serviceoption]);
-echo '<div id="nostudentonline">';
-echo get_string('nostudentonline', 'quizaccess_quizproctoring');
-echo '</div>';
-echo $OUTPUT->footer();

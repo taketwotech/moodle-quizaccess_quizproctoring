@@ -160,7 +160,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctoring.taketwotechnologies.com';
+    var externalserver = 'https://proctor-dev.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -209,8 +209,9 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, securewindow = null, userfullname,
-        enablestudentvideo = 1, setinterval = 300, enablestrictcheck = 0, warnings = 0) {
+        teacher, quizid, serviceoption, onlinestudent = 0, securewindow = null, userfullname,
+        enablestudentvideo = 1, setinterval = 300, enablestrictcheck = 0,
+        warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -278,46 +279,49 @@ function($, str, ModalFactory) {
             document.addEventListener('drop', function(event) {
                 event.preventDefault();
             });
-            // eslint-disable-next-line no-undef
-            signalingSocket = io(externalserver);
-            signalingSocket.on('connect', function() {
-            // Retrieve the session state from localStorage
-            var storedSession = localStorage.getItem('sessionState');
-            var sessionState = storedSession ? JSON.parse(storedSession) : null;
-            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, enablestrictcheck, setinterval,
-            serviceoption, quizid, function() {
-                // Once User gives access to mic/cam, join the channel and start peering up
-                var teacherroom = getTeacherroom();
-                var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
-                var fullname = userfullname;
+            const waitForElements = setInterval(() => {
+                const vElement = document.getElementById('video');
+                const cElement = document.getElementById('canvas');
 
-                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
-                    'type': typet, 'fullname': fullname}});
-
-                // Restore the session state if available
-                if (sessionState) {
-                    restoreSessionState(sessionState);
+                if (vElement && cElement) {
+                    clearInterval(waitForElements);
+                    if (typeof setupFaceMesh !== 'undefined') {
+                        // eslint-disable-next-line no-undef
+                        setupFaceMesh(enablestrictcheck, function(result) {
+                            if (result.status) {
+                                realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
+                            }
+                        });
+                    }
                 }
+            }, 500);
+            if(onlinestudent) {
+                // eslint-disable-next-line no-undef
+                signalingSocket = io(externalserver);
+                signalingSocket.on('connect', function() {
+                // Retrieve the session state from localStorage
+                var storedSession = localStorage.getItem('sessionState');
+                var sessionState = storedSession ? JSON.parse(storedSession) : null;
+                setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+                teacher, enablestudentvideo, enablestrictcheck, setinterval,
+                serviceoption, quizid, function() {
+                    // Once User gives access to mic/cam, join the channel and start peering up
+                    var teacherroom = getTeacherroom();
+                    var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
+                    var fullname = userfullname;
+
+                    signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
+                        'type': typet, 'fullname': fullname}});
+
+                    // Restore the session state if available
+                    if (sessionState) {
+                        restoreSessionState(sessionState);
+                    }
+                });
             });
-        });
+        
 
-        const waitForElements = setInterval(() => {
-            const vElement = document.getElementById('video');
-            const cElement = document.getElementById('canvas');
-
-            if (vElement && cElement) {
-                clearInterval(waitForElements);
-                if (typeof setupFaceMesh !== 'undefined') {
-                    // eslint-disable-next-line no-undef
-                    setupFaceMesh(enablestrictcheck, function(result) {
-                        if (result.status) {
-                            realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
-                        }
-                    });
-                }
-            }
-        }, 500);
+        
 
         signalingSocket.on('disconnect', function() {
             /* Tear down all of our peer connections and remove all
@@ -520,6 +524,11 @@ function($, str, ModalFactory) {
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
                 });
+        } else {
+            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+            teacher, enablestudentvideo, enablestrictcheck, setinterval,
+            serviceoption, quizid);
+        }
     }
 
     };
@@ -545,7 +554,7 @@ function($, str, ModalFactory) {
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, enablestudentvideo, enablestrictcheck,
-        setinterval, serviceoption, quizid, callback) {
+        setinterval, serviceoption, quizid, callback = function() {}) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {

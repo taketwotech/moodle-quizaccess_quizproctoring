@@ -1,6 +1,10 @@
 (function() {
     let gazeDirection = null;
     let gazeTimer = null;
+    let prevNoseX = null;
+    let gazeConfidence = { Left: 0, Right: 0, Center: 0 };
+    const CONFIDENCE_THRESHOLD = 3;
+    const SMOOTHING_FACTOR = 0.1; // Adjust between 0.1 (smoother) and 1 (instant)    
     let eyeStatus = "Open";
     let eyeTimer = null;
     const GAZE_THRESHOLD = 1000;
@@ -60,42 +64,49 @@ function setupFaceMesh(enablestrictcheck, callback) {
     sendFaceMeshData();
 }
 
+function smoothValue(newValue) {
+    if (prevNoseX === null) prevNoseX = newValue;
+    prevNoseX = prevNoseX * (1 - SMOOTHING_FACTOR) + newValue * SMOOTHING_FACTOR;
+    return prevNoseX;
+}
+
 function detectGazeDirection(landmarks, data, callback) {
     const leftEye = landmarks[33];
     const rightEye = landmarks[263];
     const nose = landmarks[1];
     const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
-    const noseX = nose.x;
+    const smoothedNoseX = smoothValue(nose.x);
+    const eyeDistance = Math.abs(rightEye.x - leftEye.x);
+    const ADAPTIVE_THRESHOLD = eyeDistance * 0.1; // Dynamic threshold
 
     let currentDirection = "Center";
-    let returnData = { status: '', data: data };
-    if (noseX < eyeMidpointX - 0.02) {
+    let returnData = { status: "", data: data };
+
+    if (smoothedNoseX < eyeMidpointX - ADAPTIVE_THRESHOLD) {
         currentDirection = "Right";
-    } else if (noseX > eyeMidpointX + 0.02) {
+    } else if (smoothedNoseX > eyeMidpointX + ADAPTIVE_THRESHOLD) {
         currentDirection = "Left";
     }
 
-    if (currentDirection !== gazeDirection) {
-        gazeDirection = currentDirection;
+    // Confidence tracking
+    gazeConfidence[currentDirection]++;
+    if (gazeConfidence[currentDirection] >= CONFIDENCE_THRESHOLD) {
+        if (currentDirection !== gazeDirection) {
+            gazeDirection = currentDirection;
 
-        if (gazeTimer) {
-            clearTimeout(gazeTimer);
-            gazeTimer = null;
-        }
-    }
+            if (gazeTimer) {
+                clearTimeout(gazeTimer);
+                gazeTimer = null;
+            }
 
-    if (gazeDirection !== "Center") {
-        if (!gazeTimer) {
-            gazeTimer = setTimeout(() => {
-                returnData.status = '' + gazeDirection + '';
-                callback(returnData);
-            }, GAZE_THRESHOLD);
+            if (gazeDirection !== "Center") {
+                gazeTimer = setTimeout(() => {
+                    returnData.status = gazeDirection;
+                    callback(returnData);
+                }, GAZE_THRESHOLD);
+            }
         }
-    } else {
-        if (gazeTimer) {
-            clearTimeout(gazeTimer);
-            gazeTimer = null;
-        }
+        gazeConfidence = { Left: 0, Right: 0, Center: 0 }; // Reset counts
     }
 }
 

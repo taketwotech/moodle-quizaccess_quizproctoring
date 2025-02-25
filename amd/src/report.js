@@ -174,7 +174,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 var quizid = $(this).data('quizid');
                 var userid = $(this).data('userid');
                 var startdate = $(this).data('startdate');
-                var storeallimages = $('#storeallimages').val();
                 var all = false;
                 var modaltitle = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
 

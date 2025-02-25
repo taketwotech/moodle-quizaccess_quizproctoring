@@ -141,7 +141,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
+        $quizid, '$serviceoption', $proctorrecord->enableteacherproctor, '$securewindow->browsersecurity', '$fullname',
         $enablevideo, $proctorrecord->time_interval, $enablestrict,
         $warningsleft);
     });
