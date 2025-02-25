@@ -194,7 +194,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
             'init', [$this->quiz->cmid, true, false, $attemptid, false,
-                $this->quiz->id, $serviceoption, $securewindow->browsersecurity]);
+                $this->quiz->id, $serviceoption, $interval->enableteacherproctor, $securewindow->browsersecurity]);
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);
