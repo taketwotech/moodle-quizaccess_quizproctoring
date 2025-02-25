@@ -295,7 +295,7 @@ function($, str, ModalFactory) {
                     }
                 }
             }, 500);
-            if(onlinestudent) {
+            if (onlinestudent) {
                 // eslint-disable-next-line no-undef
                 signalingSocket = io(externalserver);
                 signalingSocket.on('connect', function() {
@@ -319,9 +319,6 @@ function($, str, ModalFactory) {
                     }
                 });
             });
-        
-
-        
 
         signalingSocket.on('disconnect', function() {
             /* Tear down all of our peer connections and remove all
