@@ -309,9 +309,10 @@ function($, str, ModalFactory) {
                     var teacherroom = getTeacherroom();
                     var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
                     var fullname = userfullname;
+                    var domain = window.location.hostname;
 
                     signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
-                        'type': typet, 'fullname': fullname}});
+                        'type': typet, 'fullname': fullname, 'domain': domain}});
 
                     // Restore the session state if available
                     if (sessionState) {
