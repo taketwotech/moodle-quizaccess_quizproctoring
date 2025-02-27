@@ -1,4 +1,4 @@
-(function() {
+(function () {
     let gazeDirection = null;
     let gazeTimer = null;
     let prevNoseX = null;
@@ -10,8 +10,9 @@
     const GAZE_THRESHOLD = 1000;
     const EYE_THRESHOLD = 4000;
     let lastDetectionTime = Date.now();
+    let prevMouthRatio = 0;
 
-function setupFaceMesh(enablestrictcheck, callback) {
+async function setupFaceMesh(enablestrictcheck, callback) {
     const videoElement = document.getElementById('video');
     const canvasElement = document.getElementById('canvas');
     const canvasCtx = canvasElement.getContext('2d');
@@ -50,6 +51,7 @@ function setupFaceMesh(enablestrictcheck, callback) {
                     detectGazeDirection(landmarks, data, callback);
                 }
                 detectEyeStatus(landmarks, data, callback);
+                detectLipSync(landmarks, data, callback);
             });
         }
 
@@ -62,6 +64,10 @@ function setupFaceMesh(enablestrictcheck, callback) {
         requestAnimationFrame(sendFaceMeshData);
     }
     sendFaceMeshData();
+
+    const model = await loadModel();
+    detectObjects(model, videoElement, callback);
+    //detectObjects(videoElement, objectModel, callback);
 }
 
 function smoothValue(newValue) {
@@ -88,17 +94,14 @@ function detectGazeDirection(landmarks, data, callback) {
         currentDirection = "Left";
     }
 
-    // Confidence tracking
     gazeConfidence[currentDirection]++;
     if (gazeConfidence[currentDirection] >= CONFIDENCE_THRESHOLD) {
         if (currentDirection !== gazeDirection) {
             gazeDirection = currentDirection;
-
             if (gazeTimer) {
                 clearTimeout(gazeTimer);
                 gazeTimer = null;
             }
-
             if (gazeDirection !== "Center") {
                 gazeTimer = setTimeout(() => {
                     returnData.status = gazeDirection;
@@ -106,7 +109,7 @@ function detectGazeDirection(landmarks, data, callback) {
                 }, GAZE_THRESHOLD);
             }
         }
-        gazeConfidence = { Left: 0, Right: 0, Center: 0 }; // Reset counts
+        gazeConfidence = { Left: 0, Right: 0, Center: 0 };
     }
 }
 
@@ -118,11 +121,12 @@ function detectEyeStatus(landmarks, data, callback) {
 
     const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
     const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
+    const EYE_OPEN_THRESHOLD = 0.016;
 
-    const EYE_OPEN_THRESHOLD = 0.018;
+    let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD && rightEyeOpen > EYE_OPEN_THRESHOLD)
+        ? "Open"
+        : "Closed";
 
-    let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD &&
-        rightEyeOpen > EYE_OPEN_THRESHOLD) ? "Open" : "Closed";
     if (currentEyeStatus !== eyeStatus) {
         eyeStatus = currentEyeStatus;
         if (eyeTimer) {
@@ -130,7 +134,9 @@ function detectEyeStatus(landmarks, data, callback) {
             eyeTimer = null;
         }
     }
+
     let returnData = { status: '', data: data };
+
     if (eyeStatus === "Closed") {
         if (!eyeTimer) {
             eyeTimer = setTimeout(() => {
@@ -145,5 +151,45 @@ function detectEyeStatus(landmarks, data, callback) {
         }
     }
 }
-window.setupFaceMesh = setupFaceMesh;
+
+function detectLipSync(landmarks, data, callback) {
+    const upperLip = landmarks[13];
+    const lowerLip = landmarks[14];
+
+    const lipDistance = Math.abs(upperLip.y - lowerLip.y);
+    const MOUTH_OPEN_THRESHOLD = 0.015;
+
+    let mouthRatio = lipDistance;
+    let lipSyncStatus = mouthRatio > MOUTH_OPEN_THRESHOLD ? "Speaking" : "Closed";
+
+    if (Math.abs(prevMouthRatio - mouthRatio) > 0.002) {
+        prevMouthRatio = mouthRatio;
+        console.log(lipSyncStatus);
+    }
+}
+
+async function loadModel() {
+    console.log("Loading model...");
+    const model = await cocoSsd.load();
+    console.log("Model loaded successfully!");
+    return model;
+}
+
+async function detectObjects(model, videoElement, callback) {
+    setInterval(async () => {
+        const predictions = await model.detect(videoElement);
+
+        // Extract only object names (labels)
+        let objectsDetected = predictions
+            .filter(prediction => prediction.score > 0.2)
+            .map(prediction => prediction.class); // Keep only class names
+
+        // Log output only if objects are detected
+        if (objectsDetected.length > 0) {
+            console.log("Detected Objects:", JSON.stringify(objectsDetected));
+            callback({ status: 'objects_detected', objects: objectsDetected });
+        }
+    }, 3000);
+}
+    window.setupFaceMesh = setupFaceMesh;
 })();
