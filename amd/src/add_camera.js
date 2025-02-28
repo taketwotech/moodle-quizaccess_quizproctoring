@@ -389,11 +389,9 @@ function($, str, ModalFactory) {
                 } else {
                     remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
                     remoteMedia.attr("autoplay", "autoplay");
-                    remoteMedia.attr("muted", "true");
-                    remoteMedia.attr("controls", "");
-                    remoteMedia.attr("class", "quizaccess_quizproctoring");
-
-                    remoteMedia.attr("controls", "");
+                    remoteMedia.prop("controls", true);
+                    remoteMedia.addClass("quizaccess_quizproctoring");
+                    remoteMedia.prop("muted", true);
                     if ($('#region-main-box .videos-container').length === 0) {
                         $('#region-main-box').append($("<div>").addClass("videos-container"));
                     }
