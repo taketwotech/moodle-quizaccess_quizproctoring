@@ -158,10 +158,11 @@ function detectEyeStatus(landmarks, data, callback) {
     }
 }
 
-let speakingTimer = null;
 let speakingDuration = 0; // Accumulated speaking time
 let lastMouthOpenTime = null;
 const SPEAKING_GRACE_PERIOD = 1000; // Allow 1 second of silence before resetting
+let speakingTimestamps = []; // Store timestamps of speaking events
+let exceedTimestamps = []; // Store timestamps when speaking exceeds 100 times in a minute
 
 function detectLipSync(landmarks, data, callback) {
     const upperLip = landmarks[13];
@@ -175,28 +176,49 @@ function detectLipSync(landmarks, data, callback) {
 
     console.log(lipSyncStatus);
 
+    let currentTime = Date.now();
+
     if (lipSyncStatus === "Speaking") {
         if (!lastMouthOpenTime) {
-            lastMouthOpenTime = Date.now(); // Track last time mouth was open
+            lastMouthOpenTime = currentTime; // Track last time mouth was open
         }
 
-        // Accumulate speaking time
-        speakingDuration += Date.now() - lastMouthOpenTime;
-        lastMouthOpenTime = Date.now(); // Update last open time
+        speakingDuration += currentTime - lastMouthOpenTime;
+        lastMouthOpenTime = currentTime; // Update last open time
 
-        // If speaking for 5 seconds in total (even with short pauses)
-        if (speakingDuration >= 500) {
-            console.log("Speaking for 5 seconds!");
-            callback({ status: "Speaking", data: data });
-            speakingDuration = 0; // Reset after logging
+        speakingTimestamps.push(currentTime);
+
+        // Remove old timestamps (only keep last 60 seconds)
+        speakingTimestamps = speakingTimestamps.filter(timestamp => currentTime - timestamp <= 60000);
+
+        // If speaking more than 100 times in a minute
+        if (speakingTimestamps.length > 25) {
+            
+
+            // Store timestamp of this exceed event
+            exceedTimestamps.push(currentTime);
+
+            // Remove old exceed timestamps (only keep last 60 seconds)
+            exceedTimestamps = exceedTimestamps.filter(timestamp => currentTime - timestamp <= 60000);
+
+            // 🚨 If the threshold has been exceeded 5 times in one minute, log and reset
+            if (exceedTimestamps.length >= 3) {
+                console.warn("User exceeded speaking threshold 3 times in the last minute! Resetting...");
+                callback({ status: "Speaking", data: data });
+                // Reset everything
+                speakingTimestamps = [];
+                exceedTimestamps = [];
+                speakingDuration = 0;
+                lastMouthOpenTime = null;
+            }
         }
     } else {
         // If mouth closes but within the grace period, do not reset the timer
-        if (lastMouthOpenTime && Date.now() - lastMouthOpenTime < SPEAKING_GRACE_PERIOD) {
-            //console.log("Short pause detected, keeping timer running.");
+        if (lastMouthOpenTime && currentTime - lastMouthOpenTime < SPEAKING_GRACE_PERIOD) {
+            // Short pause detected, keep tracking
         } else {
-            //console.log("Mouth closed for too long, resetting timer.");
-            speakingDuration = 0; // Reset only if silence lasts too long
+            // Mouth closed too long, reset
+            speakingDuration = 0;
             lastMouthOpenTime = null;
         }
     }
