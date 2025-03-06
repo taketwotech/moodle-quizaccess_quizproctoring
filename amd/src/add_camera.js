@@ -279,6 +279,10 @@ function($, str, ModalFactory) {
             document.addEventListener('drop', function(event) {
                 event.preventDefault();
             });
+
+            document.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
+            });
             const waitForElements = setInterval(() => {
                 const vElement = document.getElementById('video');
                 const cElement = document.getElementById('canvas');

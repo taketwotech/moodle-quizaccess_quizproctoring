@@ -83,15 +83,21 @@ function detectGazeDirection(landmarks, data, callback) {
     const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
     const smoothedNoseX = smoothValue(nose.x);
     const eyeDistance = Math.abs(rightEye.x - leftEye.x);
-    const ADAPTIVE_THRESHOLD = eyeDistance * 0.1; // Dynamic threshold
+
+    const ADAPTIVE_THRESHOLD = eyeDistance * 0.25; // Increase for bigger movements
+    const HARD_THRESHOLD = eyeDistance * 0.4; // Extreme tilt detection
 
     let currentDirection = "Center";
     let returnData = { status: "", data: data };
 
-    if (smoothedNoseX < eyeMidpointX - ADAPTIVE_THRESHOLD) {
+    if (smoothedNoseX < eyeMidpointX - HARD_THRESHOLD) {
         currentDirection = "Right";
-    } else if (smoothedNoseX > eyeMidpointX + ADAPTIVE_THRESHOLD) {
+    } else if (smoothedNoseX > eyeMidpointX + HARD_THRESHOLD) {
         currentDirection = "Left";
+    } else if (smoothedNoseX < eyeMidpointX - ADAPTIVE_THRESHOLD) {
+        return;
+    } else if (smoothedNoseX > eyeMidpointX + ADAPTIVE_THRESHOLD) {
+        return;
     }
 
     gazeConfidence[currentDirection]++;
@@ -121,7 +127,7 @@ function detectEyeStatus(landmarks, data, callback) {
 
     const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
     const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
-    const EYE_OPEN_THRESHOLD = 0.016;
+    const EYE_OPEN_THRESHOLD = 0.017;
 
     let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD && rightEyeOpen > EYE_OPEN_THRESHOLD)
         ? "Open"
@@ -187,7 +193,7 @@ async function detectObjects(model, videoElement, callback) {
         // Log output only if objects are detected
         if (objectsDetected.length > 0) {
             console.log("Detected Objects:", JSON.stringify(objectsDetected));
-            callback({ status: 'objects_detected', objects: objectsDetected });
+            //callback({ status: 'objects_detected', objects: objectsDetected });
         }
     }, 3000);
 }
