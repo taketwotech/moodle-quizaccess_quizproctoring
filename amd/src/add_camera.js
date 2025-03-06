@@ -292,7 +292,7 @@ function($, str, ModalFactory) {
                     if (typeof setupFaceMesh !== 'undefined') {
                         // eslint-disable-next-line no-undef
                         setupFaceMesh(enablestrictcheck, function(result) {
-                            if (result.status) {
+                            if (result.status) {console.log(result);
                                 realtimeDetection(cmid, attemptid, mainimage, result.status, result.data);
                             }
                         });

@@ -39,6 +39,7 @@ define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
+define('QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED', 'speakingdetected');
 
 /**
  * Serves the quizaccess proctoring files.
@@ -190,7 +191,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->userimg = $imagename;
     $record->attemptid = $attemptid;
     $record->status = $status;
-    if ($status != 'leftmovedetected' && $status != 'rightmovedetected') {
+    if ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected') {
         $record->image_status = $mainimage ? 'I' : 'A';
         $record->timemodified = time();
         $record->aws_response = $service;
@@ -201,7 +202,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
 
     if ($data) {
         $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-        if ($status != 'leftmovedetected' && $status != 'rightmovedetected') {
+        if ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected') {
             $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
             $proctoreddata->userimg = $imagename;
             $DB->update_record('quizaccess_proctor_data', $proctoreddata);
@@ -217,7 +218,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     }
 
     if ( !$mainimage && $status != '' &&
-        ($status != 'leftmovedetected' && $status != 'rightmovedetected')) {
+        ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected')) {
         $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
         $errorstring = '';

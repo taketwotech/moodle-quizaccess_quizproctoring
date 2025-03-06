@@ -85,6 +85,14 @@ if (!$mainentry->isautosubmit) {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED, 'quizaccess_quizproctoring', '', '');
             }
             break;
+        case 'Speaking':
+            if (!$mainimage) {
+                quizproctoring_storeimage($img, $cmid, $attemptid,
+                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED);
+            } else {
+                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED, 'quizaccess_quizproctoring', '', '');
+            }
+            break;
     }
     die();
 }

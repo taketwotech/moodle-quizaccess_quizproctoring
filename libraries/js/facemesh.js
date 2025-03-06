@@ -127,8 +127,7 @@ function detectEyeStatus(landmarks, data, callback) {
 
     const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
     const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
-    const EYE_OPEN_THRESHOLD = 0.017;
-
+    const EYE_OPEN_THRESHOLD = 0.015;
     let currentEyeStatus = (leftEyeOpen > EYE_OPEN_THRESHOLD && rightEyeOpen > EYE_OPEN_THRESHOLD)
         ? "Open"
         : "Closed";
@@ -158,50 +157,40 @@ function detectEyeStatus(landmarks, data, callback) {
     }
 }
 
-let speakingDuration = 0; // Accumulated speaking time
+let speakingDuration = 0;
 let lastMouthOpenTime = null;
-const SPEAKING_GRACE_PERIOD = 1000; // Allow 1 second of silence before resetting
-let speakingTimestamps = []; // Store timestamps of speaking events
-let exceedTimestamps = []; // Store timestamps when speaking exceeds 100 times in a minute
+const SPEAKING_GRACE_PERIOD = 300;
+let speakingTimestamps = [];
+let exceedTimestamps = [];
 
 function detectLipSync(landmarks, data, callback) {
     const upperLip = landmarks[13];
     const lowerLip = landmarks[14];
 
     const lipDistance = Math.abs(upperLip.y - lowerLip.y);
-    const MOUTH_OPEN_THRESHOLD = 0.011;
+    const MOUTH_OPEN_THRESHOLD = 0.015;
 
     let mouthRatio = lipDistance;
     let lipSyncStatus = mouthRatio > MOUTH_OPEN_THRESHOLD ? "Speaking" : "Closed";
-
-    console.log(lipSyncStatus);
-
     let currentTime = Date.now();
 
     if (lipSyncStatus === "Speaking") {
         if (!lastMouthOpenTime) {
-            lastMouthOpenTime = currentTime; // Track last time mouth was open
+            lastMouthOpenTime = currentTime;
         }
 
         speakingDuration += currentTime - lastMouthOpenTime;
-        lastMouthOpenTime = currentTime; // Update last open time
+        lastMouthOpenTime = currentTime;
 
         speakingTimestamps.push(currentTime);
 
         // Remove old timestamps (only keep last 60 seconds)
         speakingTimestamps = speakingTimestamps.filter(timestamp => currentTime - timestamp <= 60000);
 
-        // If speaking more than 100 times in a minute
-        if (speakingTimestamps.length > 25) {
-            
-
-            // Store timestamp of this exceed event
+        if (speakingTimestamps.length > 30) {
             exceedTimestamps.push(currentTime);
-
-            // Remove old exceed timestamps (only keep last 60 seconds)
             exceedTimestamps = exceedTimestamps.filter(timestamp => currentTime - timestamp <= 60000);
 
-            // 🚨 If the threshold has been exceeded 5 times in one minute, log and reset
             if (exceedTimestamps.length >= 3) {
                 console.warn("User exceeded speaking threshold 3 times in the last minute! Resetting...");
                 callback({ status: "Speaking", data: data });
@@ -237,18 +226,22 @@ async function loadModel() {
 }
 
 async function detectObjects(model, videoElement, callback) {
+    const TARGET_OBJECTS = ["cell phone", "book", "laptop", "ipad"];
+
     setInterval(async () => {
         const predictions = await model.detect(videoElement);
 
-        // Extract only object names (labels)
+        // Extract only object names (labels) with a confidence score > 0.2
         let objectsDetected = predictions
             .filter(prediction => prediction.score > 0.2)
-            .map(prediction => prediction.class); // Keep only class names
+            .map(prediction => prediction.class);
 
-        // Log output only if objects are detected
-        if (objectsDetected.length > 0) {
-            console.log("Detected Objects:", JSON.stringify(objectsDetected));
-            //callback({ status: 'objects_detected', objects: objectsDetected });
+        // Check if any of the target objects are detected
+        const detectedTargets = objectsDetected.filter(obj => TARGET_OBJECTS.includes(obj));
+
+        if (detectedTargets.length > 0) {
+            console.log("Detected Objects:", JSON.stringify(detectedTargets));
+            callback({ status: "objects_detected", objects: detectedTargets });
         }
     }, 3000);
 }
