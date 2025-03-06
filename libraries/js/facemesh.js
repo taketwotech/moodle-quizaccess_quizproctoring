@@ -158,19 +158,52 @@ function detectEyeStatus(landmarks, data, callback) {
     }
 }
 
+let speakingTimer = null;
+let speakingDuration = 0; // Accumulated speaking time
+let lastMouthOpenTime = null;
+const SPEAKING_GRACE_PERIOD = 1000; // Allow 1 second of silence before resetting
+
 function detectLipSync(landmarks, data, callback) {
     const upperLip = landmarks[13];
     const lowerLip = landmarks[14];
 
     const lipDistance = Math.abs(upperLip.y - lowerLip.y);
-    const MOUTH_OPEN_THRESHOLD = 0.015;
+    const MOUTH_OPEN_THRESHOLD = 0.011;
 
     let mouthRatio = lipDistance;
     let lipSyncStatus = mouthRatio > MOUTH_OPEN_THRESHOLD ? "Speaking" : "Closed";
 
+    console.log(lipSyncStatus);
+
+    if (lipSyncStatus === "Speaking") {
+        if (!lastMouthOpenTime) {
+            lastMouthOpenTime = Date.now(); // Track last time mouth was open
+        }
+
+        // Accumulate speaking time
+        speakingDuration += Date.now() - lastMouthOpenTime;
+        lastMouthOpenTime = Date.now(); // Update last open time
+
+        // If speaking for 5 seconds in total (even with short pauses)
+        if (speakingDuration >= 500) {
+            console.log("Speaking for 5 seconds!");
+            callback({ status: "Speaking", data: data });
+            speakingDuration = 0; // Reset after logging
+        }
+    } else {
+        // If mouth closes but within the grace period, do not reset the timer
+        if (lastMouthOpenTime && Date.now() - lastMouthOpenTime < SPEAKING_GRACE_PERIOD) {
+            //console.log("Short pause detected, keeping timer running.");
+        } else {
+            //console.log("Mouth closed for too long, resetting timer.");
+            speakingDuration = 0; // Reset only if silence lasts too long
+            lastMouthOpenTime = null;
+        }
+    }
+
+    // Update only if there's a significant change
     if (Math.abs(prevMouthRatio - mouthRatio) > 0.002) {
         prevMouthRatio = mouthRatio;
-        console.log(lipSyncStatus);
     }
 }
 

@@ -186,28 +186,38 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record = new stdClass();
     $record->userid = $user->id;
     $record->quizid = $quizid;
-    $record->image_status = $mainimage ? 'I' : 'A';
-    $record->aws_response = $service;
     $record->timecreated = time();
-    $record->timemodified = time();
     $record->userimg = $imagename;
     $record->attemptid = $attemptid;
     $record->status = $status;
-    $id = $DB->insert_record('quizaccess_proctor_data', $record);
+    if ($status != 'leftmovedetected' && $status != 'rightmovedetected') {
+        $record->image_status = $mainimage ? 'I' : 'A';
+        $record->timemodified = time();
+        $record->aws_response = $service;
+        $id = $DB->insert_record('quizaccess_proctor_data', $record);
+    } else {
+        $id = $DB->insert_record('quizaccess_eye_proctor', $record);
+    }
 
     if ($data) {
         $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-        $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
-        $proctoreddata->userimg = $imagename;
-        $DB->update_record('quizaccess_proctor_data', $proctoreddata);
-
+        if ($status != 'leftmovedetected' && $status != 'rightmovedetected') {
+            $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
+            $proctoreddata->userimg = $imagename;
+            $DB->update_record('quizaccess_proctor_data', $proctoreddata);
+        } else {
+            $proctoreddata = $DB->get_record('quizaccess_eye_proctor', ['id' => $id]);
+            $proctoreddata->userimg = $imagename;
+            $DB->update_record('quizaccess_eye_proctor', $proctoreddata);
+        }
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
         file_put_contents($tmpdir . $imagename, $imagedata);
     }
 
-    if ( !$mainimage && $status != '') {
+    if ( !$mainimage && $status != '' &&
+        ($status != 'leftmovedetected' && $status != 'rightmovedetected')) {
         $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
         $errorstring = '';
