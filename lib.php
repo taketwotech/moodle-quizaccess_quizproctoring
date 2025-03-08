@@ -40,6 +40,7 @@ define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED', 'speakingdetected');
+define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
 
 /**
  * Serves the quizaccess proctoring files.
@@ -191,34 +192,33 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->userimg = $imagename;
     $record->attemptid = $attemptid;
     $record->status = $status;
-    if ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected') {
+    //if ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected') {
         $record->image_status = $mainimage ? 'I' : 'A';
         $record->timemodified = time();
         $record->aws_response = $service;
         $id = $DB->insert_record('quizaccess_proctor_data', $record);
-    } else {
-        $id = $DB->insert_record('quizaccess_eye_proctor', $record);
-    }
+    //} else {
+        //$id = $DB->insert_record('quizaccess_eye_proctor', $record);
+    //}
 
     if ($data) {
         $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-        if ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected') {
+        //if ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected') {
             $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
             $proctoreddata->userimg = $imagename;
             $DB->update_record('quizaccess_proctor_data', $proctoreddata);
-        } else {
+        /*} else {
             $proctoreddata = $DB->get_record('quizaccess_eye_proctor', ['id' => $id]);
             $proctoreddata->userimg = $imagename;
             $DB->update_record('quizaccess_eye_proctor', $proctoreddata);
-        }
+        }*/
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
         file_put_contents($tmpdir . $imagename, $imagedata);
     }
 
-    if ( !$mainimage && $status != '' &&
-        ($status != 'leftmovedetected' && $status != 'rightmovedetected' && $status != 'speakingdetected')) {
+    if ( !$mainimage && $status != '') {
         $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
         $errorstring = '';

@@ -33,6 +33,7 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $validate = required_param('validate', PARAM_RAW);
+$object = optional_param('objects', '', PARAM_RAW);
 
 $mainentry = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $USER->id,
@@ -91,6 +92,14 @@ if (!$mainentry->isautosubmit) {
                 $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED);
             } else {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED, 'quizaccess_quizproctoring', '', '');
+            }
+            break;
+        case 'objectsdetected':
+            if (!$mainimage) {
+                quizproctoring_storeimage($img, $cmid, $attemptid,
+                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED);
+            } else {
+                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED, 'quizaccess_quizproctoring', '', '');
             }
             break;
     }

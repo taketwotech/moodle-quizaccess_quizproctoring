@@ -48,10 +48,10 @@ async function setupFaceMesh(enablestrictcheck, callback) {
         if (results.multiFaceLandmarks?.length === 1) {
             results.multiFaceLandmarks.forEach(landmarks => {
                 if (enablestrictcheck === 1) {
-                    detectGazeDirection(landmarks, data, callback);
+                    detectGazeDirection(landmarks, data, callback);                    
+                    detectLipSync(landmarks, data, callback);
                 }
                 detectEyeStatus(landmarks, data, callback);
-                detectLipSync(landmarks, data, callback);
             });
         }
 
@@ -66,8 +66,7 @@ async function setupFaceMesh(enablestrictcheck, callback) {
     sendFaceMeshData();
 
     const model = await loadModel();
-    detectObjects(model, videoElement, callback);
-    //detectObjects(videoElement, objectModel, callback);
+    detectObjects(model, videoElement, canvasElement, callback);
 }
 
 function smoothValue(newValue) {
@@ -161,7 +160,9 @@ let speakingDuration = 0;
 let lastMouthOpenTime = null;
 const SPEAKING_GRACE_PERIOD = 300;
 let speakingTimestamps = [];
-let exceedTimestamps = [];
+let lastCallbackTime = 0;
+const SPEAKING_THRESHOLD = 50; // Trigger at 50 speaking events
+const RESET_INTERVAL = 60000; // 1 minute
 
 function detectLipSync(landmarks, data, callback) {
     const upperLip = landmarks[13];
@@ -184,21 +185,19 @@ function detectLipSync(landmarks, data, callback) {
 
         speakingTimestamps.push(currentTime);
 
-        // Remove old timestamps (only keep last 60 seconds)
-        speakingTimestamps = speakingTimestamps.filter(timestamp => currentTime - timestamp <= 60000);
+        // Remove old timestamps (keep only last 60 seconds)
+        speakingTimestamps = speakingTimestamps.filter(timestamp => currentTime - timestamp <= RESET_INTERVAL);
 
-        if (speakingTimestamps.length > 30) {
-            exceedTimestamps.push(currentTime);
-            exceedTimestamps = exceedTimestamps.filter(timestamp => currentTime - timestamp <= 60000);
-
-            if (exceedTimestamps.length >= 3) {
-                console.warn("User exceeded speaking threshold 3 times in the last minute! Resetting...");
+        if (speakingTimestamps.length >= SPEAKING_THRESHOLD) {
+            if (currentTime - lastCallbackTime >= RESET_INTERVAL) {
+                console.warn(`User spoke ${SPEAKING_THRESHOLD} times in the last minute! Triggering callback...`);
                 callback({ status: "Speaking", data: data });
+
                 // Reset everything
                 speakingTimestamps = [];
-                exceedTimestamps = [];
-                speakingDuration = 0;
                 lastMouthOpenTime = null;
+                speakingDuration = 0;
+                lastCallbackTime = currentTime; // Mark the time of the callback
             }
         }
     } else {
@@ -211,11 +210,6 @@ function detectLipSync(landmarks, data, callback) {
             lastMouthOpenTime = null;
         }
     }
-
-    // Update only if there's a significant change
-    if (Math.abs(prevMouthRatio - mouthRatio) > 0.002) {
-        prevMouthRatio = mouthRatio;
-    }
 }
 
 async function loadModel() {
@@ -225,23 +219,37 @@ async function loadModel() {
     return model;
 }
 
-async function detectObjects(model, videoElement, callback) {
-    const TARGET_OBJECTS = ["cell phone", "book", "laptop", "ipad"];
-
+async function detectObjects(model, videoElement, canvasElement, callback) {
+    TARGET_OBJECTS = [
+        "cell phone",
+        "book",
+        "laptop",
+        "ipad",
+        "headphones",
+        "earbuds",
+        "smartwatch",
+        "calculator",    
+        "monitor",
+        "mirror"
+    ];
     setInterval(async () => {
         const predictions = await model.detect(videoElement);
-
-        // Extract only object names (labels) with a confidence score > 0.2
+        let data = canvasElement.toDataURL('image/png');
+        // Extract only object names (labels)
         let objectsDetected = predictions
             .filter(prediction => prediction.score > 0.2)
-            .map(prediction => prediction.class);
-
-        // Check if any of the target objects are detected
+            .map(prediction => prediction.class); // Keep only class names
         const detectedTargets = objectsDetected.filter(obj => TARGET_OBJECTS.includes(obj));
 
         if (detectedTargets.length > 0) {
-            console.log("Detected Objects:", JSON.stringify(detectedTargets));
-            callback({ status: "objects_detected", objects: detectedTargets });
+            console.log("Detected Objects:", detectedTargets.join(", "));
+
+            // Return a single object if only one is detected
+            if (detectedTargets.length === 1) {
+                callback({ status: "objectsdetected", object: detectedTargets[0], data: data });
+            } else {
+                callback({ status: "objectsdetected", object: detectedTargets, data: data });
+            }
         }
     }, 3000);
 }
