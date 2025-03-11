@@ -112,39 +112,6 @@ class api {
     }
 
     /**
-     * Validate the image captured
-     *
-     * @param Longtext $imagedata data
-     * @param int $userid user id
-     * @param int $quizid quiz id
-     * @return string
-     */
-    public static function proctor_eye_api($imagedata, $userid, $quizid) {
-        self::init();
-        $curl = new \curl();
-        $url = 'https://proctor-dev.taketwotechnologies.com/validate';
-        $accesstoken = self::$accesstoken;
-        $accesstokensecret = self::$accesstokensecret;
-        $domain = self::domain();
-        $header = [
-            'Content-Type: application/json',
-            'access-token: ' . $accesstoken,
-            'secret-token: ' . $accesstokensecret,
-            'domain: ' . $domain,
-            'user_id: ' . $userid,
-            'quiz_id: ' . $quizid,
-        ];
-        $curl->setHeader($header);
-        $result = $curl->post($url, $imagedata);
-        if ($result) {
-            $compareresult = self::compare_faces($result);
-            if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
-                return QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED;
-            }
-        }
-    }
-
-    /**
      * Get the token is activated or not
      *
      * @return string

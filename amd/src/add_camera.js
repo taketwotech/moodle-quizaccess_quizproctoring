@@ -210,7 +210,7 @@ function($, str, ModalFactory) {
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, serviceoption, onlinestudent = 0, securewindow = null, userfullname,
-        enablestudentvideo = 1, setinterval = 300, enablestrictcheck = 0,
+        enablestudentvideo = 1, setinterval = 300,
         warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
@@ -283,23 +283,6 @@ function($, str, ModalFactory) {
             document.addEventListener('contextmenu', function(event) {
                 event.preventDefault();
             });
-            const waitForElements = setInterval(() => {
-                const vElement = document.getElementById('video');
-                const cElement = document.getElementById('canvas');
-
-                if (vElement && cElement) {
-                    clearInterval(waitForElements);
-                    if (typeof setupFaceMesh !== 'undefined') {
-                        // eslint-disable-next-line no-undef
-                        setupFaceMesh(enablestrictcheck, function(result) {
-                            if (result.status) {console.log(result);
-                                realtimeDetection(cmid, attemptid, mainimage,
-                                    result.status, result.data, result.object);
-                            }
-                        });
-                    }
-                }
-            }, 500);
             if (onlinestudent) {
                 // eslint-disable-next-line no-undef
                 signalingSocket = io(externalserver);
@@ -308,7 +291,7 @@ function($, str, ModalFactory) {
                 var storedSession = localStorage.getItem('sessionState');
                 var sessionState = storedSession ? JSON.parse(storedSession) : null;
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-                teacher, enablestudentvideo, enablestrictcheck, setinterval,
+                teacher, enablestudentvideo, setinterval,
                 serviceoption, quizid, function() {
                     // Once User gives access to mic/cam, join the channel and start peering up
                     var teacherroom = getTeacherroom();
@@ -527,7 +510,7 @@ function($, str, ModalFactory) {
                 });
         } else {
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, enablestrictcheck, setinterval,
+            teacher, enablestudentvideo, setinterval,
             serviceoption, quizid);
         }
     }
@@ -546,7 +529,6 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
-     * @param {boolean} enablestrictcheck - boolean value
      * @param {bigint} setinterval - int value
      * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
@@ -554,7 +536,7 @@ function($, str, ModalFactory) {
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo, enablestrictcheck,
+        teacher, enablestudentvideo,
         setinterval, serviceoption, quizid, callback = function() {}) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {

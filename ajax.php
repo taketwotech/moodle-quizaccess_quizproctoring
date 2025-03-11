@@ -113,9 +113,15 @@ if (!$mainentry->isautosubmit) {
         if ($target !== '') {
             $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
             $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
-            $imagedata = ["primary" => $tdata, "target" => $data, "type" => "facematches"];
-            $validate = \quizaccess_quizproctoring\api::proctor_eye_api(json_encode($imagedata),
-            $USER->id, $cm->instance);
+            $imagedata = ["primary" => $tdata, "target" => $data];
+            $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
+                $USER->id, $cm->instance);
+            if ($response == 'Unauthorized') {
+                throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
+                die();
+            } else {
+                $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
+            }
         } else {
             $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
             $imagedata = ["primary" => $data1];

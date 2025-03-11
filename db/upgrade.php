@@ -318,47 +318,5 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Update the plugin version to mark the change as complete.
         upgrade_plugin_savepoint(true, 2025010600, 'quizaccess', 'quizproctoring');
     }
-
-    if ($oldversion < 2025021901) {
-
-        // Define field enablestrictcheck to be added to quizaccess_quizproctoring.
-        $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablestrictcheck', XMLDB_TYPE_INTEGER, '1',
-            null, XMLDB_NOTNULL, null, '0', 'enablestudentvideo');
-
-        // Conditionally launch add field enablestrictcheck.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025021901, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2025022102) {
-        // Define table quizaccess_eye_proctor to be created.
-        $table = new xmldb_table('quizaccess_eye_proctor');
-
-        // Adding fields to table quizaccess_eye_proctor.
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('userid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('quizid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('userimg', XMLDB_TYPE_TEXT, null, null, null, null, null);
-        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('attemptid', XMLDB_TYPE_INTEGER, '11', null, null, null, null);
-        $table->add_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('status', XMLDB_TYPE_CHAR, '100', null, null, null, null);
-
-        // Adding keys to table quizaccess_eye_proctor.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-
-        // Conditionally launch create table for quizaccess_eye_proctor.
-        if (!$dbman->table_exists($table)) {
-            $dbman->create_table($table);
-        }
-
-        // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025022102, 'quizaccess', 'quizproctoring');
-    }
     return true;
 }
