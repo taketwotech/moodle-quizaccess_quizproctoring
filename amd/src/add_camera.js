@@ -535,7 +535,7 @@ function($, str, ModalFactory) {
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, enablestudentvideo,
-        setinterval, serviceoption, quizid, callback = function() {}) {
+        setinterval, serviceoption, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {

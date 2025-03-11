@@ -32,7 +32,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $perpage = 10;
 $page = optional_param('page', 0, PARAM_INT);
 $sort = optional_param('sort', 'attempt', PARAM_ALPHA);
-$dir = optional_param('dir', 'ASC', PARAM_ALPHA);
+$dir = optional_param('dir', 'DESC', PARAM_ALPHA);
 
 $attemptssort = ($sort === 'attempt' && $dir === 'ASC') ? 'DESC' : 'ASC';
 $arrowup = ' ▲';
