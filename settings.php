@@ -32,7 +32,7 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('pluginname', 'quizaccess_quizproctoring'), 'moodle/site:config');
 
     $choices = [
-        'take2' => 'Take2 Proctoring',
+        'take2' => 'ProctorLink',
     ];
     $settings->add(new admin_setting_configselect('quizaccess_quizproctoring/serviceoption',
         get_string('serviceoption', 'quizaccess_quizproctoring'),
