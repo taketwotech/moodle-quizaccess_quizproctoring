@@ -156,6 +156,7 @@ class api {
      * @param Longtext $response data
      * @param Longtext $source data
      * @param Longtext $target data
+     * @param bool $eyecheck eye check
      * @return string
      */
     public static function validate($response, $source, $target = '', $eyecheck = false) {
