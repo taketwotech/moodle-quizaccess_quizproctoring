@@ -158,7 +158,7 @@ class api {
      * @param Longtext $target data
      * @return string
      */
-    public static function validate($response, $source, $target = '') {
+    public static function validate($response, $source, $target = '', $eyecheck = false) {
         global $CFG;
         self::init();
         $result = json_decode($response, true);
@@ -168,7 +168,7 @@ class api {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
             } else if ($count == 1) {
                 $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
-                if ($eyesopen === false) {
+                if ($eyesopen === false && $eyecheck === true) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
                 } else if ($target !== '') {
                     $compareresult = self::compare_faces($response);

@@ -109,6 +109,7 @@ if (!$mainentry->isautosubmit) {
             $validate = \quizaccess_quizproctoring\aws\camera::validate($data);
         }
     } else {
+        $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
         // Validate image.
         if ($target !== '') {
             $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
@@ -120,7 +121,11 @@ if (!$mainentry->isautosubmit) {
                 throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
                 die();
             } else {
-                $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
+                if ($proctoringdata->enableeyecheck == 1 ) {
+                    $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata, true);
+                } else {
+                    $validate = \quizaccess_quizproctoring\api::validate($response, $data, $tdata);
+                }
             }
         } else {
             $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
@@ -132,7 +137,6 @@ if (!$mainentry->isautosubmit) {
                 die();
             } else {
                 $validate = \quizaccess_quizproctoring\api::validate($response, $data1);
-                $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
                 if ( $validate == '' && $proctoringdata->enableprofilematch == 1 ) {
                     if ( $profileimage ) {
                         $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
