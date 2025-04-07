@@ -27,7 +27,7 @@
  * Post-install script
  */
 function xmldb_quizaccess_quizproctoring_install() {
-    global $DB, $USER;
+    global $DB, $USER, $CFG;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
 
@@ -35,13 +35,14 @@ function xmldb_quizaccess_quizproctoring_install() {
     $record->firstname = $user->firstname;
     $record->lastname  = $user->lastname;
     $record->email     = $user->email;
+    $record->domain    = $CFG->wwwroot;
     $record->moodle_v  = get_config('moodle', 'release');
     $record->previously_installed_v = '';
 
     $postdata = json_encode($record);
 
     $curl = new \curl();
-    $url = 'https://localhost:8080/create';
+    $url = 'https://proctor-dev.taketwotechnologies.com/create';
     $header = [
         'Content-Type: application/json',
     ];

@@ -41,12 +41,12 @@ if ($hassiteconfig && !empty($USER->id)) {
         $choices
     ));
 
-    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/accesstoken',
+    $settings->add(new admin_setting_configpasswordunmask('quizaccess_quizproctoring/accesstoken',
         get_string('accesstoken', 'quizaccess_quizproctoring'),
         get_string('accesstoken_help', 'quizaccess_quizproctoring'),
                 PARAM_TEXT));
 
-    $settings->add(new admin_setting_configtext('quizaccess_quizproctoring/accesstokensecret',
+    $settings->add(new admin_setting_configpasswordunmask('quizaccess_quizproctoring/accesstokensecret',
         get_string('accesstokensecret', 'quizaccess_quizproctoring'),
         get_string('accesstokensecret_help', 'quizaccess_quizproctoring'),
         PARAM_TEXT));

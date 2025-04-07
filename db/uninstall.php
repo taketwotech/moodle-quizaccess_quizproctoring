@@ -36,7 +36,7 @@ function xmldb_quizaccess_quizproctoring_uninstall() {
     $postdata = json_encode($record);
 
     $curl = new \curl();
-    $url = 'https://localhost:8080/uninstall';
+    $url = 'https://proctor-dev.taketwotechnologies.com/uninstall';
     $header = [
         'Content-Type: application/json',
     ];
