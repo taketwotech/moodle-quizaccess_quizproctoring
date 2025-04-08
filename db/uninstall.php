@@ -27,12 +27,13 @@
  * Post-uninstall script
  */
 function xmldb_quizaccess_quizproctoring_uninstall() {
-    global $DB, $USER;
+    global $DB, $USER, $CFG;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
 
     $record = new stdClass();
     $record->email = $user->email;
+    $record->domain = $CFG->wwwroot;
     $postdata = json_encode($record);
 
     $curl = new \curl();
