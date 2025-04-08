@@ -285,6 +285,10 @@ button.proctoridentity {
     display: none;
 }
 
+[data-passwordunmask="unmask"] {
+    display: none;
+}
+
 .image-checkbox {
     margin-left: 5px;
     font-weight: bold;
