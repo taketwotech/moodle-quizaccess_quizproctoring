@@ -136,7 +136,7 @@ if (!$mainentry->isautosubmit) {
                 throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
                 die();
             } else {
-                $validate = \quizaccess_quizproctoring\api::validate($response, $data1);
+                $validate = \quizaccess_quizproctoring\api::validate($response, $data1, '', true);
                 if ( $validate == '' && $proctoringdata->enableprofilematch == 1 ) {
                     if ( $profileimage ) {
                         $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
