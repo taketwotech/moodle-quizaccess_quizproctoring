@@ -32,6 +32,7 @@ function xmldb_quizaccess_quizproctoring_uninstall() {
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
 
     $record = new stdClass();
+    $record->email = $user->email;
     $record->domain = $CFG->wwwroot;
     $postdata = json_encode($record);
 
