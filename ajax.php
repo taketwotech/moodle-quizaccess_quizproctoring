@@ -143,7 +143,7 @@ if (!$mainentry->isautosubmit) {
                         $profiledata = ["primary" => $data1, "target" => $imagecontent];
                         $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata),
                         $USER->id, $cm->instance);
-                        $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent);
+                        $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, true);
                         if ($profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
                             $profileresp == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
                             $profileresp == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
