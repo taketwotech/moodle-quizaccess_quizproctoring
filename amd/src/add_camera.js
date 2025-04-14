@@ -24,6 +24,16 @@ function($, str, ModalFactory) {
         docElement.on('popup', this.showpopup.bind(this));
     };
 
+    $('#id_consentcheckbox').on('change', function() {
+        if (!$(this).is(':checked')) {
+            $("#id_submitbutton").prop("disabled", true);
+        } else if ($(this).is(':checked') && $("input[name='userimg']").val() === '') {
+            $("#id_submitbutton").prop("disabled", true);
+        } else if ($(this).is(':checked') && $("input[name='userimg']").val() !== '') {
+            $("#id_submitbutton").prop("disabled", false);
+        }
+    });
+
     /** @type Tag element contain video. */
     Camera.prototype.video = false;
     /** @type String video elemend id. */
@@ -109,7 +119,9 @@ function($, str, ModalFactory) {
                     $("input[name='userimg']").val('');
                     $(document).trigger('popup', response.error);
                 } else {
-                    $("#id_submitbutton").prop("disabled", false);
+                    if ($('#id_consentcheckbox').is(':checked')) {
+                        $("#id_submitbutton").prop("disabled", false);
+                    }
                 }
             }
         });
@@ -157,6 +169,7 @@ function($, str, ModalFactory) {
         $('#' + this.videoid).show();
         $('#' + this.takepictureid).show();
         $("input[name='userimg']").val('');
+        $("#id_submitbutton").prop("disabled", true);
     };
 
     var signalingSocket = null;

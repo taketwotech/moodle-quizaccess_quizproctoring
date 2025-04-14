@@ -78,6 +78,11 @@ button.proctoridentity {
     color: red;
 }
 
+label[for="id_consentcheckbox"] {
+    font-size: 12px;
+    font-weight: 700;
+}
+
 #loading {
     backdrop-filter: blur(3px);
     position: fixed;

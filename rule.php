@@ -198,6 +198,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);
+        // Add consent checkbox at the top.
+        $mform->addElement('advcheckbox', 'consentcheckbox', '', 
+            get_string('confirmationconcent', 'quizaccess_quizproctoring'),
+            ['class' => 'consentcheckbox']);
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
             $sql = "SELECT * FROM {files} WHERE contextid =
@@ -269,6 +273,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
+        $mform->addElement('hidden', 'userimg');
+        $mform->setType('userimg', PARAM_TEXT);
         $mform->addElement('html', $html);
         $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
          'quizaccess_quizproctoring'), null, $filemanageroptions);

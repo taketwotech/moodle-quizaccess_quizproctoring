@@ -48,6 +48,7 @@ $string['clear_images_sixty'] = '3 Months';
 $string['clear_images_thirty'] = '1 Month';
 $string['clickpicture'] = 'Please capture your picture before starting the exam';
 $string['confirmation'] = 'Confirmation';
+$string['confirmationconcent'] = 'By continuing, I consent to the use of my device\'s webcam for monitoring purposes during the examination. I understand that my video feed may be recorded or reviewed in real-time to prevent any unfair practices. I confirm that I am aware of and agree to this usage as part of the exam\'s proctoring process.';
 $string['delcoursemages'] = 'Delete all stored images of {$a}';
 $string['deleteallimages'] = 'I understand that these images will be permanently deleted and cannot be recovered.';
 $string['deleteallimagescourse'] = 'Do you want to delete all images associated with "{$a}" course? Please be aware that this action is permanent and cannot be undone.<br/><br/>';
