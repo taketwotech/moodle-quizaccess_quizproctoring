@@ -401,11 +401,8 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
 
             // Allow admin or teacher to setup student video.
-            $mform->addElement('selectyesno', 'enableeyecheck',
-                get_string('enableeyecheck', 'quizaccess_quizproctoring'));
-            $mform->addHelpButton('enableeyecheck', 'enableeyecheck', 'quizaccess_quizproctoring');
-            $mform->setDefault('enableeyecheck', 0);
-            $mform->hideIf('enableeyecheck', 'enableproctoring', 'eq', '0');
+            $mform->addElement('hidden', 'enableeyecheck', 0);
+            $mform->setType('enableeyecheck', PARAM_INT);
         }
 
         // Time interval set for proctoring image.

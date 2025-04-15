@@ -294,6 +294,23 @@ function($, str, ModalFactory) {
             document.addEventListener('contextmenu', function(event) {
                 event.preventDefault();
             });
+            const waitForElements = setInterval(() => {
+                const vElement = document.getElementById('video');
+                const cElement = document.getElementById('canvas');
+
+                if (vElement && cElement) {
+                    clearInterval(waitForElements);
+                    if (typeof setupFaceMesh !== 'undefined') {
+                        // eslint-disable-next-line no-undef
+                        setupFaceMesh(function(result) {
+                            if (result.status) {console.log(result);
+                                realtimeDetection(cmid, attemptid, mainimage,
+                                    result.status, result.data, result.object);
+                            }
+                        });
+                    }
+                }
+            }, 500);
             if (onlinestudent) {
                 // eslint-disable-next-line no-undef
                 signalingSocket = io(externalserver);
@@ -819,6 +836,48 @@ function makeDraggable(element) {
                 left: parseInt(element.style.left, 10),
                 top: parseInt(element.style.top, 10)
             }));
+        }
+    });
+}
+
+/**
+ * Realtime Detection Ajax call
+ *
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {string} face string value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function realtimeDetection(cmid, attemptid, mainimage, face, data, object = '') {
+    var requestData = {
+        cmid: cmid,
+        attemptid: attemptid,
+        mainimage: mainimage,
+        validate: face,
+        imgBase64: data,
+        object: object,
+    };
+    $.ajax({
+        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+        method: 'POST',
+        data: requestData,
+        success: function(response) {
+            if (response && response.errorcode) {
+                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                var leftwarnings = Math.max(warningsl - 1, 0);
+                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                $(document).trigger('popup', response.error);
+            } else {
+                if (response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
+                }
+            }
         }
     });
 }

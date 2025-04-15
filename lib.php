@@ -131,6 +131,10 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $enablevideo = 1;
     }
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/face_mesh.js'), true);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
@@ -140,6 +144,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $warningsleft);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh.js', true);
 }
 
 /**
