@@ -1,13 +1,5 @@
 (function () {
-    let gazeDirection = null;
-    let gazeTimer = null;
-    let prevNoseX = null;
-    let gazeConfidence = { Left: 0, Right: 0, Center: 0 };
-    const CONFIDENCE_THRESHOLD = 3;
-    const SMOOTHING_FACTOR = 0.1;
-
     let eyeTimer = null;
-    const GAZE_THRESHOLD = 1000;
     const EYE_THRESHOLD = 3000;
 
     let lastWarningTime = 0;
@@ -15,7 +7,7 @@
 
     function canTriggerWarning() {
         const now = Date.now();
-        return (now - lastWarningTime) > WARNING_COOLDOWN;
+        return (Date.now() - lastWarningTime) > WARNING_COOLDOWN;
     }
 
     function triggerWarning(status, data, callback) {
@@ -32,12 +24,12 @@
 
         const faceMesh = new FaceMesh({
             locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.1/${file}`;
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
             }
         });
 
         faceMesh.setOptions({
-            maxNumFaces: 5,
+            maxNumFaces: 1,
             refineLandmarks: true,
         });
 
@@ -45,15 +37,13 @@
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            let data = canvasElement.toDataURL('image/png');
-            const currentTime = Date.now();
+            const data = canvasElement.toDataURL('image/png');
             let returnData = { status: '', data: data };
 
             if (results.multiFaceLandmarks?.length === 1) {
-                results.multiFaceLandmarks.forEach(landmarks => {
-                    detectEyeStatus(landmarks, data, callback);
-                    detectGazeDirection(landmarks, data, callback);
-                });
+                const landmarks = results.multiFaceLandmarks[0];
+                detectEyeStatus(landmarks, data, callback);
+                detectEyeDirection(landmarks, data, callback);
             }
 
             canvasCtx.restore();
@@ -64,54 +54,8 @@
             await faceMesh.send({ image: videoElement });
             requestAnimationFrame(sendFaceMeshData);
         }
+
         sendFaceMeshData();
-    }
-
-    function smoothValue(newValue) {
-        if (prevNoseX === null) prevNoseX = newValue;
-        prevNoseX = prevNoseX * (1 - SMOOTHING_FACTOR) + newValue * SMOOTHING_FACTOR;
-        return prevNoseX;
-    }
-
-    function detectGazeDirection(landmarks, data, callback) {
-        const leftEye = landmarks[33];
-        const rightEye = landmarks[263];
-        const nose = landmarks[1];
-
-        const eyeMidpointX = (leftEye.x + rightEye.x) / 2;
-        const smoothedNoseX = smoothValue(nose.x);
-        const eyeDistance = Math.abs(rightEye.x - leftEye.x);
-
-        const ADAPTIVE_THRESHOLD = eyeDistance * 0.25;
-        const HARD_THRESHOLD = eyeDistance * 0.4;
-
-        let currentDirection = "Center";
-        if (smoothedNoseX < eyeMidpointX - HARD_THRESHOLD) {
-            currentDirection = "Right";
-        } else if (smoothedNoseX > eyeMidpointX + HARD_THRESHOLD) {
-            currentDirection = "Left";
-        } else if (smoothedNoseX < eyeMidpointX - ADAPTIVE_THRESHOLD ||
-                   smoothedNoseX > eyeMidpointX + ADAPTIVE_THRESHOLD) {
-            return;
-        }
-
-        gazeConfidence[currentDirection]++;
-        if (gazeConfidence[currentDirection] >= CONFIDENCE_THRESHOLD) {
-            if (currentDirection !== gazeDirection) {
-                gazeDirection = currentDirection;
-                if (gazeTimer) {
-                    clearTimeout(gazeTimer);
-                    gazeTimer = null;
-                }
-                if (gazeDirection !== "Center") {
-                    gazeTimer = setTimeout(() => {
-                        triggerWarning(gazeDirection, data, callback);
-                        gazeTimer = null;
-                    }, GAZE_THRESHOLD);
-                }
-            }
-            gazeConfidence = { Left: 0, Right: 0, Center: 0 };
-        }
     }
 
     function detectEyeStatus(landmarks, data, callback) {
@@ -120,12 +64,27 @@
         const rightEyeUpper = landmarks[386];
         const rightEyeLower = landmarks[374];
 
+        const leftEar = landmarks[234];
+        const rightEar = landmarks[454];
+        const nose = landmarks[1];
+
+        if (!leftEyeUpper || !leftEyeLower || !rightEyeUpper || !rightEyeLower ||
+            !leftEar || !rightEar || !nose) {
+            triggerWarning('eyesnotopen', data, callback);
+            return;
+        }
+
         const leftEyeOpen = Math.abs(leftEyeUpper.y - leftEyeLower.y);
         const rightEyeOpen = Math.abs(rightEyeUpper.y - rightEyeLower.y);
-
         const EYE_OPEN_THRESHOLD = 0.015;
+
         const isClosed = leftEyeOpen < EYE_OPEN_THRESHOLD && rightEyeOpen < EYE_OPEN_THRESHOLD;
 
+        // Looking down detection (based on vertical nose-eye position)
+        const eyesAvgY = (leftEyeUpper.y + rightEyeUpper.y) / 2;
+        const lookingDown = (nose.y - eyesAvgY) > 0.04;
+
+        
         if (isClosed && !eyeTimer) {
             eyeTimer = setTimeout(() => {
                 triggerWarning('eyesnotopen', data, callback);
@@ -134,6 +93,32 @@
         } else if (!isClosed && eyeTimer) {
             clearTimeout(eyeTimer);
             eyeTimer = null;
+        }
+    }
+
+    function detectEyeDirection(landmarks, data, callback) {
+        const leftIris = landmarks[468]; // center of left iris
+        const leftEyeInner = landmarks[133]; // inner eye corner (left side of iris)
+        const leftEyeOuter = landmarks[33];  // outer eye corner (right side of iris)
+        const leftEyeTop = landmarks[159];
+        const leftEyeBottom = landmarks[145];
+
+        if (!leftIris || !leftEyeInner || !leftEyeOuter || !leftEyeTop || !leftEyeBottom) return;
+
+        // Normalize iris X and Y within eye bounds
+        const horizontalRatio = (leftIris.x - leftEyeInner.x) / (leftEyeOuter.x - leftEyeInner.x);
+        const verticalRatio = (leftIris.y - leftEyeTop.y) / (leftEyeBottom.y - leftEyeTop.y);
+
+        let direction = "center";
+
+        if (horizontalRatio < 0.30) {
+            direction = "left";
+        } else if (horizontalRatio > 0.70) {
+            direction = "right";
+        }
+
+        if (direction !== "center") {
+            triggerWarning(`eyesnotopen`, data, callback);
         }
     }
 
