@@ -273,8 +273,6 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
-        $mform->addElement('hidden', 'userimg');
-        $mform->setType('userimg', PARAM_TEXT);
         $mform->addElement('html', $html);
         $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
          'quizaccess_quizproctoring'), null, $filemanageroptions);

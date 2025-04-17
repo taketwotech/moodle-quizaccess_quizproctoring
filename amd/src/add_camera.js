@@ -207,6 +207,8 @@ function($, str, ModalFactory) {
             this.activeModal = modal;
             modal.show();
             return null;
+        }).catch(() => {
+            showCustomModal(message);
         });
     };
 
@@ -880,5 +882,58 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data, object = '') 
             }
         }
     });
+}
+/**
+ * Setup show Custom Modal
+ *
+ * @param {Longtext} message - string value
+ * @return {void}
+ */
+function showCustomModal(message) {
+    $('.custom-modal').remove();
+    const modalHtml = `
+        <div class="custom-modal show" role="dialog" aria-modal="true" tabindex="-1">
+            <div class="custom-modal-dialog modal-dialog-scrollable">
+                <div class="custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h5 class="custom-modal-title"></h5>
+                        <button type="button" class="custom-close-btn" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="custom-modal-body">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    $('body').append(modalHtml);
+    $('.custom-modal').fadeIn();
+    $('.custom-close-btn').click(function() {
+        closeCustomModal();
+    });
+    $(document).on('click', function(e) {
+        const $modalContent = $('.custom-modal-content');
+        if (!$modalContent.is(e.target) && $modalContent.has(e.target).length === 0) {
+            closeCustomModal();
+        }
+    });
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCustomModal();
+        }
+    });
+}
+
+/**
+ * Setup close Custom Modal
+ *
+ * @return {void}
+ */
+function closeCustomModal() {
+    $('.custom-modal').fadeOut(function() {
+        $(this).remove();
+    });
+    $(document).off('click');
+    $(document).off('keydown');
 }
 });
