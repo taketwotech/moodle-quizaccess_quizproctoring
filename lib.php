@@ -154,7 +154,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param string $status
  * @param boolean $storeallimg store images
  */
-function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='', $storeallimg=false) {
+function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='', $response, $storeallimg=false) {
     global $USER, $DB, $COURSE;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
@@ -184,6 +184,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record->image_status = $mainimage ? 'I' : 'A';
     $record->timemodified = time();
     $record->aws_response = $service;
+    $record->response = $response;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
 
     if ($data) {
