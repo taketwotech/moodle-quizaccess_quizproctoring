@@ -33,7 +33,6 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $validate = required_param('validate', PARAM_RAW);
-$object = optional_param('objects', '', PARAM_RAW);
 
 $mainentry = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $USER->id,

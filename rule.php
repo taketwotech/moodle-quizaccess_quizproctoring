@@ -199,7 +199,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);
         // Add consent checkbox at the top.
-        $mform->addElement('advcheckbox', 'consentcheckbox', '', 
+        $mform->addElement('advcheckbox', 'consentcheckbox', '',
             get_string('confirmationconcent', 'quizaccess_quizproctoring'),
             ['class' => 'consentcheckbox']);
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {

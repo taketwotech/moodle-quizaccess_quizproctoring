@@ -305,9 +305,9 @@ function($, str, ModalFactory) {
                     if (typeof setupFaceMesh !== 'undefined') {
                         // eslint-disable-next-line no-undef
                         setupFaceMesh(function(result) {
-                            if (result.status) {console.log(result);
+                            if (result.status) {
                                 realtimeDetection(cmid, attemptid, mainimage,
-                                    result.status, result.data, result.object);
+                                    result.status, result.data);
                             }
                         });
                     }
@@ -852,14 +852,13 @@ function makeDraggable(element) {
  * @param {Longtext} data video
  * @return {void}
  */
-function realtimeDetection(cmid, attemptid, mainimage, face, data, object = '') {
+function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     var requestData = {
         cmid: cmid,
         attemptid: attemptid,
         mainimage: mainimage,
         validate: face,
         imgBase64: data,
-        object: object,
     };
     $.ajax({
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
