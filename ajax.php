@@ -206,7 +206,7 @@ if (!$mainentry->isautosubmit) {
         default:
             // Store only if main image.
             if ($mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, $service,'', $response);
+                quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage, $service, '', $response);
             }
              break;
     }
