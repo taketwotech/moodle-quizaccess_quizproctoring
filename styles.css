@@ -374,6 +374,12 @@ label[for="id_consentcheckbox"] {
     background-color: #f7f7f7;
 }
 
+.requiredstar {
+    color: red;
+    font-size: 15px;
+    font-weight: bold;
+}
+
 /* Hidden by default for this example */
 .hidden {
     display: none;
