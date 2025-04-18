@@ -27,9 +27,9 @@ function($, str, ModalFactory) {
     $('#id_consentcheckbox').on('change', function() {
         if (!$(this).is(':checked')) {
             $("#id_submitbutton").prop("disabled", true);
-        } else if ($(this).is(':checked') && $("input[name='userimg']").val() === '') {
+        } else if ($(this).is(':checked') && $('#userimageset').val() == 0) {
             $("#id_submitbutton").prop("disabled", true);
-        } else if ($(this).is(':checked') && $("input[name='userimg']").val() !== '') {
+        } else if ($(this).is(':checked') && $('#userimageset').val() == 1) {
             $("#id_submitbutton").prop("disabled", false);
         }
     });
@@ -108,7 +108,7 @@ function($, str, ModalFactory) {
         $('#' + this.takepictureid).hide();
         $('#' + this.canvasid).show();
         $('#' + this.retakeid).show();
-        $("input[name='userimg']").val(data);
+        $('#userimageset').val(1);
         $("#id_submitbutton").prop("disabled", true);
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
@@ -116,7 +116,7 @@ function($, str, ModalFactory) {
             data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
             success: function(response) {
                 if (response && response.errorcode) {
-                    $("input[name='userimg']").val('');
+                    $('#userimageset').val(0);
                     $(document).trigger('popup', response.error);
                 } else {
                     if ($('#id_consentcheckbox').is(':checked')) {
@@ -168,7 +168,7 @@ function($, str, ModalFactory) {
         $('#' + this.retakeid).hide();
         $('#' + this.videoid).show();
         $('#' + this.takepictureid).show();
-        $("input[name='userimg']").val('');
+        $('#userimageset').val(0);
         $("#id_submitbutton").prop("disabled", true);
     };
 
@@ -189,7 +189,7 @@ function($, str, ModalFactory) {
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
-        $("input[name='userimg']").val('');
+        $('#userimageset').val(0);
         $('#' + this.videoid).show(this.cmid);
         $('#' + this.takepictureid).show();
         $('#' + this.canvasid).hide();

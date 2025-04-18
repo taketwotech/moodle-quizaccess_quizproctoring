@@ -198,7 +198,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);
-        
+
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
             $sql = "SELECT * FROM {files} WHERE contextid =
@@ -279,6 +279,10 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->addElement('html', $html);
         $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
          'quizaccess_quizproctoring'), null, $filemanageroptions);
+
+        $mform->addElement('hidden', 'userimageset', '', ['id' => 'userimageset']);
+        $mform->setType('userimageset', PARAM_INT);
+        $mform->setDefault('userimageset', 0);
 
         // Video button.
         if ($proctoringdata->proctoringvideo_link) {
