@@ -198,10 +198,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);
-        // Add consent checkbox at the top.
-        $mform->addElement('advcheckbox', 'consentcheckbox', '',
-            get_string('confirmationconcent', 'quizaccess_quizproctoring'),
-            ['class' => 'consentcheckbox']);
+        
         if ( $serviceoption != 'AWS' && $proctoringdata->enableprofilematch == 1 ) {
             $context = context_user::instance($USER->id);
             $sql = "SELECT * FROM {files} WHERE contextid =
@@ -256,9 +253,15 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $canvastag = html_writer::tag('canvas', '', ['id' => 'canvas', 'width' => '320', 'height' => '240', 'class' => 'hidden']);
         $html .= html_writer::div($canvastag, 'col-md-9');
         $html .= html_writer::end_tag('div');
+        $mform->addElement('html', $html);
+
+        // Add consent checkbox at the top.
+        $mform->addElement('advcheckbox', 'consentcheckbox', '',
+            get_string('confirmationconcent', 'quizaccess_quizproctoring'),
+            ['class' => 'consentcheckbox']);
 
         // Take picture button.
-        $html .= html_writer::start_tag('div', ['id' => 'fitem_id_user_takepicture', 'class' => 'form-group row fitem']);
+        $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_takepicture', 'class' => 'form-group row fitem']);
         $html .= html_writer::div('', 'col-md-3');
         $button = html_writer::tag('button', get_string('takepicture', 'quizaccess_quizproctoring'),
             ['class' => 'btn btn-primary', 'id' => 'takepicture']);
