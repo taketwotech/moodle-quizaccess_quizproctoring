@@ -222,7 +222,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/create';
+        $url = 'https://proctor-dev.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];
@@ -334,5 +334,19 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025040201, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2025041402) {
+
+        // Define field response to be added to quizaccess_proctor_data.
+        $table = new xmldb_table('quizaccess_proctor_data');
+        $field = new xmldb_field('response', XMLDB_TYPE_CHAR, '1000', null, null, null, null, 'isautosubmit');
+
+        // Conditionally launch add field response.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025041402, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }
