@@ -103,12 +103,15 @@ $table = new html_table();
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
-    get_string("usersimages", "quizaccess_quizproctoring"),
-    get_string("actions", "quizaccess_quizproctoring"),
+    get_string("usersimages", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('usersimages', 'quizaccess_quizproctoring')),
+    get_string("actions", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('actions', 'quizaccess_quizproctoring')),
 ];
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
-    array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring"));
+    array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('reviewattempts', 'quizaccess_quizproctoring')));
 }
 $table->head = $headers;
 $output = $PAGE->get_renderer('mod_quiz');

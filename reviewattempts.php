@@ -67,12 +67,18 @@ if ($proctoringimageshow == 1) {
         get_string("email", "quizaccess_quizproctoring"),
         html_writer::link(new moodle_url($PAGE->url, ['sort' => 'attempt', 'dir' => $attemptssort]),
         get_string("attempts", "quizaccess_quizproctoring") . $attemptarrow),
-        get_string("started", "quizaccess_quizproctoring"),
-        get_string("submitted", "quizaccess_quizproctoring"),
-        get_string("duration", "quizaccess_quizproctoring"),
-        get_string("proctoringimages", "quizaccess_quizproctoring"),
-        get_string("proctoringidentity", "quizaccess_quizproctoring"),
-        get_string("isautosubmit", "quizaccess_quizproctoring"),
+        get_string("started", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('started', 'quizaccess_quizproctoring')),
+        get_string("submitted", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('submitted', 'quizaccess_quizproctoring')),
+        get_string("duration", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('duration', 'quizaccess_quizproctoring')),
+        get_string("proctoringimages", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('proctoringimages', 'quizaccess_quizproctoring')),
+        get_string("proctoringidentity", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('proctoringidentity', 'quizaccess_quizproctoring')),
+        get_string("isautosubmit", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
     ];
     $table->head = $headers;
     $output = $PAGE->get_renderer('mod_quiz');

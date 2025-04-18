@@ -190,7 +190,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         <div class="checkbox-container" style="display: none;">
                             <input type="checkbox" class="imgcheckbox">
                             <label for="checkbox" class="image-checkbox">
-                                To view all images saved from the exam, please select the checkbox.
+                                To view all images saved from the quiz, please select the checkbox.
                             </label>
                         </div>
                     `;
