@@ -222,7 +222,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption,studenthexstring, onlinestudent = 0, securewindow = null, userfullname,
+        teacher, quizid, serviceoption, studenthexstring, onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');

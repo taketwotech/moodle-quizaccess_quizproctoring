@@ -32,7 +32,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
-    if ($oldversion < 2025041806) { 
+    if ($oldversion < 2025041806) {
         $timestamp = time();
         $randombytes = random_bytes(8);
         $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;;
