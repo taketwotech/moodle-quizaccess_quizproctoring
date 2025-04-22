@@ -395,8 +395,7 @@ function($, str, ModalFactory) {
                     });
                 }
             };
-
-            // peerConnection.ontrack = function(event) {
+            // PeerConnection.ontrack = function(event) {
 
             //     // Update connectedPeers stream
             //     connectedPeers[peerId].stream.addTrack(event.track);
@@ -431,13 +430,10 @@ function($, str, ModalFactory) {
             //         }
             //     }
             // };
- 
             peerConnection.ontrack = function (event) {
                 // Update connectedPeers stream
                 connectedPeers[peerId].stream.addTrack(event.track);
-              
                 var remoteMedia;
-              
                 if (peerMediaElements[peerId]) {
                   remoteMedia = peerMediaElements[peerId];
                 } else {
@@ -446,27 +442,22 @@ function($, str, ModalFactory) {
                   remoteMedia.prop("controls", true);
                   remoteMedia.addClass("quizaccess_quizproctoring");
                   remoteMedia.prop("muted", true);
-              
                   if ($("#region-main-box .videos-container").length === 0) {
                     $("#region-main-box").append($("<div>").addClass("videos-container"));
                   }
-              
                   var studentContainer = $("<div>").addClass("student-container");
                   const studentData = cachedStudentData.find((sd) => sd.id === peerId);
                   const studentNameText = studentData ? studentData.fullname : config.fullname || "";
-              
                   if (studentNameText) {
                     const studentName = $("<span>").addClass("student-name").text(studentNameText);
                     studentContainer.append(remoteMedia);
                     studentContainer.append(studentName);
-              
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === "teacher") {
                       total = total + 1;
                       $(".videos-container").append(studentContainer);
                       remoteMedia[0].srcObject = connectedPeers[peerId].stream;
-              
                       if (USE_VIDEO && event.track.kind === "video") {
                         const videoElement = remoteMedia[0];
                         videoElement.onloadedmetadata = () => {
@@ -474,7 +465,6 @@ function($, str, ModalFactory) {
                             studentContainer.css("display", "none");
                           }
                         };
-              
                         setTimeout(() => {
                           if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
                             studentContainer.css("display", "none");
@@ -485,7 +475,6 @@ function($, str, ModalFactory) {
                   }
                 }
               };
-
             // Add our local stream
             if (localMediaStream) {
                 if (noStudentOnlineDiv) {
