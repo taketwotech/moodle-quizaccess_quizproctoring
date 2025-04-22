@@ -124,6 +124,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
     $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
+    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     if ($serviceoption != 'AWS') {
         $enablevideo = $proctorrecord->enablestudentvideo;
@@ -139,7 +140,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', $proctorrecord->enableteacherproctor, '$securewindow->browsersecurity', '$fullname',
+        $quizid, '$serviceoption', '$studenthexstring',$proctorrecord->enableteacherproctor, '$securewindow->browsersecurity', '$fullname',
         $enablevideo, $proctorrecord->time_interval,
         $warningsleft);
     });

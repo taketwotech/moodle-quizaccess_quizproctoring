@@ -32,6 +32,14 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    if ($oldversion < 2025041806) { // match with version.php
+        $timestamp = time();
+        $randomBytes = random_bytes(8);
+        $hexstringwithtimestamp = bin2hex($randomBytes) . '_' . $timestamp;;
+        set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
+        upgrade_plugin_savepoint(true, 2025041806, 'quizaccess', 'quizproctoring');
+    }
+
     if ($oldversion < 2020092406) {
 
         // Define field deleted to be added to quizaccess_proctor_data.
@@ -222,7 +230,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/create';
+        $url = 'https://proctor-dev.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];

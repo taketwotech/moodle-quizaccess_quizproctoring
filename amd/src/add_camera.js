@@ -173,7 +173,7 @@ function($, str, ModalFactory) {
     };
 
     var signalingSocket = null;
-    var externalserver = 'https://proctoring.taketwotechnologies.com';
+    var externalserver = 'https://proctor-dev.taketwotechnologies.com';
     var localMediaStream = null;
     var peers = {};
     var peerId = null;
@@ -222,7 +222,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, onlinestudent = 0, securewindow = null, userfullname,
+        teacher, quizid, serviceoption,studenthexstring, onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
@@ -327,7 +327,7 @@ function($, str, ModalFactory) {
                     var teacherroom = getTeacherroom();
                     var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
                     var fullname = userfullname;
-                    var domain = window.location.hostname;
+                    var domain = studenthexstring;
 
                     signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
                         'type': typet, 'fullname': fullname, 'domain': domain}});
@@ -396,41 +396,96 @@ function($, str, ModalFactory) {
                 }
             };
 
-            peerConnection.ontrack = function(event) {
+            // peerConnection.ontrack = function(event) {
 
+            //     // Update connectedPeers stream
+            //     connectedPeers[peerId].stream.addTrack(event.track);
+            //     var remoteMedia;
+
+            //     if (peerMediaElements[peerId]) {
+            //         remoteMedia = peerMediaElements[peerId];
+            //     } else {
+            //         remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+            //         remoteMedia.attr("autoplay", "autoplay");
+            //         remoteMedia.prop("controls", true);
+            //         remoteMedia.addClass("quizaccess_quizproctoring");
+            //         remoteMedia.prop("muted", true);
+            //         if ($('#region-main-box .videos-container').length === 0) {
+            //             $('#region-main-box').append($("<div>").addClass("videos-container"));
+            //         }
+
+            //         var studentContainer = $("<div>").addClass("student-container");
+            //         const studentData = cachedStudentData.find(sd => sd.id === peerId);
+            //         const studentNameText = studentData ? studentData.fullname :
+            //         config.fullname || "";
+            //         const studentName = $("<span>").addClass("student-name").text(studentNameText);
+            //         studentContainer.append(remoteMedia);
+            //         studentContainer.append(studentName);
+
+            //         peerMediaElements[peerId] = remoteMedia;
+            //         var teacherroom = getTeacherroom();
+            //         if (teacherroom === 'teacher') {
+            //             total = total + 1;
+            //             $('.videos-container').append(studentContainer);
+            //             remoteMedia[0].srcObject = connectedPeers[peerId].stream;
+            //         }
+            //     }
+            // };
+ 
+            peerConnection.ontrack = function (event) {
                 // Update connectedPeers stream
                 connectedPeers[peerId].stream.addTrack(event.track);
+              
                 var remoteMedia;
-
+              
                 if (peerMediaElements[peerId]) {
-                    remoteMedia = peerMediaElements[peerId];
+                  remoteMedia = peerMediaElements[peerId];
                 } else {
-                    remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-                    remoteMedia.attr("autoplay", "autoplay");
-                    remoteMedia.prop("controls", true);
-                    remoteMedia.addClass("quizaccess_quizproctoring");
-                    remoteMedia.prop("muted", true);
-                    if ($('#region-main-box .videos-container').length === 0) {
-                        $('#region-main-box').append($("<div>").addClass("videos-container"));
-                    }
-
-                    var studentContainer = $("<div>").addClass("student-container");
-                    const studentData = cachedStudentData.find(sd => sd.id === peerId);
-                    const studentNameText = studentData ? studentData.fullname :
-                    config.fullname || "";
+                  remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+                  remoteMedia.attr("autoplay", "autoplay");
+                  remoteMedia.prop("controls", true);
+                  remoteMedia.addClass("quizaccess_quizproctoring");
+                  remoteMedia.prop("muted", true);
+              
+                  if ($("#region-main-box .videos-container").length === 0) {
+                    $("#region-main-box").append($("<div>").addClass("videos-container"));
+                  }
+              
+                  var studentContainer = $("<div>").addClass("student-container");
+                  const studentData = cachedStudentData.find((sd) => sd.id === peerId);
+                  const studentNameText = studentData ? studentData.fullname : config.fullname || "";
+              
+                  if (studentNameText) {
                     const studentName = $("<span>").addClass("student-name").text(studentNameText);
                     studentContainer.append(remoteMedia);
                     studentContainer.append(studentName);
-
+              
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
-                    if (teacherroom === 'teacher') {
-                        total = total + 1;
-                        $('.videos-container').append(studentContainer);
-                        remoteMedia[0].srcObject = connectedPeers[peerId].stream;
+                    if (teacherroom === "teacher") {
+                      total = total + 1;
+                      $(".videos-container").append(studentContainer);
+                      remoteMedia[0].srcObject = connectedPeers[peerId].stream;
+              
+                      if (USE_VIDEO && event.track.kind === "video") {
+                        const videoElement = remoteMedia[0];
+                        videoElement.onloadedmetadata = () => {
+                          if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                            studentContainer.css("display", "none");
+                          }
+                        };
+              
+                        setTimeout(() => {
+                          if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                            studentContainer.css("display", "none");
+                          }
+                        }, 2000);
+                      }
                     }
+                  }
                 }
-            };
+              };
+
             // Add our local stream
             if (localMediaStream) {
                 if (noStudentOnlineDiv) {

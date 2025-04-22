@@ -30,7 +30,10 @@ function xmldb_quizaccess_quizproctoring_install() {
     global $DB, $USER, $CFG;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
-
+    $timestamp = time();
+    $randomBytes = random_bytes(8);
+    $hexstringwithtimestamp = bin2hex($randomBytes) . '_' . $timestamp;
+    set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
     $record = new stdClass();
     $record->firstname = $user->firstname;
     $record->lastname  = $user->lastname;
@@ -42,7 +45,7 @@ function xmldb_quizaccess_quizproctoring_install() {
     $postdata = json_encode($record);
 
     $curl = new \curl();
-    $url = 'https://proctoring.taketwotechnologies.com/create';
+    $url = 'https://proctor-dev.taketwotechnologies.com/create';
     $header = [
         'Content-Type: application/json',
     ];
