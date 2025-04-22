@@ -31,8 +31,8 @@ function xmldb_quizaccess_quizproctoring_install() {
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $timestamp = time();
-    $randomBytes = random_bytes(8);
-    $hexstringwithtimestamp = bin2hex($randomBytes) . '_' . $timestamp;
+    $randombytes = random_bytes(8);
+    $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;
     set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
     $record = new stdClass();
     $record->firstname = $user->firstname;

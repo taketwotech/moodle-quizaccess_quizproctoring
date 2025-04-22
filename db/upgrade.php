@@ -32,10 +32,10 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
-    if ($oldversion < 2025041806) { // match with version.php
+    if ($oldversion < 2025041806) { 
         $timestamp = time();
-        $randomBytes = random_bytes(8);
-        $hexstringwithtimestamp = bin2hex($randomBytes) . '_' . $timestamp;;
+        $randombytes = random_bytes(8);
+        $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;;
         set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
         upgrade_plugin_savepoint(true, 2025041806, 'quizaccess', 'quizproctoring');
     }
