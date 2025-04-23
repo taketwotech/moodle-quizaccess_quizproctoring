@@ -99,16 +99,7 @@ if (!$mainentry->isautosubmit) {
             $profileimage = $file->get_content();
         }
     }
-    if ($service === 'AWS') {
-        // Validate image.
-        \quizaccess_quizproctoring\aws\camera::init();
-        if ($target !== '') {
-            $tdata = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $target));
-            $validate = \quizaccess_quizproctoring\aws\camera::validate($data, $tdata);
-        } else {
-            $validate = \quizaccess_quizproctoring\aws\camera::validate($data);
-        }
-    } else {
+    if ($service != 'AWS') {
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
         // Validate image.
         if ($target !== '') {

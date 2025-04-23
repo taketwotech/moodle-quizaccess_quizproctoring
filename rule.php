@@ -67,17 +67,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
         $url = new moodle_url('/admin/settings.php', ['section' => 'modsettingsquizcatproctoring']);
         $url = $url->out();
-        if ($serviceoption == 'AWS') {
-            $awskey = get_config('quizaccess_quizproctoring', 'aws_key');
-            $awssecret = get_config('quizaccess_quizproctoring', 'aws_secret');
-            if (empty($awskey) || empty($awssecret)) {
-                if ($isadmin) {
-                    return get_string('warningaws', 'quizaccess_quizproctoring', $url);
-                } else {
-                    return get_string('warningstudent', 'quizaccess_quizproctoring');
-                }
-            }
-        } else {
+        if ($serviceoption != 'AWS') {
             $response = \quizaccess_quizproctoring\api::getuserinfo();
             $responsedata = json_decode($response, true);
             $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
@@ -470,13 +460,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
             $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-            if ($serviceoption == 'AWS') {
-                $enableteacherproctor = 0;
-                $enableprofilematch = 0;
-                $enablestudentvideo = 1;
-                $enableeyecheck = 0;
-                $storeallimages = 0;
-            } else {
+            if ($serviceoption != 'AWS') {
                 $enableteacherproctor = $quiz->enableteacherproctor;
                 $enableprofilematch = $quiz->enableprofilematch;
                 $enablestudentvideo = $quiz->enablestudentvideo;
