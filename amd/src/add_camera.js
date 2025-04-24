@@ -395,40 +395,7 @@ function($, str, ModalFactory) {
                     });
                 }
             };
-
-            //     // Update connectedPeers stream
-            //     connectedPeers[peerId].stream.addTrack(event.track);
-            //     var remoteMedia;
-
-            //     if (peerMediaElements[peerId]) {
-            //         remoteMedia = peerMediaElements[peerId];
-            //     } else {
-            //         remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-            //         remoteMedia.attr("autoplay", "autoplay");
-            //         remoteMedia.prop("controls", true);
-            //         remoteMedia.addClass("quizaccess_quizproctoring");
-            //         remoteMedia.prop("muted", true);
-            //         if ($('#region-main-box .videos-container').length === 0) {
-            //             $('#region-main-box').append($("<div>").addClass("videos-container"));
-            //         }
-
-            //         var studentContainer = $("<div>").addClass("student-container");
-            //         const studentData = cachedStudentData.find(sd => sd.id === peerId);
-            //         const studentNameText = studentData ? studentData.fullname :
-            //         config.fullname || "";
-            //         const studentName = $("<span>").addClass("student-name").text(studentNameText);
-            //         studentContainer.append(remoteMedia);
-            //         studentContainer.append(studentName);
-
-            //         peerMediaElements[peerId] = remoteMedia;
-            //         var teacherroom = getTeacherroom();
-            //         if (teacherroom === 'teacher') {
-            //             total = total + 1;
-            //             $('.videos-container').append(studentContainer);
-            //             remoteMedia[0].srcObject = connectedPeers[peerId].stream;
-            //         }
-            //     }
-            // };
+            
             peerConnection.ontrack = function (event) {
                 // Update connectedPeers stream
                 connectedPeers[peerId].stream.addTrack(event.track);
