@@ -348,5 +348,13 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025041402, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025041806) {
+        $timestamp = time();
+        $randombytes = random_bytes(8);
+        $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;;
+        set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
+        upgrade_plugin_savepoint(true, 2025041806, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }
