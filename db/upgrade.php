@@ -354,7 +354,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $randombytes = random_bytes(8);
         $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;;
         set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
-        
+
         upgrade_plugin_savepoint(true, 2025042301, 'quizaccess', 'quizproctoring');
     }
     return true;

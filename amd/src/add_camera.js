@@ -395,8 +395,8 @@ function($, str, ModalFactory) {
                     });
                 }
             };
-            
-            peerConnection.ontrack = function (event) {
+
+            peerConnection.ontrack = function(event) {
                 // Update connectedPeers stream
                 connectedPeers[peerId].stream.addTrack(event.track);
                 var remoteMedia;
