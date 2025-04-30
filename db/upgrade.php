@@ -358,7 +358,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025042301, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025042902) {
+    if ($oldversion < 2025042904) {
 
         // Define field enableeyecheckreal to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
@@ -370,7 +370,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025042902, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025042904, 'quizaccess', 'quizproctoring');
     }
     return true;
 }
