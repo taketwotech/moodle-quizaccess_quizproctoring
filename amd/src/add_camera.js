@@ -222,7 +222,8 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, studenthexstring, onlinestudent = 0, securewindow = null, userfullname,
+        teacher, quizid, serviceoption, enableeyecheckreal, studenthexstring,
+        onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
@@ -296,23 +297,25 @@ function($, str, ModalFactory) {
             document.addEventListener('contextmenu', function(event) {
                 event.preventDefault();
             });
-            const waitForElements = setInterval(() => {
-                const vElement = document.getElementById('video');
-                const cElement = document.getElementById('canvas');
+            if (enableeyecheckreal) {
+                const waitForElements = setInterval(() => {
+                    const vElement = document.getElementById('video');
+                    const cElement = document.getElementById('canvas');
 
-                if (vElement && cElement) {
-                    clearInterval(waitForElements);
-                    if (typeof setupFaceMesh !== 'undefined') {
-                        // eslint-disable-next-line no-undef
-                        setupFaceMesh(function(result) {
-                            if (result.status) {
-                                realtimeDetection(cmid, attemptid, mainimage,
-                                    result.status, result.data);
-                            }
-                        });
+                    if (vElement && cElement) {
+                        clearInterval(waitForElements);
+                        if (typeof setupFaceMesh !== 'undefined') {
+                            // eslint-disable-next-line no-undef
+                            setupFaceMesh(function(result) {
+                                if (result.status) {
+                                    realtimeDetection(cmid, attemptid, mainimage,
+                                        result.status, result.data);
+                                }
+                            });
+                        }
                     }
-                }
-            }, 500);
+                }, 500);
+            }
             if (onlinestudent) {
                 // eslint-disable-next-line no-undef
                 signalingSocket = io(externalserver);

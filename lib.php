@@ -142,6 +142,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         add_camera.init($cmid, false, true, $attemptid, false,
         $quizid,
         '$serviceoption',
+        $proctorrecord->enableeyecheckreal,
         '$studenthexstring',
         $proctorrecord->enableteacherproctor,
         '$securewindow->browsersecurity',

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/quiz/accessrule/quizproctoring/db" VERSION="20250416" COMMENT="XMLDB file for Moodle mod/quiz/accessrule/quizproctoring"
+<XMLDB PATH="mod/quiz/accessrule/quizproctoring/db" VERSION="20250430" COMMENT="XMLDB file for Moodle mod/quiz/accessrule/quizproctoring"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
 >
@@ -17,6 +17,7 @@
         <FIELD NAME="enableprofilematch" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="enablestudentvideo" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="enableeyecheck" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="enableeyecheckreal" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

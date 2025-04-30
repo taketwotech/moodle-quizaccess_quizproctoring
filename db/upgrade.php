@@ -357,5 +357,20 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2025042301, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025042902) {
+
+        // Define field enableeyecheckreal to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableeyecheckreal', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableeyecheck');
+
+        // Conditionally launch add field enableeyecheckreal.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025042902, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }

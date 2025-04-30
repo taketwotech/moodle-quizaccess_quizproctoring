@@ -3,7 +3,7 @@
     const EYE_THRESHOLD = 3000;
 
     let lastWarningTime = 0;
-    const WARNING_COOLDOWN = 3000;
+    const WARNING_COOLDOWN = 5000;
 
     function canTriggerWarning() {
         const now = Date.now();

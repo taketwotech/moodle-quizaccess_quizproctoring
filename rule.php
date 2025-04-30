@@ -396,6 +396,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
 
             // Allow admin or teacher to setup student video.
+            $mform->addElement('selectyesno', 'enableeyecheckreal',
+                get_string('enableeyecheckreal', 'quizaccess_quizproctoring'));
+            $mform->addHelpButton('enableeyecheckreal', 'enableeyecheckreal', 'quizaccess_quizproctoring');
+            $mform->setDefault('enableeyecheckreal', 1);
+            $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
+
+            // Allow admin or teacher to setup student video.
             $mform->addElement('hidden', 'enableeyecheck', 0);
             $mform->setType('enableeyecheck', PARAM_INT);
         }
@@ -452,6 +459,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enableteacherproctor = 0;
             $record->enableprofilematch = 0;
             $record->enablestudentvideo = 1;
+            $record->enableeyecheckreal = 1;
             $record->enableeyecheck = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
@@ -464,6 +472,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
                 $enableteacherproctor = $quiz->enableteacherproctor;
                 $enableprofilematch = $quiz->enableprofilematch;
                 $enablestudentvideo = $quiz->enablestudentvideo;
+                $enableeyecheckreal = $quiz->enableeyecheckreal;
                 $enableeyecheck = $quiz->enableeyecheck;
                 $storeallimages = $quiz->storeallimages;
             }
@@ -475,6 +484,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $record->enableteacherproctor = $enableteacherproctor;
             $record->enableprofilematch = $enableprofilematch;
             $record->enablestudentvideo = $enablestudentvideo;
+            $record->enableeyecheckreal = $enableeyecheckreal;
             $record->enableeyecheck = $enableeyecheck;
             $record->storeallimages = $storeallimages;
             $record->time_interval = $interval;
@@ -503,7 +513,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     public static function get_settings_sql($quizid) {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
-            enablestudentvideo,time_interval,enableeyecheck,
+            enablestudentvideo,time_interval,enableeyecheck,enableeyecheckreal,
             warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctoring ON proctoring.quizid = quiz.id',
             [],
