@@ -426,7 +426,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
 
         $thresholds = [];
-        for ($i = 0; $i <= 20; $i++) {
+        for ($i = 0; $i <= 50; $i += 5) {
             if ($i == 0) {
                 $thresholds[$i] = 'Unlimited';
             } else {

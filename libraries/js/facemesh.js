@@ -29,7 +29,7 @@
         });
 
         faceMesh.setOptions({
-            maxNumFaces: 1,
+            maxNumFaces: 5,
             refineLandmarks: true,
         });
 
