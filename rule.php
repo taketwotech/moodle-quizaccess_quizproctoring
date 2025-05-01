@@ -402,6 +402,12 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->setDefault('enableeyecheckreal', 1);
             $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
 
+            // Add a message that appears only when both options are yes.
+            $mform->addElement('static', 'eyecheckrealnote', '',
+                html_writer::tag('div', get_string('eyecheckrealnote', 'quizaccess_quizproctoring'), ['class' => 'eyecheckmsg']));
+            $mform->hideIf('eyecheckrealnote', 'enableproctoring', 'eq', 0);
+            $mform->hideIf('eyecheckrealnote', 'enableeyecheckreal', 'eq', 0);
+
             // Allow admin or teacher to setup student video.
             $mform->addElement('hidden', 'enableeyecheck', 0);
             $mform->setType('enableeyecheck', PARAM_INT);

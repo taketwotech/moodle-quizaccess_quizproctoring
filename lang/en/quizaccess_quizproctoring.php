@@ -68,6 +68,7 @@ $string['enablestudentvideo'] = 'Enable user video during quiz';
 $string['enablestudentvideo_help'] = 'When enabled, users can view their own video during the quiz.';
 $string['enableteacherproctor'] = 'Allow proctor to view online users';
 $string['enableteacherproctor_help'] = 'When enabled, proctors can view the group of users taking the proctored quiz.';
+$string['eyecheckrealnote'] = 'Note: Eye tracking is a visually dependent process and results may vary based on individual facial features, lighting conditions, or if the user is wearing eyeglasses. While it enhances monitoring, occasional inconsistencies may occur.';
 $string['eyesnotopened'] = 'Eyes not detected. Ensure your eyes are not obstructed. {$a}';
 $string['facemaskdetected'] = 'Do not cover your face. {$a}';
 $string['facesnotmatched'] = 'Your current image is different from the initial image. {$a}';
