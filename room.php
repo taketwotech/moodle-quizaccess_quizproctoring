@@ -39,13 +39,12 @@ if ($proctorrecord->enableteacherproctor) {
     $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
     $PAGE->set_pagelayout('report');
     echo $OUTPUT->header();
-    $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     // Include js module.
     echo html_writer::script('',
     $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
-    'init', [$cmid, false, true, null, true, $room, $serviceoption,
+    'init', [$cmid, false, true, null, true, $room,
     $proctorrecord->enableeyecheckreal, $studenthexstring,
     $proctorrecord->enableteacherproctor]);
     echo '<div id="nostudentonline">';

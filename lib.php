@@ -123,14 +123,9 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
-    $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-    if ($serviceoption != 'AWS') {
-        $enablevideo = $proctorrecord->enablestudentvideo;
-    } else {
-        $enablevideo = 1;
-    }
+    $enablevideo = $proctorrecord->enablestudentvideo;
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
@@ -141,7 +136,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
         $quizid,
-        '$serviceoption',
         $proctorrecord->enableeyecheckreal,
         '$studenthexstring',
         $proctorrecord->enableteacherproctor,
@@ -163,13 +157,12 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
  * @param boolean $mainimage main image
- * @param string $service service enabled
  * @param string $status
  * @param string $response
  * @param boolean $storeallimg store images
  */
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
-    $mainimage, $service, $status='', $response='', $storeallimg=false) {
+    $mainimage, $status='', $response='', $storeallimg=false) {
     global $USER, $DB, $COURSE;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
@@ -198,7 +191,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
     $record->status = $status;
     $record->image_status = $mainimage ? 'I' : 'A';
     $record->timemodified = time();
-    $record->aws_response = $service;
+    $record->aws_response = 'take2';
     $record->response = $response;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
 

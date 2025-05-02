@@ -42,13 +42,12 @@ $mainentry = $DB->get_record('quizaccess_proctor_data', [
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
-$service = get_config('quizaccess_quizproctoring', 'serviceoption');
 if (!$mainentry->isautosubmit) {
     switch ($validate) {
         case 'noface':
             if (!$mainimage) {
                 quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-                    $mainimage, $service, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, '');
+                    $mainimage, QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, '');
             } else {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED, 'quizaccess_quizproctoring', '', '');
             }
@@ -56,7 +55,7 @@ if (!$mainentry->isautosubmit) {
         case 'multiface':
             if (!$mainimage) {
                 quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-                $mainimage, $service, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, '');
+                $mainimage, QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, '');
             } else {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED, 'quizaccess_quizproctoring', '', '');
             }
@@ -64,41 +63,9 @@ if (!$mainentry->isautosubmit) {
         case 'eyesnotopen':
             if (!$mainimage) {
                 quizproctoring_storeimage($img, $cmid, $attemptid,
-                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, '');
+                $cm->instance, $mainimage, QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, '');
             } else {
                 throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, 'quizaccess_quizproctoring', '', '');
-            }
-            break;
-        case 'Left':
-            if (!$mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid,
-                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED, '');
-            } else {
-                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED, 'quizaccess_quizproctoring', '', '');
-            }
-            break;
-        case 'Right':
-            if (!$mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid,
-                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED, '');
-            } else {
-                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED, 'quizaccess_quizproctoring', '', '');
-            }
-            break;
-        case 'Speaking':
-            if (!$mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid,
-                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED, '');
-            } else {
-                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_SPEAKINGDETECTED, 'quizaccess_quizproctoring', '', '');
-            }
-            break;
-        case 'objectsdetected':
-            if (!$mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid,
-                $cm->instance, $mainimage, $service, QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED, '');
-            } else {
-                throw new moodle_exception(QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED, 'quizaccess_quizproctoring', '', '');
             }
             break;
     }

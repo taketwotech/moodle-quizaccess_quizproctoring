@@ -222,7 +222,7 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, enableeyecheckreal, studenthexstring,
+        teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0) {
@@ -325,7 +325,7 @@ function($, str, ModalFactory) {
                 var sessionState = storedSession ? JSON.parse(storedSession) : null;
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                 teacher, enablestudentvideo, setinterval,
-                serviceoption, quizid, function() {
+                quizid, function() {
                     // Once User gives access to mic/cam, join the channel and start peering up
                     var teacherroom = getTeacherroom();
                     var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
@@ -554,7 +554,7 @@ function($, str, ModalFactory) {
         } else {
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
             teacher, enablestudentvideo, setinterval,
-            serviceoption, quizid);
+            quizid);
         }
     }
 
@@ -573,14 +573,13 @@ function($, str, ModalFactory) {
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
      * @param {bigint} setinterval - int value
-     * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
      * @param {function} callback - The callback function to execute after setting up the media stream.
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, enablestudentvideo,
-        setinterval, serviceoption, quizid, callback) {
+        setinterval, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {
