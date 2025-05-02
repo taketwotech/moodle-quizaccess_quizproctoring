@@ -306,7 +306,7 @@ function($, str, ModalFactory) {
                         clearInterval(waitForElements);
                         if (typeof setupFaceMesh !== 'undefined') {
                             // eslint-disable-next-line no-undef
-                            setupFaceMesh(function(result) {
+                            setupFaceMesh(vElement, cElement, function(result) {
                                 if (result.status) {
                                     realtimeDetection(cmid, attemptid, mainimage,
                                         result.status, result.data);

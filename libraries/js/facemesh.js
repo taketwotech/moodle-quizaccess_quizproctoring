@@ -17,10 +17,16 @@
         callback({ status, data });
     }
 
-    async function setupFaceMesh(callback) {
-        const videoElement = document.getElementById('video');
-        const canvasElement = document.getElementById('canvas');
+    async function waitForVideoReady(videoElement) {
+        while (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+
+    async function setupFaceMesh(videoElement, canvasElement, callback) {
         const canvasCtx = canvasElement.getContext('2d');
+
+        await waitForVideoReady(videoElement);
 
         const faceMesh = new FaceMesh({
             locateFile: (file) => {
@@ -80,11 +86,9 @@
 
         const isClosed = leftEyeOpen < EYE_OPEN_THRESHOLD && rightEyeOpen < EYE_OPEN_THRESHOLD;
 
-        // Looking down detection (based on vertical nose-eye position)
         const eyesAvgY = (leftEyeUpper.y + rightEyeUpper.y) / 2;
         const lookingDown = (nose.y - eyesAvgY) > 0.04;
 
-        
         if (isClosed && !eyeTimer) {
             eyeTimer = setTimeout(() => {
                 triggerWarning('eyesnotopen', data, callback);
@@ -98,14 +102,13 @@
 
     function detectEyeDirection(landmarks, data, callback) {
         const leftIris = landmarks[468]; // center of left iris
-        const leftEyeInner = landmarks[133]; // inner eye corner (left side of iris)
-        const leftEyeOuter = landmarks[33];  // outer eye corner (right side of iris)
+        const leftEyeInner = landmarks[133]; // inner eye corner
+        const leftEyeOuter = landmarks[33];  // outer eye corner
         const leftEyeTop = landmarks[159];
         const leftEyeBottom = landmarks[145];
 
         if (!leftIris || !leftEyeInner || !leftEyeOuter || !leftEyeTop || !leftEyeBottom) return;
 
-        // Normalize iris X and Y within eye bounds
         const horizontalRatio = (leftIris.x - leftEyeInner.x) / (leftEyeOuter.x - leftEyeInner.x);
         const verticalRatio = (leftIris.y - leftEyeTop.y) / (leftEyeBottom.y - leftEyeTop.y);
 

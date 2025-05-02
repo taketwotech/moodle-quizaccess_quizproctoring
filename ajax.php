@@ -46,12 +46,12 @@ $mainentry = $DB->get_record('quizaccess_proctor_data', [
 if (!$mainentry->isautosubmit) {
     if (!$img && !$tab) {
         quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-                    $mainimage, '', QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED, '');
+                    $mainimage, QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED, '');
     }
 
     if (!$img && $tab) {
         quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance,
-                    $mainimage, '', QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED, '');
+                    $mainimage, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED, '');
     }
 
     $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
