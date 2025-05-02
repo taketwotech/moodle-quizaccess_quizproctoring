@@ -146,7 +146,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $warningsleft);
     });
     M.util.js_complete();", true);
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/facemesh.js', true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
 /**

@@ -103,7 +103,7 @@ if (!$mainentry->isautosubmit) {
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
-        $imagedata = ["primary" => $tdata, "target" => $data, "type" => "eye_detection"];
+        $imagedata = ["primary" => $tdata, "target" => $data, "type" => "eyes_detection"];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
             $USER->id, $cm->instance);
         if ($response == 'Unauthorized') {
