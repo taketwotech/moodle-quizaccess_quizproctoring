@@ -544,7 +544,7 @@ function($, str, ModalFactory) {
                         if (total === 0 && noStudentOnlineDiv) {
                             noStudentOnlineDiv.style.display = 'block';
                         }
-                        remoteContainer.remove();  // ✅ Remove both media and name
+                        remoteContainer.remove();
                     }
 
                     delete peers[peerId];
