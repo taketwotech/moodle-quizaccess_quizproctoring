@@ -144,7 +144,6 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image
 $records = $DB->get_records_sql($sql, ['quizid' => $quizid], $page * $perpage, $perpage);
 
 foreach ($records as $record) {
-    $isadmin = is_siteadmin($record->id);
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', ['id' => $record->id]),
         $record->firstname . ' ' . $record->lastname
@@ -161,7 +160,8 @@ foreach ($records as $record) {
 
     $row = [$namelink, $record->email, $record->image_count];
     if ($proctoringimageshow == 1) {
-        if ($isadmin) {
+        if (is_siteadmin($record->id) || has_capability('moodle/course:update',
+            context_course::instance($course->id), $record->id)) {
             $row[] = '';
         } else {
             $row[] = $imageicon;

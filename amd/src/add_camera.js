@@ -424,15 +424,18 @@ function($, str, ModalFactory) {
                     peerMediaElements[peerId] = remoteMedia;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === "teacher") {
-                      total = total + 1;
-                      $(".videos-container").append(studentContainer);
-                      remoteMedia[0].srcObject = connectedPeers[peerId].stream;
-                      if (USE_VIDEO && event.track.kind === "video") {
-                        const videoElement = remoteMedia[0];
-                        videoElement.onloadedmetadata = () => {
-                          if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-                            studentContainer.css("display", "none");
-                          }
+                        total = total + 1;
+                        if (noStudentOnlineDiv && total > 0) {
+                            noStudentOnlineDiv.style.display = 'none';
+                        }
+                        $(".videos-container").append(studentContainer);
+                        remoteMedia[0].srcObject = connectedPeers[peerId].stream;
+                        if (USE_VIDEO && event.track.kind === "video") {
+                            const videoElement = remoteMedia[0];
+                            videoElement.onloadedmetadata = () => {
+                            if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                                studentContainer.css("display", "none");
+                            }
                         };
                         setTimeout(() => {
                           if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
@@ -443,12 +446,9 @@ function($, str, ModalFactory) {
                     }
                   }
                 }
-              };
+            };
             // Add our local stream
             if (localMediaStream) {
-                if (noStudentOnlineDiv) {
-                    noStudentOnlineDiv.style.display = 'none';
-                }
                 peerConnection.addStream(localMediaStream);
             }
             if (config.should_create_offer) {

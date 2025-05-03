@@ -124,8 +124,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', array('id' => $quizid));
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
-    $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-    $enablevideo = $proctorrecord->enablestudentvideo;
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
@@ -136,13 +134,13 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
         $quizid,
-        $proctorrecord->enableeyecheckreal,
+        $quizaproctoring->enableeyecheckreal,
         '$studenthexstring',
-        $proctorrecord->enableteacherproctor,
+        $quizaproctoring->enableteacherproctor,
         '$securewindow->browsersecurity',
         '$fullname',
-        $enablevideo,
-        $proctorrecord->time_interval,
+        $quizaproctoring->enablestudentvideo,
+        $quizaproctoring->time_interval,
         $warningsleft);
     });
     M.util.js_complete();", true);
