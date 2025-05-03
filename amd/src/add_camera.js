@@ -421,7 +421,7 @@ function($, str, ModalFactory) {
                     const studentName = $("<span>").addClass("student-name").text(studentNameText);
                     studentContainer.append(remoteMedia);
                     studentContainer.append(studentName);
-                    peerMediaElements[peerId] = remoteMedia;
+                    peerMediaElements[peerId] = studentContainer;
                     var teacherroom = getTeacherroom();
                     if (teacherroom === "teacher") {
                         total = total + 1;
@@ -536,21 +536,21 @@ function($, str, ModalFactory) {
                     peers[peerId].removeStream(connectedPeers[peerId].stream);
                     peers[peerId].close();
 
-                    // Remove the peer from connectedPeers
                     delete connectedPeers[peerId];
 
-                    var remoteMedia = peerMediaElements[peerId];
-                    if (remoteMedia) {
+                    var remoteContainer = peerMediaElements[peerId];
+                    if (remoteContainer) {
                         total = total - 1;
-                        if (total === 0) {
+                        if (total === 0 && noStudentOnlineDiv) {
                             noStudentOnlineDiv.style.display = 'block';
                         }
-                        remoteMedia.closest('.student-container').remove();
+                        remoteContainer.remove();  // ✅ Remove both media and name
                     }
-                    // Remove references
+
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
                 });
+
         } else {
             setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
             teacher, enablestudentvideo, setinterval,
