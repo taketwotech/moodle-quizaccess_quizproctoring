@@ -86,6 +86,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER;
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+    $warningsleft = 0;
+    $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $user->id,
     'quizid' => $quizid,
@@ -93,26 +95,56 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     'attemptid' => 0,
     ])) {
         $proctoreddata->attemptid = $attemptid;
+        $warningsleft = $quizaproctoring->warning_threshold;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
-    }
-    $fullname = $user->firstname .''.$user->lastname;
-    $securewindow = $DB->get_record('quiz', array('id' => $quizid));
-    $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-    $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-    if ($serviceoption != 'AWS') {
-        $enablevideo = $proctorrecord->enablestudentvideo;
     } else {
-        $enablevideo = 1;
+        if (isset($quizaproctoring->warning_threshold) && $quizaproctoring->warning_threshold != 0) {
+            $inparams = [
+                'param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
+                'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
+                'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
+                'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
+                'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
+                'param6' => QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
+                'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
+                'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'userid' => $user->id,
+                'quizid' => $quizid,
+                'attemptid' => $attemptid,
+                'image_status' => 'A',
+            ];
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
+            quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9)";
+            $errorrecords = $DB->get_records_sql($sql, $inparams);
+            $warningsleft = $quizaproctoring->warning_threshold - count($errorrecords);
+        }
     }
+    $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
+    $securewindow = $DB->get_record('quiz', array('id' => $quizid));
+    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js'), true);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
         add_camera.init($cmid, false, true, $attemptid, false,
-        $quizid, '$serviceoption', '$securewindow->browsersecurity', '$fullname',
-        $enablevideo, $proctorrecord->time_interval);
+        $quizid,
+        $quizaproctoring->enableeyecheckreal,
+        '$studenthexstring',
+        $quizaproctoring->enableteacherproctor,
+        '$securewindow->browsersecurity',
+        '$fullname',
+        $quizaproctoring->enablestudentvideo,
+        $quizaproctoring->time_interval,
+        $warningsleft);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
 /**
@@ -123,11 +155,12 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @param int $attemptid attempt id
  * @param int $quizid quiz id
  * @param boolean $mainimage main image
- * @param string $service service enabled
  * @param string $status
+ * @param string $response
  * @param boolean $storeallimg store images
  */
-function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $service, $status='', $storeallimg=false) {
+function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
+    $mainimage, $status='', $response='', $storeallimg=false) {
     global $USER, $DB, $COURSE;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
@@ -150,13 +183,14 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
     $record = new stdClass();
     $record->userid = $user->id;
     $record->quizid = $quizid;
-    $record->image_status = $mainimage ? 'I' : 'A';
-    $record->aws_response = $service;
     $record->timecreated = time();
-    $record->timemodified = time();
     $record->userimg = $imagename;
     $record->attemptid = $attemptid;
     $record->status = $status;
+    $record->image_status = $mainimage ? 'I' : 'A';
+    $record->timemodified = time();
+    $record->aws_response = 'take2';
+    $record->response = $response;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
 
     if ($data) {
@@ -164,7 +198,6 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage
         $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
         $proctoreddata->userimg = $imagename;
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
-
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
         $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');

@@ -24,6 +24,16 @@ function($, str, ModalFactory) {
         docElement.on('popup', this.showpopup.bind(this));
     };
 
+    $('#id_consentcheckbox').on('change', function() {
+        if (!$(this).is(':checked')) {
+            $("#id_submitbutton").prop("disabled", true);
+        } else if ($(this).is(':checked') && $('#userimageset').val() == 0) {
+            $("#id_submitbutton").prop("disabled", true);
+        } else if ($(this).is(':checked') && $('#userimageset').val() == 1) {
+            $("#id_submitbutton").prop("disabled", false);
+        }
+    });
+
     /** @type Tag element contain video. */
     Camera.prototype.video = false;
     /** @type String video elemend id. */
@@ -79,57 +89,8 @@ function($, str, ModalFactory) {
                     } else {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     }
-
-                    const savedPosition = JSON.parse(localStorage.getItem('videoPosition'));
-                    if (savedPosition) {
-                        videoElement.style.left = savedPosition.left;
-                        videoElement.style.top = savedPosition.top;
-                    }
-
-                    let offsetX;
-                    let offsetY;
-                    let isDragging = false;
-
-                    const stopDragging = function() {
-                        if (isDragging) {
-                            isDragging = false;
-                            videoElement.style.zIndex = 9999998;
-
-                            // Save position
-                            const position = {
-                                left: videoElement.style.left,
-                                top: videoElement.style.top,
-                            };
-                            localStorage.setItem('videoPosition', JSON.stringify(position));
-                        }
-                    };
-
-                    videoElement.addEventListener('mousedown', function(e) {
-                        isDragging = true;
-                        offsetX = e.clientX - videoElement.getBoundingClientRect().left;
-                        offsetY = e.clientY - videoElement.getBoundingClientRect().top;
-                        videoElement.style.zIndex = 9999999;
-                    });
-
-                    window.addEventListener('mousemove', function(e) {
-                        if (isDragging) {
-                            videoElement.style.left = `${e.clientX - offsetX}px`;
-                            videoElement.style.top = `${e.clientY - offsetY}px`;
-                        }
-                    });
-
-                    window.addEventListener('mouseup', stopDragging);
-
-                    // Additional safeguard: Cancel dragging if the mouse leaves the viewport
-                    window.addEventListener('mouseout', stopDragging);
-
-                    // Timeout fallback to stop dragging after a delay
-                    setInterval(() => {
-                        if (isDragging) {
-                            stopDragging();
-                        }
-                    }, 2000);
-
+                    restoreVideoPosition(videoElement);
+                    makeDraggable(videoElement);
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
@@ -147,7 +108,7 @@ function($, str, ModalFactory) {
         $('#' + this.takepictureid).hide();
         $('#' + this.canvasid).show();
         $('#' + this.retakeid).show();
-        $("input[name='userimg']").val(data);
+        $('#userimageset').val(1);
         $("#id_submitbutton").prop("disabled", true);
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
@@ -155,10 +116,12 @@ function($, str, ModalFactory) {
             data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
             success: function(response) {
                 if (response && response.errorcode) {
-                    $("input[name='userimg']").val('');
+                    $('#userimageset').val(0);
                     $(document).trigger('popup', response.error);
                 } else {
-                    $("#id_submitbutton").prop("disabled", false);
+                    if ($('#id_consentcheckbox').is(':checked')) {
+                        $("#id_submitbutton").prop("disabled", false);
+                    }
                 }
             }
         });
@@ -181,6 +144,9 @@ function($, str, ModalFactory) {
             data: requestData,
             success: function(response) {
                 if (response && response.errorcode) {
+                    var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                    var leftwarnings = Math.max(warningsl - 1, 0);
+                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                     $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
@@ -202,7 +168,8 @@ function($, str, ModalFactory) {
         $('#' + this.retakeid).hide();
         $('#' + this.videoid).show();
         $('#' + this.takepictureid).show();
-        $("input[name='userimg']").val('');
+        $('#userimageset').val(0);
+        $("#id_submitbutton").prop("disabled", true);
     };
 
     var signalingSocket = null;
@@ -218,11 +185,11 @@ function($, str, ModalFactory) {
     var attachMediaStream = null;
     var stream = null;
     var total = 0;
-
+    let cachedStudentData = null;
     var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
-        $("input[name='userimg']").val('');
+        $('#userimageset').val(0);
         $('#' + this.videoid).show(this.cmid);
         $('#' + this.takepictureid).show();
         $('#' + this.canvasid).hide();
@@ -240,6 +207,8 @@ function($, str, ModalFactory) {
             this.activeModal = modal;
             modal.show();
             return null;
+        }).catch(() => {
+            showCustomModal(message);
         });
     };
 
@@ -253,8 +222,10 @@ function($, str, ModalFactory) {
     };
 
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
-        teacher, quizid, serviceoption, securewindow = null, userfullname = null,
-        enablestudentvideo = 1, setinterval = 300) {
+        teacher, quizid, enableeyecheckreal, studenthexstring,
+        onlinestudent = 0, securewindow = null, userfullname,
+        enablestudentvideo = 1, setinterval = 300,
+        warnings = 0) {
         const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
@@ -309,6 +280,7 @@ function($, str, ModalFactory) {
                 }
             }
         } else {
+            localStorage.setItem('warningThreshold', JSON.stringify(warnings));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -321,28 +293,54 @@ function($, str, ModalFactory) {
             document.addEventListener('drop', function(event) {
                 event.preventDefault();
             });
-            signalingSocket = io(externalserver);
-            signalingSocket.on('connect', function() {
-            // Retrieve the session state from localStorage
-            var storedSession = localStorage.getItem('sessionState');
-            var sessionState = storedSession ? JSON.parse(storedSession) : null;
-            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, setinterval,
-            serviceoption, quizid, function() {
-                // Once User gives access to mic/cam, join the channel and start peering up
-                var teacherroom = getTeacherroom();
-                var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
-                var fullname = userfullname;
 
-                signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
-                    'type': typet, 'fullname': fullname}});
-
-                // Restore the session state if available
-                if (sessionState) {
-                    restoreSessionState(sessionState);
-                }
+            document.addEventListener('contextmenu', function(event) {
+                event.preventDefault();
             });
-        });
+            if (enableeyecheckreal) {
+                const waitForElements = setInterval(() => {
+                    const vElement = document.getElementById('video');
+                    const cElement = document.getElementById('canvas');
+
+                    if (vElement && cElement) {
+                        clearInterval(waitForElements);
+                        if (typeof setupFaceMesh !== 'undefined') {
+                            // eslint-disable-next-line no-undef
+                            setupFaceMesh(vElement, cElement, function(result) {
+                                if (result.status) {
+                                    realtimeDetection(cmid, attemptid, mainimage,
+                                        result.status, result.data);
+                                }
+                            });
+                        }
+                    }
+                }, 500);
+            }
+            if (onlinestudent) {
+                // eslint-disable-next-line no-undef
+                signalingSocket = io(externalserver);
+                signalingSocket.on('connect', function() {
+                // Retrieve the session state from localStorage
+                var storedSession = localStorage.getItem('sessionState');
+                var sessionState = storedSession ? JSON.parse(storedSession) : null;
+                setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+                teacher, enablestudentvideo, setinterval,
+                quizid, function() {
+                    // Once User gives access to mic/cam, join the channel and start peering up
+                    var teacherroom = getTeacherroom();
+                    var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
+                    var fullname = userfullname;
+                    var domain = studenthexstring;
+
+                    signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
+                        'type': typet, 'fullname': fullname, 'domain': domain}});
+
+                    // Restore the session state if available
+                    if (sessionState) {
+                        restoreSessionState(sessionState);
+                    }
+                });
+            });
 
         signalingSocket.on('disconnect', function() {
             /* Tear down all of our peer connections and remove all
@@ -360,6 +358,19 @@ function($, str, ModalFactory) {
         });
 
         signalingSocket.on('addPeer', function(config) {
+            if (!config.studentData || config.studentData.length === 0) {
+                // No studentData received or it is empty
+            } else {
+                cachedStudentData = config.studentData;
+            }
+            if (cachedStudentData) {
+                const existingStudent = cachedStudentData.find(student => student.id === config.peer_id);
+                if (!existingStudent) {
+                    cachedStudentData.push({id: config.peer_id, fullname: config.fullname});
+                }
+            } else {
+                cachedStudentData = [];
+            }
             var peerId = config.peer_id;
 
             if (peerId in peers) {
@@ -389,42 +400,55 @@ function($, str, ModalFactory) {
             };
 
             peerConnection.ontrack = function(event) {
-
                 // Update connectedPeers stream
                 connectedPeers[peerId].stream.addTrack(event.track);
                 var remoteMedia;
-
                 if (peerMediaElements[peerId]) {
-                    remoteMedia = peerMediaElements[peerId];
+                  remoteMedia = peerMediaElements[peerId];
                 } else {
-                    remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-                    remoteMedia.attr("autoplay", "autoplay");
-                    remoteMedia.attr("muted", "true");
-                    remoteMedia.attr("controls", "");
-                    remoteMedia.attr("class", "quizaccess_quizproctoring");
-
-                    remoteMedia.attr("controls", "");
-                    if ($('#region-main-box .videos-container').length === 0) {
-                        $('#region-main-box').append($("<div>").addClass("videos-container"));
-                    }
-
-                    var studentContainer = $("<div>").addClass("student-container");
+                  remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
+                  remoteMedia.attr("autoplay", "autoplay");
+                  remoteMedia.prop("controls", true);
+                  remoteMedia.addClass("quizaccess_quizproctoring");
+                  remoteMedia.prop("muted", true);
+                  if ($("#region-main-box .videos-container").length === 0) {
+                    $("#region-main-box").append($("<div>").addClass("videos-container"));
+                  }
+                  var studentContainer = $("<div>").addClass("student-container");
+                  const studentData = cachedStudentData.find((sd) => sd.id === peerId);
+                  const studentNameText = studentData ? studentData.fullname : config.fullname || "";
+                  if (studentNameText) {
+                    const studentName = $("<span>").addClass("student-name").text(studentNameText);
                     studentContainer.append(remoteMedia);
-
-                    peerMediaElements[peerId] = remoteMedia;
+                    studentContainer.append(studentName);
+                    peerMediaElements[peerId] = studentContainer;
                     var teacherroom = getTeacherroom();
-                    if (teacherroom === 'teacher') {
+                    if (teacherroom === "teacher") {
                         total = total + 1;
-                        $('.videos-container').append(studentContainer);
+                        if (noStudentOnlineDiv && total > 0) {
+                            noStudentOnlineDiv.style.display = 'none';
+                        }
+                        $(".videos-container").append(studentContainer);
                         remoteMedia[0].srcObject = connectedPeers[peerId].stream;
+                        if (USE_VIDEO && event.track.kind === "video") {
+                            const videoElement = remoteMedia[0];
+                            videoElement.onloadedmetadata = () => {
+                            if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                                studentContainer.css("display", "none");
+                            }
+                        };
+                        setTimeout(() => {
+                          if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+                            studentContainer.css("display", "none");
+                          }
+                        }, 2000);
+                      }
                     }
+                  }
                 }
             };
             // Add our local stream
             if (localMediaStream) {
-                if (noStudentOnlineDiv) {
-                    noStudentOnlineDiv.style.display = 'none';
-                }
                 peerConnection.addStream(localMediaStream);
             }
             if (config.should_create_offer) {
@@ -512,21 +536,26 @@ function($, str, ModalFactory) {
                     peers[peerId].removeStream(connectedPeers[peerId].stream);
                     peers[peerId].close();
 
-                    // Remove the peer from connectedPeers
                     delete connectedPeers[peerId];
 
-                    var remoteMedia = peerMediaElements[peerId];
-                    if (remoteMedia) {
+                    var remoteContainer = peerMediaElements[peerId];
+                    if (remoteContainer) {
                         total = total - 1;
-                        if (total === 0) {
+                        if (total === 0 && noStudentOnlineDiv) {
                             noStudentOnlineDiv.style.display = 'block';
                         }
-                        remoteMedia.closest('.student-container').remove();
+                        remoteContainer.remove();
                     }
-                    // Remove references
+
                     delete peers[peerId];
                     delete peerMediaElements[peerId];
                 });
+
+        } else {
+            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+            teacher, enablestudentvideo, setinterval,
+            quizid);
+        }
     }
 
     };
@@ -544,14 +573,13 @@ function($, str, ModalFactory) {
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
      * @param {bigint} setinterval - int value
-     * @param {Longtext} serviceoption - string value
      * @param {int} quizid - int value
      * @param {function} callback - The callback function to execute after setting up the media stream.
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
         teacher, enablestudentvideo,
-        setinterval, serviceoption, quizid, callback) {
+        setinterval, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
                 if (callback) {
@@ -588,21 +616,27 @@ function($, str, ModalFactory) {
                           .appendTo('body');
                         document.addEventListener('visibilitychange', function() {
                             if (document.visibilityState === 'visible') {
-                               $.ajax({
+                                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                var leftwarnings = Math.max(warningsl - 1, 0);
+                                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                var message = "Do not move away from active tab.";
+                                if (leftwarnings === 1) {
+                                    message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
+                                } else if (leftwarnings > 1) {
+                                    message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
+                                }
+                                $(document).trigger('popup', message);
+                                $.ajax({
                                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                 method: 'POST',
                                 data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
                                     success: function(response) {
-                                        if (response && response.errorcode) {
-                                            $(document).trigger('popup', response.error);
-                                        } else {
-                                            if (response.redirect && response.url) {
-                                                window.onbeforeunload = null;
-                                                $(document).trigger('popup', response.msg);
-                                                setTimeout(function() {
-                                                    window.location.href = encodeURI(response.url);
-                                                }, 3000);
-                                            }
+                                        if (response.redirect && response.url) {
+                                            window.onbeforeunload = null;
+                                            $(document).trigger('popup', response.msg);
+                                            setTimeout(function() {
+                                                window.location.href = encodeURI(response.url);
+                                            }, 3000);
                                         }
                                     }
                                 });
@@ -757,5 +791,160 @@ function setupPeerConnection(peerConnection, peerId, peer) {
                 }
             );
         });
+}
+
+/**
+ * Restore Video Position
+ *
+ * @param {HTMLElement} element - The video element whose position should be restored.
+ * @return {void}
+ */
+function restoreVideoPosition(element) {
+    const savedPosition = localStorage.getItem('videoPosition');
+    if (savedPosition) {
+        const {left, top} = JSON.parse(savedPosition);
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
+    }
+}
+
+/**
+ * Draggable Video Position
+ *
+ * @param {HTMLElement} element - The video element
+ * @return {void}
+ */
+function makeDraggable(element) {
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    element.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        offsetX = e.clientX - element.getBoundingClientRect().left;
+        offsetY = e.clientY - element.getBoundingClientRect().top;
+        element.style.cursor = 'grabbing';
+    });
+    document.addEventListener('mousemove', function(e) {
+    if (!isDragging) {
+        return;
+    }
+         requestAnimationFrame(() => {
+            let newLeft = e.clientX - offsetX;
+            let newTop = e.clientY - offsetY;
+            const maxLeft = window.innerWidth - element.offsetWidth;
+            const maxTop = window.innerHeight - element.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+            if (element.style.position !== 'fixed') {
+                element.style.position = 'fixed';
+            }
+             element.style.left = `${newLeft}px`;
+            element.style.top = `${newTop}px`;
+        });
+    });
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            element.style.cursor = 'grab';
+            localStorage.setItem('videoPosition', JSON.stringify({
+                left: parseInt(element.style.left, 10),
+                top: parseInt(element.style.top, 10)
+            }));
+        }
+    });
+}
+
+/**
+ * Realtime Detection Ajax call
+ *
+ * @param {int} cmid - cmid
+ * @param {int} attemptid - Attempt Id
+ * @param {boolean} mainimage - boolean value
+ * @param {string} face string value
+ * @param {Longtext} data video
+ * @return {void}
+ */
+function realtimeDetection(cmid, attemptid, mainimage, face, data) {
+    var requestData = {
+        cmid: cmid,
+        attemptid: attemptid,
+        mainimage: mainimage,
+        validate: face,
+        imgBase64: data,
+    };
+    $.ajax({
+        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+        method: 'POST',
+        data: requestData,
+        success: function(response) {
+            if (response && response.errorcode) {
+                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                var leftwarnings = Math.max(warningsl - 1, 0);
+                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                $(document).trigger('popup', response.error);
+            } else {
+                if (response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
+                }
+            }
+        }
+    });
+}
+/**
+ * Setup show Custom Modal
+ *
+ * @param {Longtext} message - string value
+ * @return {void}
+ */
+function showCustomModal(message) {
+    $('.custom-modal').remove();
+    const modalHtml = `
+        <div class="custom-modal show" role="dialog" aria-modal="true" tabindex="-1">
+            <div class="custom-modal-dialog modal-dialog-scrollable">
+                <div class="custom-modal-content">
+                    <div class="custom-modal-header">
+                        <h5 class="custom-modal-title"></h5>
+                        <button type="button" class="custom-close-btn" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="custom-modal-body">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    $('body').append(modalHtml);
+    $('.custom-modal').fadeIn();
+    $('.custom-close-btn').click(function() {
+        closeCustomModal();
+    });
+    $(document).on('click', function(e) {
+        const $modalContent = $('.custom-modal-content');
+        if (!$modalContent.is(e.target) && $modalContent.has(e.target).length === 0) {
+            closeCustomModal();
+        }
+    });
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCustomModal();
+        }
+    });
+}
+
+/**
+ * Setup close Custom Modal
+ *
+ * @return {void}
+ */
+function closeCustomModal() {
+    $('.custom-modal').fadeOut(function() {
+        $(this).remove();
+    });
+    $(document).off('click');
+    $(document).off('keydown');
 }
 });

@@ -15,18 +15,32 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Proctoring uninstall file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2025 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Post-uninstall script
+ */
+function xmldb_quizaccess_quizproctoring_uninstall() {
+    global $DB, $USER, $CFG;
 
-$plugin->version = 2025050500;
-$plugin->requires = 2022041900;
-$plugin->release = 'v4.4.0';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+    $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+
+    $record = new stdClass();
+    $record->email = $user->email;
+    $record->domain = $CFG->wwwroot;
+    $postdata = json_encode($record);
+
+    $curl = new \curl();
+    $url = 'https://proctoring.taketwotechnologies.com/uninstall';
+    $header = [
+        'Content-Type: application/json',
+    ];
+    $curl->setHeader($header);
+    $result = $curl->post($url, $postdata);
+}

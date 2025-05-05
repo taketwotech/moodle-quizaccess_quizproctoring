@@ -112,6 +112,31 @@ class api {
     }
 
     /**
+     * Get the token is activated or not
+     *
+     * @return string
+     */
+    public static function getuserinfo() {
+        self::init();
+        $curl = new \curl();
+        $url = 'https://proctoring.taketwotechnologies.com/getuserinfo';
+        $accesstoken = self::$accesstoken;
+        $accesstokensecret = self::$accesstokensecret;
+        $header = [
+            'Content-Type: application/json',
+            'access-token: ' . $accesstoken,
+            'secret-token: ' . $accesstokensecret,
+        ];
+        $curl->setHeader($header);
+        $response = $curl->post($url);
+        if ($response === false) {
+            echo 'Curl error: ' . $curl->error();
+            return null;
+        }
+        return $response;
+    }
+
+    /**
      * Get the Domain Name captured
      *
      * @return string
@@ -131,9 +156,10 @@ class api {
      * @param Longtext $response data
      * @param Longtext $source data
      * @param Longtext $target data
+     * @param bool $eyecheck eye check
      * @return string
      */
-    public static function validate($response, $source, $target = '') {
+    public static function validate($response, $source, $target = '', $eyecheck = false) {
         global $CFG;
         self::init();
         $result = json_decode($response, true);
@@ -143,7 +169,7 @@ class api {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
             } else if ($count == 1) {
                 $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
-                if ($eyesopen === false) {
+                if ($eyesopen === false && $eyecheck === true) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
                 } else if ($target !== '') {
                     $compareresult = self::compare_faces($response);
