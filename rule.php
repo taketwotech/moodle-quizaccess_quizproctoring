@@ -400,7 +400,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->addElement('selectyesno', 'enableeyecheckreal',
                 get_string('enableeyecheckreal', 'quizaccess_quizproctoring'));
             $mform->addHelpButton('enableeyecheckreal', 'enableeyecheckreal', 'quizaccess_quizproctoring');
-            $mform->setDefault('enableeyecheckreal', 1);
+            $mform->setDefault('enableeyecheckreal', 0);
             $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
 
             // Add a message that appears only when both options are yes.
