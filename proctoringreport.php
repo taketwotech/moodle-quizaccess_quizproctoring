@@ -103,12 +103,15 @@ $table = new html_table();
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
-    get_string("usersimages", "quizaccess_quizproctoring"),
-    get_string("actions", "quizaccess_quizproctoring"),
+    get_string("usersimages", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('usersimages', 'quizaccess_quizproctoring')),
+    get_string("actions", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('actions', 'quizaccess_quizproctoring')),
 ];
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
-    array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring"));
+    array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('reviewattempts', 'quizaccess_quizproctoring')));
 }
 $table->head = $headers;
 $output = $PAGE->get_renderer('mod_quiz');
@@ -141,7 +144,6 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image
 $records = $DB->get_records_sql($sql, ['quizid' => $quizid], $page * $perpage, $perpage);
 
 foreach ($records as $record) {
-    $isadmin = is_siteadmin($record->id);
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', ['id' => $record->id]),
         $record->firstname . ' ' . $record->lastname
@@ -158,7 +160,8 @@ foreach ($records as $record) {
 
     $row = [$namelink, $record->email, $record->image_count];
     if ($proctoringimageshow == 1) {
-        if ($isadmin) {
+        if (is_siteadmin($record->id) || has_capability('moodle/course:update',
+            context_course::instance($course->id), $record->id)) {
             $row[] = '';
         } else {
             $row[] = $imageicon;

@@ -318,5 +318,59 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Update the plugin version to mark the change as complete.
         upgrade_plugin_savepoint(true, 2025010600, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025040201) {
+
+        // Define field enableeyecheck to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableeyecheck', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'proctoringvideo_link');
+
+        // Conditionally launch add field enableeyecheck.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025040201, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025041402) {
+
+        // Define field response to be added to quizaccess_proctor_data.
+        $table = new xmldb_table('quizaccess_proctor_data');
+        $field = new xmldb_field('response', XMLDB_TYPE_CHAR, '1000', null, null, null, null, 'isautosubmit');
+
+        // Conditionally launch add field response.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025041402, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025042301) {
+        $timestamp = time();
+        $randombytes = random_bytes(8);
+        $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;;
+        set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
+
+        upgrade_plugin_savepoint(true, 2025042301, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025042904) {
+
+        // Define field enableeyecheckreal to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableeyecheckreal', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableeyecheck');
+
+        // Conditionally launch add field enableeyecheckreal.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025042904, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }
