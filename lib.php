@@ -122,7 +122,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         }
     }
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
-    $securewindow = $DB->get_record('quiz', array('id' => $quizid));
+    $securewindow = $DB->get_record('quiz', ['id' => $quizid]);
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);

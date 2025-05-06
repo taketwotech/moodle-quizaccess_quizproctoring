@@ -179,7 +179,7 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
         global $PAGE, $DB, $USER;
 
         $serviceoption = get_config('quizaccess_quizproctoring', 'serviceoption');
-        $securewindow = $DB->get_record('quiz', array('id' => $this->quiz->id));
+        $securewindow = $DB->get_record('quiz', ['id' => $this->quiz->id]);
         $interval = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
         $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
