@@ -68,7 +68,7 @@ if ($deleteuserid) {
     $usersrecords = $DB->get_records_sql($sql);
     if ($all) {
         foreach ($usersrecords as $usersrecord) {
-            $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
+            $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
             $context = $quizobj->get_context();
             $fs = get_file_storage();
             $fileinfo = [

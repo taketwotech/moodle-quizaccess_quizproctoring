@@ -289,7 +289,7 @@ function clean_images_task() {
         $totalrecords = $DB->get_records_sql("SELECT * FROM {quizaccess_proctor_data} where
             timecreated < ".$timestampdays." AND deleted = 0 AND userimg IS NOT NULL");
         foreach ($totalrecords as $record) {
-            $quizobj = \quiz::create($record->quizid, $record->userid);
+            $quizobj = \mod_quiz\quiz_settings::create($record->quizid, $record->userid);
             $context = $quizobj->get_context();
             $fs = get_file_storage();
             $fileinfo = [

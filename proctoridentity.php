@@ -33,7 +33,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $url = '';
 if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", ['attemptid' => $attemptid,
     'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'])) {
-    $quizobj = \quiz::create($quizid, $userid);
+    $quizobj = \mod_quiz\quiz_settings::create($quizid, $userid);
     $context = $quizobj->get_context();
     $fs = get_file_storage();
     $files = $fs->get_area_files($context->id, 'quizaccess_quizproctoring', 'identity', $proctoringimage->id);
