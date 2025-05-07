@@ -5,7 +5,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-22.04
-
+    env:
+      PHP_DEPRECATED_WARNINGS: 0
     services:
       postgres:
         image: postgres:13
