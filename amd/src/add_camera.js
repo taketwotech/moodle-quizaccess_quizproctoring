@@ -646,7 +646,7 @@ function($, str, ModalFactory) {
                         camera.startcamera();
                         let intervalinms = setinterval * 1000;
                         let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
-                        setTimeout(function () {
+                        setTimeout(function() {
                             camera.proctoringimage();
                             setInterval(camera.proctoringimage.bind(camera), intervalinms);
                         }, randomdelayms);
