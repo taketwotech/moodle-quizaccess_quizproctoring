@@ -56,7 +56,8 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
         ['cmid' => $cmid, 'quizid' => $quizid]));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
-$PAGE->set_pagelayout('course');
+$PAGE->set_pagelayout('report');
+$PAGE->activityheader->disable();
 $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
     '/mod/quiz/accessrule/quizproctoring/proctoringreport.php');
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');

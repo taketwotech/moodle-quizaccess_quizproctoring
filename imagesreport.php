@@ -80,7 +80,8 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php',
         ['cmid' => $cmid]));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
-$PAGE->set_pagelayout('course');
+$PAGE->set_pagelayout('report');
+$PAGE->activityheader->disable();
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deletequizid || $delcourse) {

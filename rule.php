@@ -409,8 +409,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
 
             // Add a message that appears only when both options are yes.
-            $mform->addElement('static', 'eyecheckrealnote', '',
-                html_writer::tag('div', get_string('eyecheckrealnote', 'quizaccess_quizproctoring'), ['class' => 'eyecheckmsg']));
+            $mform->addElement('textarea', 'eyecheckrealnote', '');
+            $mform->setDefault('eyecheckrealnote', get_string('eyecheckrealnote', 'quizaccess_quizproctoring'));
+            $mform->freeze('eyecheckrealnote');
             $mform->hideIf('eyecheckrealnote', 'enableproctoring', 'eq', 0);
             $mform->hideIf('eyecheckrealnote', 'enableeyecheckreal', 'eq', 0);
 
