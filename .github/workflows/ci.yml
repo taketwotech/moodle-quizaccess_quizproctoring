@@ -5,7 +5,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-22.04
-
+    env:
+      PHP_DEPRECATED_WARNINGS: 0
     services:
       postgres:
         image: postgres:13
@@ -30,8 +31,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.3', '7.4', '8.0', 8.1, 8.2]
-        moodle-branch: ['MOODLE_311_STABLE', MOODLE_402_STABLE, MOODLE_403_STABLE]
+        php: ['8.0', '8.1', '8.2', '8.3']
+        moodle-branch: ['MOODLE_402_STABLE', 'MOODLE_403_STABLE']
         database: [pgsql, mariadb]
 
     steps:
