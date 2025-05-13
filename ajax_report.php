@@ -71,7 +71,11 @@ foreach ($getimages as $img) {
             $target = 'data:image/png;base64,' . $imagebase64;
         }
     } else if (strlen($img->userimg) < 50) {
-        $quizobj = \mod_quiz\quiz_settings::create($img->quizid, $img->userid);
+        if (class_exists('\mod_quiz\quiz_settings')) {
+            $quizobj = \mod_quiz\quiz_settings::create($img->quizid, $img->userid);
+        } else {
+            $quizobj = \quiz::create($img->quizid, $img->userid);
+        }
         $context = $quizobj->get_context();
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);

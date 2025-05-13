@@ -34,8 +34,6 @@ $cmid = required_param('cmid', PARAM_INT);
 $deletequizid = optional_param('delete', '', PARAM_INT);
 $delcourse = optional_param('delcourse', '', PARAM_INT);
 $all = optional_param('all', false, PARAM_BOOL);
-$perpage = 10;
-$page = optional_param('page', 0, PARAM_INT);
 
 /**
  * Creates a quiz object compatible with both old and new Moodle versions.
@@ -136,7 +134,11 @@ if ($deletequizid || $delcourse) {
     }
     if ($all) {
         foreach ($usersrecords as $usersrecord) {
-            $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
+            if (class_exists('\mod_quiz\quiz_settings')) {
+                $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
+            } else {
+                $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
+            }
             $context = $quizobj->get_context();
             $fs = get_file_storage();
             $fileinfo = [
