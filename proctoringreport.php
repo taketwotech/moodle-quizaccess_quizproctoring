@@ -97,7 +97,7 @@ if ($deleteuserid) {
                 $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
             } else {
                 $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
-            }            
+            }
             $context = $quizobj->get_context();
             $fs = get_file_storage();
             $fileinfo = [
