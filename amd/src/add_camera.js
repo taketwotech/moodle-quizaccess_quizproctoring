@@ -172,21 +172,10 @@ function($, str, ModalFactory) {
         $("#id_submitbutton").prop("disabled", true);
     };
 
-    var signalingSocket = null;
-    var externalserver = 'https://proctoring.taketwotechnologies.com';
+    var externalserver = 'https://stream.proctorlink.com/';
     var localMediaStream = null;
-    var peers = {};
-    var peerId = null;
-    var peerMediaElements = {};
-    var connectedPeers = {};
     var USE_AUDIO = true;
     var USE_VIDEO = true;
-    var MUTE_AUDIO_BY_DEFAULT = true;
-    var attachMediaStream = null;
-    var stream = null;
-    var total = 0;
-    let cachedStudentData = null;
-    var ICE_SERVERS = [{urls: "stun:stun.l.google.com:19302"}];
 
     Camera.prototype.retake = function() {
         $('#userimageset').val(0);
@@ -226,7 +215,6 @@ function($, str, ModalFactory) {
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0) {
-        const noStudentOnlineDiv = document.getElementById('nostudentonline');
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -317,248 +305,184 @@ function($, str, ModalFactory) {
                 }, 500);
             }
             if (onlinestudent) {
-                // eslint-disable-next-line no-undef
-                signalingSocket = io(externalserver);
-                signalingSocket.on('connect', function() {
-                // Retrieve the session state from localStorage
-                var storedSession = localStorage.getItem('sessionState');
-                var sessionState = storedSession ? JSON.parse(storedSession) : null;
-                setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-                teacher, enablestudentvideo, setinterval,
-                quizid, function() {
-                    // Once User gives access to mic/cam, join the channel and start peering up
-                    var teacherroom = getTeacherroom();
-                    var typet = {"type": (teacherroom === 'teacher') ? 'teacher' : 'student'};
-                    var fullname = userfullname;
-                    var domain = studenthexstring;
-
-                    signalingSocket.emit('join', {"room": quizid, "userdata": {'quizid': quizid,
-                        'type': typet, 'fullname': fullname, 'domain': domain}});
-
-                    // Restore the session state if available
-                    if (sessionState) {
-                        restoreSessionState(sessionState);
-                    }
+                // Add iframe for student view
+                const iframeContainer = $("<div>").addClass("student-iframe-container");
+                const baseUrl = `${externalserver}/student`;
+                const params = new URLSearchParams({
+                    id: studenthexstring + Math.floor(Math.random() * 10) + 1,
+                    name: userfullname + Math.floor(Math.random() * 100000) + 1,
+                    examId: quizid
                 });
-            });
-
-        signalingSocket.on('disconnect', function() {
-            /* Tear down all of our peer connections and remove all
-             * media divs when we disconnect */
-
-            for (peerId in peerMediaElements) {
-                peerMediaElements[peerId].remove();
-            }
-            for (peerId in peers) {
-                peers[peerId].close();
-            }
-
-            peers = {};
-            peerMediaElements = {};
-        });
-
-        signalingSocket.on('addPeer', function(config) {
-            if (!config.studentData || config.studentData.length === 0) {
-                // No studentData received or it is empty
-            } else {
-                cachedStudentData = config.studentData;
-            }
-            if (cachedStudentData) {
-                const existingStudent = cachedStudentData.find(student => student.id === config.peer_id);
-                if (!existingStudent) {
-                    cachedStudentData.push({id: config.peer_id, fullname: config.fullname});
-                }
-            } else {
-                cachedStudentData = [];
-            }
-            var peerId = config.peer_id;
-
-            if (peerId in peers) {
-                return;
-            }
-
-            var peerConnection = new RTCPeerConnection(
-                {"iceServers": ICE_SERVERS},
-                {"optional": [{"DtlsSrtpKeyAgreement": true}]}
-            );
-            peers[peerId] = peerConnection;
-            // Add peer to the connectedPeers object
-            connectedPeers[peerId] = {
-                stream: new MediaStream()
-            };
-
-            peerConnection.onicecandidate = function(event) {
-                if (event.candidate) {
-                    signalingSocket.emit('relayICECandidate', {
-                        'peer_id': peerId,
-                        'ice_candidate': {
-                            'sdpMLineIndex': event.candidate.sdpMLineIndex,
-                            'candidate': event.candidate.candidate
+                const iframeUrl = `${baseUrl}?${params.toString()}`;
+                const iframe = $("<iframe>")
+                    .attr({
+                        'src': iframeUrl,
+                        'width': '100%',
+                        'height': '480',
+                        'frameborder': '0',
+                        'allow': 'camera; microphone',
+                        'style': 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; ' +
+                                'width: 320px; height: 240px; border-radius: 8px; ' +
+                                'box-shadow: 0 2px 10px rgba(0,0,0,0.2);'
+                    })
+                    .on('load', function() {
+                        console.log('Iframe loaded, sending initial message');
+                        // Send initial message to establish connection
+                        try {
+                            iframe[0].contentWindow.postMessage({ 
+                                type: 'init',
+                                timestamp: Date.now()
+                            }, externalserver);
+                        } catch (error) {
+                            console.error('Error sending initial message:', error);
                         }
                     });
-                }
-            };
+                iframeContainer.append(iframe);
+                $('body').append(iframeContainer);
 
-            peerConnection.ontrack = function(event) {
-                // Update connectedPeers stream
-                connectedPeers[peerId].stream.addTrack(event.track);
-                var remoteMedia;
-                if (peerMediaElements[peerId]) {
-                  remoteMedia = peerMediaElements[peerId];
-                } else {
-                  remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-                  remoteMedia.attr("autoplay", "autoplay");
-                  remoteMedia.prop("controls", true);
-                  remoteMedia.addClass("quizaccess_quizproctoring");
-                  remoteMedia.prop("muted", true);
-                  if ($("#region-main-box .videos-container").length === 0) {
-                    $("#region-main-box").append($("<div>").addClass("videos-container"));
-                  }
-                  var studentContainer = $("<div>").addClass("student-container");
-                  const studentData = cachedStudentData.find((sd) => sd.id === peerId);
-                  const studentNameText = studentData ? studentData.fullname : config.fullname || "";
-                  if (studentNameText) {
-                    const studentName = $("<span>").addClass("student-name").text(studentNameText);
-                    studentContainer.append(remoteMedia);
-                    studentContainer.append(studentName);
-                    peerMediaElements[peerId] = studentContainer;
-                    var teacherroom = getTeacherroom();
-                    if (teacherroom === "teacher") {
-                        total = total + 1;
-                        if (noStudentOnlineDiv && total > 0) {
-                            noStudentOnlineDiv.style.display = 'none';
-                        }
-                        $(".videos-container").append(studentContainer);
-                        remoteMedia[0].srcObject = connectedPeers[peerId].stream;
-                        if (USE_VIDEO && event.track.kind === "video") {
-                            const videoElement = remoteMedia[0];
-                            videoElement.onloadedmetadata = () => {
-                            if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-                                studentContainer.css("display", "none");
-                            }
-                        };
-                        setTimeout(() => {
-                          if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-                            studentContainer.css("display", "none");
-                          }
-                        }, 2000);
-                      }
-                    }
-                  }
-                }
-            };
-            // Add our local stream
-            if (localMediaStream) {
-                peerConnection.addStream(localMediaStream);
-            }
-            if (config.should_create_offer) {
-                peerConnection.createOffer(
-                    function(localDescription) {
-                        peerConnection.setLocalDescription(localDescription,
-                            function() {
-                                signalingSocket.emit('relaySessionDescription',
-                                    {'peer_id': peerId, 'session_description': localDescription});
-                            }
-                        );
-                    },
-                    function() {
-                        // Error handling will be implemented later
-                    }
-                );
-            }
-        });
+                // Make iframe draggable
+                makeDraggable(iframeContainer[0]);
 
-                /**
-                 * Peers exchange session descriptions which contains information
-                 * about their audio / video settings and that sort of stuff. First
-                 * the 'offerer' sends a description to the 'answerer' (with type
-                 * "offer"), then the answerer sends one back (with type "answer").
-                 */
-                signalingSocket.on('sessionDescription', function(config) {
-                    var peerId = config.peer_id;
-                    var peer = peers[peerId];
-                    var remoteDescription = config.session_description;
-                    var desc = new RTCSessionDescription(remoteDescription);
-                    peer.setRemoteDescription(desc)
-                    .then(function() {
-                        if (remoteDescription.type === "offer") {
-                            return peer.createAnswer();
-                        }
-                        return null;
-                    })
-                    .then(function(localDescription) {
-                        if (localDescription) {
-                            return peer.setLocalDescription(localDescription);
-                        }
-                        return null;
-                    })
-                    .then(function() {
-                        if (peer.localDescription) {
-                            signalingSocket.emit('relaySessionDescription', {
-                                'peer_id': peerId,
-                                'session_description': peer.localDescription
+                if (verifyduringattempt) {
+                    // Add canvas for proctoring
+                    $('<canvas>').attr({
+                        id: 'canvas',
+                        width: '280',
+                        height: '240',
+                        'style': 'display: none;'
+                    }).appendTo('body');
+
+                    // Handle visibility change
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.visibilityState === 'visible') {
+                            var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                            var leftwarnings = Math.max(warningsl - 1, 0);
+                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                            var message = "Do not move away from active tab.";
+                            if (leftwarnings === 1) {
+                                message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
+                            } else if (leftwarnings > 1) {
+                                message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
+                            }
+                            $(document).trigger('popup', message);
+                            
+                            // Send tab switch event to server
+                            $.ajax({
+                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                method: 'POST',
+                                data: {
+                                    cmid: cmid,
+                                    attemptid: attemptid,
+                                    mainimage: mainimage,
+                                    tab: true
+                                },
+                                success: function(response) {
+                                    if (response.redirect && response.url) {
+                                        window.onbeforeunload = null;
+                                        $(document).trigger('popup', response.msg);
+                                        setTimeout(function() {
+                                            window.location.href = encodeURI(response.url);
+                                        }, 3000);
+                                    }
+                                }
                             });
                         }
-                        return null;
-                    })
-                    .catch(function(error) {
-                        throw error;
                     });
-                });
 
-                /**
-                 * The offerer will send a number of ICE Candidate blobs to the answerer so they
-                 * can begin trying to find the best path to one another on the net.
-                 */
-                signalingSocket.on('iceCandidate', function(config) {
-                    var peer = peers[config.peer_id];
-                    var iceCandidate = config.ice_candidate;
-                    peer.addIceCandidate(new RTCIceCandidate(iceCandidate));
-                });
-                /**
-                 * When a user leaves a channel (or is disconnected from the
-                 * signaling server) everyone will recieve a 'removePeer' message
-                 * telling them to trash the media channels they have open for those
-                 * that peer. If it was this client that left a channel, they'll also
-                 * receive the removePeers. If this client was disconnected, they
-                 * wont receive removePeers, but rather the
-                 * signalingSocket.on('disconnect') code will kick in and tear down
-                 * all the peer sessions.
-                 */
-                    signalingSocket.on('removePeer', function(config) {
-                    var peerId = config.peer_id;
+                    // Initialize camera and start proctoring
+                    var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                    let iframeReady = false;
 
-                    if (!(peerId in peers)) {
-                        return;
-                    }
-
-                    // Close the peer connection
-                    peers[peerId].removeStream(connectedPeers[peerId].stream);
-                    peers[peerId].close();
-
-                    delete connectedPeers[peerId];
-
-                    var remoteContainer = peerMediaElements[peerId];
-                    if (remoteContainer) {
-                        total = total - 1;
-                        if (total === 0 && noStudentOnlineDiv) {
-                            noStudentOnlineDiv.style.display = 'block';
+                    // Add message listener for iframe communication
+                    window.addEventListener('message', function(event) {
+                        console.log('Received message:', {
+                            origin: event.origin,
+                            expectedOrigin: externalserver,
+                            data: event.data
+                        });
+                        
+                        if (event.origin === externalserver) {
+                            const data = event.data;
+                            if (data.type === 'ready') {
+                                console.log('Iframe is ready for communication');
+                                iframeReady = true;
+                            } else if (data.type === 'proctoring_image') {
+                                console.log('Received proctoring image from iframe');
+                                // Process the image from iframe
+                                var context = camera.canvas.getContext('2d');
+                                var img = new Image();
+                                img.onload = function() {
+                                    context.drawImage(img, 0, 0, camera.width, camera.height);
+                                    var imageData = camera.canvas.toDataURL('image/png');
+                                    $.ajax({
+                                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                        method: 'POST',
+                                        data: {
+                                            imgBase64: imageData,
+                                            cmid: camera.cmid,
+                                            attemptid: camera.attemptid,
+                                            mainimage: camera.mainimage
+                                        },
+                                        success: function(response) {
+                                            if (response && response.errorcode) {
+                                                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                                var leftwarnings = Math.max(warningsl - 1, 0);
+                                                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                                $(document).trigger('popup', response.error);
+                                            } else if (response.redirect && response.url) {
+                                                window.onbeforeunload = null;
+                                                $(document).trigger('popup', response.msg);
+                                                setTimeout(function() {
+                                                    window.location.href = encodeURI(response.url);
+                                                }, 3000);
+                                            }
+                                        }
+                                    });
+                                };
+                                img.src = data.imageData;
+                            }
+                        } else {
+                            console.log('Message origin mismatch:', {
+                                received: event.origin,
+                                expected: externalserver
+                            });
                         }
-                        remoteContainer.remove();
-                    }
+                    });
 
-                    delete peers[peerId];
-                    delete peerMediaElements[peerId];
-                });
-
-        } else {
-            setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-            teacher, enablestudentvideo, setinterval,
-            quizid);
+                    // Start sending messages only after iframe is ready
+                    setInterval(function() {
+                        if (iframeReady) {
+                            console.log('Sending get_proctoring_image message to iframe');
+                            try {
+                                iframe[0].contentWindow.postMessage({ 
+                                    type: 'get_proctoring_image',
+                                    timestamp: Date.now()
+                                }, externalserver);
+                            } catch (error) {
+                                console.error('Error sending message to iframe:', error);
+                                iframeReady = false; // Reset ready state on error
+                            }
+                        } else {
+                            console.log('Iframe not ready, sending init message');
+                            try {
+                                iframe[0].contentWindow.postMessage({ 
+                                    type: 'init',
+                                    timestamp: Date.now()
+                                }, externalserver);
+                            } catch (error) {
+                                console.error('Error sending init message:', error);
+                            }
+                        }
+                    }, setinterval * 1000);
+                }
+            } else {
+                setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
+                    teacher, enablestudentvideo, setinterval,
+                    quizid);
+            }
         }
-    }
-
     };
+
     return {
         init: init
     };
@@ -703,98 +627,7 @@ function($, str, ModalFactory) {
     }
 
 /**
- * RestoreSessionState
- *
- * @param {Longtext} sessionState sessionState
- */
-function restoreSessionState(sessionState) {
-    for (var peerId in sessionState.connectedPeers) {
-        if (sessionState.connectedPeers.hasOwnProperty(peerId)) {
-            var peer = sessionState.connectedPeers[peerId];
-
-            // Create RTCPeerConnection and add track
-            var peerConnection = new RTCPeerConnection(
-                {"iceServers": ICE_SERVERS},
-                {"optional": [{"DtlsSrtpKeyAgreement": true}]}
-            );
-
-            peers[peerId] = peerConnection;
-
-            setupPeerConnection(peerConnection, peerId, peer);
-        }
-    }
-}
-
-/**
- * SetupPeerConnection
- *
- * @param {Longtext} peerConnection peerConnection
- * @param {Longtext} peerId peerId
- * @param {Longtext} peer peer
- */
-function setupPeerConnection(peerConnection, peerId, peer) {
-    peerConnection.onicecandidate = function(event) {
-        if (event.candidate) {
-            signalingSocket.emit('relayICECandidate', {
-                'peer_id': peerId,
-                'ice_candidate': {
-                    'sdpMLineIndex': event.candidate.sdpMLineIndex,
-                    'candidate': event.candidate.candidate
-                }
-            });
-        }
-    };
-
-    peerConnection.ontrack = function(event) {
-        // Update connectedPeers stream
-        peer.stream.addTrack(event.track);
-
-        var remoteMedia;
-
-        if (peerMediaElements[peerId]) {
-            remoteMedia = peerMediaElements[peerId];
-        } else {
-            remoteMedia = USE_VIDEO ? $("<video>") : $("<audio>");
-            remoteMedia.attr("autoplay", "autoplay");
-
-            if (MUTE_AUDIO_BY_DEFAULT) {
-                remoteMedia.attr("muted", "true");
-            }
-            remoteMedia.attr("controls", "");
-            peerMediaElements[peerId] = remoteMedia;
-            var teacherroom = getTeacherroom();
-            if (teacherroom === 'teacher') {
-                $('#region-main-box').append(remoteMedia);
-                attachMediaStream(remoteMedia[0], stream);
-            }
-        }
-        attachMediaStream(remoteMedia[0], peer.stream);
-    };
-
-    // Add our local stream
-    peerConnection.addStream(localMediaStream);
-
-    // Add existing tracks to the new connection
-    for (var track of peer.stream.getTracks()) {
-        peerConnection.addTrack(track, peer.stream);
-    }
-
-    // Create an offer
-    peerConnection.createOffer(
-        function(localDescription) {
-            peerConnection.setLocalDescription(localDescription,
-                function() {
-                    signalingSocket.emit('relaySessionDescription', {
-                        'peer_id': peerId,
-                        'session_description': localDescription
-                    });
-                }
-            );
-        });
-}
-
-/**
- * Restore Video Position
+ * RestoreVideoPosition
  *
  * @param {HTMLElement} element - The video element whose position should be restored.
  * @return {void}
@@ -809,7 +642,7 @@ function restoreVideoPosition(element) {
 }
 
 /**
- * Draggable Video Position
+ * DraggableVideoPosition
  *
  * @param {HTMLElement} element - The video element
  * @return {void}
@@ -855,7 +688,7 @@ function makeDraggable(element) {
 }
 
 /**
- * Realtime Detection Ajax call
+ * RealtimeDetectionAjaxCall
  *
  * @param {int} cmid - cmid
  * @param {int} attemptid - Attempt Id

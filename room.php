@@ -37,19 +37,67 @@ if ($proctorrecord->enableteacherproctor) {
         redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
     }
     $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
-    $PAGE->set_pagelayout('report');
+    $PAGE->set_pagelayout('embedded');
     echo $OUTPUT->header();
-    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
-    // Include js module.
-    echo html_writer::script('',
-    $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-    $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
-    'init', [$cmid, false, true, null, true, $room,
-    $proctorrecord->enableeyecheckreal, $studenthexstring,
-    $proctorrecord->enableteacherproctor]);
-    echo '<div id="nostudentonline">';
-    echo get_string('nostudentonline', 'quizaccess_quizproctoring');
+    
+    // Add CSS to ensure full page coverage
+    echo '<style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        #page {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+        }
+        #page-content {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+        }
+        .teacher-iframe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            z-index: 9999;
+        }
+        .teacher-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>';
+    
+    // Add teacher iframe that uses full page
+    $teacherUrl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://localhost:3000/teacher';
+    $teacherParams = [
+        'room' => $room,
+        'cmid' => $cmid,
+        'teacher' => 'true'
+    ];
+    $teacherIframeUrl = $teacherUrl . '?' . http_build_query($teacherParams);
+    
+    echo '<div class="teacher-iframe-container">';
+    echo '<iframe src="' . htmlspecialchars($teacherIframeUrl) . '"></iframe>';
     echo '</div>';
+    
     echo $OUTPUT->footer();
 } else {
     redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
