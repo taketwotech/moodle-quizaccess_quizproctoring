@@ -285,33 +285,16 @@ function($, str, ModalFactory) {
             document.addEventListener('contextmenu', function(event) {
                 event.preventDefault();
             });
-            if (enableeyecheckreal) {
-                const waitForElements = setInterval(() => {
-                    const vElement = document.getElementById('video');
-                    const cElement = document.getElementById('canvas');
 
-                    if (vElement && cElement) {
-                        clearInterval(waitForElements);
-                        if (typeof setupFaceMesh !== 'undefined') {
-                            // eslint-disable-next-line no-undef
-                            setupFaceMesh(vElement, cElement, function(result) {
-                                if (result.status) {
-                                    realtimeDetection(cmid, attemptid, mainimage,
-                                        result.status, result.data);
-                                }
-                            });
-                        }
-                    }
-                }, 500);
-            }
             if (onlinestudent) {
                 // Add iframe for student view
                 const iframeContainer = $("<div>").addClass("student-iframe-container");
                 const baseUrl = `${externalserver}/student`;
                 const params = new URLSearchParams({
-                    id: studenthexstring + Math.floor(Math.random() * 10) + 1,
-                    name: userfullname + Math.floor(Math.random() * 100000) + 1,
-                    examId: quizid
+                    id: studenthexstring,
+                    name: userfullname,
+                    examId: quizid,
+                    room: `${studenthexstring}_${quizid}`
                 });
                 const iframeUrl = `${baseUrl}?${params.toString()}`;
                 const iframe = $("<iframe>")
@@ -339,11 +322,50 @@ function($, str, ModalFactory) {
                     });
                 iframeContainer.append(iframe);
                 $('body').append(iframeContainer);
+                $('<video>').attr({
+                    'id': 'video',
+                    'class': 'quizaccess_quizproctoring-video',
+                    'width': '280',
+                    'height': '240',
+                    'autoplay': 'autoplay',
+                    'style': 'display: none;',
+                }).appendTo('body');
 
                 // Make iframe draggable
                 makeDraggable(iframeContainer[0]);
 
                 if (verifyduringattempt) {
+                    if (enableeyecheckreal) {
+                    const waitForElements = setInterval(() => {
+                        const vElement = document.getElementById('video');
+                        const cElement = document.getElementById('canvas');
+                        if (vElement && cElement) {
+                            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                            .then((stream) => {
+                                vElement.srcObject = stream;
+                                vElement.play();
+                            })
+                            .catch((err) => {
+                                throw err;
+                            });
+                            clearInterval(waitForElements);
+                            const faceMesh = new FaceMesh({
+                                locateFile: (file) => {
+                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                }
+                            });
+                            if (typeof setupFaceMesh !== 'undefined') {
+                                // eslint-disable-next-line no-undef
+                                setupFaceMesh(vElement, cElement, faceMesh, function(result) {
+                                    if (result.status) {
+                                        realtimeDetection(cmid, attemptid, mainimage,
+                                            result.status, result.data);
+                                    }
+                                });
+                            }
+                        }
+                        }, 500);
+                    }
                     // Add canvas for proctoring
                     $('<canvas>').attr({
                         id: 'canvas',
@@ -476,6 +498,29 @@ function($, str, ModalFactory) {
                     }, setinterval * 1000);
                 }
             } else {
+                if (enableeyecheckreal) {
+                    const waitForElements = setInterval(() => {
+                        const vElement = document.getElementById('video');
+                        const cElement = document.getElementById('canvas');
+                        if (vElement && cElement) {
+                            const faceMesh = new FaceMesh({
+                                locateFile: (file) => {
+                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                }
+                            });
+                            clearInterval(waitForElements);
+                            if (typeof setupFaceMesh !== 'undefined') {
+                                // eslint-disable-next-line no-undef
+                                setupFaceMesh(vElement, cElement, faceMesh, function(result) {
+                                    if (result.status) {
+                                        realtimeDetection(cmid, attemptid, mainimage,
+                                            result.status, result.data);
+                                    }
+                                });
+                            }
+                        }
+                    }, 500);
+                }
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, setinterval,
                     quizid);

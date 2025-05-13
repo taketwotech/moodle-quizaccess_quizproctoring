@@ -29,6 +29,8 @@ require_login();
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php'));
 
 $room = required_param('room', PARAM_INT);
+$studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
+$roomid = $studenthexstring.'_'.$room;
 $cmid = required_param('cmid', PARAM_INT);
 $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $room]);
 if ($proctorrecord->enableteacherproctor) {
@@ -86,9 +88,9 @@ if ($proctorrecord->enableteacherproctor) {
     </style>';
     
     // Add teacher iframe that uses full page
-    $teacherUrl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://localhost:3000/teacher';
+    $teacherUrl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://stream.proctorlink.com/teacher';
     $teacherParams = [
-        'room' => $room,
+        'room' => $roomid,
         'cmid' => $cmid,
         'teacher' => 'true'
     ];
