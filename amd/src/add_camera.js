@@ -172,7 +172,7 @@ function($, str, ModalFactory) {
         $("#id_submitbutton").prop("disabled", true);
     };
 
-    var externalserver = 'https://stream.proctorlink.com/';
+    var externalserver = 'https://stream.proctorlink.com';
     var localMediaStream = null;
     var USE_AUDIO = true;
     var USE_VIDEO = true;
