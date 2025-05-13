@@ -214,7 +214,7 @@ function($, str, ModalFactory) {
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
-        warnings = 0) {
+        warnings = 0, $usergroup = '') {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -285,7 +285,12 @@ function($, str, ModalFactory) {
             document.addEventListener('contextmenu', function(event) {
                 event.preventDefault();
             });
-
+            var room = `${studenthexstring}_${quizid}`;
+            if ($usergroup != '') {
+                room = `${studenthexstring}_${quizid}_${$usergroup}`;
+            }
+            console.log('Room:', room);
+            // Add iframe for student view
             if (onlinestudent) {
                 // Add iframe for student view
                 const iframeContainer = $("<div>").addClass("student-iframe-container");
@@ -294,7 +299,7 @@ function($, str, ModalFactory) {
                     id: studenthexstring,
                     name: userfullname,
                     examId: quizid,
-                    room: `${studenthexstring}_${quizid}`
+                    room: room
                 });
                 const iframeUrl = `${baseUrl}?${params.toString()}`;
                 const iframe = $("<iframe>")
