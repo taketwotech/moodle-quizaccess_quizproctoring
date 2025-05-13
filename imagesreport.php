@@ -82,6 +82,32 @@ $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('report');
 $PAGE->activityheader->disable();
+$PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
+$PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
+$PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+$PAGE->requires->js_init_code("
+    $(document).ready(function() {
+        $('#imagesreporttable').DataTable({
+            pageLength: 10,
+            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
+            language: {
+                search: 'Search:',
+                lengthMenu: 'Show _MENU_ per page',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No records available',
+                emptyTable: 'No records found',
+                paginate: {
+                    first: 'First',
+                    last: 'Last',
+                    next: 'Next',
+                    previous: 'Previous'
+                },
+                zeroRecords: 'No matching records found',
+                infoFiltered: '(filtered from _MAX_ total records)'
+            }
+        });
+    });
+");
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deletequizid || $delcourse) {
@@ -150,6 +176,7 @@ if ($deletequizid || $delcourse) {
 }
 
 $table = new html_table();
+$table->id = 'imagesreporttable';
 $headers = [
     get_string("fullquizname", "quizaccess_quizproctoring"),
     get_string("users", "quizaccess_quizproctoring"),
@@ -186,25 +213,33 @@ $sql = "SELECT q.name AS quiz_name, p.quizid, COUNT(DISTINCT p.userid) AS user_c
         AND q.course = :courseid
         GROUP BY p.quizid, q.name
         ORDER BY q.name ASC";
-$records = $DB->get_records_sql($sql, ['courseid' => $course->id], $page * $perpage, $perpage);
-foreach ($records as $record) {
-    $quizobj = create_quiz_object($record->quizid, $USER->id);
-    $quiz = is_callable([$quizobj, 'get_quiz']) ? $quizobj->get_quiz() : $quizobj->quiz;
-    $cm = is_callable([$quizobj, 'get_cm']) ? $quizobj->get_cm() : $quizobj->cm;
+$records = $DB->get_records_sql($sql, ['courseid' => $course->id]);
+if (empty($records)) {
+    $table->data[] = [
+        get_string('norecordsfound', 'quizaccess_quizproctoring'),
+        '',
+        '',
+        ''
+    ];
+} else {
+    foreach ($records as $record) {
+        $quizobj = create_quiz_object($record->quizid, $USER->id);
+        $quiz = is_callable([$quizobj, 'get_quiz']) ? $quizobj->get_quiz() : $quizobj->quiz;
+        $cm = is_callable([$quizobj, 'get_cm']) ? $quizobj->get_cm() : $quizobj->cm;
 
-    $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-    class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
-    data-quiz="' . $record->quiz_name . '">
-    <i class="icon fa fa-trash"></i></a>';
-    $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-    'cmid' => $cm->id,
-    'quizid' => $record->quizid,
-    ]);
-    $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
-    $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quiz_name . '</a>';
-    $table->data[] = [$quizname, $record->user_count, $record->image_count, $deleteicon];
+        $deleteicon = '<a href="#" title="' . get_string('delete') . '"
+        class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
+        data-quiz="' . $record->quiz_name . '">
+        <i class="icon fa fa-trash"></i></a>';
+        $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
+        'cmid' => $cm->id,
+        'quizid' => $record->quizid,
+        ]);
+        $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
+        $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quiz_name . '</a>';
+        $table->data[] = [$quizname, $record->user_count, $record->image_count, $deleteicon];
+    }
 }
 
 echo html_writer::table($table);
-echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 echo $OUTPUT->footer();

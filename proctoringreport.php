@@ -29,6 +29,7 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = optional_param('quizid', '', PARAM_INT);
 $deleteuserid = optional_param('delete', '', PARAM_INT);
+$all = optional_param('all', false, PARAM_BOOL);
 
 $context = context_module::instance($cmid, MUST_EXIST);
 if (class_exists('\mod_quiz\quiz_settings')) {
@@ -154,13 +155,6 @@ echo '<div class="headtitle">' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 
-$sqlcount = "SELECT COUNT(DISTINCT p.userid) AS totalcount
-             FROM {quizaccess_proctor_data} p
-             JOIN {user} u ON u.id = p.userid
-             WHERE p.userimg IS NOT NULL AND p.deleted = 0 AND p.userimg != ''
-             AND p.quizid = :quizid";
-$totalcount = $DB->count_records_sql($sqlcount, ['quizid' => $quizid]);
-
 $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image_count
         FROM {quizaccess_proctor_data} p
         JOIN {user} u ON u.id = p.userid
@@ -169,34 +163,45 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image
         GROUP BY p.userid
         ORDER BY u.firstname ASC";
 $records = $DB->get_records_sql($sql, ['quizid' => $quizid]);
-
-foreach ($records as $record) {
-    $namelink = html_writer::link(
-        new moodle_url('/user/view.php', ['id' => $record->id]),
-        $record->firstname . ' ' . $record->lastname
-    );
-    $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-        class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
-        data-username="' . $record->firstname . ' ' . $record->lastname . '">
-        <i class="icon fa fa-trash"></i></a>';
-
-    $imgurl = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid=' .
-        $record->id . '&cmid=' . $cmid . '&quizid=' . $quizid;
-    $imageicon = '<a href="' . $imgurl . '"><img class="imageicon" src="' .
-        $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
-
-    $row = [$namelink, $record->email, $record->image_count];
+if (empty($records)) {
+    $rows = [
+        get_string('norecordsfound', 'quizaccess_quizproctoring'),
+        '',
+        '',
+        '',
+    ];
     if ($proctoringimageshow == 1) {
-        if (is_siteadmin($record->id) || has_capability('moodle/course:update',
-            context_course::instance($course->id), $record->id)) {
-            $row[] = '';
-        } else {
-            $row[] = $imageicon;
-        }
+        array_splice($rows, -1, 0, '');
     }
-    $row[] = $deleteicon;
-    $table->data[] = $row;
-}
+    $table->data[] = $rows;
+} else {
+    foreach ($records as $record) {
+        $namelink = html_writer::link(
+            new moodle_url('/user/view.php', ['id' => $record->id]),
+            $record->firstname . ' ' . $record->lastname
+        );
+        $deleteicon = '<a href="#" title="' . get_string('delete') . '"
+            class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
+            data-username="' . $record->firstname . ' ' . $record->lastname . '">
+            <i class="icon fa fa-trash"></i></a>';
 
+        $imgurl = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid=' .
+            $record->id . '&cmid=' . $cmid . '&quizid=' . $quizid;
+        $imageicon = '<a href="' . $imgurl . '"><img class="imageicon" src="' .
+            $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
+
+        $row = [$namelink, $record->email, $record->image_count];
+        if ($proctoringimageshow == 1) {
+            if (is_siteadmin($record->id) || has_capability('moodle/course:update',
+                context_course::instance($course->id), $record->id)) {
+                $row[] = '';
+            } else {
+                $row[] = $imageicon;
+            }
+        }
+        $row[] = $deleteicon;
+        $table->data[] = $row;
+    }
+}
 echo html_writer::table($table);
 echo $OUTPUT->footer();

@@ -127,39 +127,51 @@ if ($proctoringimageshow == 1) {
         AND image_status = :status AND deleted = 0
         ORDER BY attemptid DESC
     ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M']);
+    if (empty($records)) {
+        $table->data[] = [
+            get_string('norecordsfound', 'quizaccess_quizproctoring'),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+        ];
+    } else {
+        foreach ($records as $record) {
+            $attempt = $DB->get_record('quiz_attempts', [
+                'quiz' => $quizid,
+                'userid' => $userid,
+                'id' => $record->attemptid,
+            ]);
 
-    foreach ($records as $record) {
-        $attempt = $DB->get_record('quiz_attempts', [
-            'quiz' => $quizid,
-            'userid' => $userid,
-            'id' => $record->attemptid,
-        ]);
+            $attemptsurl = new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]);
+            $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
 
-        $attemptsurl = new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]);
-        $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
+            $finishtime = $timetaken = get_string('inprogress', 'quiz');
+            $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
+            if ($attempt->timefinish) {
+                $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
+                $timetaken = format_time($attempt->timefinish - $attempt->timestart);
+            }
 
-        $finishtime = $timetaken = get_string('inprogress', 'quiz');
-        $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
-        if ($attempt->timefinish) {
-            $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
-            $timetaken = format_time($attempt->timefinish - $attempt->timestart);
+            $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'"
+                data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
+                data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
+
+            $pindentity = '';
+            if (!empty($record->user_identity)) {
+                $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'"
+                    data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity',
+                    'quizaccess_quizproctoring') . '" alt="icon">';
+            }
+
+            $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
+
+            $row = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit];
+            $table->data[] = $row;
         }
-
-        $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'"
-            data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
-            data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
-
-        $pindentity = '';
-        if (!empty($record->user_identity)) {
-            $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'"
-                data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity',
-                'quizaccess_quizproctoring') . '" alt="icon">';
-        }
-
-        $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
-
-        $row = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit];
-        $table->data[] = $row;
     }
 
     echo html_writer::table($table);
