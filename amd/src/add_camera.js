@@ -305,7 +305,7 @@ function($, str, ModalFactory) {
                         'frameborder': '0',
                         'allow': 'camera; microphone',
                         'style': 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; ' +
-                                'width: 320px; height: 240px; border-radius: 8px; ' +
+                                'width: 230px; height: 173px; border-radius: 3px; ' +
                                 'box-shadow: 0 2px 10px rgba(0,0,0,0.2);'
                     })
                     .on('load', function() {
