@@ -619,7 +619,12 @@ function($, str, ModalFactory) {
                         });
                         var camera = new Camera(cmid, mainimage, attemptid, quizid);
                         camera.startcamera();
-                        setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
+                        let intervalinms = setinterval * 1000;
+                        let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
+                        setTimeout(function() {
+                            camera.proctoringimage();
+                            setInterval(camera.proctoringimage.bind(camera), intervalinms);
+                        }, randomdelayms);
                     }
                     return stream;
                 })

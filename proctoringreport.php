@@ -30,8 +30,6 @@ $cmid = required_param('cmid', PARAM_INT);
 $quizid = optional_param('quizid', '', PARAM_INT);
 $deleteuserid = optional_param('delete', '', PARAM_INT);
 $all = optional_param('all', false, PARAM_BOOL);
-$perpage = 10;
-$page = optional_param('page', 0, PARAM_INT);
 
 $context = context_module::instance($cmid, MUST_EXIST);
 if (class_exists('\mod_quiz\quiz_settings')) {
@@ -56,9 +54,36 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
         ['cmid' => $cmid, 'quizid' => $quizid]));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
-$PAGE->set_pagelayout('course');
+$PAGE->set_pagelayout('report');
+$PAGE->activityheader->disable();
 $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
     '/mod/quiz/accessrule/quizproctoring/proctoringreport.php');
+
+$PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
+$PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
+$PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+$PAGE->requires->js_init_code("
+    $(document).ready(function() {
+        $('#proctoringreporttable').DataTable({
+            pageLength: 10,
+            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
+            language: {
+                search: 'Search:',
+                lengthMenu: 'Show _MENU_ per page',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                    paginate: {
+                        first: 'First',
+                        last: 'Last',
+                        next: 'Next',
+                        previous: 'Previous'
+                    },
+                    zeroRecords: 'No matching records found',
+                    infoEmpty: 'No records available',
+                    infoFiltered: '(filtered from _MAX_ total records)'
+            }
+        });
+    });
+");
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deleteuserid) {
@@ -68,7 +93,11 @@ if ($deleteuserid) {
     $usersrecords = $DB->get_records_sql($sql);
     if ($all) {
         foreach ($usersrecords as $usersrecord) {
-            $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
+            if (class_exists('\mod_quiz\quiz_settings')) {
+                $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
+            } else {
+                $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
+            }
             $context = $quizobj->get_context();
             $fs = get_file_storage();
             $fileinfo = [
@@ -101,6 +130,8 @@ if ($deleteuserid) {
     }
 }
 $table = new html_table();
+$table->id = 'proctoringreporttable';
+
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
@@ -119,21 +150,14 @@ $output = $PAGE->get_renderer('mod_quiz');
 echo $output->header();
 
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
-    $url = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid='.$cmid;
-    $btn = '<a class="btn btn-primary" href="'.$url.'">
-    '.get_string("proctoringimagereport", "quizaccess_quizproctoring", $course->fullname).'</a>';
+    $url = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid=' . $cmid;
+    $btn = '<a class="btn btn-primary" href="' . $url . '">' .
+        get_string("proctoringimagereport", "quizaccess_quizproctoring", $course->fullname) . '</a>';
 }
 echo '<div class="headtitle">' .
      '<p>' . get_string("delinformationu", "quizaccess_quizproctoring") . '</p>' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
-
-$sqlcount = "SELECT COUNT(DISTINCT p.userid) AS totalcount
-             FROM {quizaccess_proctor_data} p
-             JOIN {user} u ON u.id = p.userid
-             WHERE p.userimg IS NOT NULL AND p.deleted = 0 AND p.userimg != ''
-             AND p.quizid = :quizid";
-$totalcount = $DB->count_records_sql($sqlcount, ['quizid' => $quizid]);
 
 $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image_count
         FROM {quizaccess_proctor_data} p
@@ -142,36 +166,46 @@ $sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image
         AND p.quizid = :quizid
         GROUP BY p.userid
         ORDER BY u.firstname ASC";
-$records = $DB->get_records_sql($sql, ['quizid' => $quizid], $page * $perpage, $perpage);
-
-foreach ($records as $record) {
-    $namelink = html_writer::link(
-        new moodle_url('/user/view.php', ['id' => $record->id]),
-        $record->firstname . ' ' . $record->lastname
-    );
-    $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-    class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
-    data-username="' . $record->firstname . ' ' . $record->lastname . '">
-    <i class="icon fa fa-trash"></i></a>';
-
-    $imgurl = $CFG->wwwroot.'/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid='.
-    $record->id.'&cmid='.$cmid.'&quizid='.$quizid;
-    $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' .
-    $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
-
-    $row = [$namelink, $record->email, $record->image_count];
+$records = $DB->get_records_sql($sql, ['quizid' => $quizid]);
+if (empty($records)) {
+    $rows = [
+        get_string('norecordsfound', 'quizaccess_quizproctoring'),
+        '',
+        '',
+        '',
+    ];
     if ($proctoringimageshow == 1) {
-        if (is_siteadmin($record->id) || has_capability('moodle/course:update',
-            context_course::instance($course->id), $record->id)) {
-            $row[] = '';
-        } else {
-            $row[] = $imageicon;
-        }
+        array_splice($rows, -1, 0, '');
     }
-    $row[] = $deleteicon;
-    $table->data[] = $row;
-}
+    $table->data[] = $rows;
+} else {
+    foreach ($records as $record) {
+        $namelink = html_writer::link(
+            new moodle_url('/user/view.php', ['id' => $record->id]),
+            $record->firstname . ' ' . $record->lastname
+        );
+        $deleteicon = '<a href="#" title="' . get_string('delete') . '"
+            class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
+            data-username="' . $record->firstname . ' ' . $record->lastname . '">
+            <i class="icon fa fa-trash"></i></a>';
 
+        $imgurl = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid=' .
+            $record->id . '&cmid=' . $cmid . '&quizid=' . $quizid;
+        $imageicon = '<a href="' . $imgurl . '"><img class="imageicon" src="' .
+            $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
+
+        $row = [$namelink, $record->email, $record->image_count];
+        if ($proctoringimageshow == 1) {
+            if (is_siteadmin($record->id) || has_capability('moodle/course:update',
+                context_course::instance($course->id), $record->id)) {
+                $row[] = '';
+            } else {
+                $row[] = $imageicon;
+            }
+        }
+        $row[] = $deleteicon;
+        $table->data[] = $row;
+    }
+}
 echo html_writer::table($table);
-echo $OUTPUT->paging_bar($totalcount, $page, $perpage, $PAGE->url);
 echo $OUTPUT->footer();

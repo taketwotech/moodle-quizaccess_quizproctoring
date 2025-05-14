@@ -93,6 +93,7 @@ $string['nocameradetected'] = 'No camera detected. {$a}';
 $string['nofacedetected'] = 'No face detected. {$a}';
 $string['noimages'] = 'No images';
 $string['noimageswarning'] = 'No warning images were found during the exam';
+$string['norecordsfound'] = 'No records found.';
 $string['nostudentonline'] = 'No users are online';
 $string['notcameradetected'] = 'No camera detected.';
 $string['notice'] = 'Notice - Ensure you are in a well-lit environment with your face clearly visible and free from shadows. Sit in front of a plain or uncluttered background without any movement or distractions. Position your camera at eye level to capture your full face clearly, avoiding any obstructions.';

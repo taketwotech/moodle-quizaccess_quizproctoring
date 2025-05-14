@@ -31,42 +31,63 @@ $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $perpage = 10;
 $page = optional_param('page', 0, PARAM_INT);
-$sort = optional_param('sort', 'attempt', PARAM_ALPHA);
-$dir = optional_param('dir', 'DESC', PARAM_ALPHA);
-
-$attemptssort = ($sort === 'attempt' && $dir === 'ASC') ? 'DESC' : 'ASC';
-$arrowup = ' ▲';
-$arrowdown = ' ▼';
 
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-$attemptarrow = ($sort === 'attempt') ? ($dir === 'ASC' ? $arrowup : $arrowdown) : '';
-
-// Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
 require_login($course, true, $cm);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
-    $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php',
-        ['userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid]));
+    $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php', [
+        'userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid
+    ]));
     $PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
 
     $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
         '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
+
+    $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
+    $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+    $PAGE->requires->js_init_code("
+        $(document).ready(function() {
+                $('#attemptsreporttable').DataTable({
+                pageLength: 10,
+                lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
+                language: {
+                    search: 'Search:',
+                    lengthMenu: 'Show _MENU_ per page',
+                    info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                        paginate: {
+                            first: 'First',
+                            last: 'Last',
+                            next: 'Next',
+                            previous: 'Previous'
+                        },
+                        zeroRecords: 'No matching records found',
+                        infoEmpty: 'No records available',
+                        infoFiltered: '(filtered from _MAX_ total records)'
+                }
+            });
+        });
+    ");
+
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
     $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
-    'attemptstarted', 'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
-    $PAGE->requires->jquery();
+        'attemptstarted', 'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
     $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
+
     $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     echo '<input type="hidden" id="storeallimages" name="storeallimages" value="'.$storerecord->storeallimages.'" />';
+
     $table = new html_table();
-    $headers = [
+    $table->id = 'attemptsreporttable';
+
+    $table->head = [
         get_string("email", "quizaccess_quizproctoring"),
-        html_writer::link(new moodle_url($PAGE->url, ['sort' => 'attempt', 'dir' => $attemptssort]),
-        get_string("attempts", "quizaccess_quizproctoring") . $attemptarrow),
+        get_string("attempts", "quizaccess_quizproctoring"),
         get_string("started", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('started', 'quizaccess_quizproctoring')),
         get_string("submitted", "quizaccess_quizproctoring") .
@@ -80,76 +101,88 @@ if ($proctoringimageshow == 1) {
         get_string("isautosubmit", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
     ];
-    $table->head = $headers;
-    $output = $PAGE->get_renderer('mod_quiz');
+
     echo $OUTPUT->header();
+
+    $btn = '';
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-            'cmid' => $cmid,
-            'quizid' => $quizid,
+            'cmid' => $cmid, 'quizid' => $quizid
         ]);
-        $btn = '<a class="btn btn-primary" href="'.$backurl.'">
-        '.get_string("userimagereport", "quizaccess_quizproctoring").'</a>';
+        $btn = '<a class="btn btn-primary" href="'.$backurl.'">'.get_string("userimagereport", "quizaccess_quizproctoring").'</a>';
     }
+
     echo '<div class="headtitle">' .
-    '<p>'.get_string('reviewattemptsu', 'quizaccess_quizproctoring',
-        $user->firstname . ' ' . $user->lastname) . '</p>' .
-    '<div>' . $btn . '</div>' .
-    '</div><br/>';
+        '<p>' . get_string('reviewattemptsu', 'quizaccess_quizproctoring', fullname($user)) . '</p>' .
+        '<div>' . $btn . '</div>' .
+        '</div><br/>';
 
     $namelink = html_writer::link(
         new moodle_url('/user/view.php', ['id' => $user->id]),
         $user->email
     );
-    $totalattempts = $DB->count_records('quizaccess_proctor_data',
-        ['quizid' => $quizid, 'userid' => $userid, 'image_status' => 'M']);
 
-    $sortcolumns = [
-        'attempt' => 'attemptid',
-    ];
-    $sortcolumn = isset($sortcolumns[$sort]) ? $sortcolumns[$sort] : $sortcolumns['attempt'];
+    $totalattempts = $DB->count_records('quizaccess_proctor_data', [
+        'quizid' => $quizid, 'userid' => $userid, 'image_status' => 'M'
+    ]);
 
     $records = $DB->get_records_sql("
         SELECT *
         FROM {quizaccess_proctor_data}
         WHERE quizid = :quizid AND userid = :userid
         AND image_status = :status AND deleted = 0
-        ORDER BY $sortcolumn $dir
-    ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M'], $page * $perpage, $perpage);
-    foreach ($records as $record) {
-        $attempt = $DB->get_record('quiz_attempts', [
-                        'quiz' => $quizid,
-                        'userid' => $userid,
-                        'id' => $record->attemptid,
-                    ]);
-        $attemptsurl = new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]);
-        $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
-        $finishtime = $timetaken = get_string('inprogress', 'quiz');
-        $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
-        if ($attempt->timefinish) {
-            $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
-            $timetaken = format_time($attempt->timefinish - $attempt->timestart);
+        ORDER BY attemptid DESC
+    ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M']);
+    if (empty($records)) {
+        $table->data[] = [
+            get_string('norecordsfound', 'quizaccess_quizproctoring'),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+        ];
+    } else {
+        foreach ($records as $record) {
+            $attempt = $DB->get_record('quiz_attempts', [
+                'quiz' => $quizid,
+                'userid' => $userid,
+                'id' => $record->attemptid,
+            ]);
+
+            $attemptsurl = new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]);
+            $attempturl = '<a href="' . $attemptsurl->out() . '">' . $attempt->attempt . '</a>';
+
+            $finishtime = $timetaken = get_string('inprogress', 'quiz');
+            $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
+            if ($attempt->timefinish) {
+                $finishtime = userdate($attempt->timefinish, get_string('strftimerecent', 'langconfig'));
+                $timetaken = format_time($attempt->timefinish - $attempt->timestart);
+            }
+
+            $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'"
+                data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
+                data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
+
+            $pindentity = '';
+            if (!empty($record->user_identity)) {
+                $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'"
+                    data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity',
+                    'quizaccess_quizproctoring') . '" alt="icon">';
+            }
+
+            $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
+
+            $row = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit];
+            $table->data[] = $row;
         }
-        $pimages = '<img class="imageicon proctoringimage" data-attemptid="'.$attempt->id.'"
-        data-quizid="'.$quizid.'" data-userid="'.$user->id.'" data-startdate="'.$timestart.'"
-        data-all="false" src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
-        $pindentity = '';
-        if ($record->user_identity && $record->user_identity != 0) {
-            $pindentity = '<img class="imageicon proctoridentity" data-attemptid="'.$attempt->id.'"
-            data-quizid="'.$quizid.'" data-userid="'.$user->id.'" src="' . $OUTPUT->image_url('identity',
-                'quizaccess_quizproctoring') . '" alt="icon">';
-        }
-        if ($record->isautosubmit) {
-            $submit = '<div class="submittag">Yes</div>';
-        } else {
-            $submit = 'No';
-        }
-        $row = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit];
-        $table->data[] = $row;
     }
+
     echo html_writer::table($table);
-    echo $OUTPUT->paging_bar($totalattempts, $page, $perpage, $PAGE->url->out(true, ['sort' => $sort, 'dir' => $dir]));
     echo $OUTPUT->footer();
+
 } else {
     redirect(new moodle_url('/'));
 }

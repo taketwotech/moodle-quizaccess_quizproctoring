@@ -26,16 +26,21 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
-
-
+if (class_exists('\mod_quiz\local\access_rule_base')) {
+    class_alias('\mod_quiz\local\access_rule_base', '\quizaccess_quizproctoring_rule_base');
+    class_alias('\mod_quiz\form\preflight_check_form', '\quizaccess_quizproctoring_preflight_form');
+} else {
+    require_once($CFG->dirroot . '/mod/quiz/accessrule/accessrulebase.php');
+    class_alias('\quiz_access_rule_base', '\quizaccess_quizproctoring_rule_base');
+    class_alias('\mod_quiz_preflight_check_form', '\quizaccess_quizproctoring_preflight_form');
+}
 /**
  * A rule representing the safe browser check.
  *
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class quizaccess_quizproctoring extends quiz_access_rule_base {
+class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
 
     /**
      * * Information, such as might be shown on the quiz view page, relating to this restriction.
@@ -46,9 +51,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
      * @param int $timenow current time
      * @param bool $canignoretimelimits ignore time limits
      *
-     * @return quiz_access_rule_base|quizaccess_proctoring|null
+     * @return quizaccess_quizproctoring_rule_base|quizaccess_proctoring|null
      */
-    public static function make(quiz $quizobj, $timenow, $canignoretimelimits) {
+    public static function make($quizobj, $timenow, $canignoretimelimits) {
 
         if (!$quizobj->get_quiz()->enableproctoring) {
             return null;
@@ -168,13 +173,13 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
     /**
      * Preflight check form
      *
-     * @param mod_quiz_preflight_check_form $quizform quiz form
+     * @param quizaccess_quizproctoring_preflight_form $quizform quiz form
      * @param MoodleQuickForm $mform mform
      * @param int $attemptid attempt id
      * @return String
      *
      */
-    public function add_preflight_check_form_fields(mod_quiz_preflight_check_form $quizform,
+    public function add_preflight_check_form_fields(quizaccess_quizproctoring_preflight_form $quizform,
             MoodleQuickForm $mform, $attemptid) {
         global $PAGE, $DB, $USER;
 
@@ -404,8 +409,9 @@ class quizaccess_quizproctoring extends quiz_access_rule_base {
             $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
 
             // Add a message that appears only when both options are yes.
-            $mform->addElement('static', 'eyecheckrealnote', '',
-                html_writer::tag('div', get_string('eyecheckrealnote', 'quizaccess_quizproctoring'), ['class' => 'eyecheckmsg']));
+            $mform->addElement('textarea', 'eyecheckrealnote', '');
+            $mform->setDefault('eyecheckrealnote', get_string('eyecheckrealnote', 'quizaccess_quizproctoring'));
+            $mform->freeze('eyecheckrealnote');
             $mform->hideIf('eyecheckrealnote', 'enableproctoring', 'eq', 0);
             $mform->hideIf('eyecheckrealnote', 'enableeyecheckreal', 'eq', 0);
 
