@@ -38,7 +38,7 @@ if ($proctorrecord->enableteacherproctor) {
         redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
     }
     $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
-    $PAGE->set_pagelayout('embedded');
+    $PAGE->set_pagelayout('report');
     echo $OUTPUT->header();
     
     // Add CSS to ensure full page coverage
@@ -73,6 +73,7 @@ if ($proctorrecord->enableteacherproctor) {
             margin: 0;
             padding: 0;
             z-index: 9999;
+            margin-top: 65px;
         }
         .teacher-iframe-container iframe {
             width: 100%;

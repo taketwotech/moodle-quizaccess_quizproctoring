@@ -293,7 +293,10 @@ function($, str, ModalFactory) {
             // Add iframe for student view
             if (onlinestudent) {
                 // Add iframe for student view
-                const iframeContainer = $("<div>").addClass("student-iframe-container");
+                const iframeContainer = $("<div>").addClass("student-iframe-container").css({
+                    display: 'none'
+                });
+
                 const baseUrl = `${externalserver}/student`;
                 const params = new URLSearchParams({
                     id: studenthexstring,
@@ -332,12 +335,9 @@ function($, str, ModalFactory) {
                     'class': 'quizaccess_quizproctoring-video',
                     'width': '280',
                     'height': '240',
-                    'autoplay': 'autoplay',
-                    'style': 'display: none;',
-                }).appendTo('body');
-
-                // Make iframe draggable
-                makeDraggable(iframeContainer[0]);
+                    'autoplay': 'autoplay'
+                }).css('display', enablestudentvideo ? 'block' : 'none')
+                .appendTo('body');
 
                 if (verifyduringattempt) {
                     if (enableeyecheckreal) {
@@ -368,6 +368,7 @@ function($, str, ModalFactory) {
                                     }
                                 });
                             }
+                            makeDraggable(vElement);
                         }
                         }, 500);
                     }
