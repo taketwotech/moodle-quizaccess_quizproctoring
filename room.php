@@ -40,52 +40,7 @@ if ($proctorrecord->enableteacherproctor) {
     $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
     $PAGE->set_pagelayout('report');
     echo $OUTPUT->header();
-    
-    // Add CSS to ensure full page coverage
-    echo '<style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-        #page {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100vw;
-        }
-        #page-content {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100vw;
-        }
-        .teacher-iframe-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            z-index: 9999;
-            margin-top: 65px;
-        }
-        .teacher-iframe-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-        }
-    </style>';
+
     // Get the proctoring grouping
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring']);
     $usergroup = '';
