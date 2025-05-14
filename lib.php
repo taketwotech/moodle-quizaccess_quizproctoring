@@ -88,6 +88,22 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $warningsleft = 0;
     $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+
+    // Get the proctoring grouping
+    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring']);
+    $usergroup = '';
+    
+    if ($proctoringgrouping) {
+        // Get user's group from proctoring grouping
+        $sql = "SELECT g.name 
+                FROM {groups} g 
+                JOIN {groupings_groups} gg ON g.id = gg.groupid 
+                JOIN {groups_members} gm ON g.id = gm.groupid 
+                WHERE gg.groupingid = :groupingid 
+                AND gm.userid = :userid";
+        $usergroup = $DB->get_field_sql($sql, ['groupingid' => $proctoringgrouping->id, 'userid' => $USER->id]);
+    }
+
     if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $user->id,
     'quizid' => $quizid,
@@ -141,7 +157,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         '$fullname',
         $quizaproctoring->enablestudentvideo,
         $quizaproctoring->time_interval,
-        $warningsleft);
+        $warningsleft,
+        '$usergroup');
     });
     M.util.js_complete();", true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);

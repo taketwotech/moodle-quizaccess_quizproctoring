@@ -30,7 +30,6 @@ $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php'));
 
 $room = required_param('room', PARAM_INT);
 $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
-$roomid = $studenthexstring.'_'.$room;
 $cmid = required_param('cmid', PARAM_INT);
 $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $room]);
 if ($proctorrecord->enableteacherproctor) {
@@ -86,14 +85,34 @@ if ($proctorrecord->enableteacherproctor) {
             bottom: 0;
         }
     </style>';
+    // Get the proctoring grouping
+    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring']);
+    $usergroup = '';
+    
+    if ($proctoringgrouping) {
+        // Get user's group from proctoring grouping
+        $sql = "SELECT g.name 
+                FROM {groups} g 
+                JOIN {groupings_groups} gg ON g.id = gg.groupid 
+                JOIN {groups_members} gm ON g.id = gm.groupid 
+                WHERE gg.groupingid = :groupingid 
+                AND gm.userid = :userid";
+        $usergroup = $DB->get_field_sql($sql, ['groupingid' => $proctoringgrouping->id, 'userid' => $USER->id]);
+    }
     
     // Add teacher iframe that uses full page
     $teacherUrl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://stream.proctorlink.com/teacher';
+    $roomid = $studenthexstring.'_'.$room;
+    if ($usergroup != '') {
+        $roomid = $studenthexstring.'_'.$room.'_'.$usergroup;
+    }
     $teacherParams = [
         'room' => $roomid,
         'cmid' => $cmid,
         'teacher' => 'true'
     ];
+
+        
     $teacherIframeUrl = $teacherUrl . '?' . http_build_query($teacherParams);
     
     echo '<div class="teacher-iframe-container">';
