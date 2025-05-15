@@ -214,7 +214,7 @@ function($, str, ModalFactory) {
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
-        warnings = 0, $usergroup = '') {
+        warnings = 0, usergroup = '', detectionval = null) {
         if (!verifyduringattempt) {
             var camera;
             if (document.readyState === 'complete') {
@@ -286,8 +286,8 @@ function($, str, ModalFactory) {
                 event.preventDefault();
             });
             var room = `${studenthexstring}_${quizid}`;
-            if ($usergroup != '') {
-                room = `${studenthexstring}_${quizid}_${$usergroup}`;
+            if (usergroup != '') {
+                room = `${studenthexstring}_${quizid}_${usergroup}`;
             }
             console.log('Room:', room);
             // Add iframe for student view
@@ -339,8 +339,15 @@ function($, str, ModalFactory) {
                 }).css('display', enablestudentvideo ? 'block' : 'none')
                 .appendTo('body');
 
+                // Add canvas for proctoring
+                $('<canvas>').attr({
+                    id: 'canvas',
+                    width: '280',
+                    height: '240',
+                    'style': 'display: none;'
+                }).appendTo('body');
+
                 if (verifyduringattempt) {
-                    if (enableeyecheckreal) {
                     const waitForElements = setInterval(() => {
                         const vElement = document.getElementById('video');
                         const cElement = document.getElementById('canvas');
@@ -354,31 +361,27 @@ function($, str, ModalFactory) {
                                 throw err;
                             });
                             clearInterval(waitForElements);
-                            const faceMesh = new FaceMesh({
-                                locateFile: (file) => {
-                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                }
-                            });
-                            if (typeof setupFaceMesh !== 'undefined') {
-                                // eslint-disable-next-line no-undef
-                                setupFaceMesh(vElement, cElement, faceMesh, function(result) {
-                                    if (result.status) {
-                                        realtimeDetection(cmid, attemptid, mainimage,
-                                            result.status, result.data);
+                            if (enableeyecheckreal) {
+                                if (detectionval === null || detectionval === 1) {
+                                    const faceMesh = new FaceMesh({
+                                        locateFile: (file) => {
+                                            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                        }
+                                    });
+                                    if (typeof setupFaceMesh !== 'undefined') {
+                                        // eslint-disable-next-line no-undef
+                                        setupFaceMesh(vElement, cElement, faceMesh, function(result) {
+                                            if (result.status) {
+                                                realtimeDetection(cmid, attemptid, mainimage,
+                                                    result.status, result.data);
+                                            }
+                                        });
                                     }
-                                });
+                                }
                             }
                             makeDraggable(vElement);
                         }
-                        }, 500);
-                    }
-                    // Add canvas for proctoring
-                    $('<canvas>').attr({
-                        id: 'canvas',
-                        width: '280',
-                        height: '240',
-                        'style': 'display: none;'
-                    }).appendTo('body');
+                    }, 500);
 
                     // Handle visibility change
                     document.addEventListener('visibilitychange', function() {

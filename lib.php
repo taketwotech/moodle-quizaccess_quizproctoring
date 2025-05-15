@@ -139,6 +139,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', ['id' => $quizid]);
+    $detectionval = get_user_preferences('eye_detection', null, $USER->id);
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
@@ -158,7 +159,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $quizaproctoring->enablestudentvideo,
         $quizaproctoring->time_interval,
         $warningsleft,
-        '$usergroup');
+        '$usergroup',
+        $detectionval);
     });
     M.util.js_complete();", true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
@@ -179,7 +181,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
     $mainimage, $status='', $response='', $storeallimg=false) {
     global $USER, $DB, $COURSE;
-
+    $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     // We are all good, store the image.
     if ( $mainimage ) {
@@ -195,6 +197,9 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
             'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'I' ])) {
             $DB->delete_records('quizaccess_proctor_data', ['id' => $qpd->id]);
         }
+        $preferencename = 'eye_detection';
+        $preferencevalue = $quizaccessquizproctoring->enableeyecheckreal;
+        set_user_preference($preferencename, $preferencevalue, $user->id);
     }
     $imagename = '';
     $record = new stdClass();
@@ -222,8 +227,6 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
     }
 
     if ( !$mainimage && $status != '') {
-        $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
             $inparams = [

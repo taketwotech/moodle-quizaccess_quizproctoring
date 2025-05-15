@@ -33,7 +33,13 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $validate = required_param('validate', PARAM_RAW);
+$detectionval = get_user_preferences('eye_detection', null, $USER->id);
 
+if ($detectionval !== null) {
+    if ($detectionval !== '1') {
+        return;
+    }
+}
 $mainentry = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,
