@@ -273,9 +273,6 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $html .= html_writer::end_tag('div');
 
         $mform->addElement('html', $html);
-        $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
-         'quizaccess_quizproctoring'), null, $filemanageroptions);
-
         $mform->addElement('hidden', 'userimageset', '', ['id' => 'userimageset']);
         $mform->setType('userimageset', PARAM_INT);
         $mform->setDefault('userimageset', 0);
