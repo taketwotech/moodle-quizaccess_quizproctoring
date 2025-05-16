@@ -24,6 +24,7 @@
  */
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+use mod_quiz\quiz_attempt;
 
 define('QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED', 'nofacedetected');
 define('QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED', 'nocameradetected');

@@ -358,7 +358,31 @@ function($, str, ModalFactory) {
                                 vElement.play();
                             })
                             .catch((err) => {
-                                throw err;
+                                if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                                    $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                    method: 'POST',
+                                    data: {
+                                        cmid: cmid,
+                                        attemptid: attemptid,
+                                        mainimage: mainimage,
+                                    },
+                                    success: function(response) {
+                                        if (response && response.errorcode) {
+                                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                            const leftwarnings = Math.max(warningsl - 1, 0);
+                                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                            $(document).trigger('popup', response.error);
+                                        } else if (response.redirect && response.url) {
+                                            window.onbeforeunload = null;
+                                            $(document).trigger('popup', response.msg);
+                                            setTimeout(function() {
+                                                window.location.href = encodeURI(response.url);
+                                            }, 3000);
+                                        }
+                                    }
+                                });
+                                }
                             });
                             clearInterval(waitForElements);
                             if (enableeyecheckreal) {
@@ -423,7 +447,7 @@ function($, str, ModalFactory) {
                     // Initialize camera and start proctoring
                     var camera = new Camera(cmid, mainimage, attemptid, quizid);
                     let iframeReady = false;
-
+                    let responseReceived = true;
                     // Add message listener for iframe communication
                     window.addEventListener('message', function(event) {
                         console.log('Received message:', {
@@ -438,6 +462,7 @@ function($, str, ModalFactory) {
                                 console.log('Iframe is ready for communication');
                                 iframeReady = true;
                             } else if (data.type === 'proctoring_image') {
+                                responseReceived = true;
                                 console.log('Received proctoring image from iframe');
                                 // Process the image from iframe
                                 var context = camera.canvas.getContext('2d');
@@ -483,6 +508,33 @@ function($, str, ModalFactory) {
                     // Start sending messages only after iframe is ready
                     setInterval(function() {
                         if (iframeReady) {
+                            if (!responseReceived) {
+                                $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                    method: 'POST',
+                                    data: {
+                                        cmid: cmid,
+                                        attemptid: attemptid,
+                                        mainimage: mainimage,
+                                    },
+                                    success: function(response) {
+                                        if (response && response.errorcode) {
+                                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                            const leftwarnings = Math.max(warningsl - 1, 0);
+                                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                            $(document).trigger('popup', response.error);
+                                        } else if (response.redirect && response.url) {
+                                            window.onbeforeunload = null;
+                                            $(document).trigger('popup', response.msg);
+                                            setTimeout(function() {
+                                                window.location.href = encodeURI(response.url);
+                                            }, 3000);
+                                        }
+                                    }
+                                });
+                            }
+
+                            responseReceived = false;
                             console.log('Sending get_proctoring_image message to iframe');
                             try {
                                 iframe[0].contentWindow.postMessage({ 
