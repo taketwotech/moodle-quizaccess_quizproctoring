@@ -64,7 +64,11 @@ $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
 foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
-        $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        if ($img->status === 'minimizedetected') {
+            $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
+        } else {
+            $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        }
         if (file_exists($imagepath)) {
             $imagecontent = file_get_contents($imagepath);
             $imagebase64 = base64_encode($imagecontent);
