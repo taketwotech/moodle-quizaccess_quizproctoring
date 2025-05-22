@@ -31,6 +31,18 @@ $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php'));
 $room = required_param('room', PARAM_INT);
 $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
 $cmid = required_param('cmid', PARAM_INT);
+$context = context_module::instance($cmid, MUST_EXIST);
+if (class_exists('\mod_quiz\quiz_settings')) {
+    if ($room) {
+        $quizobj = \mod_quiz\quiz_settings::create($room, $USER->id);
+    } else {
+        $quizobj = \mod_quiz\quiz_settings::create_for_cmid($cmid, $USER->id);
+    }
+    $course = $quizobj->get_course();
+} else {
+    $cm = get_coursemodule_from_id('quiz', $cmid, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+}
 $proctorrecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $room]);
 if ($proctorrecord->enableteacherproctor) {
     $context = context_module::instance($cmid);
@@ -42,7 +54,7 @@ if ($proctorrecord->enableteacherproctor) {
     echo $OUTPUT->header();
 
     // Get the proctoring grouping
-    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring']);
+    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $course->id]);
     $usergroup = '';
     
     if ($proctoringgrouping) {

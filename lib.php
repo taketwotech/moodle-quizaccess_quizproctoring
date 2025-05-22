@@ -84,14 +84,14 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
  * @param int $quizid quiz id
  */
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
-    global $DB, $PAGE, $OUTPUT, $USER;
+    global $DB, $PAGE, $OUTPUT, $USER, $COURSE;
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $warningsleft = 0;
     $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
     // Get the proctoring grouping
-    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring']);
+    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $COURSE->id]);
     $usergroup = '';
     
     if ($proctoringgrouping) {
