@@ -216,6 +216,7 @@ function($, str, ModalFactory) {
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0, usergroup = '', detectionval = null) {
         if (!verifyduringattempt) {
+            localStorage.removeItem('eyecheckoff');
             var camera;
             if (document.readyState === 'complete') {
                 $('.quizstartbuttondiv [type=submit]').prop("disabled", false);
@@ -560,27 +561,29 @@ function($, str, ModalFactory) {
                 }
             } else {
                 if (enableeyecheckreal) {
-                    const waitForElements = setInterval(() => {
-                        const vElement = document.getElementById('video');
-                        const cElement = document.getElementById('canvas');
-                        if (vElement && cElement) {
-                            const faceMesh = new FaceMesh({
-                                locateFile: (file) => {
-                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                }
-                            });
-                            clearInterval(waitForElements);
-                            if (typeof setupFaceMesh !== 'undefined') {
-                                // eslint-disable-next-line no-undef
-                                setupFaceMesh(vElement, cElement, faceMesh, function(result) {
-                                    if (result.status) {
-                                        realtimeDetection(cmid, attemptid, mainimage,
-                                            result.status, result.data);
+                    if (detectionval === null || detectionval === 1) {
+                        const waitForElements = setInterval(() => {
+                            const vElement = document.getElementById('video');
+                            const cElement = document.getElementById('canvas');
+                            if (vElement && cElement) {
+                                const faceMesh = new FaceMesh({
+                                    locateFile: (file) => {
+                                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
                                     }
                                 });
+                                clearInterval(waitForElements);
+                                if (typeof setupFaceMesh !== 'undefined') {
+                                    // eslint-disable-next-line no-undef
+                                    setupFaceMesh(vElement, cElement, faceMesh, function(result) {
+                                        if (result.status) {                                            
+                                            realtimeDetection(cmid, attemptid, mainimage,
+                                                    result.status, result.data);
+                                        }
+                                    });
+                                }
                             }
-                        }
-                    }, 500);
+                        }, 500);
+                    }
                 }
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, setinterval,
@@ -820,7 +823,11 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
         method: 'POST',
         data: requestData,
-        success: function(response) {
+        success: function(response) {console.log(response);
+            if (response && response.status === 'eyecheckoff') {
+                localStorage.setItem('eyecheckoff', JSON.stringify(true));
+                return;
+            }
             if (response && response.errorcode) {
                 var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                 var leftwarnings = Math.max(warningsl - 1, 0);
