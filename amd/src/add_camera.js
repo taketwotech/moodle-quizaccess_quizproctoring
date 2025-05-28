@@ -387,21 +387,19 @@ function($, str, ModalFactory) {
                             });
                             clearInterval(waitForElements);
                             if (enableeyecheckreal) {
-                                if (detectionval === null || detectionval === 1) {
-                                    const faceMesh = new FaceMesh({
-                                        locateFile: (file) => {
-                                            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                const faceMesh = new FaceMesh({
+                                    locateFile: (file) => {
+                                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                    }
+                                });
+                                if (typeof setupFaceMesh !== 'undefined') {
+                                    // eslint-disable-next-line no-undef
+                                    setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
+                                        if (result.status) {
+                                            realtimeDetection(cmid, attemptid, mainimage,
+                                                result.status, result.data);
                                         }
                                     });
-                                    if (typeof setupFaceMesh !== 'undefined') {
-                                        // eslint-disable-next-line no-undef
-                                        setupFaceMesh(vElement, cElement, faceMesh, function(result) {
-                                            if (result.status) {
-                                                realtimeDetection(cmid, attemptid, mainimage,
-                                                    result.status, result.data);
-                                            }
-                                        });
-                                    }
                                 }
                             }
                             makeDraggable(vElement);
@@ -560,30 +558,28 @@ function($, str, ModalFactory) {
                     }, setinterval * 1000);
                 }
             } else {
-                if (enableeyecheckreal) {
-                    if (detectionval === null || detectionval === 1) {
-                        const waitForElements = setInterval(() => {
-                            const vElement = document.getElementById('video');
-                            const cElement = document.getElementById('canvas');
-                            if (vElement && cElement) {
-                                const faceMesh = new FaceMesh({
-                                    locateFile: (file) => {
-                                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                if (enableeyecheckreal) {                    
+                    const waitForElements = setInterval(() => {
+                        const vElement = document.getElementById('video');
+                        const cElement = document.getElementById('canvas');
+                        if (vElement && cElement) {
+                            const faceMesh = new FaceMesh({
+                                locateFile: (file) => {
+                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                }
+                            });
+                            clearInterval(waitForElements);
+                            if (typeof setupFaceMesh !== 'undefined') {
+                                // eslint-disable-next-line no-undef
+                                setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
+                                    if (result.status) {
+                                        realtimeDetection(cmid, attemptid, mainimage,
+                                                result.status, result.data);
                                     }
                                 });
-                                clearInterval(waitForElements);
-                                if (typeof setupFaceMesh !== 'undefined') {
-                                    // eslint-disable-next-line no-undef
-                                    setupFaceMesh(vElement, cElement, faceMesh, function(result) {
-                                        if (result.status) {                                            
-                                            realtimeDetection(cmid, attemptid, mainimage,
-                                                    result.status, result.data);
-                                        }
-                                    });
-                                }
                             }
-                        }, 500);
-                    }
+                        }
+                    }, 500);
                 }
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, setinterval,
