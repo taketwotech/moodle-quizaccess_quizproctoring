@@ -34,7 +34,7 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $validate = required_param('validate', PARAM_RAW);
 if ($validate === 'eyecheckoff') {
-    set_user_preference('eye_detection', 0, $user->id);
+    set_user_preference('eye_detection', 0, $USER->id);
     echo json_encode(['status' => 'eyecheckoff']);
     exit;
 }
