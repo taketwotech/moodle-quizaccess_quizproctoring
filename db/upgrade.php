@@ -28,7 +28,7 @@
  * @param string $oldversion the version we are upgrading from.
  */
 function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
-    global $CFG, $DB, $USER;
+    global $CFG, $DB, $USER, $SESSION;
 
     $dbman = $DB->get_manager();
 
@@ -205,33 +205,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
     }
-
-    if ($oldversion < 2024083000) {
-
-        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
-        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
-        $release = $plugin->release;
-
-        $record = new stdClass();
-        $record->firstname = $user->firstname;
-        $record->lastname  = $user->lastname;
-        $record->email     = $user->email;
-        $record->moodle_v  = get_config('moodle', 'release');
-        $record->previously_installed_v = $release .'(Build: '. $oldversion.')';
-
-        $postdata = json_encode($record);
-
-        $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/create';
-        $header = [
-            'Content-Type: application/json',
-        ];
-        $curl->setHeader($header);
-        $result = $curl->post($url, $postdata);
-
-        upgrade_plugin_savepoint(true, 2024083000, 'quizaccess', 'quizproctoring');
-    }
-
+    
     if ($oldversion < 2024092404) {
 
         // Define field isautosubmit to be added to quizaccess_proctor_data.
@@ -372,5 +346,35 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025042904, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025052801) {
+
+        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+        $release = $plugin->release;
+
+        $record = new stdClass();
+        $record->firstname = $user->firstname;
+        $record->lastname  = $user->lastname;
+        $record->email     = $user->email;
+        $record->domain    = $CFG->wwwroot;
+        $record->moodle_v  = get_config('moodle', 'release');
+        $record->previously_installed_v = '(Build: '. $oldversion.')';
+        $record->proctorlink_version = $release;
+        $SESSION->proctorlink_version = $release;
+
+        $postdata = json_encode($record);
+
+        $curl = new \curl();
+        $url = 'https://proctor-dev.taketwotechnologies.com/create';
+        $header = [
+            'Content-Type: application/json',
+        ];
+        $curl->setHeader($header);
+        $result = $curl->post($url, $postdata);
+
+        upgrade_plugin_savepoint(true, 2025052801, 'quizaccess', 'quizproctoring');
+    }
+    
     return true;
 }

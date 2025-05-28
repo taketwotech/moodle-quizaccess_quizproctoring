@@ -92,6 +92,7 @@ class api {
      * @return string
      */
     public static function proctor_image_api($imagedata, $userid, $quizid) {
+        global $SESSION;
         self::init();
         $curl = new \curl();
         $url = 'https://proctor-dev.taketwotechnologies.com/validate';
@@ -102,12 +103,17 @@ class api {
             'Content-Type: application/json',
             'access-token: ' . $accesstoken,
             'secret-token: ' . $accesstokensecret,
-            'domain: ' . $domain,
-            'user_id: ' . $userid,
-            'quiz_id: ' . $quizid,
         ];
+        $data = [
+            'user_id' => $userid,
+            'quiz_id' => $quizid,
+            'domain' => self::domain(),
+            'proctorlink_version' => $SESSION->proctorlink_version,
+            'baseimagedata' => $imagedata,
+        ];
+
         $curl->setHeader($header);
-        $result = $curl->post($url, $imagedata);
+        $result = $curl->post($url, json_encode($data));
         return $result;
     }
 
