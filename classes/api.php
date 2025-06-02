@@ -103,17 +103,13 @@ class api {
             'Content-Type: application/json',
             'access-token: ' . $accesstoken,
             'secret-token: ' . $accesstokensecret,
-        ];
-        $data = [
-            'user_id' => $userid,
-            'quiz_id' => $quizid,
-            'domain' => self::domain(),
-            'proctorlink_version' => $SESSION->proctorlink_version,
-            'baseimagedata' => $imagedata,
-        ];
+            'domain: ' . $domain,
+            'user_id: ' . $userid,
+            'quiz_id: ' . $quizid,
+        ];       
 
         $curl->setHeader($header);
-        $result = $curl->post($url, json_encode($data));
+        $result = $curl->post($url, json_encode($imagedata));
         return $result;
     }
 
