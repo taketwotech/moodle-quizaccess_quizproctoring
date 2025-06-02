@@ -81,8 +81,7 @@ if ($proctorrecord->enableteacherproctor) {
         'teacher' => 'true'
     ];
 
-        
-    $teacherIframeUrl = $teacherUrl . '?' . http_build_query($teacherParams);
+    $teacherIframeUrl = $teacherUrl . '?' . http_build_query($teacherParams, '', '&', PHP_QUERY_RFC3986);
     
     echo '<div class="teacher-iframe-container">';
     echo '<iframe src="' . htmlspecialchars($teacherIframeUrl) . '"></iframe>';
