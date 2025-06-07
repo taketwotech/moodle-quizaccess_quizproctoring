@@ -409,37 +409,7 @@ function($, str, ModalFactory) {
                     // Handle visibility change
                     document.addEventListener('visibilitychange', function() {
                         if (document.visibilityState === 'visible') {
-                            var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                            var leftwarnings = Math.max(warningsl - 1, 0);
-                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                            var message = "Do not move away from active tab.";
-                            if (leftwarnings === 1) {
-                                message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
-                            } else if (leftwarnings > 1) {
-                                message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
-                            }
-                            $(document).trigger('popup', message);
-                            
-                            // Send tab switch event to server
-                            $.ajax({
-                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-                                method: 'POST',
-                                data: {
-                                    cmid: cmid,
-                                    attemptid: attemptid,
-                                    mainimage: mainimage,
-                                    tab: true
-                                },
-                                success: function(response) {
-                                    if (response.redirect && response.url) {
-                                        window.onbeforeunload = null;
-                                        $(document).trigger('popup', response.msg);
-                                        setTimeout(function() {
-                                            window.location.href = encodeURI(response.url);
-                                        }, 3000);
-                                    }
-                                }
-                            });
+                            visibilitychange(cmid, attemptid, mainimage);
                         }
                     });
 
@@ -645,30 +615,7 @@ function($, str, ModalFactory) {
                           .appendTo('body');
                         document.addEventListener('visibilitychange', function() {
                             if (document.visibilityState === 'visible') {
-                                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                                var leftwarnings = Math.max(warningsl - 1, 0);
-                                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                                var message = "Do not move away from active tab.";
-                                if (leftwarnings === 1) {
-                                    message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
-                                } else if (leftwarnings > 1) {
-                                    message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
-                                }
-                                $(document).trigger('popup', message);
-                                $.ajax({
-                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-                                method: 'POST',
-                                data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
-                                    success: function(response) {
-                                        if (response.redirect && response.url) {
-                                            window.onbeforeunload = null;
-                                            $(document).trigger('popup', response.msg);
-                                            setTimeout(function() {
-                                                window.location.href = encodeURI(response.url);
-                                            }, 3000);
-                                        }
-                                    }
-                                });
+                                visibilitychange(cmid, attemptid, mainimage);
                             }
                         });
                         var camera = new Camera(cmid, mainimage, attemptid, quizid);
@@ -691,6 +638,11 @@ function($, str, ModalFactory) {
                             camera.startcamera();
                             setInterval(camera.proctoringimage.bind(camera), setinterval * 1000);
                         }
+                        document.addEventListener('visibilitychange', function() {
+                            if (document.visibilityState === 'visible') {
+                                visibilitychange(cmid, attemptid, mainimage);
+                            }
+                        });
                     }
                     throw error;
                 })
@@ -703,6 +655,41 @@ function($, str, ModalFactory) {
                 localMediaStream = createDummyMediaStream();
                 if (callback) {
                     callback();
+                }
+            }
+        });
+    }
+
+    /**
+     * Setup visibility change
+     *
+     * @param {int} cmid - cmid
+     * @param {int} attemptid - Attempt Id
+     * @param {boolean} mainimage - boolean value
+     * @return {void}
+     */
+    function visibilitychange(cmid, attemptid, mainimage) {
+        var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+        var leftwarnings = Math.max(warningsl - 1, 0);
+        localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+        var message = "Do not move away from active tab.";
+        if (leftwarnings === 1) {
+            message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
+        } else if (leftwarnings > 1) {
+            message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
+        }
+        $(document).trigger('popup', message);
+        $.ajax({
+        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+        method: 'POST',
+        data: {cmid: cmid, attemptid: attemptid, mainimage: mainimage, tab: true},
+            success: function(response) {
+                if (response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
                 }
             }
         });
