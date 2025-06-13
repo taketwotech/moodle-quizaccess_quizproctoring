@@ -59,7 +59,7 @@ $totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
 $totalrecord = count($totalimages);
 $totalpages = ceil($totalrecord / $perpage);
-$tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+$tmpdir = $CFG->dataroot . '/proctorlink';
 
 foreach ($getimages as $img) {
     $target = '';

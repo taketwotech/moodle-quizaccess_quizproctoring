@@ -375,6 +375,15 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2025052801, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025061300) {
+        $task = new \quizaccess_quizproctoring\task\images_adhoc_task();
+        $task->set_component('quizaccess_quizproctoring');
+        
+        \core\task\manager::queue_adhoc_task($task);
+
+        upgrade_plugin_savepoint(true, 2025061300, 'quizaccess', 'quizproctoring');
+    }
     
     return true;
 }

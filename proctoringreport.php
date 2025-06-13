@@ -114,7 +114,7 @@ if ($deleteuserid) {
                 $file->delete();
             }
 
-            $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+            $tmpdir = $CFG->dataroot . '/proctorlink/';
             $tempfilepath = $tmpdir . $usersrecord->userimg;
             if (file_exists($tempfilepath)) {
                 unlink($tempfilepath);

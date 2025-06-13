@@ -37,7 +37,7 @@ $tab = optional_param('tab', false, PARAM_BOOL);
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
-$tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+$tmpdir = $CFG->dataroot . '/proctorlink';
 $mainentry = $DB->get_record('quizaccess_proctor_data', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,

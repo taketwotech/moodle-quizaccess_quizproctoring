@@ -183,7 +183,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  */
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
     $mainimage, $status='', $response='', $storeallimg=false) {
-    global $USER, $DB, $COURSE;
+    global $CFG, $USER, $DB, $COURSE;
     $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     // We are all good, store the image.
@@ -225,7 +225,10 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
         $DB->update_record('quizaccess_proctor_data', $proctoreddata);
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
-        $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+        $tmpdir = $CFG->dataroot . '/proctorlink/';
+        if (!file_exists($tmpdir)) {
+            mkdir($tmpdir, 0777, true);
+        }
         file_put_contents($tmpdir . $imagename, $imagedata);
     }
 
