@@ -82,7 +82,7 @@ $getmimages = $DB->get_records_sql($sqlm, $params);
 
 $sql = "SELECT * FROM {quizaccess_proctor_data}
         WHERE userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND deleted = 0
-        ORDER BY id ASC";
+         AND image_status != 'M' ORDER BY id ASC";
 $params = ['userid' => $userid, 'quizid' => $quizid, 'attemptid' => $attemptid];
 $getimages = $DB->get_records_sql($sql, $params);
 $combinedimages = array_merge($getmimages, $getimages);

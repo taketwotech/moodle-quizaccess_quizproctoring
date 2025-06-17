@@ -48,7 +48,7 @@ JOIN {quizaccess_main_proctor} mp
     ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
 LEFT JOIN {quizaccess_proctor_data} p 
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0 AND mp.attemptid = p.attemptid
-WHERE mp.userimg IS NOT NULL AND mp.userimg != ''
+WHERE mp.userimg IS NOT NULL AND mp.userimg != ''  AND p.image_status != 'M'
 GROUP BY mp.attemptid, u.id, u.firstname, u.lastname, u.username
 ORDER BY totalwarnings DESC";
 

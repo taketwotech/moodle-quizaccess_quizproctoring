@@ -261,7 +261,7 @@ JOIN {quizaccess_main_proctor} mp
     ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
 LEFT JOIN {quizaccess_proctor_data} pd 
     ON pd.userid = u.id AND pd.quizid = :quizid2 AND pd.deleted = 0
-WHERE mp.userimg IS NOT NULL AND mp.userimg != ''
+WHERE mp.userimg IS NOT NULL AND mp.userimg != '' AND pd.image_status != 'M'
 GROUP BY u.id, u.firstname, u.lastname, u.email
 ORDER BY u.firstname ASC
 ";

@@ -436,6 +436,36 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025061602, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025061603) {
+        $sql = "SELECT * FROM {quizaccess_proctor_data}
+                WHERE deleted = 0 AND image_status = 'M'
+                ORDER BY id ASC";
+        $records = $DB->get_records_sql($sql);
+
+        foreach ($records as $record) {
+            $newrecord = new stdClass();
+            
+            $newrecord->userid = $record->userid;
+            $newrecord->quizid = $record->quizid;
+            $newrecord->user_identity = $record->user_identity;
+            $newrecord->userimg = $record->userimg;
+            $newrecord->image_status = $record->image_status;            
+            $newrecord->timecreated = $record->timecreated;
+            $newrecord->timemodified = $record->timemodified;
+            $newrecord->aws_response = $record->aws_response;
+            $newrecord->attemptid = $record->attemptid;
+            $newrecord->deleted = $record->deleted;
+            $newrecord->status = $record->status;
+            $newrecord->isautosubmit = $record->isautosubmit;
+            $newrecord->response = $record->response;
+            
+            $DB->insert_record('quizaccess_main_proctor', $newrecord);
+        }
+
+        // Mark the upgrade savepoint.
+        upgrade_plugin_savepoint(true, 2025061603, 'quizaccess', 'quizproctoring');
+    }
     
     return true;
 }

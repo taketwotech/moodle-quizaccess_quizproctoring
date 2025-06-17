@@ -55,7 +55,7 @@ JOIN {quizaccess_main_proctor} mp
 LEFT JOIN {quizaccess_proctor_data} p 
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0
      AND mp.attemptid= p.attemptid
-WHERE mp.userimg IS NOT NULL AND mp.userimg != ''
+WHERE mp.userimg IS NOT NULL AND mp.userimg != '' AND p.image_status != 'M'
 GROUP BY mp.attemptid, u.id, u.firstname, u.lastname
 ORDER BY totalwarnings DESC";
 $params = [

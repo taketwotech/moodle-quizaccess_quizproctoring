@@ -38,13 +38,13 @@ $offset = ($page - 1) * $perpage;
 
 $addsql = '';
 if (!$all) {
-    $addsql = " (status != '' OR image_status = 'M') AND ";
+    $addsql = " (status != '') AND ";
 }
 $sql = "SELECT * FROM {quizaccess_proctor_data}
         WHERE ".$addsql."userid = ".$userid."
         AND quizid = ".$quizid."
         AND attemptid = ".$attemptid."
-        AND deleted = 0
+        AND deleted = 0 AND image_status != 'M'
         ORDER BY id ASC
         LIMIT ".$perpage." OFFSET ".$offset;
 
@@ -53,7 +53,7 @@ $sqlt = "SELECT * FROM {quizaccess_proctor_data}
         WHERE ".$addsql."userid = ".$userid."
         AND quizid = ".$quizid."
         AND attemptid = ".$attemptid."
-        AND deleted = 0
+        AND deleted = 0 AND image_status != 'M'
         ORDER BY id ASC";
 $totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
