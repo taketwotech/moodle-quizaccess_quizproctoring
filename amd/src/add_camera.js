@@ -76,6 +76,23 @@ function($, str, ModalFactory) {
                         e.preventDefault();
                     });
 
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                    videoElement.onloadedmetadata = () => {
+                        const videoWidth = videoElement.videoWidth;
+                        const videoHeight = videoElement.videoHeight;
+
+                        if (isMobile) {
+                            this.width = videoWidth;
+                            this.height = videoHeight;
+                            const canvasElement = document.getElementById(this.canvasid);
+                            if (canvasElement) {
+                                canvasElement.width = videoWidth;
+                                canvasElement.height = videoHeight;
+                            }
+                        }
+                    };
+
                     stream.getVideoTracks()[0].onended = function() {
                         takePictureButton.prop('disabled', true);
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
