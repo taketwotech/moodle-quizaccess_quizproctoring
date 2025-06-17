@@ -198,6 +198,10 @@ foreach ($combinedimages as $img) {
         $startY = $pdf->GetY();
         $col = 0;
     }
+
+    if ($processedPath && file_exists($processedPath)) {
+        @unlink($processedPath);
+    }
 }
 
 $filename = 'facial_analysis_report_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $user->firstname.' '.$user->lastname) . '.pdf';
