@@ -68,7 +68,7 @@ function($, str, ModalFactory) {
                 if (videoElement) {
                     videoElement.srcObject = stream;
                     videoElement.muted = true;
-                    videoElement.playsinline = true;
+                    videoElement.setAttribute('playsinline', 'true');
                     localMediaStream = stream;
                     videoElement.play();
 

@@ -469,7 +469,18 @@ label[for="id_consentcheckbox"] {
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
-        display: none;
+       display: none !important;
+    }
+
+    .moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup .moodle-dialogue-wrap {
+        overflow: scroll !important;
+    }
+
+
+    .mform.full-width-labels .fitem.row>.col-md-9 {
+        flex: 0 0 63% !important;
+        max-width: 100% !important;
+        width: inherit !important;
     }
 }
 
