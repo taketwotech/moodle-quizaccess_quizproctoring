@@ -384,6 +384,58 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2025061300, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025061601) {
+
+        // Define table quizaccess_main_proctor to be created.
+        $table = new xmldb_table('quizaccess_main_proctor');
+
+        // Adding fields to table quizaccess_main_proctor.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('quizid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('user_identity', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userimg', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('image_status', XMLDB_TYPE_CHAR, '1', null, XMLDB_NOTNULL, null, 'M');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('aws_response', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('attemptid', XMLDB_TYPE_INTEGER, '11', null, null, null, null);
+        $table->add_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('status', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        $table->add_field('isautosubmit', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('response', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('iseyecheck', XMLDB_TYPE_INTEGER, '1', null, null, null, '1');
+
+        // Adding keys to table quizaccess_main_proctor.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Adding indexes to table quizaccess_main_proctor.
+        $table->add_index('indexing', XMLDB_INDEX_NOTUNIQUE, ['quizid', 'image_status', 'userid', 'deleted', 'status', 'attemptid', 'isautosubmit']);
+
+        // Conditionally launch create table for quizaccess_main_proctor.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025061601, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025061602) {
+
+        // Define field enableuploadidentity to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enableuploadidentity', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableeyecheck');
+
+        // Conditionally launch add field enableuploadidentity.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025061602, 'quizaccess', 'quizproctoring');
+    }
     
     return true;
 }

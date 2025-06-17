@@ -38,7 +38,7 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 $tmpdir = $CFG->dataroot . '/proctorlink';
-$mainentry = $DB->get_record('quizaccess_proctor_data', [
+$mainentry = $DB->get_record('quizaccess_main_proctor', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,
     'image_status' => 'M',
@@ -54,11 +54,10 @@ if (!$mainentry->isautosubmit) {
                     $mainimage, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED, '');
     }
 
-    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-    require_login($course);
+    $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
     $target = '';
-    $profileimg = '';
+    $profileimage = '';
     if (!$mainimage) {
         // If it is not main image, get the main image data and compare.
         if ($mainentry) {
@@ -77,28 +76,30 @@ if (!$mainentry->isautosubmit) {
             }
         }
     } else {
-        $context = context_user::instance($USER->id);
-        $sql = "SELECT * FROM {files} WHERE contextid =
-        :contextid AND component = 'user' AND
-        filearea = 'icon' AND itemid = 0 AND
-        filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
-        ORDER BY timemodified, filename DESC LIMIT 1";
-        $params = ['contextid' => $context->id];
-        $filerecord = $DB->get_record_sql($sql, $params);
-        if ($filerecord) {
-            $fs = get_file_storage();
-            $file = $fs->get_file(
-                $filerecord->contextid,
-                $filerecord->component,
-                $filerecord->filearea,
-                $filerecord->itemid,
-                $filerecord->filepath,
-                $filerecord->filename
-            );
-            $profileimage = $file->get_content();
+        if ($proctoringdata->enableprofilematch == 1 ) {
+            $context = context_user::instance($USER->id);
+            $sql = "SELECT * FROM {files} WHERE contextid =
+            :contextid AND component = 'user' AND
+            filearea = 'icon' AND itemid = 0 AND
+            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+            ORDER BY timemodified, filename DESC LIMIT 1";
+            $params = ['contextid' => $context->id];
+            $filerecord = $DB->get_record_sql($sql, $params);
+            if ($filerecord) {
+                $fs = get_file_storage();
+                $file = $fs->get_file(
+                    $filerecord->contextid,
+                    $filerecord->component,
+                    $filerecord->filearea,
+                    $filerecord->itemid,
+                    $filerecord->filepath,
+                    $filerecord->filename
+                );
+                $profileimage = $file->get_content();
+            }
         }
     }
-    $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
+    
     // Validate image.
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
@@ -194,7 +195,7 @@ if (!$mainentry->isautosubmit) {
         default:
             // Store only if main image.
             if ($mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage,  '', $response);
+                quizproctoring_storemainimage($img, $cmid, $attemptid, $cm->instance, $mainimage,  '', $response);
             }
              break;
     }

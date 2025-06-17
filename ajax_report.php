@@ -57,10 +57,29 @@ $sqlt = "SELECT * FROM {quizaccess_proctor_data}
         ORDER BY id ASC";
 $totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
-$totalrecord = count($totalimages);
+$totalrecord = count($totalimages) + 1;
 $totalpages = ceil($totalrecord / $perpage);
 $tmpdir = $CFG->dataroot . '/proctorlink';
-
+$sqlm = $DB->get_record('quizaccess_main_proctor', ['userid' => $userid,
+            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'M', 'deleted' => 0 ]);
+$targetm = '';
+if ($sqlm && !empty($sqlm->userimg)) {
+    $imagepath = $tmpdir . '/' . $sqlm->userimg;
+    if (file_exists($imagepath)) {
+        $imagedata = file_get_contents($imagepath);
+        if ($imagedata) {
+            $targetm = 'data:image/png;base64,' . base64_encode($imagedata);
+        }
+    }
+    array_push($imgarray, [
+        'title' => get_string('mainimage', 'quizaccess_quizproctoring'),
+        'img' => $targetm,
+        'imagestatus' => get_string('mainimage', 'quizaccess_quizproctoring'),
+        'timecreated' => userdate($sqlm->timecreated, '%H:%M'),
+        'totalpage' => $totalpages,
+        'total' => $totalrecord,
+    ]);
+}
 foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {

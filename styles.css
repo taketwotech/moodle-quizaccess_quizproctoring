@@ -452,6 +452,20 @@ label[for="id_consentcheckbox"] {
     color: #000;
 }
 
+#exportpdf {
+    margin-bottom: 15px;
+}
+
+#exportcsv {
+    margin-bottom: 15px;
+    margin-left: 10px;
+}
+
+.moodle-dialogue-focused {
+    scroll-behavior: auto !important;
+}
+
+
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video {

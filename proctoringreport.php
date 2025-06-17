@@ -58,7 +58,8 @@ $PAGE->set_pagelayout('report');
 $PAGE->activityheader->disable();
 $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
     '/mod/quiz/accessrule/quizproctoring/proctoringreport.php');
-
+$PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
+$PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
 $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
 $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
@@ -83,10 +84,93 @@ $PAGE->requires->js_init_code("
             }
         });
     });
+
+    $('#exportpdf').on('click', function() {
+        const button = $(this);
+        button.prop('disabled', true).text('Generating PDF...');
+        $.ajax({
+            url: '" . (new moodle_url('/mod/quiz/accessrule/quizproctoring/ajaxexport.php')) . "',
+            method: 'GET',
+            data: {
+                cmid: {$cmid},
+                quizid: {$quizid},
+                course: " . json_encode($course->shortname) . ",
+                quizname: " . json_encode($quiz->name) . ",
+                quizopen: {$quiz->timeopen},
+            },
+            success: function(response) {
+                try {
+                    const data = JSON.parse(response);
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        alert('Error generating report.');
+                    }
+                } catch (e) {
+                    alert('Unexpected response');
+                }
+            },
+            error: function() {
+                alert('AJAX error');
+            },
+            complete: function() {
+                button.prop('disabled', false).text('Export Report to PDF');
+            }
+        });
+    });
+
+    $('#exportcsv').on('click', function() {
+        const button = $(this);
+        button.prop('disabled', true).text('Generating CSV...');
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/csvreport.php',
+            method: 'GET',
+            data: {
+                cmid: {$cmid},
+                quizid: {$quizid},
+                course: " . json_encode($course->shortname) . ",
+            },
+            success: function(response) {
+                try {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (data.url) {
+                        window.location.href = data.url;
+                    } else {
+                        alert('Error generating report.');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Unexpected response');
+                }
+            },
+            error: function() {
+                alert('AJAX error');
+            },
+            complete: function() {
+                button.prop('disabled', false).text('Export Report to CSV');
+            }
+        });
+    });
+
 ");
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deleteuserid) {
+    $tmpdir = $CFG->dataroot . '/proctorlink';            
+    $sqlm = "SELECT * from {quizaccess_main_proctor} where userid =
+    ".$deleteuserid." AND quizid = ".$quizid."
+    AND deleted = 0";
+    $usersmrecords = $DB->get_records_sql($sqlm);
+    if ($all) {
+        foreach ($usersmrecords as $usersmrecord) {
+            $tempfilepath = $tmpdir . '/' . $usersmrecord->userimg;
+            if (file_exists($tempfilepath)) {
+                unlink($tempfilepath);
+            }
+        }
+        $DB->set_field('quizaccess_main_proctor', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);        
+    }
+
     $sql = "SELECT * from {quizaccess_proctor_data} where userid =
     ".$deleteuserid." AND quizid = ".$quizid."
     AND deleted = 0";
@@ -135,8 +219,11 @@ $table->id = 'proctoringreporttable';
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
+    get_string("attemptslast", "quizaccess_quizproctoring"),
     get_string("usersimages", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('usersimages', 'quizaccess_quizproctoring')),
+    get_string("usersimageswarning", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('usersimageswarning', 'quizaccess_quizproctoring')),
     get_string("actions", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('actions', 'quizaccess_quizproctoring')),
 ];
@@ -148,7 +235,7 @@ if ($proctoringimageshow == 1) {
 $table->head = $headers;
 $output = $PAGE->get_renderer('mod_quiz');
 echo $output->header();
-
+$initialwarning = 0;
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid=' . $cmid;
     $btn = '<a class="btn btn-primary" href="' . $url . '">' .
@@ -159,17 +246,36 @@ echo '<div class="headtitle">' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 
-$sql = "SELECT u.id, u.firstname, u.lastname, u.email, COUNT(p.userimg) AS image_count
-        FROM {quizaccess_proctor_data} p
-        JOIN {user} u ON u.id = p.userid
-        WHERE p.userimg IS NOT NULL AND p.deleted = 0 AND p.userimg != ''
-        AND p.quizid = :quizid
-        GROUP BY p.userid
-        ORDER BY u.firstname ASC";
-$records = $DB->get_records_sql($sql, ['quizid' => $quizid]);
+$sql = "
+SELECT 
+    u.id,
+    u.firstname,
+    u.lastname,
+    u.email,
+    COUNT(DISTINCT mp.id) AS image_mcount,
+    COUNT(DISTINCT CASE WHEN pd.userimg IS NOT NULL AND pd.userimg != '' THEN pd.id END) AS image_count,
+    COUNT(DISTINCT CASE WHEN pd.status IS NOT NULL AND pd.status != '' THEN pd.id END) AS warning_count,
+    MAX(mp.timecreated) AS last_attempt_time
+FROM {user} u
+JOIN {quizaccess_main_proctor} mp 
+    ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
+LEFT JOIN {quizaccess_proctor_data} pd 
+    ON pd.userid = u.id AND pd.quizid = :quizid2 AND pd.deleted = 0
+WHERE mp.userimg IS NOT NULL AND mp.userimg != ''
+GROUP BY u.id, u.firstname, u.lastname, u.email
+ORDER BY u.firstname ASC
+";
+
+$params = [
+    'quizid1' => $quizid,
+    'quizid2' => $quizid,
+];
+$records = $DB->get_records_sql($sql, $params);
 if (empty($records)) {
     $rows = [
         get_string('norecordsfound', 'quizaccess_quizproctoring'),
+        '',
+        '',
         '',
         '',
         '',
@@ -185,16 +291,20 @@ if (empty($records)) {
             $record->firstname . ' ' . $record->lastname
         );
         $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-            class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
-            data-username="' . $record->firstname . ' ' . $record->lastname . '">
-            <i class="icon fa fa-trash"></i></a>';
+             class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
+        data-username="' . $record->firstname . ' ' . $record->lastname . '">
+        <i class="icon fa fa-trash"></i></a>';
+
+        $totalimagecount = $record->image_mcount + $record->image_count;
+        $warningcount = $record->warning_count;
+        $last_attempt_time = $record->last_attempt_time ? userdate($record->last_attempt_time, get_string('strftimerecent', 'langconfig')) : '-';
 
         $imgurl = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid=' .
             $record->id . '&cmid=' . $cmid . '&quizid=' . $quizid;
-        $imageicon = '<a href="' . $imgurl . '"><img class="imageicon" src="' .
-            $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
+        $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' .
+        $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
 
-        $row = [$namelink, $record->email, $record->image_count];
+        $row = [$namelink, $record->email, $last_attempt_time, $totalimagecount, $warningcount];
         if ($proctoringimageshow == 1) {
             if (is_siteadmin($record->id) || has_capability('moodle/course:update',
                 context_course::instance($course->id), $record->id)) {
@@ -207,5 +317,7 @@ if (empty($records)) {
         $table->data[] = $row;
     }
 }
+echo '<button id="exportpdf" class="btn btn-secondary">'.get_string('exportpdf', 'quizaccess_quizproctoring').'</button>';
+echo '<button id="exportcsv" class="btn btn-secondary">'.get_string('exportcsv', 'quizaccess_quizproctoring').'</button>';
 echo html_writer::table($table);
 echo $OUTPUT->footer();

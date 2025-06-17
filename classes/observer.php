@@ -64,5 +64,8 @@ class observer {
         global $DB, $CFG;
         $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where
          attemptid=?", [$event->objectid]);
+
+        $proctoringmaindata = $DB->execute("update {quizaccess_main_proctor} set deleted = 1 where
+         attemptid=?", [$event->objectid]);
     }
 }

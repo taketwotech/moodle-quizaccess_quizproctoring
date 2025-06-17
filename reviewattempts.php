@@ -46,7 +46,8 @@ if ($proctoringimageshow == 1) {
 
     $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
         '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
-
+    $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
+    $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
     $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
     $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
@@ -100,6 +101,10 @@ if ($proctoringimageshow == 1) {
         $OUTPUT->render(new help_icon('proctoringidentity', 'quizaccess_quizproctoring')),
         get_string("isautosubmit", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
+        get_string("iseyeoff", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('iseyeoff', 'quizaccess_quizproctoring')),
+        get_string("generatereport", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('generatereport', 'quizaccess_quizproctoring')),
     ];
 
     echo $OUTPUT->header();
@@ -122,17 +127,16 @@ if ($proctoringimageshow == 1) {
         $user->email
     );
 
-    $totalattempts = $DB->count_records('quizaccess_proctor_data', [
+    $totalattempts = $DB->count_records('quizaccess_main_proctor', [
         'quizid' => $quizid, 'userid' => $userid, 'image_status' => 'M'
     ]);
 
-    $records = $DB->get_records_sql("
-        SELECT *
-        FROM {quizaccess_proctor_data}
-        WHERE quizid = :quizid AND userid = :userid
-        AND image_status = :status AND deleted = 0
-        ORDER BY attemptid DESC
-    ", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M']);
+    $records = $DB->get_records_sql("SELECT *
+    FROM {quizaccess_main_proctor}
+    WHERE quizid = :quizid AND userid = :userid
+    AND image_status = :status AND deleted = 0
+    ORDER BY attemptid DESC
+", ['quizid' => $quizid, 'userid' => $userid, 'status' => 'M']);
     if (empty($records)) {
         $table->data[] = [
             get_string('norecordsfound', 'quizaccess_quizproctoring'),
@@ -173,9 +177,19 @@ if ($proctoringimageshow == 1) {
                     'quizaccess_quizproctoring') . '" alt="icon">';
             }
 
-            $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
-
-            $row = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit];
+            if ($record->isautosubmit) {
+                $submit = '<div class="submittag">Yes</div>';
+            } else {
+                $submit = 'No';
+            }
+            if ($record->iseyecheck) {
+                $submiteye = 'No';
+            } else {
+                $submiteye = '<div class="submittag">Yes</div>';
+            }
+            $generate = '<button data-attemptid="'.$attempt->id.'" data-username="'.$user->username.'"
+                        data-quizid="'.$quizid.'" data-userid="'.$user->id.'" class="btn btn-warning generate">'.get_string('generate', 'quizaccess_quizproctoring').'</button>';
+            $row = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit, $submiteye, $generate];
             $table->data[] = $row;
         }
     }
