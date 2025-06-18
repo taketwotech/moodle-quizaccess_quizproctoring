@@ -227,7 +227,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
                 'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
-                'userid' => $user->id,
+                'userid' => $USER->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
                 'image_status' => 'A',
@@ -242,7 +242,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
                 $attemptobj = quiz_attempt::create($attemptid);
                 $attemptobj->process_finish(time(), false);
                 $autosubmitdata = $DB->get_record('quizaccess_main_proctor', [
-                    'userid' => $user->id,
+                    'userid' => $USER->id,
                     'quizid' => $quizid,
                     'attemptid' => $attemptid,
                     'image_status' => 'M',

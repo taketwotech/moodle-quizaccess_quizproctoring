@@ -76,23 +76,6 @@ function($, str, ModalFactory) {
                         e.preventDefault();
                     });
 
-                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-                    videoElement.onloadedmetadata = () => {
-                        const videoWidth = videoElement.videoWidth;
-                        const videoHeight = videoElement.videoHeight;
-
-                        if (isMobile) {
-                            this.width = videoWidth;
-                            this.height = videoHeight;
-                            const canvasElement = document.getElementById(this.canvasid);
-                            if (canvasElement) {
-                                canvasElement.width = videoWidth;
-                                canvasElement.height = videoHeight;
-                            }
-                        }
-                    };
-
                     stream.getVideoTracks()[0].onended = function() {
                         takePictureButton.prop('disabled', true);
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
@@ -118,9 +101,43 @@ function($, str, ModalFactory) {
     };
 
     Camera.prototype.takepicture = function() {
-        var context = this.canvas.getContext('2d');
-        context.drawImage(this.video, 0, 0, this.width, this.height);
-        var data = this.canvas.toDataURL('image/png');
+        const video = this.video;
+    const canvas = this.canvas;
+
+    const targetRatio = 4 / 3; // Or use 1 for square crop
+
+    // Get video actual dimensions
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    const videoRatio = vw / vh;
+
+    let sx, sy, sw, sh;
+
+    if (videoRatio > targetRatio) {
+        // Video is wider than target ratio – crop sides
+        sh = vh;
+        sw = vh * targetRatio;
+        sx = (vw - sw) / 2;
+        sy = 0;
+    } else {
+        // Video is taller than target ratio – crop top/bottom
+        sw = vw;
+        sh = vw / targetRatio;
+        sx = 0;
+        sy = (vh - sh) / 2;
+    }
+
+    // Set canvas to fixed output size (e.g., 320x240 for 4:3)
+    canvas.width = this.width;   // e.g., 320
+    canvas.height = this.height; // e.g., 240
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+    const data = canvas.toDataURL('image/png');
+        //var context = this.canvas.getContext('2d');
+        //context.drawImage(this.video, 0, 0, this.width, this.height);
+        //var data = this.canvas.toDataURL('image/png');
         $('#' + this.videoid).hide();
         $('#' + this.takepictureid).hide();
         $('#' + this.canvasid).show();

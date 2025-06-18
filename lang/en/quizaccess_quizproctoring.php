@@ -37,6 +37,7 @@ $string['attempts'] = 'Attempt';
 $string['attemptslast'] = 'Last Attempt';
 $string['attemptstarted'] = 'Attempt started:';
 $string['autosubmit'] = 'The warning threshold has been reached. Your quiz has been automatically submitted.';
+$string['checkgetuserinfo'] = 'Check Get User Info';
 $string['clear_images'] = 'Clear All Stored Images After';
 $string['clear_images_help'] = 'After this period, All Stored Images will Clear';
 $string['clear_images_never'] = 'Never';

@@ -72,13 +72,12 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $url = new moodle_url('/admin/settings.php', ['section' => 'modsettingsquizcatproctoring']);
         $url = $url->out();
 
-        $response = \quizaccess_quizproctoring\api::getuserinfo();
-        $responsedata = json_decode($response, true);
+        $isactive = get_config('quizaccess_quizproctoring', 'getuserinfo');
         $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
-        if (!$responsedata['active']) {
+        if ($isactive === '0') {
             if ($isadmin) {
-                return '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
+                return false;
             } else {
                 return get_string('warningstudent', 'quizaccess_quizproctoring');
             }
@@ -110,6 +109,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $sql = "SELECT cm.* FROM {modules} md JOIN {course_modules} cm ON cm.module = md.id WHERE cm.id = $id";
         $getquiz = $DB->get_record_sql($sql);
         $button = '';
+        $notice = '';
         $context = context_module::instance($id);
         if ($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance,
             'enableteacherproctor' => 1])) {
@@ -135,7 +135,11 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                     'get'
                 );
         }
-        return get_string('proctoringnotice', 'quizaccess_quizproctoring').'<br>'.$button;
+        $isactive = get_config('quizaccess_quizproctoring', 'getuserinfo');
+        if ($isactive === '0' && $isadmin) {
+            $notice = '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
+        }
+        return get_string('proctoringnotice', 'quizaccess_quizproctoring').'<br>'.$notice.$button;
     }
 
     /**
@@ -292,9 +296,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
      */
     public function validate_preflight_check($data, $files, $errors, $attemptid) {
         global $USER, $DB, $CFG;
-        $useridentity = $data['user_identity'];
-        $cmid = $data['cmid'];
-        $userimg = $data['userimg'];
+        $useridentity = isset($data['user_identity']) ? $data['user_identity'] : 0;
+        $cmid = isset($data['cmid']) ? $data['cmid'] : 0;
+        $userimg = isset($data['userimg']) ? $data['userimg'] : null;
         $record = new stdClass();
         $record->user_identity = $useridentity;
         $record->userid = $USER->id;
