@@ -102,39 +102,39 @@ function($, str, ModalFactory) {
 
     Camera.prototype.takepicture = function() {
         const video = this.video;
-    const canvas = this.canvas;
+        const canvas = this.canvas;
 
-    const targetRatio = 4 / 3; // Or use 1 for square crop
+        const targetRatio = 4 / 3;
 
-    // Get video actual dimensions
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    const videoRatio = vw / vh;
+        // Get video actual dimensions
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        const videoRatio = vw / vh;
 
-    let sx, sy, sw, sh;
+        let sx, sy, sw, sh;
 
-    if (videoRatio > targetRatio) {
-        // Video is wider than target ratio – crop sides
-        sh = vh;
-        sw = vh * targetRatio;
-        sx = (vw - sw) / 2;
-        sy = 0;
-    } else {
-        // Video is taller than target ratio – crop top/bottom
-        sw = vw;
-        sh = vw / targetRatio;
-        sx = 0;
-        sy = (vh - sh) / 2;
-    }
+        if (videoRatio > targetRatio) {
+            // Video is wider than target ratio – crop sides
+            sh = vh;
+            sw = vh * targetRatio;
+            sx = (vw - sw) / 2;
+            sy = 0;
+        } else {
+            // Video is taller than target ratio – crop top/bottom
+            sw = vw;
+            sh = vw / targetRatio;
+            sx = 0;
+            sy = (vh - sh) / 2;
+        }
 
-    // Set canvas to fixed output size (e.g., 320x240 for 4:3)
-    canvas.width = this.width;   // e.g., 320
-    canvas.height = this.height; // e.g., 240
+        // Set canvas to fixed output size (e.g., 320x240 for 4:3)
+        canvas.width = this.width;   // e.g., 320
+        canvas.height = this.height; // e.g., 240
 
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
 
-    const data = canvas.toDataURL('image/png');
+        const data = canvas.toDataURL('image/png');
         //var context = this.canvas.getContext('2d');
         //context.drawImage(this.video, 0, 0, this.width, this.height);
         //var data = this.canvas.toDataURL('image/png');
@@ -347,7 +347,7 @@ function($, str, ModalFactory) {
                         'height': '480',
                         'frameborder': '0',
                         'allow': 'camera; microphone',
-                        'style': 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; ' +
+                        'style': 'position: absolute; bottom: 20px; right: 20px; z-index: 9999; ' +
                                 'width: 230px; height: 173px; border-radius: 3px; ' +
                                 'box-shadow: 0 2px 10px rgba(0,0,0,0.2);'
                     })

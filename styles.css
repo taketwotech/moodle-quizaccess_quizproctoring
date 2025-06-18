@@ -472,7 +472,7 @@ label[for="id_consentcheckbox"] {
        display: none !important;
     }
 
-    .moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup .moodle-dialogue-wrap {
+    /*.moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup .moodle-dialogue-wrap {
         overflow: scroll !important;
     }
 
@@ -481,7 +481,7 @@ label[for="id_consentcheckbox"] {
         flex: 0 0 63% !important;
         max-width: 100% !important;
         width: inherit !important;
-    }
+    }*/
 }
 
 /* Show video on larger screens */
@@ -489,4 +489,118 @@ label[for="id_consentcheckbox"] {
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
         display: block; /* Or use display: inline; or display: inline-block; as per your layout */
     }
+}
+
+@media only screen and (max-width: 767px) {
+.moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup .moodle-dialogue-wrap {
+    overflow: scroll !important;
+}
+
+/* Modal overlay (lightbox) */
+.moodle-dialogue-base .yui3-widget-mask {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 1042;
+  background-color: rgba(0, 0, 0, 0.5); /* optional dim effect */
+}
+
+/* Main popup container */
+.moodle-dialogue {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 90vw !important;
+  max-width: 600px;
+  height: auto !important;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1043 !important;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+  box-sizing: border-box;
+}
+
+/* Popup inner content padding */
+.moodle-dialogue-content {
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Header styles */
+.moodle-dialogue-hd {
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #ddd;
+  background-color: #f5f5f5;
+}
+
+/* Footer area (if needed) */
+.moodle-dialogue-ft {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #ddd;
+  background-color: #f5f5f5;
+}
+
+/* Close button */
+.closebutton {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #333;
+}
+
+/* Form layout tweaks for better mobile stacking */
+.fitem.row,
+.form-group.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.fitem .col-md-3,
+.fitem .col-md-9 {
+  width: 100%;
+}
+
+/* Adjust buttons */
+input[type="submit"],
+button {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* Ensure smooth scrolling on iOS */
+.moodle-dialogue {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile-specific overrides */
+@media (max-width: 600px) {
+  .moodle-dialogue {
+    top: 10px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    max-height: 95vh;
+  }
+
+  .moodle-dialogue-hd {
+    font-size: 1rem;
+  }
+
+  .closebutton {
+    font-size: 1rem;
+  }
+
+  input[type="submit"],
+  button {
+    font-size: 1rem;
+  }
+}
 }
