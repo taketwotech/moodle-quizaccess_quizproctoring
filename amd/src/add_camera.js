@@ -280,7 +280,8 @@ function($, str, ModalFactory) {
                 $("#id_submitbutton").prop("disabled", true);
                 localStorage.removeItem('videoPosition');
             });
-            $(document).on('click', '.closebutton', function() {
+
+            $(document).on('click', '.mod_quiz_preflight_popup .closebutton', function() {
                 if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
                     camera.stopcamera();
                     camera.resetcamera();
