@@ -35,40 +35,6 @@ $deletequizid = optional_param('delete', '', PARAM_INT);
 $delcourse = optional_param('delcourse', '', PARAM_INT);
 $all = optional_param('all', false, PARAM_BOOL);
 
-/**
- * Creates a quiz object compatible with both old and new Moodle versions.
- *
- * @param int $quizid The ID of the quiz.
- * @param int $userid The ID of the user.
- * @return stdClass|mod_quiz\quiz_settings Quiz object or fallback equivalent.
- */
-function create_quiz_object($quizid, $userid) {
-    global $DB;
-
-    if (class_exists('\mod_quiz\quiz_settings')) {
-        return \mod_quiz\quiz_settings::create($quizid, $userid);
-    }
-
-    $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('quiz', $quizid, $quiz->course, false, MUST_EXIST);
-    $course = $DB->get_record('course', ['id' => $quiz->course], '*', MUST_EXIST);
-
-    $quizobj = new stdClass();
-    $quizobj->quiz = $quiz;
-    $quizobj->cm = $cm;
-    $quizobj->course = $course;
-
-    $quizobj->get_quiz = function() use ($quiz) {
-        return $quiz;
-    };
-    $quizobj->get_cm = function() use ($cm) {
-        return $cm;
-    };
-    $quizobj->get_course = function() use ($course) {
-        return $course;
-    };
-    return $quizobj;
-}
 // Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
@@ -107,10 +73,10 @@ $PAGE->requires->js_init_code("
     });
 ");
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
-
+$mainrecords = []; 
 if ($deletequizid || $delcourse) {
     if ($deletequizid) {
-        $sql = "SELECT * from {quizaccess_proctor_data} where quizid =
+        $sql = "SELECT * from {quizaccess_main_proctor} where quizid =
         ".$deletequizid." AND deleted = 0";
         $usersrecords = $DB->get_records_sql($sql);
         $deletequiz = $deletequizid;
@@ -130,9 +96,15 @@ if ($deletequizid || $delcourse) {
         $sql = "SELECT * from {quizaccess_proctor_data} where quizid
           IN ($quizidsstring) AND deleted = 0";
         $usersrecords = $DB->get_records_sql($sql);
+
+        $sqlm = "SELECT * from {quizaccess_main_proctor} where quizid
+          IN ($quizidsstring) AND deleted = 0";
+        $mainrecords = $DB->get_records_sql($sqlm);
+
         $deletequiz = $quizidsstring;
     }
     if ($all) {
+        $tmpdir = $CFG->dataroot . '/proctorlink/';            
         foreach ($usersrecords as $usersrecord) {
             if (class_exists('\mod_quiz\quiz_settings')) {
                 $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
@@ -156,8 +128,13 @@ if ($deletequizid || $delcourse) {
             }
 
             // Delete file from the temp directory.
-            $tmpdir = $CFG->dataroot . '/proctorlink/';
             $tempfilepath = $tmpdir . $usersrecord->userimg;
+            if (file_exists($tempfilepath)) {
+                unlink($tempfilepath);
+            }
+        }
+        foreach ($mainrecords as $mainrecord) {
+            $tempfilepath = $tmpdir . '/' . $mainrecord->userimg;
             if (file_exists($tempfilepath)) {
                 unlink($tempfilepath);
             }
@@ -165,6 +142,11 @@ if ($deletequizid || $delcourse) {
         if (!empty($deletequiz)) {
             $DB->execute("
                 UPDATE {quizaccess_proctor_data}
+                SET deleted = 1
+                WHERE quizid IN ($deletequiz)
+            ");
+            $DB->execute("
+                UPDATE {quizaccess_main_proctor}
                 SET deleted = 1
                 WHERE quizid IN ($deletequiz)
             ");
@@ -195,7 +177,7 @@ if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) 
 }
 
 $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
-             FROM {quizaccess_proctor_data} p
+             FROM {quizaccess_main_proctor} p
              JOIN {quiz} q ON p.quizid = q.id
              WHERE p.userimg IS NOT NULL AND p.deleted=0
              AND p.userimg !='' AND q.course = :courseid";
@@ -206,15 +188,51 @@ if ($totalcount > 0) {
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 }
-$sql = "SELECT q.name AS quiz_name, p.quizid, COUNT(DISTINCT p.userid) AS user_count,
-        COUNT(p.userimg) AS image_count
-        FROM {quizaccess_proctor_data} p
-        JOIN {quiz} q ON p.quizid = q.id
-        WHERE p.userimg IS NOT NULL AND p.deleted=0
-        AND p.userimg !=''
-        AND q.course = :courseid
-        GROUP BY p.quizid, q.name
-        ORDER BY q.name ASC";
+$sql = "SELECT
+    q.id AS quizid,
+    q.name AS quizname,
+    (
+        SELECT COUNT(mp.userimg)
+        FROM {quizaccess_main_proctor} mp
+        WHERE mp.quizid = q.id
+          AND mp.deleted = 0
+          AND mp.userimg IS NOT NULL
+          AND mp.userimg != ''
+    ) AS main_proctor_images,
+    (
+        SELECT COUNT(pd.userimg)
+        FROM {quizaccess_proctor_data} pd
+        WHERE pd.quizid = q.id
+          AND pd.deleted = 0
+          AND pd.userimg IS NOT NULL
+          AND pd.userimg != ''
+    ) AS proctor_data_images,
+    (
+        (
+            SELECT COUNT(mp.userimg)
+            FROM {quizaccess_main_proctor} mp
+            WHERE mp.quizid = q.id
+              AND mp.deleted = 0
+              AND mp.userimg IS NOT NULL
+              AND mp.userimg != ''
+        ) +
+        (
+            SELECT COUNT(pd.userimg)
+            FROM {quizaccess_proctor_data} pd
+            WHERE pd.quizid = q.id
+              AND pd.deleted = 0
+              AND pd.userimg IS NOT NULL
+              AND pd.userimg != ''
+        )
+    ) AS total_images,
+    (
+        SELECT COUNT(DISTINCT userid)
+        FROM {quizaccess_main_proctor}
+            WHERE quizid = q.id AND deleted = 0
+    ) AS total_users
+FROM {quiz} q
+WHERE q.course = :courseid
+ORDER BY q.name ASC";
 $records = $DB->get_records_sql($sql, ['courseid' => $course->id]);
 if (empty($records)) {
     $table->data[] = [
@@ -225,21 +243,24 @@ if (empty($records)) {
     ];
 } else {
     foreach ($records as $record) {
-        $quizobj = create_quiz_object($record->quizid, $USER->id);
-        $quiz = is_callable([$quizobj, 'get_quiz']) ? $quizobj->get_quiz() : $quizobj->quiz;
-        $cm = is_callable([$quizobj, 'get_cm']) ? $quizobj->get_cm() : $quizobj->cm;
-
-        $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-        class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
-        data-quiz="' . $record->quiz_name . '">
-        <i class="icon fa fa-trash"></i></a>';
+        if ($record->total_images == 0) {
+            $deleteicon = '<span title="' . get_string('delete') . '" class="delete-quizs disabled"
+            style="opacity: 0.5; cursor: not-allowed;">
+                <i class="icon fa fa-trash"></i>
+            </span>';
+        } else {
+            $deleteicon = '<a href="#" title="' . get_string('delete') . '"
+                class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
+                data-quiz="' . $record->quizname . '">
+                <i class="icon fa fa-trash"></i></a>';
+        }
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
         'cmid' => $cm->id,
         'quizid' => $record->quizid,
         ]);
-        $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quiz_name);
-        $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quiz_name . '</a>';
-        $table->data[] = [$quizname, $record->user_count, $record->image_count, $deleteicon];
+        $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quizname);
+        $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quizname . '</a>';
+        $table->data[] = [$quizname, $record->total_users, $record->total_images , $deleteicon];
     }
 }
 
