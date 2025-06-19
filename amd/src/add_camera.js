@@ -391,6 +391,8 @@ function($, str, ModalFactory) {
                             .then((stream) => {
                                 vElement.srcObject = stream;
                                 vElement.play();
+                                restoreVideoPosition(vElement);
+                                makeDraggable(vElement);
                             })
                             .catch((err) => {
                                 if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
