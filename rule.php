@@ -71,7 +71,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $isadmin = is_siteadmin($USER);
         $url = new moodle_url('/admin/settings.php', ['section' => 'modsettingsquizcatproctoring']);
         $url = $url->out();
-
+        $attemptid = optional_param('attempt', 0, PARAM_INT);
+        
         $isactive = get_config('quizaccess_quizproctoring', 'getuserinfo');
         $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
@@ -79,7 +80,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             if ($isadmin) {
                 return false;
             } else {
-                return get_string('warningstudent', 'quizaccess_quizproctoring');
+                if (empty($attemptid)) {
+                    return get_string('warningstudent', 'quizaccess_quizproctoring');
+                }
             }
         }
         if (empty($accesstoken) || empty($accesstokensecret)) {
