@@ -51,5 +51,30 @@
         <INDEX NAME="quizid-attemptid-userid-image_status-status" UNIQUE="false" FIELDS="quizid, attemptid, userid, image_status, status"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="quizaccess_main_proctor" COMMENT="Default comment for the table, please edit me">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="20" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="quizid" TYPE="int" LENGTH="20" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="user_identity" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="userimg" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="image_status" TYPE="char" LENGTH="1" NOTNULL="true" DEFAULT="M" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="20" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="20" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="aws_response" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="attemptid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="isautosubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="response" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="iseyecheck" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="indexing" UNIQUE="false" FIELDS="quizid, image_status, userid, deleted, status, attemptid, isautosubmit"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>
