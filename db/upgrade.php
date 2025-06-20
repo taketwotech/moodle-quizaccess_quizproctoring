@@ -385,7 +385,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025061300, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025061601) {
+    if ($oldversion < 2025061702) {
 
         // Define table quizaccess_main_proctor to be created.
         $table = new xmldb_table('quizaccess_main_proctor');
@@ -419,10 +419,10 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025061601, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025061702, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025061602) {
+    if ($oldversion < 2025061703) {
 
         // Define field enableuploadidentity to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
@@ -434,16 +434,16 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025061602, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025061703, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025061605) {        
+    if ($oldversion < 2025061704) {        
         $task = new \quizaccess_quizproctoring\task\mainImagesTask();
         $task->set_component('quizaccess_quizproctoring');
         
         \core\task\manager::queue_adhoc_task($task);
         // Mark the upgrade savepoint.
-        upgrade_plugin_savepoint(true, 2025061605, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025061704, 'quizaccess', 'quizproctoring');
     }
     
     return true;
