@@ -164,7 +164,7 @@ if ($deleteuserid) {
     if ($all) {
         foreach ($usersmrecords as $usersmrecord) {
             $tempfilepath = $tmpdir . '/' . $usersmrecord->userimg;
-            if (file_exists($tempfilepath)) {
+            if (file_exists($tempfilepath) && is_file($tempfilepath)) {
                 unlink($tempfilepath);
             }
         }
@@ -200,7 +200,7 @@ if ($deleteuserid) {
 
             $tmpdir = $CFG->dataroot . '/proctorlink/';
             $tempfilepath = $tmpdir . $usersrecord->userimg;
-            if (file_exists($tempfilepath)) {
+            if (file_exists($tempfilepath) && is_file($tempfilepath)) {
                 unlink($tempfilepath);
             }
         }

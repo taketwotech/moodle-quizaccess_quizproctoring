@@ -384,7 +384,31 @@ function($, str, ModalFactory) {
                 }).appendTo('body');
 
                 if (verifyduringattempt) {
-                    const waitForElements = setInterval(() => {
+                    // Handle visibility change
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.visibilityState === 'visible') {
+                            visibilitychange(cmid, attemptid, mainimage);
+                        }
+                    });
+
+                    // Initialize camera and start proctoring
+                    var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                    let iframeReady = false;
+                    let responseReceived = true;
+                    // Add message listener for iframe communication
+                    window.addEventListener('message', function(event) {
+                        console.log('Received message:', {
+                            origin: event.origin,
+                            expectedOrigin: externalserver,
+                            data: event.data
+                        });
+                        
+                        if (event.origin === externalserver) {
+                            const data = event.data;
+                            if (data.type === 'ready') {
+                                console.log('Iframe is ready for communication');
+                                iframeReady = true;
+                                const waitForElements = setInterval(() => {
                         const vElement = document.getElementById('video');
                         const cElement = document.getElementById('canvas');
                         if (vElement && cElement) {
@@ -439,34 +463,8 @@ function($, str, ModalFactory) {
                                     });
                                 }
                             }
-                            makeDraggable(vElement);
                         }
                     }, 500);
-
-                    // Handle visibility change
-                    document.addEventListener('visibilitychange', function() {
-                        if (document.visibilityState === 'visible') {
-                            visibilitychange(cmid, attemptid, mainimage);
-                        }
-                    });
-
-                    // Initialize camera and start proctoring
-                    var camera = new Camera(cmid, mainimage, attemptid, quizid);
-                    let iframeReady = false;
-                    let responseReceived = true;
-                    // Add message listener for iframe communication
-                    window.addEventListener('message', function(event) {
-                        console.log('Received message:', {
-                            origin: event.origin,
-                            expectedOrigin: externalserver,
-                            data: event.data
-                        });
-                        
-                        if (event.origin === externalserver) {
-                            const data = event.data;
-                            if (data.type === 'ready') {
-                                console.log('Iframe is ready for communication');
-                                iframeReady = true;
                             } else if (data.type === 'proctoring_image') {
                                 responseReceived = true;
                                 console.log('Received proctoring image from iframe');
@@ -563,6 +561,8 @@ function($, str, ModalFactory) {
                             }
                         }
                     }, setinterval * 1000);
+
+                    
                 }
             } else {
                 if (enableeyecheckreal) {                    

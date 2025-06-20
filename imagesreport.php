@@ -129,13 +129,13 @@ if ($deletequizid || $delcourse) {
 
             // Delete file from the temp directory.
             $tempfilepath = $tmpdir . $usersrecord->userimg;
-            if (file_exists($tempfilepath)) {
+            if (file_exists($tempfilepath) && is_file($tempfilepath)) {
                 unlink($tempfilepath);
             }
         }
         foreach ($mainrecords as $mainrecord) {
             $tempfilepath = $tmpdir . '/' . $mainrecord->userimg;
-            if (file_exists($tempfilepath)) {
+            if (file_exists($tempfilepath) && is_file($tempfilepath)) {
                 unlink($tempfilepath);
             }
         }
