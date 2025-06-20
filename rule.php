@@ -454,6 +454,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
 
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
+        $mform->setType('proctoringvideo_link', PARAM_URL);
+
     }
 
     /**

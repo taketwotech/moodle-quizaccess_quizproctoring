@@ -48,7 +48,6 @@ if (class_exists('\mod_quiz\quiz_settings')) {
 }
 
 require_login($course, true, $cm);
-$PAGE->set_context($context);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
 $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php',

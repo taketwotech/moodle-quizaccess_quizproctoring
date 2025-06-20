@@ -56,12 +56,10 @@ class checkGetUserInfo extends scheduled_task {
 
 	    mtrace("Executing scheduled task: Check Get User Info");
 
-	    try {
-	        // Call external API
+	    try {	        
 	        $response = \quizaccess_quizproctoring\api::getuserinfo();
 	        $responsedata = json_decode($response, true);
 
-	        // Check the expected structure
 	        if (is_array($responsedata) && array_key_exists('active', $responsedata)) {
 	            $status = $responsedata['active'] ? 1 : 0;
 	            set_config('getuserinfo', $status, 'quizaccess_quizproctoring');
