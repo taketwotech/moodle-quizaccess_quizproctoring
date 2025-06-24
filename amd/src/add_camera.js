@@ -199,6 +199,7 @@ function($, str, ModalFactory) {
     var localMediaStream = null;
     var USE_AUDIO = true;
     var USE_VIDEO = true;
+    let hiddenCloseButton = null;
 
     Camera.prototype.retake = function() {
         $('#userimageset').val(0);
@@ -270,6 +271,12 @@ function($, str, ModalFactory) {
                 localStorage.removeItem('videoPosition');
             });
 
+            $(document).on('click', '.filemanager', function(e) {
+                e.preventDefault();
+                hiddenCloseButton = $(this).closest('.moodle-dialogue-base').find('.closebutton');
+                hiddenCloseButton.hide();
+            });
+
             $(document).on('click', '.mod_quiz_preflight_popup .closebutton', function() {
                 if (typeof camera !== 'undefined' && typeof camera.stopcamera === 'function') {
                     camera.stopcamera();
@@ -278,6 +285,14 @@ function($, str, ModalFactory) {
                     localStorage.removeItem('videoPosition');
                 }
             });
+
+            $(document).on('click', '.closebutton', function() {
+                if (hiddenCloseButton) {
+                    hiddenCloseButton.show();
+                    hiddenCloseButton = null;
+               }
+            });
+
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {
                     camera.stopcamera();
@@ -319,7 +334,7 @@ function($, str, ModalFactory) {
             if (onlinestudent) {
                 // Add iframe for student view
                 const iframeContainer = $("<div>").addClass("student-iframe-container").css({
-                    display: 'none'
+                    display: 'block'
                 });
 
                 const baseUrl = `${externalserver}/student`;
@@ -338,8 +353,7 @@ function($, str, ModalFactory) {
                         'frameborder': '0',
                         'allow': 'camera; microphone',
                         'style': 'position: absolute; bottom: 20px; right: 20px; z-index: 9999; ' +
-                                'width: 230px; height: 173px; border-radius: 3px; ' +
-                                'box-shadow: 0 2px 10px rgba(0,0,0,0.2);'
+                                'width: 230px; height: 173px; border-radius: 3px; '
                     })
                     .on('load', function() {
                         console.log('Iframe loaded, sending initial message');
@@ -404,6 +418,7 @@ function($, str, ModalFactory) {
                                 vElement.play();
                                 restoreVideoPosition(vElement);
                                 makeDraggable(vElement);
+                                $(".student-iframe-container").css({display: 'none'});
                             })
                             .catch((err) => {
                                 if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -771,31 +786,61 @@ function makeDraggable(element) {
     let offsetX = 0;
     let offsetY = 0;
     let isDragging = false;
+
+    // Mouse Events
     element.addEventListener('mousedown', function(e) {
         isDragging = true;
         offsetX = e.clientX - element.getBoundingClientRect().left;
         offsetY = e.clientY - element.getBoundingClientRect().top;
         element.style.cursor = 'grabbing';
     });
+
     document.addEventListener('mousemove', function(e) {
-    if (!isDragging) {
-        return;
-    }
-         requestAnimationFrame(() => {
-            let newLeft = e.clientX - offsetX;
-            let newTop = e.clientY - offsetY;
-            const maxLeft = window.innerWidth - element.offsetWidth;
-            const maxTop = window.innerHeight - element.offsetHeight;
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(0, Math.min(newTop, maxTop));
-            if (element.style.position !== 'fixed') {
-                element.style.position = 'fixed';
-            }
-             element.style.left = `${newLeft}px`;
-            element.style.top = `${newTop}px`;
+        if (!isDragging) return;
+        requestAnimationFrame(() => {
+            moveElement(e.clientX, e.clientY);
         });
     });
+
     document.addEventListener('mouseup', function() {
+        endDrag();
+    });
+
+    // Touch Events (for iOS/iPad)
+    element.addEventListener('touchstart', function(e) {
+        isDragging = true;
+        const touch = e.touches[0];
+        offsetX = touch.clientX - element.getBoundingClientRect().left;
+        offsetY = touch.clientY - element.getBoundingClientRect().top;
+    });
+
+    document.addEventListener('touchmove', function(e) {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        requestAnimationFrame(() => {
+            moveElement(touch.clientX, touch.clientY);
+        });
+    });
+
+    document.addEventListener('touchend', function() {
+        endDrag();
+    });
+
+    function moveElement(clientX, clientY) {
+        let newLeft = clientX - offsetX;
+        let newTop = clientY - offsetY;
+        const maxLeft = window.innerWidth - element.offsetWidth;
+        const maxTop = window.innerHeight - element.offsetHeight;
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        if (element.style.position !== 'fixed') {
+            element.style.position = 'fixed';
+        }
+        element.style.left = `${newLeft}px`;
+        element.style.top = `${newTop}px`;
+    }
+
+    function endDrag() {
         if (isDragging) {
             isDragging = false;
             element.style.cursor = 'grab';
@@ -804,7 +849,7 @@ function makeDraggable(element) {
                 top: parseInt(element.style.top, 10)
             }));
         }
-    });
+    }
 }
 
 /**
