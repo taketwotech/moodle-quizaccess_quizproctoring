@@ -191,6 +191,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $element->setAttributes(['class' => 'proctoringmsg']);
 
         if ($proctoringdata->enableprofilematch == 1) {
+            $datauri = null;
             $context = context_user::instance($USER->id);
             $sql = "SELECT * FROM {files} WHERE contextid =
             :contextid AND component = 'user' AND

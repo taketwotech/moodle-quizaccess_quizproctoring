@@ -59,13 +59,6 @@ $params = [
 
 $records = $DB->get_records_sql($sql, $params);
 
-// Debug output
-if ($debug) {
-    header('Content-Type: application/json');
-    echo json_encode(array_values($records), JSON_PRETTY_PRINT);
-    exit;
-}
-
 // Prepare CSV
 $filename = 'proctoring_report_' . $course . '.csv';
 $tempdir = make_temp_directory('quizaccess_quizproctoring/reports');

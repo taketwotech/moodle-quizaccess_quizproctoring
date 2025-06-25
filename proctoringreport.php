@@ -65,22 +65,26 @@ $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
         $('#proctoringreporttable').DataTable({
-            pageLength: 10,
-            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
-            language: {
-                search: 'Search:',
-                lengthMenu: 'Show _MENU_ per page',
-                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-                    paginate: {
-                        first: 'First',
-                        last: 'Last',
-                        next: 'Next',
-                        previous: 'Previous'
-                    },
-                    zeroRecords: 'No matching records found',
-                    infoEmpty: 'No records available',
-                    infoFiltered: '(filtered from _MAX_ total records)'
-            }
+            serverSide: true,
+            processing: true,
+            ajax: {
+                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoringreport_ajax.php',
+                type: 'POST',
+                data: {
+                    cmid: {$cmid},
+                    quizid: {$quizid},
+                    courseid: {$course->id}
+                }
+            },
+            columns: [
+                { data: 'fullname' },
+                { data: 'email' },
+                { data: 'lastattempt' },
+                { data: 'totalimages' },
+                { data: 'warnings' },
+                { data: 'review' },
+                { data: 'actions' }
+            ]
         });
     });
 
@@ -122,7 +126,7 @@ $PAGE->requires->js_init_code("
         const button = $(this);
         button.prop('disabled', true).text('Generating CSV...');
         $.ajax({
-            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/csvreport.php',
+            url: '" . (new moodle_url('/mod/quiz/accessrule/quizproctoring/csvreport.php')) . "',
             method: 'GET',
             data: {
                 cmid: {$cmid},
@@ -212,8 +216,6 @@ if ($deleteuserid) {
         redirect($redirecturl, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
     }
 }
-$table = new html_table();
-$table->id = 'proctoringreporttable';
 
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
@@ -231,10 +233,10 @@ if ($proctoringimageshow == 1) {
     array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('reviewattempts', 'quizaccess_quizproctoring')));
 }
-$table->head = $headers;
+
 $output = $PAGE->get_renderer('mod_quiz');
 echo $output->header();
-$initialwarning = 0;
+
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $url = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid=' . $cmid;
     $btn = '<a class="btn btn-primary" href="' . $url . '">' .
@@ -245,78 +247,14 @@ echo '<div class="headtitle">' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 
-$sql = "
-SELECT 
-    u.id,
-    u.firstname,
-    u.lastname,
-    u.email,
-    COUNT(DISTINCT mp.id) AS image_mcount,
-    COUNT(DISTINCT CASE WHEN pd.userimg IS NOT NULL AND pd.userimg != '' THEN pd.id END) AS image_count,
-    COUNT(DISTINCT CASE WHEN pd.status IS NOT NULL AND pd.status != '' THEN pd.id END) AS warning_count,
-    MAX(mp.timecreated) AS last_attempt_time
-FROM {user} u
-JOIN {quizaccess_main_proctor} mp 
-    ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
-LEFT JOIN {quizaccess_proctor_data} pd 
-    ON pd.userid = u.id AND pd.quizid = :quizid2 AND pd.deleted = 0
-WHERE mp.userimg IS NOT NULL AND mp.userimg != '' AND pd.image_status != 'M'
-GROUP BY u.id, u.firstname, u.lastname, u.email
-ORDER BY u.firstname ASC
-";
-
-$params = [
-    'quizid1' => $quizid,
-    'quizid2' => $quizid,
-];
-$records = $DB->get_records_sql($sql, $params);
-if (empty($records)) {
-    $rows = [
-        get_string('norecordsfound', 'quizaccess_quizproctoring'),
-        '',
-        '',
-        '',
-        '',
-        '',
-    ];
-    if ($proctoringimageshow == 1) {
-        array_splice($rows, -1, 0, '');
-    }
-    $table->data[] = $rows;
-} else {
-    foreach ($records as $record) {
-        $namelink = html_writer::link(
-            new moodle_url('/user/view.php', ['id' => $record->id]),
-            $record->firstname . ' ' . $record->lastname
-        );
-        $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-             class="delete-icon" data-cmid="' . $cmid . '" data-quizid="' . $quizid . '" data-userid="' . $record->id . '"
-        data-username="' . $record->firstname . ' ' . $record->lastname . '">
-        <i class="icon fa fa-trash"></i></a>';
-
-        $totalimagecount = $record->image_mcount + $record->image_count;
-        $warningcount = $record->warning_count;
-        $last_attempt_time = $record->last_attempt_time ? userdate($record->last_attempt_time, get_string('strftimerecent', 'langconfig')) : '-';
-
-        $imgurl = $CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/reviewattempts.php?userid=' .
-            $record->id . '&cmid=' . $cmid . '&quizid=' . $quizid;
-        $imageicon = '<a href="'.$imgurl.'"><img class="imageicon" src="' .
-        $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring') . '" alt="icon"></a>';
-
-        $row = [$namelink, $record->email, $last_attempt_time, $totalimagecount, $warningcount];
-        if ($proctoringimageshow == 1) {
-            if (is_siteadmin($record->id) || has_capability('moodle/course:update',
-                context_course::instance($course->id), $record->id)) {
-                $row[] = '';
-            } else {
-                $row[] = $imageicon;
-            }
-        }
-        $row[] = $deleteicon;
-        $table->data[] = $row;
-    }
-}
 echo '<button id="exportpdf" class="btn btn-secondary">'.get_string('exportpdf', 'quizaccess_quizproctoring').'</button>';
 echo '<button id="exportcsv" class="btn btn-secondary">'.get_string('exportcsv', 'quizaccess_quizproctoring').'</button>';
-echo html_writer::table($table);
+
+echo '<table id="proctoringreporttable" class="generaltable display" style="width:100%">
+        <thead>
+            <tr>';
+foreach ($headers as $headcol) {
+    echo '<th>' . $headcol . '</th>';
+}
+echo '</tr> </thead>       <tbody></tbody>    </table>';
 echo $OUTPUT->footer();
