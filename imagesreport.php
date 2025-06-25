@@ -206,6 +206,7 @@ $sql = "SELECT
           AND pd.deleted = 0
           AND pd.userimg IS NOT NULL
           AND pd.userimg != ''
+          AND pd.image_status != 'M'
     ) AS proctor_data_images,
     (
         (

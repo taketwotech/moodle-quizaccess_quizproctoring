@@ -64,27 +64,29 @@ $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'
 $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
-        $('#proctoringreporttable').DataTable({
+        const table = $('#proctoringreporttable').DataTable({
             serverSide: true,
             processing: true,
             ajax: {
                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoringreport_ajax.php',
                 type: 'POST',
-                data: {
-                    cmid: {$cmid},
-                    quizid: {$quizid},
-                    courseid: {$course->id}
+                data: function(d) {
+                    d.cmid = {$cmid};
+                    d.quizid = {$quizid};
+                    d.courseid = {$course->id};
                 }
             },
             columns: [
-                { data: 'fullname' },
-                { data: 'email' },
-                { data: 'lastattempt' },
-                { data: 'totalimages' },
-                { data: 'warnings' },
-                { data: 'review' },
-                { data: 'actions' }
-            ]
+                { data: 'fullname', orderable: true },
+                { data: 'email', orderable: true },
+                { data: 'lastattempt', orderable: true },
+                { data: 'totalimages', orderable: true },
+                { data: 'warnings', orderable: true },
+                { data: 'review', orderable: false },
+                { data: 'actions', orderable: false }
+            ],
+            order: [[0, 'asc']],
+            responsive: true
         });
     });
 

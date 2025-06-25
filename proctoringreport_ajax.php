@@ -37,18 +37,54 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 
 global $DB, $CFG, $OUTPUT;
 
-// DataTables server-side params
+// DataTables core parameters
 $draw = optional_param('draw', 1, PARAM_INT);
 $start = optional_param('start', 0, PARAM_INT);
 $length = optional_param('length', 10, PARAM_INT);
-$search = optional_param_array('search', [], PARAM_RAW);
-$searchvalue = isset($search['value']) ? trim($search['value']) : '';
 
-// Build WHERE conditions
+// Search value (from nested structure)
+$searchvalue = '';
+if (isset($_POST['search']['value'])) {
+    $searchvalue = trim($_POST['search']['value']);
+}
+
+// Column mapping
+$columns = ['fullname', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
+$ordercolumn = 'u.firstname';
+$orderdir = 'ASC';
+
+// Handle ordering from DataTables
+if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
+    $colindex = (int) $_POST['order'][0]['column'];
+    $orderdir = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+
+    if (isset($columns[$colindex])) {
+        switch ($columns[$colindex]) {
+            case 'fullname':
+                $ordercolumn = 'u.firstname';
+                break;
+            case 'email':
+                $ordercolumn = 'u.email';
+                break;
+            case 'lastattempt':
+                $ordercolumn = 'MAX(mp.timecreated)';
+                break;
+            case 'totalimages':
+                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0)';
+                break;
+            case 'warnings':
+                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0 AND pd.status != \'\')';
+                break;
+            default:
+                $ordercolumn = 'u.firstname';
+        }
+    }
+}
+
 $where = "mp.quizid = :quizid AND mp.deleted = 0";
 $params = ['quizid' => $quizid];
 
-if ($searchvalue !== '') {
+if (!empty($searchvalue)) {
     $where .= " AND (
         u.firstname LIKE :searchfirstname OR 
         u.lastname LIKE :searchlastname OR 
@@ -59,14 +95,12 @@ if ($searchvalue !== '') {
     $params['searchemail'] = "%{$searchvalue}%";
 }
 
-// Total records
 $totalsql = "SELECT COUNT(DISTINCT u.id)
              FROM {user} u
              JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
              WHERE $where";
 $recordsTotal = $DB->count_records_sql($totalsql, $params);
 
-// Data query
 $sql = "
     SELECT 
         u.id,
@@ -77,7 +111,13 @@ $sql = "
         (
             SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
             WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
+            AND pd.userimg IS NOT NULL AND pd.userimg != '' AND pd.image_status != 'M'
         ) AS totalimages,
+        (
+            SELECT COUNT(*) FROM {quizaccess_main_proctor} pd
+            WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
+            AND pd.userimg IS NOT NULL AND pd.userimg != ''
+        ) AS totalmimages,
         (
             SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
             WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0 AND pd.status != ''
@@ -86,12 +126,11 @@ $sql = "
     JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
     WHERE $where
     GROUP BY u.id, u.firstname, u.lastname, u.email
-    ORDER BY u.firstname ASC
+    ORDER BY $ordercolumn $orderdir
 ";
 
 $records = $DB->get_records_sql($sql, $params, $start, $length);
 
-// Prepare JSON response
 $data = [];
 foreach ($records as $r) {
     $fullname = $r->firstname . ' ' . $r->lastname;
@@ -108,8 +147,9 @@ foreach ($records as $r) {
         'class' => 'imageicon',
         'alt' => 'review'
     ]));
+
     if (is_siteadmin($r->id) || has_capability('moodle/course:update',
-                context_course::instance($courseid), $r->id)) {
+            context_course::instance($courseid), $r->id)) {
         $reviewicon = '';
     }
 
@@ -127,17 +167,17 @@ foreach ($records as $r) {
         'fullname' => $namelink,
         'email' => $r->email,
         'lastattempt' => $lastattempt,
-        'totalimages' => $r->totalimages,
+        'totalimages' => $r->totalimages + $r->totalmimages,
         'warnings' => $r->warnings,
         'review' => $reviewicon,
         'actions' => $deleteicon
     ];
 }
 
-// Output JSON
 echo json_encode([
     'draw' => $draw,
     'recordsTotal' => $recordsTotal,
     'recordsFiltered' => $recordsTotal,
     'data' => $data
 ]);
+
