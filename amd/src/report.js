@@ -8,7 +8,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     lightbox.init();
                 }
             });
-            $('.delete-icon').on('click', function(event) {
+            $('#proctoringreporttable').on('click', '.delete-icon', function(event) {
                 event.preventDefault();
                 var username = $(this).data('username');
                 var cmid = $(this).data('cmid');

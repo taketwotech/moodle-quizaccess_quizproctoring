@@ -396,6 +396,7 @@ label[for="id_consentcheckbox"] {
     padding: 0;
     height: 100vh;
     width: 100vw;
+    overflow: scroll;
 }
 #page-mod-quiz-accessrule-quizproctoring-room #page-content {
     margin: 0;
