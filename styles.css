@@ -466,6 +466,15 @@ label[for="id_consentcheckbox"] {
     scroll-behavior: auto !important;
 }
 
+#page-mod-quiz-view #canvas {
+    object-fit: cover;
+    width: 320px !important;
+    height: 240px !important;
+}
+
+#page-mod-quiz-view #video {
+    object-fit: cover;
+}
 
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {

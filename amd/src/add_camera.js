@@ -103,40 +103,51 @@ function($, str, ModalFactory) {
     Camera.prototype.takepicture = function() {
         const video = this.video;
         const canvas = this.canvas;
-        const targetRatio = 4 / 3;
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
+
+        const outputWidth = 320;
+        const outputHeight = 240;
+        const targetRatio = outputWidth / outputHeight;
+
+        const vw = video.videoWidth || video.clientWidth;
+        const vh = video.videoHeight || video.clientHeight;
         const videoRatio = vw / vh;
-        let sx, sy, sw, sh;
+
+        let sx = 0, sy = 0, sw = vw, sh = vh;
+
         if (videoRatio > targetRatio) {
             sh = vh;
             sw = vh * targetRatio;
             sx = (vw - sw) / 2;
-            sy = 0;
         } else {
             sw = vw;
             sh = vw / targetRatio;
-            sx = 0;
             sy = (vh - sh) / 2;
         }
 
-        canvas.width = this.width;
-        canvas.height = this.height;
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
 
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
 
         const data = canvas.toDataURL('image/png');
+
         $('#' + this.videoid).hide();
         $('#' + this.takepictureid).hide();
         $('#' + this.canvasid).show();
         $('#' + this.retakeid).show();
         $('#userimageset').val(1);
         $("#id_submitbutton").prop("disabled", true);
+
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
-            data: {imgBase64: data, cmid: this.cmid, attemptid: this.attemptid, mainimage: this.mainimage},
+            data: {
+                imgBase64: data,
+                cmid: this.cmid,
+                attemptid: this.attemptid,
+                mainimage: this.mainimage
+            },
             success: function(response) {
                 if (response && response.errorcode) {
                     $('#userimageset').val(0);
@@ -149,6 +160,7 @@ function($, str, ModalFactory) {
             }
         });
     };
+
     Camera.prototype.proctoringimage = function() {
         var requestData = {
             cmid: this.cmid,
