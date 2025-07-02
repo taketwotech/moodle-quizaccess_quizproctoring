@@ -89,8 +89,10 @@ function($, str, ModalFactory) {
                     } else {
                         $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
                     }
-                    restoreVideoPosition(videoElement);
-                    makeDraggable(videoElement);
+                    if (this.attemptid) {
+                        restoreVideoPosition(videoElement);
+                        makeDraggable(videoElement);
+                    }                    
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
@@ -168,9 +170,35 @@ function($, str, ModalFactory) {
             mainimage: this.mainimage
         };
         if (this.canvas) {
-            var context = this.canvas.getContext('2d');
-            context.drawImage(this.video, 0, 0, this.width, this.height);
-            var data = this.canvas.toDataURL('image/png');
+            const video = this.video;
+            const canvas = this.canvas;
+
+            const outputWidth = 280;
+            const outputHeight = 240;
+            const targetRatio = outputWidth / outputHeight;
+
+            const vw = video.videoWidth || video.clientWidth;
+            const vh = video.videoHeight || video.clientHeight;
+            const videoRatio = vw / vh;
+
+            let sx = 0, sy = 0, sw = vw, sh = vh;
+
+            if (videoRatio > targetRatio) {
+                sh = vh;
+                sw = vh * targetRatio;
+                sx = (vw - sw) / 2;
+            } else {
+                sw = vw;
+                sh = vw / targetRatio;
+                sy = (vh - sh) / 2;
+            }
+
+            canvas.width = outputWidth;
+            canvas.height = outputHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
+            const data = canvas.toDataURL('image/png');
             requestData.imgBase64 = data;
         }
         $.ajax({
@@ -484,9 +512,35 @@ function($, str, ModalFactory) {
                                 // Process the image from iframe
                                 var context = camera.canvas.getContext('2d');
                                 var img = new Image();
+
                                 img.onload = function() {
-                                    context.drawImage(img, 0, 0, camera.width, camera.height);
-                                    var imageData = camera.canvas.toDataURL('image/png');
+                                    const canvas = camera.canvas;
+
+                                    const outputWidth = 280;
+                                    const outputHeight = 240;
+                                    const targetRatio = outputWidth / outputHeight;
+
+                                    const iw = img.naturalWidth;
+                                    const ih = img.naturalHeight;
+                                    const imgRatio = iw / ih;
+
+                                    let sx = 0, sy = 0, sw = iw, sh = ih;
+
+                                    if (imgRatio > targetRatio) {
+                                        sh = ih;
+                                        sw = ih * targetRatio;
+                                        sx = (iw - sw) / 2;
+                                    } else {
+                                        sw = iw;
+                                        sh = iw / targetRatio;
+                                        sy = (ih - sh) / 2;
+                                    }
+
+                                    canvas.width = outputWidth;
+                                    canvas.height = outputHeight;
+
+                                    context.drawImage(img, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
+                                    var imageData = canvas.toDataURL('image/png');
                                     $.ajax({
                                         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                         method: 'POST',

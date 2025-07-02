@@ -235,7 +235,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         // Video tag.
         $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_video', 'class' => 'form-group row fitem videohtml']);
         $html .= html_writer::div('', 'col-md-3');
-        $videotag = html_writer::tag('video', '', ['id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay']);
+        $videotag = html_writer::tag('video', '', ['id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay', 'draggable' => 'false']);
         $html .= html_writer::div($videotag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
