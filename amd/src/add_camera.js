@@ -92,7 +92,7 @@ function($, str, ModalFactory) {
                     if (this.attemptid) {
                         restoreVideoPosition(videoElement);
                         makeDraggable(videoElement);
-                    }                    
+                    }
                     takePictureButton.prop('disabled', false);
                 }
                 return videoElement;
@@ -114,7 +114,10 @@ function($, str, ModalFactory) {
         const vh = video.videoHeight || video.clientHeight;
         const videoRatio = vw / vh;
 
-        let sx = 0, sy = 0, sw = vw, sh = vh;
+        let sx = 0;
+        let sy = 0;
+        let sw = vw;
+        let sh = vh;
 
         if (videoRatio > targetRatio) {
             sh = vh;
@@ -181,7 +184,10 @@ function($, str, ModalFactory) {
             const vh = video.videoHeight || video.clientHeight;
             const videoRatio = vw / vh;
 
-            let sx = 0, sy = 0, sw = vw, sh = vh;
+            let sx = 0;
+            let sy = 0;
+            let sw = vw;
+            let sh = vh;
 
             if (videoRatio > targetRatio) {
                 sh = vh;
@@ -369,10 +375,8 @@ function($, str, ModalFactory) {
             if (usergroup != '') {
                 room = `${studenthexstring}_${quizid}_${usergroup}`;
             }
-            console.log('Room:', room);
-            // Add iframe for student view
+
             if (onlinestudent) {
-                // Add iframe for student view
                 const iframeContainer = $("<div>").addClass("student-iframe-container").css({
                     display: 'block'
                 });
@@ -396,14 +400,13 @@ function($, str, ModalFactory) {
                                 'width: 230px; height: 173px; border-radius: 3px; '
                     })
                     .on('load', function() {
-                        console.log('Iframe loaded, sending initial message');
                         try {
-                            iframe[0].contentWindow.postMessage({ 
+                            iframe[0].contentWindow.postMessage({
                                 type: 'init',
                                 timestamp: Date.now()
                             }, externalserver);
                         } catch (error) {
-                            console.error('Error sending initial message:', error);
+                            throw error;
                         }
                     });
                 iframeContainer.append(iframe);
@@ -435,18 +438,10 @@ function($, str, ModalFactory) {
                     var camera = new Camera(cmid, mainimage, attemptid, quizid);
                     let iframeReady = false;
                     let responseReceived = true;
-                    // Add message listener for iframe communication
                     window.addEventListener('message', function(event) {
-                        console.log('Received message:', {
-                            origin: event.origin,
-                            expectedOrigin: externalserver,
-                            data: event.data
-                        });
-                        
                         if (event.origin === externalserver) {
                             const data = event.data;
                             if (data.type === 'ready') {
-                                console.log('Iframe is ready for communication');
                                 iframeReady = true;
                                 const waitForElements = setInterval(() => {
                         const vElement = document.getElementById('video');
@@ -508,8 +503,6 @@ function($, str, ModalFactory) {
                     }, 500);
                             } else if (data.type === 'proctoring_image') {
                                 responseReceived = true;
-                                console.log('Received proctoring image from iframe');
-                                // Process the image from iframe
                                 var context = camera.canvas.getContext('2d');
                                 var img = new Image();
 
@@ -568,11 +561,6 @@ function($, str, ModalFactory) {
                                 };
                                 img.src = data.imageData;
                             }
-                        } else {
-                            console.log('Message origin mismatch:', {
-                                received: event.origin,
-                                expected: externalserver
-                            });
                         }
                     });
 
@@ -606,30 +594,25 @@ function($, str, ModalFactory) {
                             }
 
                             responseReceived = false;
-                            console.log('Sending get_proctoring_image message to iframe');
                             try {
                                 iframe[0].contentWindow.postMessage({ 
                                     type: 'get_proctoring_image',
                                     timestamp: Date.now()
                                 }, externalserver);
                             } catch (error) {
-                                console.error('Error sending message to iframe:', error);
-                                iframeReady = false; // Reset ready state on error
+                                iframeReady = false;
                             }
                         } else {
-                            console.log('Iframe not ready, sending init message');
                             try {
                                 iframe[0].contentWindow.postMessage({ 
                                     type: 'init',
                                     timestamp: Date.now()
                                 }, externalserver);
                             } catch (error) {
-                                console.error('Error sending init message:', error);
+                                throw error;
                             }
                         }
                     }, setinterval * 1000);
-
-                    
                 }
             } else {
                 if (enableeyecheckreal) {                    
@@ -853,7 +836,6 @@ function makeDraggable(element) {
     let offsetY = 0;
     let isDragging = false;
 
-    // Mouse Events
     element.addEventListener('mousedown', function(e) {
         isDragging = true;
         offsetX = e.clientX - element.getBoundingClientRect().left;
@@ -862,7 +844,9 @@ function makeDraggable(element) {
     });
 
     document.addEventListener('mousemove', function(e) {
-        if (!isDragging) return;
+        if (!isDragging) {
+            return;
+        }
         requestAnimationFrame(() => {
             moveElement(e.clientX, e.clientY);
         });
@@ -872,7 +856,6 @@ function makeDraggable(element) {
         endDrag();
     });
 
-    // Touch Events (for iOS/iPad)
     element.addEventListener('touchstart', function(e) {
         isDragging = true;
         const touch = e.touches[0];
@@ -881,7 +864,9 @@ function makeDraggable(element) {
     });
 
     document.addEventListener('touchmove', function(e) {
-        if (!isDragging) return;
+        if (!isDragging) {
+            return;
+        }
         const touch = e.touches[0];
         requestAnimationFrame(() => {
             moveElement(touch.clientX, touch.clientY);
@@ -891,30 +876,42 @@ function makeDraggable(element) {
     document.addEventListener('touchend', function() {
         endDrag();
     });
+}
 
-    function moveElement(clientX, clientY) {
-        let newLeft = clientX - offsetX;
-        let newTop = clientY - offsetY;
-        const maxLeft = window.innerWidth - element.offsetWidth;
-        const maxTop = window.innerHeight - element.offsetHeight;
-        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-        newTop = Math.max(0, Math.min(newTop, maxTop));
-        if (element.style.position !== 'fixed') {
-            element.style.position = 'fixed';
-        }
-        element.style.left = `${newLeft}px`;
-        element.style.top = `${newTop}px`;
+/**
+ * DraggableVideoPosition
+ *
+ * @param {clientX} element
+ * @param {clientY} element
+ * @return {void}
+ */
+function moveElement(clientX, clientY) {
+    let newLeft = clientX - offsetX;
+    let newTop = clientY - offsetY;
+    const maxLeft = window.innerWidth - element.offsetWidth;
+    const maxTop = window.innerHeight - element.offsetHeight;
+    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    newTop = Math.max(0, Math.min(newTop, maxTop));
+    if (element.style.position !== 'fixed') {
+        element.style.position = 'fixed';
     }
+    element.style.left = `${newLeft}px`;
+    element.style.top = `${newTop}px`;
+}
 
-    function endDrag() {
-        if (isDragging) {
-            isDragging = false;
-            element.style.cursor = 'grab';
-            localStorage.setItem('videoPosition', JSON.stringify({
-                left: parseInt(element.style.left, 10),
-                top: parseInt(element.style.top, 10)
-            }));
-        }
+/**
+ * DraggableVideoPosition
+ *
+ * @return {void}
+ */
+function endDrag() {
+    if (isDragging) {
+        isDragging = false;
+        element.style.cursor = 'grab';
+        localStorage.setItem('videoPosition', JSON.stringify({
+            left: parseInt(element.style.left, 10),
+            top: parseInt(element.style.top, 10)
+        }));
     }
 }
 
@@ -940,7 +937,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
         method: 'POST',
         data: requestData,
-        success: function(response) {console.log(response);
+        success: function(response) {
             if (response && response.status === 'eyecheckoff') {
                 localStorage.setItem('eyecheckoff', JSON.stringify(true));
                 return;

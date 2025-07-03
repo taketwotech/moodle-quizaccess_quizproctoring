@@ -427,7 +427,11 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 const userid = $(this).data('userid');
                 const username = encodeURIComponent($(this).data('username')); // URL-safe
 
-                const url = `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/userreport.php?attemptid=${attemptid}&quizid=${quizid}&userid=${userid}&username=${username}`;
+                const url = `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/userreport.php` +
+                `?attemptid=${attemptid}` +
+                `&quizid=${quizid}` +
+                `&userid=${userid}` +
+                `&username=${username}`;
 
                 window.open(url, '_blank');
             });
