@@ -106,7 +106,7 @@ class api {
             'domain: ' . $domain,
             'user_id: ' . $userid,
             'quiz_id: ' . $quizid,
-        ];       
+        ];
 
         $curl->setHeader($header);
         $result = $curl->post($url, json_encode($imagedata));

@@ -72,7 +72,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $url = new moodle_url('/admin/settings.php', ['section' => 'modsettingsquizcatproctoring']);
         $url = $url->out();
         $attemptid = optional_param('attempt', 0, PARAM_INT);
-        
+
         $isactive = get_config('quizaccess_quizproctoring', 'getuserinfo');
         $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
@@ -235,7 +235,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         // Video tag.
         $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_video', 'class' => 'form-group row fitem videohtml']);
         $html .= html_writer::div('', 'col-md-3');
-        $videotag = html_writer::tag('video', '', ['id' => 'video', 'width' => '320', 'height' => '240', 'autoplay' => 'autoplay', 'draggable' => 'false']);
+        $videotag = html_writer::tag('video', '', ['id' => 'video', 'width' => '320',
+            'height' => '240', 'autoplay' => 'autoplay', 'draggable' => 'false']);
         $html .= html_writer::div($videotag, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
@@ -269,9 +270,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $html .= html_writer::end_tag('div');
 
         $mform->addElement('html', $html);
-        if(!empty($proctoringdata) && $proctoringdata->enableuploadidentity == 1){
+        if (!empty($proctoringdata) && $proctoringdata->enableuploadidentity == 1) {
             $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
-         'quizaccess_quizproctoring'), null, $filemanageroptions);
+            'quizaccess_quizproctoring'), null, $filemanageroptions);
         }
         $mform->addElement('hidden', 'userimageset', '', ['id' => 'userimageset']);
         $mform->setType('userimageset', PARAM_INT);

@@ -37,22 +37,22 @@ $debug = optional_param('debug', 0, PARAM_INT);
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
-$sql = "SELECT 
+$sql = "SELECT
     mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username,
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS
 noface_count, COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END)
 AS minimize_count, COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END)
 AS multifacesdetected, COUNT(CASE WHEN p.status = 'nocameradetected' THEN 1 END)
-AS nocameradetected, 
+AS nocameradetected,
 COUNT(CASE WHEN p.status = 'eyesnotopened' THEN 1 END)
 AS eyesnotopened,
 COUNT(CASE WHEN p.status IN
-('minimizedetected', 'multifacesdetected', 'nofacedetected', 'nocameradetected', 'eyesnotopened') 
+('minimizedetected', 'multifacesdetected', 'nofacedetected', 'nocameradetected', 'eyesnotopened')
     THEN 1 END) AS totalwarnings
 FROM {user} u
-JOIN {quizaccess_main_proctor} mp 
+JOIN {quizaccess_main_proctor} mp
     ON mp.userid = u.id AND mp.quizid = :quizid1AND mp.deleted = 0
-LEFT JOIN {quizaccess_proctor_data} p 
+LEFT JOIN {quizaccess_proctor_data} p
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0
      AND mp.attemptid= p.attemptid
 WHERE mp.userimg IS NOT NULL AND mp.userimg != '' AND p.image_status != 'M'
@@ -112,7 +112,7 @@ if (empty($records)) {
     $pdf->Write(0, 'No records found.');
 } else {
     $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(28, 7, 'Student', 1, 0, 'C');    
+    $pdf->Cell(28, 7, 'Student', 1, 0, 'C');
     $pdf->Cell(19, 7, 'Tab Switch', 1, 0, 'C');
     $pdf->Cell(19, 7, 'No Camera', 1, 0, 'C');
     $pdf->Cell(18, 7, 'No Face', 1, 0, 'C');
@@ -177,10 +177,10 @@ if (empty($records)) {
         $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera, $y);
         $pdf->MultiCell($wnoface, $maxheight, $r->noface_count, 1, 'C', false, 0);
 
-        $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera +  $wnoface, $y);
+        $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera + $wnoface, $y);
         $pdf->MultiCell($wnoeye, $maxheight, $r->eyesnotopened, 1, 'C', false, 0);
 
-        $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera+ $wnoface + $wnoeye , $y);
+        $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye, $y);
         $pdf->MultiCell($wmultiface, $maxheight, $r->multifacesdetected, 1, 'C', false, 0);
 
         $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface, $y);

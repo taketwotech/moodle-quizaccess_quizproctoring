@@ -1,4 +1,28 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Create user report.
+ *
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
+ * @copyright  2025 Mahendra Soni
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 require_once(__DIR__ . '/../../../../config.php');
 require_login();
 require_once($CFG->libdir . '/pdflib.php');
@@ -8,7 +32,6 @@ $quizid = required_param('quizid', PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
 $username = required_param('username', PARAM_RAW);
 
-// Fetch quiz and attempt details
 $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 $attempt = $DB->get_record('quiz_attempts', [
@@ -17,63 +40,56 @@ $attempt = $DB->get_record('quiz_attempts', [
     'id' => $attemptid,
 ]);
 
-// Preprocess image
-function preprocessImage($sourcePath, $tempDir) {
-    $info = getimagesize($sourcePath);
+function preprocessimage($sourcepath, $tempdir) {
+    $info = getimagesize($sourcepath);
     if (!$info) {
-        error_log("Failed to get image size: $sourcePath");
         return false;
     }
 
     $mime = $info['mime'];
-    $ext = pathinfo($sourcePath, PATHINFO_EXTENSION);
-    $filename = basename($sourcePath, '.' . $ext);
+    $ext = pathinfo($sourcepath, PATHINFO_EXTENSION);
+    $filename = basename($sourcepath, '.' . $ext);
 
     switch ($mime) {
         case 'image/jpeg':
-            $image = @imagecreatefromjpeg($sourcePath);
+            $image = @imagecreatefromjpeg($sourcepath);
             $ext = '.jpg';
             break;
         case 'image/png':
-            $image = @imagecreatefrompng($sourcePath);
+            $image = @imagecreatefrompng($sourcepath);
             $ext = '.png';
             break;
         default:
-            error_log("Unsupported image MIME type: $mime");
             return false;
     }
 
     if (!$image) {
-        error_log("Failed to create image resource: $sourcePath");
         return false;
     }
 
-    $tempPath = $tempDir . 'processed_' . $filename . $ext;
-    $newImage = imagecreatetruecolor(imagesx($image), imagesy($image));
-    if (!$newImage) {
+    $tempPath = $tempdir . 'processed_' . $filename . $ext;
+    $newimage = imagecreatetruecolor(imagesx($image), imagesy($image));
+    if (!$newimage) {
         imagedestroy($image);
-        error_log("Failed to create true color image: $sourcePath");
         return false;
     }
 
-    imagecopy($newImage, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
+    imagecopy($newimage, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
 
     $result = ($mime === 'image/png') ?
-        imagepng($newImage, $tempPath, 9) :
-        imagejpeg($newImage, $tempPath, 90);
+        imagepng($newimage, $tempPath, 9) :
+        imagejpeg($newimage, $tempPath, 90);
 
     imagedestroy($image);
-    imagedestroy($newImage);
+    imagedestroy($newimage);
 
     if (!$result) {
-        error_log("Failed to save processed image: $tempPath");
         return false;
     }
 
     return $tempPath;
 }
 
-// Fetch image records
 $sqlm = "SELECT * FROM {quizaccess_main_proctor}
         WHERE userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND deleted = 0
         ORDER BY id ASC";
@@ -89,64 +105,52 @@ $combinedimages = array_merge($getmimages, $getimages);
 
 $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
 
-// Start PDF
 $pdf = new \TCPDF();
 $pdf->AddPage();
 $pdf->SetFont('helvetica', 'B', 14);
 $pdf->Cell(0, 10, 'Student Facial Analysis For ' . $username, 0, 1, 'C');
 
 $pdf->SetFont('helvetica', 'B', 14);
-$pdf->Cell(0, 10, $quiz->name, 0, 1, 'C'); // using 1 to move to next line
+$pdf->Cell(0, 10, $quiz->name, 0, 1, 'C');
 $pdf->SetTextColor(0, 0, 0);
-$pdf->Ln(5); // Optional smaller spacing
+$pdf->Ln(5);
 
-// Table header
 $pdf->SetFont('helvetica', 'B', 11);
 $pdf->Cell(60, 8, 'Student name', 1, 0, 'C');
 $pdf->Cell(60, 8, 'Attempt ID', 1, 0, 'C');
 $pdf->Cell(60, 8, 'Attempt Time', 1, 1, 'C');
 
-// Column widths
-$w_name = 60;
-$w_attemptid = 60;
-$w_timestart = 60;
+$wname = 60;
+$wattemptid = 60;
+$wtimestart = 60;
 
-// Prepare the actual values
-$studentName = $user->firstname . ' ' . $user->lastname;
-$attemptIdStr = (string)$attemptid;
-$timeStr = $timestart;
+$studentname = $user->firstname . ' ' . $user->lastname;
+$attemptidstr = (string)$attemptid;
+$timestr = $timestart;
 
-// Get heights for each value
 $pdf->SetFont('helvetica', '', 11);
-$h_name = $pdf->getStringHeight($w_name, $studentName);
-$h_id = $pdf->getStringHeight($w_attemptid, $attemptIdStr);
-$h_time = $pdf->getStringHeight($w_timestart, $timeStr);
+$hname = $pdf->getStringHeight($wname, $studentname);
+$hid = $pdf->getStringHeight($wattemptid, $attemptidstr);
+$htime = $pdf->getStringHeight($wtimestart, $timestr);
 
-// Determine max height for row
-$maxHeight = max($h_name, $h_id, $h_time);
+$maxheight = max($hname, $hid, $htime);
 
-// Write the row using MultiCell
-$pdf->MultiCell($w_name, $maxHeight, $studentName, 1, 'C', false, 0, '', '', true, 0, false, true, $maxHeight, 'M');
-$pdf->MultiCell($w_attemptid, $maxHeight, $attemptIdStr, 1, 'C', false, 0, '', '', true, 0, false, true, $maxHeight, 'M');
-$pdf->MultiCell($w_timestart, $maxHeight, $timeStr, 1, 'C', false, 1, '', '', true, 0, false, true, $maxHeight, 'M');
+$pdf->MultiCell($wname, $maxheight, $studentname, 1, 'C', false, 0, '', '', true, 0, false, true, $maxheight, 'M');
+$pdf->MultiCell($wattemptid, $maxheight, $attemptidstr, 1, 'C', false, 0, '', '', true, 0, false, true, $maxheight, 'M');
+$pdf->MultiCell($wtimestart, $maxheight, $timestr, 1, 'C', false, 1, '', '', true, 0, false, true, $maxheight, 'M');
 
-// Add spacing after the row
 $pdf->Ln(8);
 
-// Image layout config
-$imagesPerRow = 3;
-$imageWidth = 55;
-$imageHeight = 40;
-$textHeight = 7;
-$cellPadding = 5;
+$imagesperrow = 3;
+$imagewidth = 55;
+$imageheight = 40;
+$textheight = 7;
+$cellpadding = 5;
 $col = 0;
-$startX = $pdf->GetX();
-$startY = $pdf->GetY();
+$startx = $pdf->GetX();
+$starty = $pdf->GetY();
 
 foreach ($combinedimages as $img) {
-    //if ($img->image_status === 'M') continue;
-
-    // Resolve image path
     if (empty($img->userimg)) {
         $imagepath = ($img->status === 'minimizedetected') ?
             $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png' :
@@ -154,53 +158,48 @@ foreach ($combinedimages as $img) {
     } else {
         $imagepath = $CFG->dataroot . '/proctorlink/' . $img->userimg;
         if (strpos($imagepath, $CFG->dataroot) === 0) {
-            $processedPath = preprocessImage($imagepath, $CFG->dataroot . '/proctorlink/');
-            if (!$processedPath || !file_exists($processedPath)) {
+            $processedpath = preprocessimage($imagepath, $CFG->dataroot . '/proctorlink/');
+            if (!$processedpath || !file_exists($processedpath)) {
                 error_log("Skipping image due to failed preprocessing: $imagepath");
                 continue;
             }
-            $imagepath = $processedPath;
+            $imagepath = $processedpath;
         }
     }
 
     $imagepath = str_replace('\\', '/', $imagepath);
     if (!file_exists($imagepath) || !getimagesize($imagepath)) {
-        error_log("Skipping invalid image: $imagepath");
         continue;
     }
 
-    // Image metadata
     $status = $img->status ? get_string($img->status, 'quizaccess_quizproctoring', '') : '';
     $formattedtime = userdate($img->timecreated, '%H:%M');
 
-    // Draw image
     $x = $pdf->GetX();
     $y = $pdf->GetY();
-    $pdf->Image($imagepath, $x, $y, $imageWidth, $imageHeight);
+    $pdf->Image($imagepath, $x, $y, $imagewidth, $imageheight);
 
-    // Status and timestamp (small)
     $pdf->SetFont('helvetica', '', 7);
-    $pdf->SetXY($x, $y + $imageHeight + 1);
-    $pdf->Cell($imageWidth, 3.5, $status, 0, 2, 'C');
-    $pdf->Cell($imageWidth, 3.5, $formattedtime, 0, 0, 'C');
+    $pdf->SetXY($x, $y + $imageheight + 1);
+    $pdf->Cell($imagewidth, 3.5, $status, 0, 2, 'C');
+    $pdf->Cell($imagewidth, 3.5, $formattedtime, 0, 0, 'C');
 
     $col++;
-    if ($col % $imagesPerRow === 0) {
-        $pdf->SetXY($startX, $y + $imageHeight + $textHeight + 2); // go to next row
+    if ($col % $imagesperrow === 0) {
+        $pdf->SetXY($startx, $y + $imageheight + $textheight + 2); // go to next row
     } else {
-        $pdf->SetXY($x + $imageWidth + $cellPadding, $y);
+        $pdf->SetXY($x + $imagewidth + $cellpadding, $y);
     }
 
-    // Page break if too low
     if ($pdf->GetY() > 240) {
         $pdf->AddPage();
-        $startX = $pdf->GetX();
-        $startY = $pdf->GetY();
+        $startx = $pdf->GetX();
+        $starty = $pdf->GetY();
         $col = 0;
     }
 
-    if ($processedPath && file_exists($processedPath)) {
-        @unlink($processedPath);
+    if ($processedpath && file_exists($processedpath)) {
+        @unlink($processedpath);
     }
 }
 

@@ -99,7 +99,7 @@ if (!$mainentry->isautosubmit) {
             }
         }
     }
-    
+
     // Validate image.
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);

@@ -26,7 +26,6 @@ namespace quizaccess_quizproctoring\task;
 
 use core\task\scheduled_task;
 use Exception;
-defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
 
@@ -52,26 +51,21 @@ class checkGetUserInfo extends scheduled_task {
      * @return boolean
      */
     public function execute() {
-	    global $DB, $CFG;
-
-	    mtrace("Executing scheduled task: Check Get User Info");
-
-	    try {	        
-	        $response = \quizaccess_quizproctoring\api::getuserinfo();
-	        $responsedata = json_decode($response, true);
-
-	        if (is_array($responsedata) && array_key_exists('active', $responsedata)) {
-	            $status = $responsedata['active'] ? 1 : 0;
-	            set_config('getuserinfo', $status, 'quizaccess_quizproctoring');
-	            mtrace("User info status updated: " . $status);
-	        } else {
-	            mtrace("Invalid response structure from getuserinfo API.");
-	        }
-	    } catch (Exception $exception) {
-	        mtrace('Error in getuserinfo API: ' . $exception->getMessage());
-	    }
-
-	    return true;
-	}
-
+        global $DB, $CFG;
+        mtrace("Executing scheduled task: Check Get User Info");
+        try {	        
+            $response = \quizaccess_quizproctoring\api::getuserinfo();
+            $responsedata = json_decode($response, true);
+            if (is_array($responsedata) && array_key_exists('active', $responsedata)) {
+                $status = $responsedata['active'] ? 1 : 0;
+                set_config('getuserinfo', $status, 'quizaccess_quizproctoring');
+                mtrace("User info status updated: " . $status);
+            } else {
+                mtrace("Invalid response structure from getuserinfo API.");
+            }
+        } catch (Exception $exception) {
+            mtrace('Error in getuserinfo API: ' . $exception->getMessage());
+        }
+        return true;
+    }
 }

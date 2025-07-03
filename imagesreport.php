@@ -73,7 +73,7 @@ $PAGE->requires->js_init_code("
     });
 ");
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
-$mainrecords = []; 
+$mainrecords = [];
 if ($deletequizid || $delcourse) {
     if ($deletequizid) {
         $sql = "SELECT * from {quizaccess_main_proctor} where quizid =
@@ -104,7 +104,7 @@ if ($deletequizid || $delcourse) {
         $deletequiz = $quizidsstring;
     }
     if ($all) {
-        $tmpdir = $CFG->dataroot . '/proctorlink/';            
+        $tmpdir = $CFG->dataroot . '/proctorlink/';
         foreach ($usersrecords as $usersrecord) {
             if (class_exists('\mod_quiz\quiz_settings')) {
                 $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);

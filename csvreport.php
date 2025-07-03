@@ -34,19 +34,19 @@ $course = required_param('course', PARAM_RAW);
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
-// Fetch data
-$sql = "SELECT 
+$sql = "SELECT
     mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username,
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS noface_count,
     COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END) AS minimize_count,
     COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END) AS multifacesdetected,
     COUNT(CASE WHEN p.status = 'nocameradetected' THEN 1 END) AS nocameradetected,
     COUNT(CASE WHEN p.status = 'eyesnotopened' THEN 1 END) AS eyesnotopened,
-    COUNT(CASE WHEN p.status IN ('minimizedetected', 'multifacesdetected', 'nofacedetected', 'nocameradetected', 'eyesnotopened') THEN 1 END) AS totalwarnings
+    COUNT(CASE WHEN p.status IN ('minimizedetected', 'multifacesdetected',
+    'nofacedetected', 'nocameradetected', 'eyesnotopened') THEN 1 END) AS totalwarnings
 FROM {user} u
-JOIN {quizaccess_main_proctor} mp 
+JOIN {quizaccess_main_proctor} mp
     ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
-LEFT JOIN {quizaccess_proctor_data} p 
+LEFT JOIN {quizaccess_proctor_data} p
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0 AND mp.attemptid = p.attemptid
 WHERE mp.userimg IS NOT NULL AND mp.userimg != ''  AND p.image_status != 'M'
 GROUP BY mp.attemptid, u.id, u.firstname, u.lastname, u.username
@@ -59,7 +59,6 @@ $params = [
 
 $records = $DB->get_records_sql($sql, $params);
 
-// Prepare CSV
 $filename = 'proctoring_report_' . $course . '.csv';
 $tempdir = make_temp_directory('quizaccess_quizproctoring/reports');
 $filepath = $tempdir . '/' . $filename;

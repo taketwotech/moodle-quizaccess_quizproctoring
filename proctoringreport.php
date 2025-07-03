@@ -161,7 +161,7 @@ $PAGE->requires->js_init_code("
 $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deleteuserid) {
-    $tmpdir = $CFG->dataroot . '/proctorlink';            
+    $tmpdir = $CFG->dataroot . '/proctorlink';
     $sqlm = "SELECT * from {quizaccess_main_proctor} where userid =
     ".$deleteuserid." AND quizid = ".$quizid."
     AND deleted = 0";
@@ -173,7 +173,7 @@ if ($deleteuserid) {
                 unlink($tempfilepath);
             }
         }
-        $DB->set_field('quizaccess_main_proctor', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);        
+        $DB->set_field('quizaccess_main_proctor', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
     }
 
     $sql = "SELECT * from {quizaccess_proctor_data} where userid =

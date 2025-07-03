@@ -205,7 +205,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2024020251, 'quizaccess', 'quizproctoring');
     }
-    
+
     if ($oldversion < 2024092404) {
 
         // Define field isautosubmit to be added to quizaccess_proctor_data.
@@ -379,7 +379,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     if ($oldversion < 2025061300) {
         $task = new \quizaccess_quizproctoring\task\images_adhoc_task();
         $task->set_component('quizaccess_quizproctoring');
-        
+
         \core\task\manager::queue_adhoc_task($task);
 
         upgrade_plugin_savepoint(true, 2025061300, 'quizaccess', 'quizproctoring');
@@ -411,7 +411,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
         // Adding indexes to table quizaccess_main_proctor.
-        $table->add_index('indexing', XMLDB_INDEX_NOTUNIQUE, ['quizid', 'image_status', 'userid', 'deleted', 'status', 'attemptid', 'isautosubmit']);
+        $table->add_index('indexing', XMLDB_INDEX_NOTUNIQUE, ['quizid', 'image_status',
+            'userid', 'deleted', 'status', 'attemptid', 'isautosubmit']);
 
         // Conditionally launch create table for quizaccess_main_proctor.
         if (!$dbman->table_exists($table)) {
@@ -437,14 +438,13 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025061703, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025061704) {        
+    if ($oldversion < 2025061704) {
         $task = new \quizaccess_quizproctoring\task\mainImagesTask();
         $task->set_component('quizaccess_quizproctoring');
-        
+
         \core\task\manager::queue_adhoc_task($task);
         // Mark the upgrade savepoint.
         upgrade_plugin_savepoint(true, 2025061704, 'quizaccess', 'quizproctoring');
     }
-    
     return true;
 }

@@ -31,7 +31,7 @@ $filename = required_param('filename', PARAM_FILE);
 
 $filepath = make_temp_directory('quizaccess_quizproctoring/reports') . '/' . $filename;
 if (!file_exists($filepath)) {
-    print_error('filenotfound');
+    throw new moodle_exception('filenotfound', 'error');
 }
 
 send_temp_file($filepath, $filename);

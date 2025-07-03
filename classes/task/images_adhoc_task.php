@@ -26,9 +26,20 @@ namespace quizaccess_quizproctoring\task;
 
 use core\task\scheduled_task;
 use Exception;
-defined('MOODLE_INTERNAL') || die();
 
+
+/**
+ * Scheduled task for Copy Images from temp to proctorlink folder
+ *
+ * @copyright  2025 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class images_adhoc_task extends \core\task\adhoc_task {
+    /**
+     * Execute Task.
+     *
+     * @return boolean
+     */
     public function execute() {
     	global $CFG;        
         

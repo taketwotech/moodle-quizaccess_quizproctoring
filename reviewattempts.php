@@ -141,7 +141,7 @@ if ($proctoringimageshow == 1) {
         '<p>' . get_string('reviewattemptsu', 'quizaccess_quizproctoring', fullname($user)) . '</p>' .
         '<div>' . $btn . '</div>' .
         '</div><br/>';
-    
+
     echo '<table id="attemptsreporttable" class="display" style="width:100%">';
     echo '<thead><tr>';
     foreach ($headers as $headcol) {

@@ -26,11 +26,21 @@ namespace quizaccess_quizproctoring\task;
 
 use core\task\scheduled_task;
 use Exception;
-defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Scheduled task for Copy Main Images db data to new table
+ *
+ * @copyright  2025 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class mainImagesTask extends \core\task\adhoc_task {
+    /**
+     * Execute Task.
+     *
+     * @return boolean
+     */
     public function execute() {
-    	global $DB;        
+    	global $DB;
         
         mtrace("Running adhoc task Started");
 
@@ -38,15 +48,13 @@ class mainImagesTask extends \core\task\adhoc_task {
                 WHERE deleted = 0 AND image_status = 'M'
                 ORDER BY id ASC";
         $records = $DB->get_records_sql($sql);
-
         foreach ($records as $record) {
             $newrecord = new \stdClass();
-            
             $newrecord->userid = $record->userid;
             $newrecord->quizid = $record->quizid;
             $newrecord->user_identity = $record->user_identity;
             $newrecord->userimg = $record->userimg;
-            $newrecord->image_status = $record->image_status;            
+            $newrecord->image_status = $record->image_status;
             $newrecord->timecreated = $record->timecreated;
             $newrecord->timemodified = $record->timemodified;
             $newrecord->aws_response = $record->aws_response;
@@ -55,10 +63,8 @@ class mainImagesTask extends \core\task\adhoc_task {
             $newrecord->status = $record->status;
             $newrecord->isautosubmit = $record->isautosubmit;
             $newrecord->response = $record->response;
-            
             $DB->insert_record('quizaccess_main_proctor', $newrecord);
         }
-
         mtrace("Adhoc task completed successfully.");
     }
 }

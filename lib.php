@@ -92,17 +92,15 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
     $SESSION->proctorlink_version = $plugin->release;
 
-    // Get the proctoring grouping
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $COURSE->id]);
     $usergroup = '';
-    
+
     if ($proctoringgrouping) {
-        // Get user's group from proctoring grouping
-        $sql = "SELECT g.name 
-                FROM {groups} g 
-                JOIN {groupings_groups} gg ON g.id = gg.groupid 
-                JOIN {groups_members} gm ON g.id = gm.groupid 
-                WHERE gg.groupingid = :groupingid 
+        $sql = "SELECT g.name
+                FROM {groups} g
+                JOIN {groupings_groups} gg ON g.id = gg.groupid
+                JOIN {groups_members} gm ON g.id = gm.groupid
+                WHERE gg.groupingid = :groupingid
                 AND gm.userid = :userid";
         $usergroup = $DB->get_field_sql($sql, ['groupingid' => $proctoringgrouping->id, 'userid' => $USER->id]);
     }

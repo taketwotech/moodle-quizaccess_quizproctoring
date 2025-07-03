@@ -37,23 +37,19 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 
 global $DB, $CFG, $OUTPUT;
 
-// DataTables core parameters
 $draw = optional_param('draw', 1, PARAM_INT);
 $start = optional_param('start', 0, PARAM_INT);
 $length = optional_param('length', 10, PARAM_INT);
 
-// Search value (from nested structure)
 $searchvalue = '';
 if (isset($_POST['search']['value'])) {
     $searchvalue = trim($_POST['search']['value']);
 }
 
-// Column mapping
 $columns = ['fullname', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
 $ordercolumn = 'u.firstname';
 $orderdir = 'ASC';
 
-// Handle ordering from DataTables
 if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
     $colindex = (int) $_POST['order'][0]['column'];
     $orderdir = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
@@ -70,10 +66,12 @@ if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
                 $ordercolumn = 'MAX(mp.timecreated)';
                 break;
             case 'totalimages':
-                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0)';
+                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
+                WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0)';
                 break;
             case 'warnings':
-                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0 AND pd.status != \'\')';
+                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
+                WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0 AND pd.status != \'\')';
                 break;
             default:
                 $ordercolumn = 'u.firstname';
@@ -86,8 +84,8 @@ $params = ['quizid' => $quizid];
 
 if (!empty($searchvalue)) {
     $where .= " AND (
-        u.firstname LIKE :searchfirstname OR 
-        u.lastname LIKE :searchlastname OR 
+        u.firstname LIKE :searchfirstname OR
+        u.lastname LIKE :searchlastname OR
         u.email LIKE :searchemail
     )";
     $params['searchfirstname'] = "%{$searchvalue}%";
@@ -99,10 +97,10 @@ $totalsql = "SELECT COUNT(DISTINCT u.id)
              FROM {user} u
              JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
              WHERE $where";
-$recordsTotal = $DB->count_records_sql($totalsql, $params);
+$recordstotal = $DB->count_records_sql($totalsql, $params);
 
 $sql = "
-    SELECT 
+    SELECT
         u.id,
         u.firstname,
         u.lastname,
@@ -176,8 +174,8 @@ foreach ($records as $r) {
 
 echo json_encode([
     'draw' => $draw,
-    'recordsTotal' => $recordsTotal,
-    'recordsFiltered' => $recordsTotal,
+    'recordsTotal' => $recordstotal,
+    'recordsFiltered' => $recordstotal,
     'data' => $data
 ]);
 

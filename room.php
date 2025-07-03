@@ -53,40 +53,37 @@ if ($proctorrecord->enableteacherproctor) {
     $PAGE->set_pagelayout('report');
     echo $OUTPUT->header();
 
-    // Get the proctoring grouping
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $course->id]);
     $usergroup = '';
     
     if ($proctoringgrouping) {
-        // Get user's group from proctoring grouping
-        $sql = "SELECT g.name 
-                FROM {groups} g 
-                JOIN {groupings_groups} gg ON g.id = gg.groupid 
-                JOIN {groups_members} gm ON g.id = gm.groupid 
-                WHERE gg.groupingid = :groupingid 
+        $sql = "SELECT g.name
+                FROM {groups} g
+                JOIN {groupings_groups} gg ON g.id = gg.groupid
+                JOIN {groups_members} gm ON g.id = gm.groupid
+                WHERE gg.groupingid = :groupingid
                 AND gm.userid = :userid";
         $usergroup = $DB->get_field_sql($sql, ['groupingid' => $proctoringgrouping->id, 'userid' => $USER->id]);
     }
     
-    // Add teacher iframe that uses full page
-    $teacherUrl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://stream.proctorlink.com/teacher';
+    $teacherurl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://stream.proctorlink.com/teacher';
     $roomid = $studenthexstring.'_'.$room;
     if ($usergroup != '') {
         $roomid = $studenthexstring.'_'.$room.'_'.$usergroup;
     }
-    $teacherParams = [
+    $teacherparams = [
         'room' => $roomid,
         'cmid' => $cmid,
         'disablecontrol' => 1,
         'teacher' => 'true'
     ];
 
-    $teacherIframeUrl = $teacherUrl . '?' . http_build_query($teacherParams, '', '&', PHP_QUERY_RFC3986);
+    $teacheriframeurl = $teacherurl . '?' . http_build_query($teacherparams, '', '&', PHP_QUERY_RFC3986);
     
     echo '<div class="teacher-iframe-container">';
-    echo '<iframe src="' . htmlspecialchars($teacherIframeUrl) . '"></iframe>';
+    echo '<iframe src="' . htmlspecialchars($teacheriframeurl) . '"></iframe>';
     echo '</div>';
-    
+
     echo $OUTPUT->footer();
 } else {
     redirect($CFG->wwwroot . "/mod/quiz/view.php?id={$cmid}");
