@@ -876,42 +876,41 @@ function makeDraggable(element) {
     document.addEventListener('touchend', function() {
         endDrag();
     });
-}
-
-/**
- * DraggableVideoPosition
- *
- * @param {clientX} element
- * @param {clientY} element
- * @return {void}
- */
-function moveElement(clientX, clientY) {
-    let newLeft = clientX - offsetX;
-    let newTop = clientY - offsetY;
-    const maxLeft = window.innerWidth - element.offsetWidth;
-    const maxTop = window.innerHeight - element.offsetHeight;
-    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-    newTop = Math.max(0, Math.min(newTop, maxTop));
-    if (element.style.position !== 'fixed') {
-        element.style.position = 'fixed';
+    /**
+     * DraggableVideoPosition
+     *
+     * @param {clientX} element
+     * @param {clientY} element
+     * @return {void}
+     */
+    function moveElement(clientX, clientY) {
+        let newLeft = clientX - offsetX;
+        let newTop = clientY - offsetY;
+        const maxLeft = window.innerWidth - element.offsetWidth;
+        const maxTop = window.innerHeight - element.offsetHeight;
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        if (element.style.position !== 'fixed') {
+            element.style.position = 'fixed';
+        }
+        element.style.left = `${newLeft}px`;
+        element.style.top = `${newTop}px`;
     }
-    element.style.left = `${newLeft}px`;
-    element.style.top = `${newTop}px`;
-}
 
-/**
- * DraggableVideoPosition
- *
- * @return {void}
- */
-function endDrag() {
-    if (isDragging) {
-        isDragging = false;
-        element.style.cursor = 'grab';
-        localStorage.setItem('videoPosition', JSON.stringify({
-            left: parseInt(element.style.left, 10),
-            top: parseInt(element.style.top, 10)
-        }));
+    /**
+     * DraggableVideoPosition
+     *
+     * @return {void}
+     */
+    function endDrag() {
+        if (isDragging) {
+            isDragging = false;
+            element.style.cursor = 'grab';
+            localStorage.setItem('videoPosition', JSON.stringify({
+                left: parseInt(element.style.left, 10),
+                top: parseInt(element.style.top, 10)
+            }));
+        }
     }
 }
 
