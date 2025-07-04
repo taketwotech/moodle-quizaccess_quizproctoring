@@ -40,8 +40,8 @@ class mainImagesTask extends \core\task\adhoc_task {
      * @return boolean
      */
     public function execute() {
-    	global $DB;
-        
+        global $DB;
+
         mtrace("Running adhoc task Started");
 
         $sql = "SELECT * FROM {quizaccess_proctor_data}

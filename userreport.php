@@ -67,7 +67,7 @@ function preprocessimage($sourcepath, $tempdir) {
         return false;
     }
 
-    $tempPath = $tempdir . 'processed_' . $filename . $ext;
+    $temppath = $tempdir . 'processed_' . $filename . $ext;
     $newimage = imagecreatetruecolor(imagesx($image), imagesy($image));
     if (!$newimage) {
         imagedestroy($image);
@@ -77,8 +77,8 @@ function preprocessimage($sourcepath, $tempdir) {
     imagecopy($newimage, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));
 
     $result = ($mime === 'image/png') ?
-        imagepng($newimage, $tempPath, 9) :
-        imagejpeg($newimage, $tempPath, 90);
+        imagepng($newimage, $temppath, 9) :
+        imagejpeg($newimage, $temppath, 90);
 
     imagedestroy($image);
     imagedestroy($newimage);
@@ -87,7 +87,7 @@ function preprocessimage($sourcepath, $tempdir) {
         return false;
     }
 
-    return $tempPath;
+    return $temppath;
 }
 
 $sqlm = "SELECT * FROM {quizaccess_main_proctor}
@@ -160,7 +160,6 @@ foreach ($combinedimages as $img) {
         if (strpos($imagepath, $CFG->dataroot) === 0) {
             $processedpath = preprocessimage($imagepath, $CFG->dataroot . '/proctorlink/');
             if (!$processedpath || !file_exists($processedpath)) {
-                error_log("Skipping image due to failed preprocessing: $imagepath");
                 continue;
             }
             $imagepath = $processedpath;
@@ -186,7 +185,7 @@ foreach ($combinedimages as $img) {
 
     $col++;
     if ($col % $imagesperrow === 0) {
-        $pdf->SetXY($startx, $y + $imageheight + $textheight + 2); // go to next row
+        $pdf->SetXY($startx, $y + $imageheight + $textheight + 2);
     } else {
         $pdf->SetXY($x + $imagewidth + $cellpadding, $y);
     }

@@ -27,8 +27,6 @@ namespace quizaccess_quizproctoring\task;
 use core\task\scheduled_task;
 use Exception;
 
-require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
-
 /**
  * Scheduled task for Clean Stored Images
  *
@@ -53,7 +51,8 @@ class checkGetUserInfo extends scheduled_task {
     public function execute() {
         global $DB, $CFG;
         mtrace("Executing scheduled task: Check Get User Info");
-        try {	        
+        require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
+        try {
             $response = \quizaccess_quizproctoring\api::getuserinfo();
             $responsedata = json_decode($response, true);
             if (is_array($responsedata) && array_key_exists('active', $responsedata)) {

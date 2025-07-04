@@ -55,7 +55,7 @@ if ($proctorrecord->enableteacherproctor) {
 
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $course->id]);
     $usergroup = '';
-    
+
     if ($proctoringgrouping) {
         $sql = "SELECT g.name
                 FROM {groups} g
@@ -65,7 +65,7 @@ if ($proctorrecord->enableteacherproctor) {
                 AND gm.userid = :userid";
         $usergroup = $DB->get_field_sql($sql, ['groupingid' => $proctoringgrouping->id, 'userid' => $USER->id]);
     }
-    
+
     $teacherurl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://stream.proctorlink.com/teacher';
     $roomid = $studenthexstring.'_'.$room;
     if ($usergroup != '') {
@@ -74,12 +74,12 @@ if ($proctorrecord->enableteacherproctor) {
     $teacherparams = [
         'room' => $roomid,
         'cmid' => $cmid,
-        'disablecontrol' => 1,
+        'disablecontrol' => 0,
         'teacher' => 'true'
     ];
 
     $teacheriframeurl = $teacherurl . '?' . http_build_query($teacherparams, '', '&', PHP_QUERY_RFC3986);
-    
+
     echo '<div class="teacher-iframe-container">';
     echo '<iframe src="' . htmlspecialchars($teacheriframeurl) . '"></iframe>';
     echo '</div>';

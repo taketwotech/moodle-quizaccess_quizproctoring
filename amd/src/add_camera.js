@@ -400,14 +400,10 @@ function($, str, ModalFactory) {
                                 'width: 230px; height: 173px; border-radius: 3px; '
                     })
                     .on('load', function() {
-                        try {
-                            iframe[0].contentWindow.postMessage({
-                                type: 'init',
-                                timestamp: Date.now()
-                            }, externalserver);
-                        } catch (error) {
-                            throw error;
-                        }
+                        iframe[0].contentWindow.postMessage({
+                            type: 'init',
+                            timestamp: Date.now()
+                        }, externalserver);
                     });
                 iframeContainer.append(iframe);
                 $('body').append(iframeContainer);
@@ -517,7 +513,10 @@ function($, str, ModalFactory) {
                                     const ih = img.naturalHeight;
                                     const imgRatio = iw / ih;
 
-                                    let sx = 0, sy = 0, sw = iw, sh = ih;
+                                    let sx = 0;
+                                    let sy = 0;
+                                    let sw = iw;
+                                    let sh = ih;
 
                                     if (imgRatio > targetRatio) {
                                         sh = ih;
@@ -564,7 +563,6 @@ function($, str, ModalFactory) {
                         }
                     });
 
-                    // Start sending messages only after iframe is ready
                     setInterval(function() {
                         if (iframeReady) {
                             if (!responseReceived) {
@@ -595,7 +593,7 @@ function($, str, ModalFactory) {
 
                             responseReceived = false;
                             try {
-                                iframe[0].contentWindow.postMessage({ 
+                                iframe[0].contentWindow.postMessage({
                                     type: 'get_proctoring_image',
                                     timestamp: Date.now()
                                 }, externalserver);
@@ -603,19 +601,15 @@ function($, str, ModalFactory) {
                                 iframeReady = false;
                             }
                         } else {
-                            try {
-                                iframe[0].contentWindow.postMessage({ 
-                                    type: 'init',
-                                    timestamp: Date.now()
-                                }, externalserver);
-                            } catch (error) {
-                                throw error;
-                            }
+                            iframe[0].contentWindow.postMessage({
+                                type: 'init',
+                                timestamp: Date.now()
+                            }, externalserver);
                         }
                     }, setinterval * 1000);
                 }
             } else {
-                if (enableeyecheckreal) {                    
+                if (enableeyecheckreal) {
                     const waitForElements = setInterval(() => {
                         const vElement = document.getElementById('video');
                         const cElement = document.getElementById('canvas');
@@ -682,7 +676,7 @@ function($, str, ModalFactory) {
                     navigator.msGetUserMedia
                 );
 
-                attachMediaStream = function(element, stream) {
+                const attachMediaStream = function(element, stream) {
                     element.srcObject = stream;
                 };
 
@@ -876,11 +870,12 @@ function makeDraggable(element) {
     document.addEventListener('touchend', function() {
         endDrag();
     });
+
     /**
-     * DraggableVideoPosition
+     * Moves the draggable element to the specified screen coordinates.
      *
-     * @param {clientX} element
-     * @param {clientY} element
+     * @param {number} clientX - The X-coordinate of the cursor.
+     * @param {number} clientY - The Y-coordinate of the cursor.
      * @return {void}
      */
     function moveElement(clientX, clientY) {

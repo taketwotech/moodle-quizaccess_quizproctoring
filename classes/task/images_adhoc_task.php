@@ -41,23 +41,23 @@ class images_adhoc_task extends \core\task\adhoc_task {
      * @return boolean
      */
     public function execute() {
-    	global $CFG;        
-        
+        global $CFG;
+
         mtrace("Running adhoc task Started");
 
-        $sourceDir = make_temp_directory('quizaccess_quizproctoring/captured');
-        $destinationDir = $CFG->dataroot . '/proctorlink';
-        if (!file_exists($destinationDir)) {
-            mkdir($destinationDir, 0777, true);
+        $sourcedir = make_temp_directory('quizaccess_quizproctoring/captured');
+        $destinationdir = $CFG->dataroot . '/proctorlink';
+        if (!file_exists($destinationdir)) {
+            mkdir($destinationdir, 0777, true);
         }
 
-        $files = glob($sourceDir . '/*');
+        $files = glob($sourcedir . '/*');
         foreach ($files as $file) {
             if (is_file($file)) {
                 $basename = basename($file);
-                $destinationPath = $destinationDir . '/' . $basename;
+                $destinationpath = $destinationdir . '/' . $basename;
 
-                if (copy($file, $destinationPath)) {
+                if (copy($file, $destinationpath)) {
                     mtrace("Copied: $basename");
                 } else {
                     mtrace("Failed to copy: $basename");
