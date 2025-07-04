@@ -446,5 +446,29 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Mark the upgrade savepoint.
         upgrade_plugin_savepoint(true, 2025061704, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025062401) {
+
+        // Define table quizaccess_proctor_alert to be created.
+        $table = new xmldb_table('quizaccess_proctor_alert');
+
+        // Adding fields to table quizaccess_proctor_alert.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('quizid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('alertmessage', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('attemptid', XMLDB_TYPE_INTEGER, '11', null, null, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table quizaccess_proctor_alert.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for quizaccess_proctor_alert.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025062401, 'quizaccess', 'quizproctoring');
+    }
     return true;
 }

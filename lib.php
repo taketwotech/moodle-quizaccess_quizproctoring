@@ -160,6 +160,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $quizaproctoring->enablestudentvideo,
         $quizaproctoring->time_interval,
         $warningsleft,
+        $USER->id,
         '$usergroup',
         $detectionval);
     });

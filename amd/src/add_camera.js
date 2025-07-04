@@ -284,7 +284,7 @@ function($, str, ModalFactory) {
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
-        warnings = 0, usergroup = '', detectionval = null) {
+        warnings = 0, userid, usergroup = '', detectionval = null) {
         if (!verifyduringattempt) {
             localStorage.removeItem('eyecheckoff');
             var camera;
@@ -559,6 +559,26 @@ function($, str, ModalFactory) {
                                     });
                                 };
                                 img.src = data.imageData;
+                            } else if (data.type === 'proctoring-alert') {
+                                $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_sendalert.php',
+                                    method: 'POST',
+                                    data: {
+                                        quizid: quizid,
+                                        userid: userid,
+                                        attemptid: attemptid,
+                                        alertmessage: data.text
+                                    },
+                                    success: function(response) {
+                                        if (response && response.errorcode) {
+                                            $(document).trigger('popup', response.error);
+                                        } else {
+                                            if (response.success) {
+                                                $(document).trigger('popup', data.text);
+                                            }
+                                        }
+                                    },
+                                });
                             }
                         }
                     });
