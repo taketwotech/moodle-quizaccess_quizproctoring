@@ -44,8 +44,7 @@ if (!$cm) {
 }
 $context = context_module::instance($cm->id);
 
-if ($quizsubmit) {	
-	// Submit quiz.
+if ($quizsubmit) {
     $attemptobj = quiz_attempt::create($attemptid);
     $attemptobj->process_finish(time(), false);
     $autosubmitdata = $DB->get_record('quizaccess_proctor_data', [
@@ -61,19 +60,19 @@ if ($quizsubmit) {
         'msg' => get_string('autosubmitbyteacher', 'quizaccess_quizproctoring'), 'url' => $attemptobj->review_url()->out()]);
     die();
 } else {
-	$record = new stdClass();
-	$record->userid = $userid;
-	$record->quizid = $quizid;
-	$record->attemptid = $attemptid;
-	$record->alertmessage = $alertmessage;
-	$record->timecreated = time();
+    $record = new stdClass();
+    $record->userid = $userid;
+    $record->quizid = $quizid;
+    $record->attemptid = $attemptid;
+    $record->alertmessage = $alertmessage;
+    $record->timecreated = time();
 
-	$DB->insert_record('quizaccess_proctor_alert', $record);
+    $DB->insert_record('quizaccess_proctor_alert', $record);
 
-	$response = [
-	    'success' => true,
-	    'msg' => 'Alert sent successfully!',
-	];
-	echo json_encode($response);
-	exit();
+    $response = [
+        'success' => true,
+        'msg' => 'Alert sent successfully!',
+    ];
+    echo json_encode($response);
+    exit();
 }

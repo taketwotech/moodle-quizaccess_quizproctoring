@@ -285,9 +285,9 @@ function($, str, ModalFactory) {
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, setinterval = 300,
         warnings = 0, userid, usergroup = '', detectionval = null) {
+        let camera;
         if (!verifyduringattempt) {
             localStorage.removeItem('eyecheckoff');
-            var camera;
             if (document.readyState === 'complete') {
                 $('.quizstartbuttondiv [type=submit]').prop("disabled", false);
             } else {
@@ -430,8 +430,7 @@ function($, str, ModalFactory) {
                         }
                     });
 
-                    // Initialize camera and start proctoring
-                    var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                    camera = new Camera(cmid, mainimage, attemptid, quizid);
                     let iframeReady = false;
                     let responseReceived = true;
                     window.addEventListener('message', function(event) {
@@ -449,7 +448,7 @@ function($, str, ModalFactory) {
                                 vElement.play();
                                 restoreVideoPosition(vElement);
                                 makeDraggable(vElement);
-                                $(".student-iframe-container").css({display: 'none'});
+                                $(".student-iframe-container").css({ display: 'none' });
                             })
                             .catch((err) => {
                                 if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -695,10 +694,6 @@ function($, str, ModalFactory) {
                     navigator.mozGetUserMedia ||
                     navigator.msGetUserMedia
                 );
-
-                const attachMediaStream = function(element, stream) {
-                    element.srcObject = stream;
-                };
 
                 navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {

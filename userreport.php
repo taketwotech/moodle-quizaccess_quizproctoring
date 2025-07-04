@@ -40,6 +40,14 @@ $attempt = $DB->get_record('quiz_attempts', [
     'id' => $attemptid,
 ]);
 
+/**
+ * Preprocesses an image by loading it and saving a re-encoded copy in a temp directory.
+ *
+ *
+ * @param string $sourcepath Path to the original image file.
+ * @param string $tempdir Directory path where the processed image will be saved.
+ * @return string|false The path to the processed image file, or false on failure.
+ */
 function preprocessimage($sourcepath, $tempdir) {
     $info = getimagesize($sourcepath);
     if (!$info) {
