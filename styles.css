@@ -462,10 +462,12 @@ label[for="id_consentcheckbox"] {
     margin-left: 10px;
 }
 
+/* stylelint-disable-next-line declaration-no-important */
 .moodle-dialogue-focused {
     scroll-behavior: auto !important;
 }
 
+/* stylelint-disable-next-line declaration-no-important */
 #page-mod-quiz-view #canvas {
     object-fit: cover;
     width: 320px !important;
@@ -478,16 +480,18 @@ label[for="id_consentcheckbox"] {
 
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
+    /* stylelint-disable-next-line declaration-no-important */
     #page-mod-quiz-attempt .quizaccess_quizproctoring-video,
     .student-iframe-container {
         display: none !important;
     }
 
+    /* stylelint-disable-next-line declaration-no-important */
     .moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup .moodle-dialogue-wrap {
         overflow: scroll !important;
     }
 
-
+    /* stylelint-disable-next-line declaration-no-important */
     .mform.full-width-labels .fitem.row > .col-md-9 {
         flex: 0 0 63% !important;
         max-width: 100% !important;
