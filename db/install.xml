@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/quiz/accessrule/quizproctoring/db" VERSION="20250704" COMMENT="XMLDB file for Moodle mod/quiz/accessrule/quizproctoring"
+<XMLDB PATH="mod/quiz/accessrule/quizproctoring/db" VERSION="20250707" COMMENT="XMLDB file for Moodle mod/quiz/accessrule/quizproctoring"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../../../lib/xmldb/xmldb.xsd"
 >
@@ -42,7 +42,7 @@
         <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="status" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="isautosubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="quiz is auto submit"/>
-        <FIELD NAME="response" TYPE="char" LENGTH="1000" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="response" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

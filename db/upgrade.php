@@ -470,5 +470,19 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025062401, 'quizaccess', 'quizproctoring');
     }
+
+    if ($oldversion < 2025070600) {
+
+        // Changing type of field response on table quizaccess_proctor_data to text.
+        $table = new xmldb_table('quizaccess_proctor_data');
+        $field = new xmldb_field('response', XMLDB_TYPE_TEXT, null, null, null, null, null, 'isautosubmit');
+
+        // Launch change of type for field response.
+        $dbman->change_field_type($table, $field);
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025070600, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }
