@@ -439,65 +439,70 @@ function($, str, ModalFactory) {
                             if (data.type === 'ready') {
                                 iframeReady = true;
                                 const waitForElements = setInterval(() => {
-                        const vElement = document.getElementById('video');
-                        const cElement = document.getElementById('canvas');
-                        if (vElement && cElement) {
-                            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-                            .then((stream) => {
-                                vElement.srcObject = stream;
-                                vElement.play();
-                                restoreVideoPosition(vElement);
-                                makeDraggable(vElement);
-                                $(".student-iframe-container").css({ display: 'none' });
-                            })
-                            .catch((err) => {
-                                if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                                    $.ajax({
-                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-                                    method: 'POST',
-                                    data: {
-                                        cmid: cmid,
-                                        attemptid: attemptid,
-                                        mainimage: mainimage,
-                                    },
-                                    success: function(response) {
-                                        if (response && response.errorcode) {
-                                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                                            const leftwarnings = Math.max(warningsl - 1, 0);
-                                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                                            $(document).trigger('popup', response.error);
-                                        } else if (response.redirect && response.url) {
-                                            window.onbeforeunload = null;
-                                            $(document).trigger('popup', response.msg);
-                                            setTimeout(function() {
-                                                window.location.href = encodeURI(response.url);
-                                            }, 3000);
+                                    const vElement = document.getElementById('video');
+                                    const cElement = document.getElementById('canvas');
+                                    if (vElement && cElement) {
+                                        navigator.mediaDevices.getUserMedia({video: true, audio: false})
+                                        .then((stream) => {
+                                            vElement.srcObject = stream;
+                                            vElement.play();
+                                            restoreVideoPosition(vElement);
+                                            makeDraggable(vElement);
+                                            $(".student-iframe-container").css({display: 'none'});
+                                        })
+                                        .catch((err) => {
+                                            if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                                                $.ajax({
+                                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                                                method: 'POST',
+                                                data: {
+                                                    cmid: cmid,
+                                                    attemptid: attemptid,
+                                                    mainimage: mainimage,
+                                                },
+                                                success: function(response) {
+                                                    if (response && response.errorcode) {
+                                                        const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                                        const leftwarnings = Math.max(warningsl - 1, 0);
+                                                        localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                                        $(document).trigger('popup', response.error);
+                                                    } else if (response.redirect && response.url) {
+                                                        window.onbeforeunload = null;
+                                                        $(document).trigger('popup', response.msg);
+                                                        setTimeout(function() {
+                                                            window.location.href = encodeURI(response.url);
+                                                        }, 3000);
+                                                    }
+                                                }
+                                            });
+                                                throw err;
+                                            }
+                                        });
+                                        clearInterval(waitForElements);
+                                        if (enableeyecheckreal) {
+                                            // eslint-disable-next-line no-undef
+                                            const faceMesh = new FaceMesh({
+                                                locateFile: (file) => {
+                                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+                                                }
+                                            });
+                                            if (typeof setupFaceMesh !== 'undefined') {
+                                                // eslint-disable-next-line no-undef
+                                                setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
+                                                    if (result.status) {
+                                                        realtimeDetection(cmid, attemptid, mainimage,
+                                                            result.status, result.data);
+                                                    }
+                                                });
+                                            }
                                         }
                                     }
-                                });
-                                }
-                            });
-                            clearInterval(waitForElements);
-                            if (enableeyecheckreal) {
-                                const faceMesh = new FaceMesh({
-                                    locateFile: (file) => {
-                                        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                    }
-                                });
-                                if (typeof setupFaceMesh !== 'undefined') {
-                                    // eslint-disable-next-line no-undef
-                                    setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                        if (result.status) {
-                                            realtimeDetection(cmid, attemptid, mainimage,
-                                                result.status, result.data);
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                    }, 500);
+                                }, 500);
                             } else if (data.type === 'proctoring_image') {
                                 responseReceived = true;
+                                if (ismobiledevice() && document.visibilityState === 'hidden') {
+                                    return;
+                                }
                                 var context = camera.canvas.getContext('2d');
                                 var img = new Image();
 
@@ -585,6 +590,9 @@ function($, str, ModalFactory) {
                     setInterval(function() {
                         if (iframeReady) {
                             if (!responseReceived) {
+                                if (ismobiledevice() && document.visibilityState === 'hidden') {
+                                    return;
+                                }
                                 $.ajax({
                                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                     method: 'POST',
@@ -633,6 +641,7 @@ function($, str, ModalFactory) {
                         const vElement = document.getElementById('video');
                         const cElement = document.getElementById('canvas');
                         if (vElement && cElement) {
+                            // eslint-disable-next-line no-undef
                             const faceMesh = new FaceMesh({
                                 locateFile: (file) => {
                                     return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
@@ -709,18 +718,35 @@ function($, str, ModalFactory) {
                             'autoplay': 'autoplay'
                         }).css('display', enablestudentvideo ? 'block' : 'none')
                           .appendTo('body');
+                        let allowproctoring = true;
+
                         document.addEventListener('visibilitychange', function() {
-                            if (document.visibilityState === 'visible') {
-                                visibilitychange(cmid, attemptid, mainimage);
+                            if (ismobiledevice()) {
+                                if (document.visibilityState === 'hidden') {
+                                    allowproctoring = false;
+                                } else {
+                                    allowproctoring = true;
+                                    visibilitychange(cmid, attemptid, mainimage);
+                                }
+                            } else {
+                                if (document.visibilityState === 'visible') {
+                                    visibilitychange(cmid, attemptid, mainimage);
+                                }
                             }
                         });
+
                         var camera = new Camera(cmid, mainimage, attemptid, quizid);
                         camera.startcamera();
+
                         let intervalinms = setinterval * 1000;
                         let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
+
                         setTimeout(function() {
-                            camera.proctoringimage();
-                            setInterval(camera.proctoringimage.bind(camera), intervalinms);
+                            setInterval(function() {
+                                if (allowproctoring) {
+                                    camera.proctoringimage();
+                                }
+                            }, intervalinms);
                         }, randomdelayms);
                     }
                     return stream;
@@ -756,6 +782,14 @@ function($, str, ModalFactory) {
         });
     }
 
+    /**
+     * Checks if the current device is a mobile device.
+     *
+     * @returns {boolean} True if the device is a mobile device, false otherwise.
+     */
+    function ismobiledevice() {
+        return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
     /**
      * Setup visibility change
      *
