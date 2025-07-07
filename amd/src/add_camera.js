@@ -443,6 +443,7 @@ function($, str, ModalFactory) {
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
                                         navigator.mediaDevices.getUserMedia({video: true, audio: false})
+                                        // eslint-disable-next-line promise/always-return
                                         .then((stream) => {
                                             vElement.srcObject = stream;
                                             vElement.play();
@@ -705,6 +706,7 @@ function($, str, ModalFactory) {
                 );
 
                 navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
+                // eslint-disable-next-line promise/always-return
                 .then(function(stream) {
                     localMediaStream = stream;
                     if (verifyduringattempt) {
