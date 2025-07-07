@@ -74,7 +74,7 @@ if ($proctorrecord->enableteacherproctor) {
     $teacherparams = [
         'room' => $roomid,
         'cmid' => $cmid,
-        'disablecontrol' => 1,
+        'disablecontrol' => 0,
         'teacher' => 'true'
     ];
 
