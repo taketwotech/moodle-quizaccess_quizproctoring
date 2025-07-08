@@ -78,16 +78,16 @@ function($, str, ModalFactory) {
 
                     stream.getVideoTracks()[0].onended = function() {
                         takePictureButton.prop('disabled', true);
-                        $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
+                        $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
                     };
 
                     const audioTrack = stream.getAudioTracks()[0];
                     if (audioTrack) {
                         audioTrack.onended = function() {
-                            $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
+                            $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
                         };
                     } else {
-                        $(document).trigger('popup', 'Camera or microphone is disabled. Please enable both to continue.');
+                        $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
                     }
                     if (this.attemptid) {
                         restoreVideoPosition(videoElement);
@@ -442,17 +442,19 @@ function($, str, ModalFactory) {
                                     const vElement = document.getElementById('video');
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
-                                        navigator.mediaDevices.getUserMedia({video: true, audio: false})
+                                        navigator.mediaDevices.getUserMedia({video: true, audio: true})
                                         // eslint-disable-next-line promise/always-return
                                         .then((stream) => {
                                             vElement.srcObject = stream;
                                             vElement.play();
+                                            vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
                                             $(".student-iframe-container").css({display: 'none'});
                                         })
                                         .catch((err) => {
                                             if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+                                                $(".student-iframe-container").css({display: 'none'});
                                                 $.ajax({
                                                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                                 method: 'POST',
@@ -803,11 +805,11 @@ function($, str, ModalFactory) {
         var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
         var leftwarnings = Math.max(warningsl - 1, 0);
         localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-        var message = "Do not move away from active tab.";
+        let message = M.util.get_string('tabwarning', 'quizaccess_quizproctoring');
         if (leftwarnings === 1) {
-            message = `Do not move away from active tab. You have only ${leftwarnings} warning left.`;
+            message = M.util.get_string('tabwarningoneleft', 'quizaccess_quizproctoring');
         } else if (leftwarnings > 1) {
-            message = `Do not move away from active tab. You have only ${leftwarnings} warnings left.`;
+            message = M.util.get_string('tabwarningmultiple', 'quizaccess_quizproctoring', leftwarnings);
         }
         $(document).trigger('popup', message);
         $.ajax({

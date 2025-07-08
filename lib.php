@@ -165,6 +165,13 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         $detectionval);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->strings_for_js([
+        'tabwarning',
+        'tabwarningoneleft',
+        'tabwarningmultiple',
+        'nocameradetected',
+        'nocameradetectedm'
+    ], 'quizaccess_quizproctoring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
