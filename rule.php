@@ -189,7 +189,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $PAGE->requires->strings_for_js([
         'nocameradetected',
         'nocameradetectedm'
-    ], 'quizaccess_quizproctoring');
+        ], 'quizaccess_quizproctoring');
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));
         $element->setAttributes(['class' => 'proctoringmsg']);
