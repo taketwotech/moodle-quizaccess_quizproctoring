@@ -442,11 +442,12 @@ function($, str, ModalFactory) {
                                     const vElement = document.getElementById('video');
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
-                                        navigator.mediaDevices.getUserMedia({video: true, audio: false})
+                                        navigator.mediaDevices.getUserMedia({video: true, audio: true})
                                         // eslint-disable-next-line promise/always-return
                                         .then((stream) => {
                                             vElement.srcObject = stream;
                                             vElement.play();
+                                            vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
                                             $(".student-iframe-container").css({display: 'none'});
