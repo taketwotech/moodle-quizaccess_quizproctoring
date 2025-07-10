@@ -51,6 +51,7 @@ if ($proctorrecord->enableteacherproctor) {
     }
     $PAGE->set_title(get_string('viewstudentonline', 'quizaccess_quizproctoring'));
     $PAGE->set_pagelayout('report');
+    $PAGE->add_body_class('drawer-closed');
     echo $OUTPUT->header();
 
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $course->id]);

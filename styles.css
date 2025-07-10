@@ -388,11 +388,14 @@ label[for="id_consentcheckbox"] {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    height: 100vh;
+    width: 100%;
 }
 #page-mod-quiz-accessrule-quizproctoring-room #page {
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    min-height: 100vh;
+    width: 100%;
 }
 
 #page-mod-quiz-accessrule-quizproctoring-room #page-header {
@@ -402,17 +405,21 @@ label[for="id_consentcheckbox"] {
 #page-mod-quiz-accessrule-quizproctoring-room #page-content {
     margin: 0;
     padding: 0;
+    height: 100vh;
+    width: 100%;
 }
 .teacher-iframe-container {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     margin: 0;
     padding: 0;
-    z-index: 0;
-    margin-top: 55px;
+    z-index: 1;
+    height: 97vh;
+    width: 100%;
+    margin-top: 25px;
 }
 .teacher-iframe-container iframe {
     width: 100%;
@@ -423,6 +430,20 @@ label[for="id_consentcheckbox"] {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+/* stylelint-disable declaration-no-important */
+#page-mod-quiz-accessrule-quizproctoring-room .block,
+#page-mod-quiz-accessrule-quizproctoring-room .columnleft,
+#page-mod-quiz-accessrule-quizproctoring-room .columnright {
+    display: none !important;
+}
+/* stylelint-enable declaration-no-important */
+
+#page-mod-quiz-accessrule-quizproctoring-room #page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 /* Hidden by default for this example */

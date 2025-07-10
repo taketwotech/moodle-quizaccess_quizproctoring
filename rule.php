@@ -428,8 +428,6 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         // Time interval set for proctoring image.
         $mform->addElement('select', 'time_interval',
             get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), [
-            "5" => get_string('fiveseconds', 'quizaccess_quizproctoring'),
-            "10" => get_string('tenseconds', 'quizaccess_quizproctoring'),
             "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
             "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'),
             "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
