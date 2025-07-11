@@ -140,6 +140,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', ['id' => $quizid]);
+
     $detectionval = get_user_preferences('eye_detection', null, $USER->id);
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
