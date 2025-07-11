@@ -55,7 +55,7 @@ $columns = [
     '',
     'qmp.isautosubmit',
     'qmp.iseyecheck',
-    ''
+    '',
 ];
 
 $ordercol = 'qa.attempt';
@@ -164,6 +164,6 @@ echo json_encode([
     'draw' => optional_param('draw', 1, PARAM_INT),
     'recordsTotal' => $total,
     'recordsFiltered' => $total,
-    'data' => $data
+    'data' => $data,
 ]);
 exit;

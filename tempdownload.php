@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Create temp file of PDF
  *
@@ -21,6 +22,7 @@
  * @copyright  2025 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require_once(__DIR__ . '/../../../../config.php');
 require_login();
 $filename = required_param('filename', PARAM_FILE);

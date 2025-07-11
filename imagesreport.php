@@ -241,7 +241,7 @@ if (empty($records)) {
         get_string('norecordsfound', 'quizaccess_quizproctoring'),
         '',
         '',
-        ''
+        '',
     ];
 } else {
     foreach ($records as $record) {

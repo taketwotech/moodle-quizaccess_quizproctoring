@@ -138,12 +138,12 @@ foreach ($records as $r) {
     $reviewurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php', [
         'userid' => $r->id,
         'cmid' => $cmid,
-        'quizid' => $quizid
+        'quizid' => $quizid,
     ]);
     $reviewicon = html_writer::link($reviewurl, html_writer::empty_tag('img', [
         'src' => $OUTPUT->image_url('review-icon', 'quizaccess_quizproctoring'),
         'class' => 'imageicon',
-        'alt' => 'review'
+        'alt' => 'review',
     ]));
 
     if (is_siteadmin($r->id) || has_capability('moodle/course:update',
@@ -158,7 +158,7 @@ foreach ($records as $r) {
         'data-cmid' => $cmid,
         'data-quizid' => $quizid,
         'data-userid' => $r->id,
-        'data-username' => $fullname
+        'data-username' => $fullname,
     ]);
 
     $data[] = [
@@ -168,7 +168,7 @@ foreach ($records as $r) {
         'totalimages' => $r->totalimages + $r->totalmimages,
         'warnings' => $r->warnings,
         'review' => $reviewicon,
-        'actions' => $deleteicon
+        'actions' => $deleteicon,
     ];
 }
 
@@ -176,6 +176,6 @@ echo json_encode([
     'draw' => $draw,
     'recordsTotal' => $recordstotal,
     'recordsFiltered' => $recordstotal,
-    'data' => $data
+    'data' => $data,
 ]);
 

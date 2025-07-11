@@ -134,7 +134,7 @@ if (empty($records)) {
         $imagessurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php', [
             'userid' => $r->id,
             'cmid' => $cmid,
-            'quizid' => $quizid
+            'quizid' => $quizid,
         ]);
         $linktext = 'view';
         $linkurl = $imagessurl->out();

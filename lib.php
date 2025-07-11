@@ -171,7 +171,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'tabwarningoneleft',
         'tabwarningmultiple',
         'nocameradetected',
-        'nocameradetectedm'
+        'nocameradetectedm',
     ], 'quizaccess_quizproctoring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
