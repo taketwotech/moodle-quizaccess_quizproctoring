@@ -37,8 +37,8 @@ $tab = optional_param('tab', false, PARAM_BOOL);
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
-$tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-$mainentry = $DB->get_record('quizaccess_proctor_data', [
+$tmpdir = $CFG->dataroot . '/proctorlink';
+$mainentry = $DB->get_record('quizaccess_main_proctor', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,
     'image_status' => 'M',
@@ -54,11 +54,10 @@ if (!$mainentry->isautosubmit) {
                     $mainimage, QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED, '');
     }
 
-    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-    require_login($course);
+    $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
     $target = '';
-    $profileimg = '';
+    $profileimage = '';
     if (!$mainimage) {
         // If it is not main image, get the main image data and compare.
         if ($mainentry) {
@@ -77,34 +76,36 @@ if (!$mainentry->isautosubmit) {
             }
         }
     } else {
-        $context = context_user::instance($USER->id);
-        $sql = "SELECT * FROM {files} WHERE contextid =
-        :contextid AND component = 'user' AND
-        filearea = 'icon' AND itemid = 0 AND
-        filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
-        ORDER BY timemodified, filename DESC LIMIT 1";
-        $params = ['contextid' => $context->id];
-        $filerecord = $DB->get_record_sql($sql, $params);
-        if ($filerecord) {
-            $fs = get_file_storage();
-            $file = $fs->get_file(
-                $filerecord->contextid,
-                $filerecord->component,
-                $filerecord->filearea,
-                $filerecord->itemid,
-                $filerecord->filepath,
-                $filerecord->filename
-            );
-            $profileimage = $file->get_content();
+        if ($proctoringdata->enableprofilematch == 1 ) {
+            $context = context_user::instance($USER->id);
+            $sql = "SELECT * FROM {files} WHERE contextid =
+            :contextid AND component = 'user' AND
+            filearea = 'icon' AND itemid = 0 AND
+            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
+            ORDER BY timemodified, filename DESC LIMIT 1";
+            $params = ['contextid' => $context->id];
+            $filerecord = $DB->get_record_sql($sql, $params);
+            if ($filerecord) {
+                $fs = get_file_storage();
+                $file = $fs->get_file(
+                    $filerecord->contextid,
+                    $filerecord->component,
+                    $filerecord->filearea,
+                    $filerecord->itemid,
+                    $filerecord->filepath,
+                    $filerecord->filename
+                );
+                $profileimage = $file->get_content();
+            }
         }
     }
-    $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
+
     // Validate image.
     if ($target !== '') {
         $data = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
         $imagedata = ["primary" => $tdata, "target" => $data, "type" => "eyes_detection"];
-        $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(($imagedata),
             $USER->id, $cm->instance);
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
@@ -119,7 +120,7 @@ if (!$mainentry->isautosubmit) {
     } else {
         $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $imagedata = ["primary" => $data1];
-        $response = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($imagedata),
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(($imagedata),
             $USER->id, $cm->instance);
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
@@ -130,7 +131,7 @@ if (!$mainentry->isautosubmit) {
                 if ( $profileimage ) {
                     $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
                     $profiledata = ["primary" => $data1, "target" => $imagecontent];
-                    $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(json_encode($profiledata),
+                    $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(($profiledata),
                     $USER->id, $cm->instance);
                     $response = $matchprofile;
                     $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, true);
@@ -194,7 +195,7 @@ if (!$mainentry->isautosubmit) {
         default:
             // Store only if main image.
             if ($mainimage) {
-                quizproctoring_storeimage($img, $cmid, $attemptid, $cm->instance, $mainimage,  '', $response);
+                quizproctoring_storemainimage($img, $cmid, $attemptid, $cm->instance, $mainimage,  '', $response);
             }
              break;
     }

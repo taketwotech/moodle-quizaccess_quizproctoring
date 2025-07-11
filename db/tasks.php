@@ -36,3 +36,15 @@ $tasks = [
         'dayofweek' => '*',
     ],
 ];
+
+$tasks = [
+    [
+        'classname' => 'quizaccess_quizproctoring\task\checkGetUserInfo',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => '0,12',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];

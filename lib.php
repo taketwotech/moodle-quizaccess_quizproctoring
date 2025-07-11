@@ -24,6 +24,7 @@
  */
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+use mod_quiz\quiz_attempt;
 
 define('QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED', 'nofacedetected');
 define('QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED', 'nocameradetected');
@@ -63,7 +64,7 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
     } else {
         $filepath = '/' . implode('/', $args) . '/';
     }
-    if (!$data = $DB->get_record("quizaccess_proctor_data", ['id' => $itemid]) && $filearea == 'identity') {
+    if (!$data = $DB->get_record("quizaccess_main_proctor", ['id' => $itemid]) && $filearea == 'identity') {
         return false;
     }
 
@@ -83,12 +84,28 @@ function quizaccess_quizproctoring_pluginfile($course, $cm, $context, $filearea,
  * @param int $quizid quiz id
  */
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
-    global $DB, $PAGE, $OUTPUT, $USER;
+    global $DB, $PAGE, $OUTPUT, $USER, $COURSE, $SESSION;
     // Update main image attempt id as soon as user landed on attemp page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $warningsleft = 0;
     $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-    if ($proctoreddata = $DB->get_record('quizaccess_proctor_data', [
+    $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+    $SESSION->proctorlink_version = $plugin->release;
+
+    $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $COURSE->id]);
+    $usergroup = '';
+
+    if ($proctoringgrouping) {
+        $sql = "SELECT g.name
+                FROM {groups} g
+                JOIN {groupings_groups} gg ON g.id = gg.groupid
+                JOIN {groups_members} gm ON g.id = gm.groupid
+                WHERE gg.groupingid = :groupingid
+                AND gm.userid = :userid";
+        $usergroup = $DB->get_field_sql($sql, ['groupingid' => $proctoringgrouping->id, 'userid' => $USER->id]);
+    }
+
+    if ($proctoreddata = $DB->get_record('quizaccess_main_proctor', [
     'userid' => $user->id,
     'quizid' => $quizid,
     'image_status' => 'M',
@@ -96,7 +113,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     ])) {
         $proctoreddata->attemptid = $attemptid;
         $warningsleft = $quizaproctoring->warning_threshold;
-        $DB->update_record('quizaccess_proctor_data', $proctoreddata);
+        $DB->update_record('quizaccess_main_proctor', $proctoreddata);
     } else {
         if (isset($quizaproctoring->warning_threshold) && $quizaproctoring->warning_threshold != 0) {
             $inparams = [
@@ -123,6 +140,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     }
     $fullname = $user->id .'-'.$user->firstname.' '.$user->lastname;
     $securewindow = $DB->get_record('quiz', ['id' => $quizid]);
+
+    $detectionval = get_user_preferences('eye_detection', null, $USER->id);
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
@@ -141,9 +160,19 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         '$fullname',
         $quizaproctoring->enablestudentvideo,
         $quizaproctoring->time_interval,
-        $warningsleft);
+        $warningsleft,
+        $USER->id,
+        '$usergroup',
+        $detectionval);
     });
     M.util.js_complete();", true);
+    $PAGE->requires->strings_for_js([
+        'tabwarning',
+        'tabwarningoneleft',
+        'tabwarningmultiple',
+        'nocameradetected',
+        'nocameradetectedm'
+    ], 'quizaccess_quizproctoring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
@@ -161,52 +190,38 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  */
 function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
     $mainimage, $status='', $response='', $storeallimg=false) {
-    global $USER, $DB, $COURSE;
-
-    $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+    global $CFG, $USER, $DB, $COURSE;
+    $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     // We are all good, store the image.
-    if ( $mainimage ) {
-        if ($qpd = $DB->get_record('quizaccess_proctor_data', [
-            'userid' => $user->id,
-            'quizid' => $quizid,
-            'attemptid' => $attemptid,
-            'image_status' => 'M',
-        ])) {
-            $DB->delete_records('quizaccess_proctor_data', ['id' => $qpd->id]);
-        }
-        if ($qpd = $DB->get_record('quizaccess_proctor_data', ['userid' => $user->id,
-            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'I' ])) {
-            $DB->delete_records('quizaccess_proctor_data', ['id' => $qpd->id]);
-        }
+    if ($data) {
+        $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.png';
+    } else {
+        $imagename = '';
     }
-    $imagename = '';
     $record = new stdClass();
-    $record->userid = $user->id;
+    $record->userid = $USER->id;
     $record->quizid = $quizid;
     $record->timecreated = time();
     $record->userimg = $imagename;
     $record->attemptid = $attemptid;
     $record->status = $status;
-    $record->image_status = $mainimage ? 'I' : 'A';
+    $record->image_status = 'A';
     $record->timemodified = time();
     $record->aws_response = 'take2';
     $record->response = $response;
     $id = $DB->insert_record('quizaccess_proctor_data', $record);
 
     if ($data) {
-        $imagename = $id. "_" . $quizid . "_" . $attemptid . "_" . $USER->id . '_image.png';
-        $proctoreddata = $DB->get_record('quizaccess_proctor_data', ['id' => $id]);
-        $proctoreddata->userimg = $imagename;
-        $DB->update_record('quizaccess_proctor_data', $proctoreddata);
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
-        $tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
+        $tmpdir = $CFG->dataroot . '/proctorlink/';
+        if (!file_exists($tmpdir)) {
+            mkdir($tmpdir, 0777, true);
+        }
         file_put_contents($tmpdir . $imagename, $imagedata);
     }
 
     if ( !$mainimage && $status != '') {
-        $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
             $inparams = [
@@ -219,7 +234,7 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
                 'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
-                'userid' => $user->id,
+                'userid' => $USER->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
                 'image_status' => 'A',
@@ -233,14 +248,14 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
                 // Submit quiz.
                 $attemptobj = quiz_attempt::create($attemptid);
                 $attemptobj->process_finish(time(), false);
-                $autosubmitdata = $DB->get_record('quizaccess_proctor_data', [
-                    'userid' => $user->id,
+                $autosubmitdata = $DB->get_record('quizaccess_main_proctor', [
+                    'userid' => $USER->id,
                     'quizid' => $quizid,
                     'attemptid' => $attemptid,
                     'image_status' => 'M',
                 ]);
                 $autosubmitdata->isautosubmit = 1;
-                $DB->update_record('quizaccess_proctor_data', $autosubmitdata);
+                $DB->update_record('quizaccess_main_proctor', $autosubmitdata);
                 echo json_encode(['status' => 'true', 'redirect' => 'true',
                     'msg' => get_string('autosubmit', 'quizaccess_quizproctoring'), 'url' => $attemptobj->review_url()->out()]);
                 die();
@@ -276,6 +291,67 @@ function quizproctoring_storeimage($data, $cmid, $attemptid, $quizid,
 }
 
 /**
+ * Proctoring images store
+ *
+ * @param string $data user image in base64
+ * @param int $cmid course module id
+ * @param int $attemptid attempt id
+ * @param int $quizid quiz id
+ * @param boolean $mainimage main image
+ * @param string $status
+ * @param string $response
+ * @param boolean $storeallimg store images
+ */
+function quizproctoring_storemainimage($data, $cmid, $attemptid, $quizid,
+    $mainimage, $status='', $response='', $storeallimg=false) {
+    global $USER, $DB, $COURSE, $CFG;
+
+    // We are all good, store the image.
+    if ( $mainimage ) {
+        if ($qpd = $DB->get_record('quizaccess_main_proctor', [
+            'userid' => $USER->id,
+            'quizid' => $quizid,
+            'attemptid' => $attemptid,
+            'image_status' => 'M',
+        ])) {
+            $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
+        }
+        if ($qpd = $DB->get_record('quizaccess_main_proctor', ['userid' => $USER->id,
+            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'I' ])) {
+            $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
+        }
+        $preferencename = 'eye_detection';
+        set_user_preference($preferencename, 1, $USER->id);
+    }
+    $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.png';
+    $record = new stdClass();
+    $record->userid = $USER->id;
+    $record->quizid = $quizid;
+    $record->timecreated = time();
+    $record->userimg = $imagename;
+    $record->attemptid = $attemptid;
+    $record->status = $status;
+    $record->image_status = 'I';
+    $record->timemodified = time();
+    $record->aws_response = 'take2';
+    $record->response = $response;
+    $id = $DB->insert_record('quizaccess_main_proctor', $record);
+
+    if ($data) {
+        $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
+        $imagedata = base64_decode($base64string);
+
+        if ($imagedata !== false) {
+            $tmpdir = $CFG->dataroot . '/proctorlink';
+            if (!file_exists($tmpdir)) {
+                mkdir($tmpdir, 0755, true);
+            }
+            file_put_contents($tmpdir . '/' . $imagename, $imagedata);
+        }
+    }
+}
+
+/**
  * Clean Stored Images task.
  *
  * @return bool false if no record found
@@ -289,7 +365,7 @@ function clean_images_task() {
         $totalrecords = $DB->get_records_sql("SELECT * FROM {quizaccess_proctor_data} where
             timecreated < ".$timestampdays." AND deleted = 0 AND userimg IS NOT NULL");
         foreach ($totalrecords as $record) {
-            $quizobj = \quiz::create($record->quizid, $record->userid);
+            $quizobj = \mod_quiz\quiz_settings::create($record->quizid, $record->userid);
             $context = $quizobj->get_context();
             $fs = get_file_storage();
             $fileinfo = [

@@ -92,6 +92,7 @@ class api {
      * @return string
      */
     public static function proctor_image_api($imagedata, $userid, $quizid) {
+        global $SESSION;
         self::init();
         $curl = new \curl();
         $url = 'https://proctoring.taketwotechnologies.com/validate';
@@ -106,8 +107,9 @@ class api {
             'user_id: ' . $userid,
             'quiz_id: ' . $quizid,
         ];
+
         $curl->setHeader($header);
-        $result = $curl->post($url, $imagedata);
+        $result = $curl->post($url, json_encode($imagedata));
         return $result;
     }
 
@@ -142,12 +144,8 @@ class api {
      * @return string
      */
     public static function domain() {
-        if (isset($_SERVER['HTTPS'])) {
-            $protocol = ($_SERVER['HTTPS'] && $_SERVER['HTTPS'] != "off") ? "https" : "http";
-        } else {
-            $protocol = 'http';
-        }
-        return $protocol . "://" . $_SERVER['HTTP_HOST'];
+        global $CFG;
+        return $CFG->wwwroot;
     }
 
     /**

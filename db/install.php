@@ -27,13 +27,16 @@
  * Post-install script
  */
 function xmldb_quizaccess_quizproctoring_install() {
-    global $DB, $USER, $CFG;
+    global $DB, $USER, $CFG, $SESSION;
 
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $timestamp = time();
     $randombytes = random_bytes(8);
     $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;
     set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
+    $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+    $release = $plugin->release;
+
     $record = new stdClass();
     $record->firstname = $user->firstname;
     $record->lastname  = $user->lastname;
@@ -41,6 +44,8 @@ function xmldb_quizaccess_quizproctoring_install() {
     $record->domain    = $CFG->wwwroot;
     $record->moodle_v  = get_config('moodle', 'release');
     $record->previously_installed_v = '';
+    $record->proctorlink_version = $release;
+    $SESSION->proctorlink_version = $release;
 
     $postdata = json_encode($record);
 

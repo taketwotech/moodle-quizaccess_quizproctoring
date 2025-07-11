@@ -15,18 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Create temp file of CSV
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2025 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__ . '/../../../../config.php');
+require_once($CFG->libdir . '/filelib.php');
+require_login();
 
-$plugin->version = 2025071000;
-$plugin->requires = 2022041900;
-$plugin->release = 'v4.4.2';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+$filename = required_param('filename', PARAM_FILE);
+
+$filepath = make_temp_directory('quizaccess_quizproctoring/reports') . '/' . $filename;
+if (!file_exists($filepath)) {
+    throw new moodle_exception('filenotfound', 'error');
+}
+
+send_temp_file($filepath, $filename);
