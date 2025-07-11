@@ -15,18 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Create temp file of PDF
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2025 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__ . '/../../../../config.php');
+require_login();
+$filename = required_param('filename', PARAM_FILE);
+$fullpath = make_temp_directory('quizaccess_quizproctoring/reports') . '/' . $filename;
+if (!file_exists($fullpath)) {
+    throw new moodle_exception('filenotfound');
+}
 
-$plugin->version = 2025071100;
-$plugin->requires = 2022041900;
-$plugin->release = 'v4.4.3';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+header('Content-Type: application/pdf');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Content-Length: ' . filesize($fullpath));
+
+readfile($fullpath);
+unlink($fullpath);
+exit;

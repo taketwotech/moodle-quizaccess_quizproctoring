@@ -31,9 +31,13 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
 $url = '';
-if ($proctoringimage = $DB->get_record("quizaccess_proctor_data", ['attemptid' => $attemptid,
+if ($proctoringimage = $DB->get_record("quizaccess_main_proctor", ['attemptid' => $attemptid,
     'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'])) {
-    $quizobj = \quiz::create($quizid, $userid);
+    if (class_exists('\mod_quiz\quiz_settings')) {
+        $quizobj = \mod_quiz\quiz_settings::create($quizid, $userid);
+    } else {
+        $quizobj = \quiz::create($quizid, $userid);
+    }
     $context = $quizobj->get_context();
     $fs = get_file_storage();
     $files = $fs->get_area_files($context->id, 'quizaccess_quizproctoring', 'identity', $proctoringimage->id);

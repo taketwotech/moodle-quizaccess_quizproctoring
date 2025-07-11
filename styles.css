@@ -384,6 +384,67 @@ label[for="id_consentcheckbox"] {
     font-size: 11px;
     font-weight: bold;
 }
+#page-mod-quiz-accessrule-quizproctoring-room body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    width: 100%;
+}
+#page-mod-quiz-accessrule-quizproctoring-room #page {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    width: 100%;
+}
+
+#page-mod-quiz-accessrule-quizproctoring-room #page-header {
+    display: none;
+}
+
+#page-mod-quiz-accessrule-quizproctoring-room #page-content {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100%;
+}
+.teacher-iframe-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    height: 97vh;
+    width: 100%;
+    margin-top: 25px;
+}
+.teacher-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* stylelint-disable declaration-no-important */
+#page-mod-quiz-accessrule-quizproctoring-room .block,
+#page-mod-quiz-accessrule-quizproctoring-room .columnleft,
+#page-mod-quiz-accessrule-quizproctoring-room .columnright {
+    display: none !important;
+}
+/* stylelint-enable declaration-no-important */
+
+#page-mod-quiz-accessrule-quizproctoring-room #page-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
 
 /* Hidden by default for this example */
 .hidden {
@@ -399,11 +460,66 @@ label[for="id_consentcheckbox"] {
     font-weight: bold;
 }
 
+#id_eyecheckrealnote {
+    height: 55px;
+    font-size: 11px;
+    font-weight: 700;
+    resize: none;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    border: none;
+    color: #000;
+}
+
+#exportpdf {
+    margin-bottom: 15px;
+}
+
+#exportcsv {
+    margin-bottom: 15px;
+    margin-left: 10px;
+}
+
+/* stylelint-disable declaration-no-important */
+.moodle-dialogue-focused {
+    scroll-behavior: auto !important;
+}
+/* stylelint-enable declaration-no-important */
+
+/* stylelint-disable declaration-no-important */
+#page-mod-quiz-view #canvas {
+    object-fit: cover;
+    width: 320px !important;
+    height: 240px !important;
+}
+/* stylelint-enable declaration-no-important */
+
+#page-mod-quiz-view #video {
+    object-fit: cover;
+}
+
 /* Hide video on mobile devices */
 @media only screen and (max-width: 767px) {
-    #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
-        display: none;
+    /* stylelint-disable declaration-no-important */
+    #page-mod-quiz-attempt .quizaccess_quizproctoring-video,
+    .student-iframe-container {
+        display: none !important;
     }
+    /* stylelint-enable declaration-no-important */
+
+    /* stylelint-disable declaration-no-important */
+    .moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup .moodle-dialogue-wrap {
+        overflow: scroll !important;
+    }
+    /* stylelint-enable declaration-no-important */
+
+    /* stylelint-disable declaration-no-important */
+    .mform.full-width-labels .fitem.row > .col-md-9 {
+        flex: 0 0 63% !important;
+        max-width: 100% !important;
+        width: inherit !important;
+    }
+    /* stylelint-enable declaration-no-important */
 }
 
 /* Show video on larger screens */

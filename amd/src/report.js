@@ -8,7 +8,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     lightbox.init();
                 }
             });
-            $('.delete-icon').on('click', function(event) {
+            $('#proctoringreporttable').on('click', '.delete-icon', function(event) {
                 event.preventDefault();
                 var username = $(this).data('username');
                 var cmid = $(this).data('cmid');
@@ -168,7 +168,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 });
             });
 
-            $('.proctoringimage').on('click', function(event) {
+            $('#attemptsreporttable').on('click', '.proctoringimage', function(event) {
                 event.preventDefault();
                 var attemptid = $(this).data('attemptid');
                 var quizid = $(this).data('quizid');
@@ -390,7 +390,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 });
             });
 
-            $('.proctoridentity').on('click', function(event) {
+            $('#attemptsreporttable').on('click', '.proctoridentity', function(event) {
                 event.preventDefault();
                 $.ajax({
                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoridentity.php',
@@ -417,6 +417,23 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         return true;
                     }
                 });
+            });
+
+            $('#attemptsreporttable').on('click', '.generate', function(event) {
+                event.preventDefault();
+
+                const attemptid = $(this).data('attemptid');
+                const quizid = $(this).data('quizid');
+                const userid = $(this).data('userid');
+                const username = encodeURIComponent($(this).data('username')); // URL-safe
+
+                const url = `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/userreport.php` +
+                `?attemptid=${attemptid}` +
+                `&quizid=${quizid}` +
+                `&userid=${userid}` +
+                `&username=${username}`;
+
+                window.open(url, '_blank');
             });
         }
     };

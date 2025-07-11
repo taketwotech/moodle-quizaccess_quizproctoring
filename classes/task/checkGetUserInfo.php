@@ -33,14 +33,14 @@ use Exception;
  * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class deleteStoredImagesTask extends scheduled_task {
+class checkGetUserInfo extends scheduled_task {
     /**
      * Task Name
      *
      * @return string
      */
     public function get_name() {
-        return get_string('deletestoredimagestask', 'quizaccess_quizproctoring');
+        return get_string('checkgetuserinfo', 'quizaccess_quizproctoring');
     }
 
     /**
@@ -50,12 +50,20 @@ class deleteStoredImagesTask extends scheduled_task {
      */
     public function execute() {
         global $DB, $CFG;
-        mtrace("Delete Stored Images started");
+        mtrace("Executing scheduled task: Check Get User Info");
         require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
         try {
-            clean_images_task();
+            $response = \quizaccess_quizproctoring\api::getuserinfo();
+            $responsedata = json_decode($response, true);
+            if (is_array($responsedata) && array_key_exists('active', $responsedata)) {
+                $status = $responsedata['active'] ? 1 : 0;
+                set_config('getuserinfo', $status, 'quizaccess_quizproctoring');
+                mtrace("User info status updated: " . $status);
+            } else {
+                mtrace("Invalid response structure from getuserinfo API.");
+            }
         } catch (Exception $exception) {
-            mtrace('error in delete stored images '.$exception->getMessage());
+            mtrace('Error in getuserinfo API: ' . $exception->getMessage());
         }
         return true;
     }

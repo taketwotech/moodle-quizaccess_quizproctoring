@@ -38,13 +38,13 @@ $offset = ($page - 1) * $perpage;
 
 $addsql = '';
 if (!$all) {
-    $addsql = " (status != '' OR image_status = 'M') AND ";
+    $addsql = " (status != '') AND ";
 }
 $sql = "SELECT * FROM {quizaccess_proctor_data}
         WHERE ".$addsql."userid = ".$userid."
         AND quizid = ".$quizid."
         AND attemptid = ".$attemptid."
-        AND deleted = 0
+        AND deleted = 0 AND image_status != 'M'
         ORDER BY id ASC
         LIMIT ".$perpage." OFFSET ".$offset;
 
@@ -53,25 +53,52 @@ $sqlt = "SELECT * FROM {quizaccess_proctor_data}
         WHERE ".$addsql."userid = ".$userid."
         AND quizid = ".$quizid."
         AND attemptid = ".$attemptid."
-        AND deleted = 0
+        AND deleted = 0 AND image_status != 'M'
         ORDER BY id ASC";
 $totalimages = $DB->get_records_sql($sqlt);
 $imgarray = [];
-$totalrecord = count($totalimages);
+$totalrecord = count($totalimages) + 1;
 $totalpages = ceil($totalrecord / $perpage);
-$tmpdir = make_temp_directory('quizaccess_quizproctoring/captured/');
-
+$tmpdir = $CFG->dataroot . '/proctorlink';
+$sqlm = $DB->get_record('quizaccess_main_proctor', ['userid' => $userid,
+            'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'M', 'deleted' => 0 ]);
+$targetm = '';
+if ($sqlm && !empty($sqlm->userimg)) {
+    $imagepath = $tmpdir . '/' . $sqlm->userimg;
+    if (file_exists($imagepath)) {
+        $imagedata = file_get_contents($imagepath);
+        if ($imagedata) {
+            $targetm = 'data:image/png;base64,' . base64_encode($imagedata);
+        }
+    }
+    array_push($imgarray, [
+        'title' => get_string('mainimage', 'quizaccess_quizproctoring'),
+        'img' => $targetm,
+        'imagestatus' => get_string('mainimage', 'quizaccess_quizproctoring'),
+        'timecreated' => userdate($sqlm->timecreated, '%H:%M'),
+        'totalpage' => $totalpages,
+        'total' => $totalrecord,
+    ]);
+}
 foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
-        $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        if ($img->status === 'minimizedetected') {
+            $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
+        } else {
+            $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        }
         if (file_exists($imagepath)) {
             $imagecontent = file_get_contents($imagepath);
             $imagebase64 = base64_encode($imagecontent);
             $target = 'data:image/png;base64,' . $imagebase64;
         }
     } else if (strlen($img->userimg) < 50) {
-        $quizobj = \quiz::create($img->quizid, $img->userid);
+        if (class_exists('\mod_quiz\quiz_settings')) {
+            $quizobj = \mod_quiz\quiz_settings::create($img->quizid, $img->userid);
+        } else {
+            $quizobj = \quiz::create($img->quizid, $img->userid);
+        }
         $context = $quizobj->get_context();
         $fs = get_file_storage();
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
