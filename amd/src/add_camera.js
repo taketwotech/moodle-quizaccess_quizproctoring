@@ -706,7 +706,6 @@ function($, str, ModalFactory) {
                     navigator.mozGetUserMedia ||
                     navigator.msGetUserMedia
                 );
-                // eslint-disable-next-line promise/catch-or-return
                 navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
                     localMediaStream = stream;

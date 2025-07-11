@@ -188,7 +188,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         null, $proctoringdata->enableteacherproctor, $securewindow->browsersecurity]);
         $PAGE->requires->strings_for_js([
         'nocameradetected',
-        'nocameradetectedm'
+        'nocameradetectedm',
         ], 'quizaccess_quizproctoring');
         $element = $mform->addElement('static', 'proctoringmsg', '',
             get_string('notice', 'quizaccess_quizproctoring'));

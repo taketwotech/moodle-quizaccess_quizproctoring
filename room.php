@@ -76,7 +76,7 @@ if ($proctorrecord->enableteacherproctor) {
         'room' => $roomid,
         'cmid' => $cmid,
         'disablecontrol' => 1,
-        'teacher' => 'true'
+        'teacher' => 'true',
     ];
 
     $teacheriframeurl = $teacherurl . '?' . http_build_query($teacherparams, '', '&', PHP_QUERY_RFC3986);

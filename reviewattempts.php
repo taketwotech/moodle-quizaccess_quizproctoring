@@ -40,7 +40,7 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 $proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
 if ($proctoringimageshow == 1) {
     $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php', [
-        'userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid
+        'userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid,
     ]));
     $PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
 
@@ -132,7 +132,7 @@ if ($proctoringimageshow == 1) {
     $btn = '';
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-            'cmid' => $cmid, 'quizid' => $quizid
+            'cmid' => $cmid, 'quizid' => $quizid,
         ]);
         $btn = '<a class="btn btn-primary" href="'.$backurl.'">'.get_string("userimagereport", "quizaccess_quizproctoring").'</a>';
     }
