@@ -92,7 +92,7 @@ $PAGE->requires->js_init_code("
 
     $('#exportpdf').on('click', function() {
         const button = $(this);
-        button.prop('disabled', true).text('Generating PDF...');
+        button.prop('disabled', true).text('" . get_string('exportpdf_generating', 'quizaccess_quizproctoring') . "');
         $.ajax({
             url: '" . (new moodle_url('/mod/quiz/accessrule/quizproctoring/ajaxexport.php')) . "',
             method: 'GET',
@@ -119,14 +119,14 @@ $PAGE->requires->js_init_code("
                 alert('AJAX error');
             },
             complete: function() {
-                button.prop('disabled', false).text('Export Report to PDF');
+                button.prop('disabled', false).text('" . get_string('exportpdf', 'quizaccess_quizproctoring') . "');
             }
         });
     });
 
     $('#exportcsv').on('click', function() {
         const button = $(this);
-        button.prop('disabled', true).text('Generating CSV...');
+        button.prop('disabled', true).text('" . get_string('exportcsv_generating', 'quizaccess_quizproctoring') . "');
         $.ajax({
             url: '" . (new moodle_url('/mod/quiz/accessrule/quizproctoring/csvreport.php')) . "',
             method: 'GET',
@@ -152,7 +152,7 @@ $PAGE->requires->js_init_code("
                 alert('AJAX error');
             },
             complete: function() {
-                button.prop('disabled', false).text('Export Report to CSV');
+                button.prop('disabled', false).text('" . get_string('exportcsv', 'quizaccess_quizproctoring') . "');
             }
         });
     });

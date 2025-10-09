@@ -34,6 +34,11 @@ $course = required_param('course', PARAM_RAW);
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
+// Set the user's preferred language for string translations.
+if (!empty($USER->lang)) {
+    $SESSION->lang = $USER->lang;
+}
+
 $sql = "SELECT
     mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username,
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS noface_count,
@@ -66,15 +71,15 @@ $filepath = $tempdir . '/' . $filename;
 $handle = fopen($filepath, 'w');
 
 fputcsv($handle, [
-    'Student',
-    'Tab Switch',
-    'No Camera',
-    'No Face',
-    'No Eye',
-    'Multi Face',
-    'Total Warnings',
-    'Start Time',
-    'Photos Link',
+    get_string('csvheader_student', 'quizaccess_quizproctoring'),
+    get_string('csvheader_tabswitch', 'quizaccess_quizproctoring'),
+    get_string('csvheader_nocamera', 'quizaccess_quizproctoring'),
+    get_string('csvheader_noface', 'quizaccess_quizproctoring'),
+    get_string('csvheader_noeye', 'quizaccess_quizproctoring'),
+    get_string('csvheader_multiface', 'quizaccess_quizproctoring'),
+    get_string('csvheader_totalwarnings', 'quizaccess_quizproctoring'),
+    get_string('csvheader_starttime', 'quizaccess_quizproctoring'),
+    get_string('csvheader_photoslink', 'quizaccess_quizproctoring'),
 ]);
 
 foreach ($records as $r) {
