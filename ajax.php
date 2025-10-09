@@ -37,6 +37,9 @@ $tab = optional_param('tab', false, PARAM_BOOL);
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
+$context = context_module::instance($cm->id);
+$PAGE->set_context($context);
+
 $tmpdir = $CFG->dataroot . '/proctorlink';
 $mainentry = $DB->get_record('quizaccess_main_proctor', [
     'userid' => $USER->id,
