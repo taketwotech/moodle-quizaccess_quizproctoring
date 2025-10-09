@@ -113,20 +113,26 @@ $combinedimages = array_merge($getmimages, $getimages);
 
 $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
 
-$pdf = new \TCPDF();
+$pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+$pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('Moodle');
+$pdf->SetTitle(get_string('userreport_title', 'quizaccess_quizproctoring', $username));
+$pdf->SetMargins(10, 10, 10);
+$pdf->SetAutoPageBreak(true, 10);
 $pdf->AddPage();
-$pdf->SetFont('helvetica', 'B', 14);
-$pdf->Cell(0, 10, 'Student Facial Analysis For ' . $username, 0, 1, 'C');
 
-$pdf->SetFont('helvetica', 'B', 14);
+$pdf->SetFont('freeserif', 'B', 14);
+$pdf->Cell(0, 10, get_string('userreport_title', 'quizaccess_quizproctoring', $username), 0, 1, 'C');
+
+$pdf->SetFont('freeserif', 'B', 14);
 $pdf->Cell(0, 10, $quiz->name, 0, 1, 'C');
 $pdf->SetTextColor(0, 0, 0);
 $pdf->Ln(5);
 
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->Cell(60, 8, 'Student name', 1, 0, 'C');
-$pdf->Cell(60, 8, 'Attempt ID', 1, 0, 'C');
-$pdf->Cell(60, 8, 'Attempt Time', 1, 1, 'C');
+$pdf->SetFont('freeserif', 'B', 10);
+$pdf->Cell(60, 8, get_string('userreport_studentname', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(60, 8, get_string('userreport_attemptid', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(60, 8, get_string('userreport_attempttime', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
 $wname = 60;
 $wattemptid = 60;
@@ -136,7 +142,7 @@ $studentname = $user->firstname . ' ' . $user->lastname;
 $attemptidstr = (string)$attemptid;
 $timestr = $timestart;
 
-$pdf->SetFont('helvetica', '', 11);
+$pdf->SetFont('freeserif', '', 10);
 $hname = $pdf->getStringHeight($wname, $studentname);
 $hid = $pdf->getStringHeight($wattemptid, $attemptidstr);
 $htime = $pdf->getStringHeight($wtimestart, $timestr);
@@ -186,7 +192,7 @@ foreach ($combinedimages as $img) {
     $y = $pdf->GetY();
     $pdf->Image($imagepath, $x, $y, $imagewidth, $imageheight);
 
-    $pdf->SetFont('helvetica', '', 7);
+    $pdf->SetFont('freeserif', '', 7);
     $pdf->SetXY($x, $y + $imageheight + 1);
     $pdf->Cell($imagewidth, 3.5, $status, 0, 2, 'C');
     $pdf->Cell($imagewidth, 3.5, $formattedtime, 0, 0, 'C');

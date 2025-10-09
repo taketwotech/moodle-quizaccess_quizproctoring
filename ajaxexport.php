@@ -69,21 +69,26 @@ if ($debug) {
     die;
 }
 
-$pdf = new \TCPDF();
+$pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+$pdf->SetCreator(PDF_CREATOR);
+$pdf->SetAuthor('Moodle');
+$pdf->SetTitle(get_string('pdf_title', 'quizaccess_quizproctoring'));
+$pdf->SetMargins(10, 10, 10);
+$pdf->SetAutoPageBreak(true, 10);
 $pdf->AddPage();
 
-$pdf->SetFont('helvetica', 'B', 14);
-$pdf->Cell(0, 10, 'Student Facial Analysis For All Students', 0, 0, 'C');
+$pdf->SetFont('freeserif', 'B', 14);
+$pdf->Cell(0, 10, get_string('pdf_title', 'quizaccess_quizproctoring'), 0, 0, 'C');
 $pdf->SetTextColor(0, 0, 0);
 $pdf->Ln(10);
 
-$pdf->SetFont('helvetica', 'B', 11);
-$pdf->Cell(60, 8, 'Course', 1, 0, 'C');
-$pdf->Cell(80, 8, 'Assessment', 1, 0, 'C');
-$pdf->Cell(40, 8, 'Date', 1, 1, 'C');
+$pdf->SetFont('freeserif', 'B', 11);
+$pdf->Cell(60, 8, get_string('pdf_course', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(80, 8, get_string('pdf_assessment', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(40, 8, get_string('pdf_date', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
 $quizopen = $quizopen ? userdate($quizopen, get_string('strftimerecent', 'langconfig')) : '-';
-$pdf->SetFont('helvetica', '', 11);
+$pdf->SetFont('freeserif', '', 11);
 
 $wcourse = 60;
 $wquizname = 80;
@@ -104,25 +109,25 @@ $pdf->MultiCell($wquizopen, $maxheight, $quizopen, 1, 'C', false, 1, '', '', tru
 
 $pdf->Ln(10);
 
-$pdf->SetFont('helvetica', 'B', 12);
-$pdf->Cell(0, 10, 'PROCTORING ANALYSIS For QUIZ ID: ' . $quizid, 0, 1, 'C');
+$pdf->SetFont('freeserif', 'B', 12);
+$pdf->Cell(0, 10, get_string('pdf_analysis_title', 'quizaccess_quizproctoring', $quizid), 0, 1, 'C');
 $pdf->Ln(5);
 
 if (empty($records)) {
-    $pdf->Write(0, 'No records found.');
+    $pdf->Write(0, get_string('norecordsfound', 'quizaccess_quizproctoring'));
 } else {
-    $pdf->SetFont('helvetica', 'B', 9);
-    $pdf->Cell(28, 7, 'Student', 1, 0, 'C');
-    $pdf->Cell(19, 7, 'Tab Switch', 1, 0, 'C');
-    $pdf->Cell(19, 7, 'No Camera', 1, 0, 'C');
-    $pdf->Cell(18, 7, 'No Face', 1, 0, 'C');
-    $pdf->Cell(18, 7, 'No Eye', 1, 0, 'C');
-    $pdf->Cell(18, 7, 'Multi Face', 1, 0, 'C');
-    $pdf->Cell(20, 7, 'Total', 1, 0, 'C');
-    $pdf->Cell(40, 7, 'Time', 1, 0, 'C');
-    $pdf->Cell(15, 7, 'Photos', 1, 1, 'C');
+    $pdf->SetFont('freeserif', 'B', 6.5);
+    $pdf->Cell(30, 7, get_string('pdf_student', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(24, 7, get_string('pdf_tabswitch', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(20, 7, get_string('pdf_nocamera', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(18, 7, get_string('pdf_noface', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(16, 7, get_string('pdf_noeye', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(20, 7, get_string('pdf_multiface', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(17, 7, get_string('pdf_total', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(28, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(17, 7, get_string('pdf_photos', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
-    $pdf->SetFont('helvetica', '', 9);
+    $pdf->SetFont('freeserif', '', 6.5);
     foreach ($records as $r) {
         $attempt = $DB->get_record('quiz_attempts', [
             'quiz' => $quizid,
@@ -136,19 +141,19 @@ if (empty($records)) {
             'cmid' => $cmid,
             'quizid' => $quizid,
         ]);
-        $linktext = 'view';
+        $linktext = get_string('pdf_view', 'quizaccess_quizproctoring');
         $linkurl = $imagessurl->out();
         $fullname = $r->firstname . ' ' . $r->lastname . ' (' . $r->username . ')';
 
-        $wstudent = 28;
-        $wtabswitch = 19;
-        $wcamera = 19;
+        $wstudent = 30;
+        $wtabswitch = 24;
+        $wcamera = 20;
         $wnoface = 18;
-        $wnoeye = 18;
-        $wmultiface = 18;
-        $wfacemismatch = 20;
-        $wtime = 40;
-        $wphotos = 15;
+        $wnoeye = 16;
+        $wmultiface = 20;
+        $wfacemismatch = 17;
+        $wtime = 28;
+        $wphotos = 17;
 
         $hstudent = $pdf->getStringHeight($wstudent, $fullname);
         $htabswitch = $pdf->getStringHeight($wtabswitch, $r->minimize_count);
@@ -158,7 +163,7 @@ if (empty($records)) {
         $hmultiface = $pdf->getStringHeight($wmultiface, $r->multifacesdetected);
         $hfacemismatch = $pdf->getStringHeight($wfacemismatch, $r->totalwarnings);
         $htime = $pdf->getStringHeight($wtime, $timestart);
-        $hphotos = $pdf->getStringHeight($wphotos, 'view');
+        $hphotos = $pdf->getStringHeight($wphotos, $linktext);
 
         $maxheight = max($hstudent, $htabswitch, $hcamera, $hnoface, $hnoeye, $hmultiface, $hfacemismatch, $htime, $hphotos);
 
@@ -191,12 +196,12 @@ if (empty($records)) {
 
         $pdf->SetXY($pdf->GetX(), $pdf->GetY());
 
-        $pdf->SetFont('helvetica', 'U', 10);
+        $pdf->SetFont('freeserif', 'U', 6.5);
         $pdf->SetTextColor(0, 0, 255);
 
         $pdf->Cell($wphotos, $maxheight, $linktext, 1, 1, 'C', false, $linkurl);
 
-        $pdf->SetFont('helvetica', '', 10);
+        $pdf->SetFont('freeserif', '', 6.5);
         $pdf->SetTextColor(0, 0, 0);
     }
 }
