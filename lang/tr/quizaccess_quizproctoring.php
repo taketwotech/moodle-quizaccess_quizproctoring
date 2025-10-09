@@ -158,3 +158,6 @@ $string['warnings'] = ' uyarı';
 $string['warningsleft'] = 'Sadece {$a} uyarınız kaldı.';
 $string['warningstudent'] = 'Test düzgün yapılandırılmamış. Lütfen site yöneticisine başvurun.';
 $string['yes'] = 'Evet';
+$string['yesmainimage_label'] = 'Ana Görsel';
+$string['yeswarningimage_label'] = 'Uyarı Görseli';
+$string['yesapproveimage_label'] = 'Onaylanmış Görsel';

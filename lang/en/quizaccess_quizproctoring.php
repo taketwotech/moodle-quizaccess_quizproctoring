@@ -183,4 +183,6 @@ $string['warnings'] = ' warnings';
 $string['warningsleft'] = 'You have only {$a} left.';
 $string['warningstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
 $string['yes'] = 'Yes';
-
+$string['yesmainimage_label'] = 'Main image';
+$string['yeswarningimage_label'] = 'Warning image';
+$string['yesapproveimage_label'] = 'Approved image';

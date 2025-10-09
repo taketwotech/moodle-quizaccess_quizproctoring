@@ -183,3 +183,6 @@ $string['warnings'] = ' avertissements';
 $string['warningsleft'] = 'Il vous reste {$a} avertissements.';
 $string['warningstudent'] = 'Le quiz n\'est pas correctement configuré. Veuillez contacter l\'administrateur du site.';
 $string['yes'] = 'Oui';
+$string['yesmainimage_label'] = 'Image principale';
+$string['yeswarningimage_label'] = 'Image d\'avertissement';
+$string['yesapproveimage_label'] = 'Image approuvée';
