@@ -633,7 +633,8 @@ function($, str, ModalFactory) {
                         } else {
                             iframe[0].contentWindow.postMessage({
                                 type: 'init',
-                                timestamp: Date.now()
+                                timestamp: Date.now(),
+                                lang: $('html').attr('lang') || 'en'
                             }, externalserver);
                         }
                     }, setinterval * 1000);
