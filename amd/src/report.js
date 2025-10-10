@@ -176,25 +176,29 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 var startdate = $(this).data('startdate');
                 var all = false;
                 var modaltitle = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
+                var storeAllImages = $('#storeallimages').val();
 
-                ModalFactory.create({
-                    type: ModalFactory.types.DEFAULT,
-                    body: '<div class="image-content"><p>Loading images...</p></div><div class="pagination-controls"></div>',
-                    title: modaltitle,
-                    large: true,
+                str.get_string('viewallimages_checkbox', 'quizaccess_quizproctoring').then(function(checkboxLabel) {
+                    return ModalFactory.create({
+                        type: ModalFactory.types.DEFAULT,
+                        body: '<div class="image-content"><p>Loading images...</p></div><div class="pagination-controls"></div>',
+                        title: modaltitle,
+                        large: true,
+                    }).then(function(modal) {
+                        modal.show();
+                        $('.imgcheckbox').prop('checked', false);
+                        var checkboxContainer = `
+                            <div class="checkbox-container" style="display: none;">
+                                <input type="checkbox" class="imgcheckbox">
+                                <label for="checkbox" class="image-checkbox">
+                                    ${checkboxLabel}
+                                </label>
+                            </div>
+                        `;
+                        modal.getBody().prepend(checkboxContainer);
+                        return modal;
+                    });
                 }).then(function(modal) {
-                    modal.show();
-                    $('.imgcheckbox').prop('checked', false);
-                    var storeAllImages = $('#storeallimages').val();
-                    var checkboxContainer = `
-                        <div class="checkbox-container" style="display: none;">
-                            <input type="checkbox" class="imgcheckbox">
-                            <label for="checkbox" class="image-checkbox">
-                                To view all images saved from the quiz, please select the checkbox.
-                            </label>
-                        </div>
-                    `;
-                    modal.getBody().prepend(checkboxContainer);
                     if (storeAllImages === '1') {
                         modal.getBody().find('.checkbox-container').show();
                     } else {
@@ -384,8 +388,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         }
                     });
                     return undefined;
-                })
-                .catch(function() {
+                }).catch(function() {
                     // Console.log(err);
                 });
             });

@@ -201,6 +201,7 @@ $string['usersimages'] = 'Images de l\'utilisateur';
 $string['usersimages_help'] = 'Voir les miniatures de toutes les images capturées pendant la session de surveillance pour cet utilisateur.';
 $string['usersimageswarning'] = 'Avertissements';
 $string['usersimageswarning_help'] = 'Voir les miniatures de toutes les images d\'avertissement capturées pendant la session de surveillance pour cet utilisateur.';
+$string['viewallimages_checkbox'] = 'Pour voir toutes les images enregistrées du quiz, veuillez cocher la case.';
 $string['viewproctoringreport'] = 'Voir le rapport de surveillance';
 $string['viewstudentonline'] = 'Voir les utilisateurs en ligne';
 $string['warning'] = ' avertissement';

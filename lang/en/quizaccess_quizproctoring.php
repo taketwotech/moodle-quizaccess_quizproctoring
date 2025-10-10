@@ -171,6 +171,7 @@ $string['usersimages'] = 'User\'s Images';
 $string['usersimages_help'] = 'View thumbnails of all images captured during the proctoring session for this user.';
 $string['usersimageswarning'] = 'Warnings';
 $string['usersimageswarning_help'] = 'View thumbnails of all warning images captured during the proctoring session for this user.';
+$string['viewallimages_checkbox'] = 'To view all images saved from the quiz, please select the checkbox.';
 $string['viewproctoringreport'] = 'View Proctoring Report';
 $string['viewstudentonline'] = 'View Online Users';
 $string['warning'] = ' warning';

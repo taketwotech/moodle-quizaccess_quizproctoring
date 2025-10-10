@@ -176,6 +176,7 @@ $string['usersimages'] = 'Kullanıcının Görselleri';
 $string['usersimages_help'] = 'Bu kullanıcı için gözetim oturumu sırasında yakalanan tüm küçük görselleri görüntüleyin.';
 $string['usersimageswarning'] = 'Uyarılar';
 $string['usersimageswarning_help'] = 'Bu kullanıcı için gözetim oturumu sırasında yakalanan tüm uyarı görsellerini görüntüleyin.';
+$string['viewallimages_checkbox'] = 'Testten kaydedilen tüm görselleri görüntülemek için lütfen onay kutusunu seçin.';
 $string['viewproctoringreport'] = 'Gözetim Raporunu Görüntüle';
 $string['viewstudentonline'] = 'Çevrimiçi Kullanıcıları Görüntüle';
 $string['warning'] = ' uyarı';
