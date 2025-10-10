@@ -34,9 +34,13 @@ $course = required_param('course', PARAM_RAW);
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
-// Set the user's preferred language for string translations.
+// Force user's language for translations.
 if (!empty($USER->lang)) {
-    $SESSION->lang = $USER->lang;
+    $curlang = current_language();
+    if ($curlang !== $USER->lang) {
+        // Temporarily switch to user's language.
+        $SESSION->forcelang = $USER->lang;
+    }
 }
 
 $sql = "SELECT

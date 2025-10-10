@@ -37,6 +37,15 @@ $debug = optional_param('debug', 0, PARAM_INT);
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
+// Force user's language for translations.
+if (!empty($USER->lang)) {
+    $curlang = current_language();
+    if ($curlang !== $USER->lang) {
+        // Temporarily switch to user's language.
+        $SESSION->forcelang = $USER->lang;
+    }
+}
+
 $sql = "SELECT
     mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username,
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS
