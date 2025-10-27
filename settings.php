@@ -61,9 +61,4 @@ if ($hassiteconfig && !empty($USER->id)) {
             300 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]
     ));
-
-    $settings->add(new admin_setting_configcheckbox('quizaccess_quizproctoring/proctoring_image_show',
-        get_string('proctoring_image_show', 'quizaccess_quizproctoring'),
-        get_string('proctoring_image_show_help', 'quizaccess_quizproctoring'), 1));
-
 }

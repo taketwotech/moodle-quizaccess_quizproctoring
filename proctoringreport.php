@@ -230,7 +230,7 @@ $headers = [
     get_string("actions", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('actions', 'quizaccess_quizproctoring')),
 ];
-$proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
+$proctoringimageshow = 1;
 if ($proctoringimageshow == 1) {
     array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('reviewattempts', 'quizaccess_quizproctoring')));
