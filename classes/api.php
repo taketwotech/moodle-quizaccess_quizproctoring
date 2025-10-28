@@ -91,7 +91,7 @@ class api {
      * @param int $quizid quiz id
      * @return string
      */
-    public static function proctor_image_api($imagedata, $userid, $quizid) {
+    public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid) {
         global $SESSION;
         self::init();
         $curl = new \curl();
@@ -106,6 +106,7 @@ class api {
             'domain: ' . $domain,
             'user_id: ' . $userid,
             'quiz_id: ' . $quizid,
+            'attempt_id: ' . $attemptid,
         ];
 
         $curl->setHeader($header);

@@ -109,7 +109,7 @@ if (!$mainentry->isautosubmit) {
         $tdata = preg_replace('#^data:image/\w+;base64,#i', '', $target);
         $imagedata = ["primary" => $tdata, "target" => $data, "type" => "eyes_detection"];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(($imagedata),
-            $USER->id, $cm->instance);
+            $USER->id, $cm->instance, $attemptid);
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
@@ -124,7 +124,7 @@ if (!$mainentry->isautosubmit) {
         $data1 = preg_replace('#^data:image/\w+;base64,#i', '', $img);
         $imagedata = ["primary" => $data1];
         $response = \quizaccess_quizproctoring\api::proctor_image_api(($imagedata),
-            $USER->id, $cm->instance);
+            $USER->id, $cm->instance, $attemptid);
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
@@ -135,7 +135,7 @@ if (!$mainentry->isautosubmit) {
                     $imagecontent = base64_encode(preg_replace('#^data:image/\w+;base64,#i', '', $profileimage));
                     $profiledata = ["primary" => $data1, "target" => $imagecontent];
                     $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(($profiledata),
-                    $USER->id, $cm->instance);
+                    $USER->id, $cm->instance, $attemptid);
                     $response = $matchprofile;
                     $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, false);
                     if ($profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
