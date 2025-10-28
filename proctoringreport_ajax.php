@@ -146,11 +146,6 @@ foreach ($records as $r) {
         'alt' => 'review',
     ]));
 
-    /*if (is_siteadmin($r->id) || has_capability('moodle/course:update',
-            context_course::instance($courseid), $r->id)) {
-        $reviewicon = '';
-    }*/
-
     $deleteicon = html_writer::tag('a', '<i class="icon fa fa-trash"></i>', [
         'href' => '#',
         'class' => 'delete-icon',

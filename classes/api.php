@@ -89,6 +89,7 @@ class api {
      * @param Longtext $imagedata data
      * @param int $userid user id
      * @param int $quizid quiz id
+     * @param int $attemptid attempt id
      * @return string
      */
     public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid) {
