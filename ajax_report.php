@@ -74,7 +74,7 @@ if ($sqlm && !empty($sqlm->userimg)) {
     array_push($imgarray, [
         'title' => get_string('mainimage', 'quizaccess_quizproctoring'),
         'img' => $targetm,
-        'imagestatus' => get_string('mainimage', 'quizaccess_quizproctoring'),
+        'imagestatus' => 'main image',
         'timecreated' => userdate($sqlm->timecreated, '%H:%M'),
         'totalpage' => $totalpages,
         'total' => $totalrecord,
@@ -120,11 +120,11 @@ foreach ($getimages as $img) {
     }
     $formattedtime = userdate($img->timecreated, '%H:%M');
     if ($img->image_status == 'M') {
-        $imagestatusstr = get_string('mainimage', 'quizaccess_quizproctoring');
+        $imagestatusstr = 'main image';
     } else if ($img->status != '') {
-        $imagestatusstr = get_string('imgwarning', 'quizaccess_quizproctoring');
+        $imagestatusstr = 'warning';
     } else {
-        $imagestatusstr = get_string('green', 'quizaccess_quizproctoring');
+        $imagestatusstr = 'green';
     }
     array_push($imgarray, ['title' => $img->image_status == 'M' ?
         get_string('mainimage', 'quizaccess_quizproctoring') :
