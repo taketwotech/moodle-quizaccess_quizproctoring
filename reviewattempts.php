@@ -37,7 +37,7 @@ $context = context_module::instance($cmid, MUST_EXIST);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
 require_login($course, true, $cm);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
-$proctoringimageshow = get_config('quizaccess_quizproctoring', 'proctoring_image_show');
+$proctoringimageshow = 1;
 if ($proctoringimageshow == 1) {
     $PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/reviewattempts.php', [
         'userid' => $userid, 'cmid' => $cmid, 'quizid' => $quizid,

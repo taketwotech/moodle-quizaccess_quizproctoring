@@ -137,11 +137,10 @@ if (!$mainentry->isautosubmit) {
                     $matchprofile = \quizaccess_quizproctoring\api::proctor_image_api(($profiledata),
                     $USER->id, $cm->instance);
                     $response = $matchprofile;
-                    $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, true);
+                    $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, false);
                     if ($profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
-                        $profileresp == QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED) {
                         throw new moodle_exception('notmatchedprofile', 'quizaccess_quizproctoring');
                         die();
