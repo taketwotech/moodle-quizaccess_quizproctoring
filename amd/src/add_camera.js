@@ -157,7 +157,7 @@ function($, str, ModalFactory) {
                     $('#userimageset').val(0);
                     $(document).trigger('popup', response.error);
                 } else {
-                    $('#userimageset').val(1);        
+                    $('#userimageset').val(1);
                     if ($('#id_consentcheckbox').is(':checked')) {
                         $("#id_submitbutton").prop("disabled", false);
                     }
