@@ -32,7 +32,6 @@
  * Structure step to restore one quizaccess proctoring activity
  */
 class restore_quizaccess_quizproctoring_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Define structure
      */

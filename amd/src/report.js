@@ -178,26 +178,28 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 var modaltitle = M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                 var storeAllImages = $('#storeallimages').val();
 
-                str.get_string('viewallimages_checkbox', 'quizaccess_quizproctoring').then(function(checkboxLabel) {
+                var checkboxLabel;
+                str.get_string('viewallimages_checkbox', 'quizaccess_quizproctoring').then(function(label) {
+                    checkboxLabel = label;
                     return ModalFactory.create({
                         type: ModalFactory.types.DEFAULT,
                         body: '<div class="image-content"><p>Loading images...</p></div><div class="pagination-controls"></div>',
                         title: modaltitle,
                         large: true,
-                    }).then(function(modal) {
-                        modal.show();
-                        $('.imgcheckbox').prop('checked', false);
-                        var checkboxContainer = `
-                            <div class="checkbox-container" style="display: none;">
-                                <input type="checkbox" class="imgcheckbox">
-                                <label for="checkbox" class="image-checkbox">
-                                    ${checkboxLabel}
-                                </label>
-                            </div>
-                        `;
-                        modal.getBody().prepend(checkboxContainer);
-                        return modal;
                     });
+                }).then(function(modal) {
+                    modal.show();
+                    $('.imgcheckbox').prop('checked', false);
+                    var checkboxContainer = `
+                        <div class="checkbox-container" style="display: none;">
+                            <input type="checkbox" class="imgcheckbox">
+                            <label for="checkbox" class="image-checkbox">
+                                ${checkboxLabel}
+                            </label>
+                        </div>
+                    `;
+                    modal.getBody().prepend(checkboxContainer);
+                    return modal;
                 }).then(function(modal) {
                     if (storeAllImages === '1') {
                         modal.getBody().find('.checkbox-container').show();

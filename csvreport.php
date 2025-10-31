@@ -84,7 +84,7 @@ fputcsv($handle, [
     get_string('csvheader_totalwarnings', 'quizaccess_quizproctoring'),
     get_string('csvheader_starttime', 'quizaccess_quizproctoring'),
     get_string('csvheader_photoslink', 'quizaccess_quizproctoring'),
-]);
+], ',', '"', '\\');
 
 foreach ($records as $r) {
     $attempt = $DB->get_record('quiz_attempts', [
@@ -113,7 +113,7 @@ foreach ($records as $r) {
         $r->totalwarnings,
         $timestart,
         $imagessurl->out(false),
-    ]);
+    ], ',', '"', '\\');
 }
 
 fclose($handle);

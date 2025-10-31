@@ -68,9 +68,9 @@ if ($proctorrecord->enableteacherproctor) {
     }
     $PAGE->requires->js(new moodle_url('/mod/quiz/accessrule/quizproctoring/libraries/js/validatelang.js'));
     $teacherurl = get_config('quizaccess_quizproctoring', 'teacher_url') ?: 'https://stream.proctorlink.com/teacher';
-    $roomid = $studenthexstring.'_'.$room;
+    $roomid = $studenthexstring . '_' . $room;
     if ($usergroup != '') {
-        $roomid = $studenthexstring.'_'.$room.'_'.$usergroup;
+        $roomid = $studenthexstring . '_' . $room . '_' . $usergroup;
     }
     $teacherparams = [
         'room' => $roomid,

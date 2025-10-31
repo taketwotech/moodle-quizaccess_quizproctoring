@@ -51,7 +51,7 @@ class checkGetUserInfo extends scheduled_task {
     public function execute() {
         global $DB, $CFG;
         mtrace("Executing scheduled task: Check Get User Info");
-        require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
+        require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
         try {
             $response = \quizaccess_quizproctoring\api::getuserinfo();
             $responsedata = json_decode($response, true);

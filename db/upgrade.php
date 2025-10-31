@@ -33,7 +33,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2020092406) {
-
         // Define field deleted to be added to quizaccess_proctor_data.
         $table = new xmldb_table('quizaccess_proctor_data');
         $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'attemptid');
@@ -48,7 +47,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2020092407) {
-
         // Define field triggeresamail to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('triggeresamail', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'time_interval');
@@ -63,7 +61,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2020092408) {
-
         // Define field warning_threshold to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('warning_threshold', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'triggeresamail');
@@ -87,7 +84,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2020092409) {
-
         // Define field ci_test_id to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('ci_test_id', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'warning_threshold');
@@ -102,7 +98,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2020092410) {
-
         // Define field quiz_sku to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('quiz_sku', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'ci_test_id');
@@ -117,7 +112,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2021060400) {
-
         // Define field quiz_sku to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('proctoringvideo_link', XMLDB_TYPE_TEXT, '', null, null, null, null, 'quiz_sku');
@@ -132,7 +126,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2021060401) {
-
         // Define index quizid-enableproctoring (unique) to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $index = new xmldb_index('quizid-enableproctoring', XMLDB_INDEX_UNIQUE, ['quizid', 'enableproctoring']);
@@ -144,8 +137,11 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Define index quizid-attemptid-userid-image_status-status (not unique) to be added to quizaccess_proctor_data.
         $table = new xmldb_table('quizaccess_proctor_data');
-        $index = new xmldb_index('quizid-attemptid-userid-image_status-status',
-            XMLDB_INDEX_NOTUNIQUE, ['quizid', 'attemptid', 'userid', 'image_status', 'status']);
+        $index = new xmldb_index(
+            'quizid-attemptid-userid-image_status-status',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['quizid', 'attemptid', 'userid', 'image_status', 'status']
+        );
 
         // Conditionally launch add index quizid-attemptid-userid-image_status-status.
         if (!$dbman->index_exists($table, $index)) {
@@ -154,11 +150,9 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Proctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2021060401, 'quizaccess', 'quizproctoring');
-
     }
 
     if ($oldversion < 2023031600) {
-
         // Define field triggeresamail to be dropped from quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('triggeresamail');
@@ -191,11 +185,18 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024020251) {
-
         // Define field enableteacherproctor to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enableteacherproctor', XMLDB_TYPE_INTEGER, '1',
-         null, XMLDB_NOTNULL, null, '0', 'proctoringvideo_link');
+        $field = new xmldb_field(
+            'enableteacherproctor',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'proctoringvideo_link'
+        );
 
         // Conditionally launch add field enableteacherproctor.
         if (!$dbman->field_exists($table, $field)) {
@@ -207,7 +208,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024092404) {
-
         // Define field isautosubmit to be added to quizaccess_proctor_data.
         $table = new xmldb_table('quizaccess_proctor_data');
         $field = new xmldb_field('isautosubmit', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'status');
@@ -222,7 +222,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024102700) {
-
         // Update img_check_time to 30 for all instances in quizaccess_quizproctoring.
         $DB->set_field('config_plugins', 'value', '30', [
             'plugin' => 'quizaccess_quizproctoring',
@@ -240,7 +239,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024102910) {
-
         // Define field storeallimages to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('storeallimages', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableteacherproctor');
@@ -255,7 +253,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024102911) {
-
         // Define field enableprofilematch to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('enableprofilematch', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'storeallimages');
@@ -270,11 +267,18 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2024103002) {
-
         // Define field enablestudentvideo to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablestudentvideo', XMLDB_TYPE_INTEGER, '1',
-            null, XMLDB_NOTNULL, null, '0', 'enableprofilematch');
+        $field = new xmldb_field(
+            'enablestudentvideo',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'enableprofilematch'
+        );
 
         // Conditionally launch add field enablestudentvideo.
         if (!$dbman->field_exists($table, $field)) {
@@ -294,7 +298,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025040201) {
-
         // Define field enableeyecheck to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('enableeyecheck', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'proctoringvideo_link');
@@ -309,7 +312,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025041402) {
-
         // Define field response to be added to quizaccess_proctor_data.
         $table = new xmldb_table('quizaccess_proctor_data');
         $field = new xmldb_field('response', XMLDB_TYPE_CHAR, '1000', null, null, null, null, 'isautosubmit');
@@ -326,14 +328,13 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     if ($oldversion < 2025042301) {
         $timestamp = time();
         $randombytes = random_bytes(8);
-        $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;;
+        $hexstringwithtimestamp = bin2hex($randombytes) . '_' . $timestamp;
         set_config('quizproctoringhexstring', $hexstringwithtimestamp, 'quizaccess_quizproctoring');
 
         upgrade_plugin_savepoint(true, 2025042301, 'quizaccess', 'quizproctoring');
     }
 
     if ($oldversion < 2025042904) {
-
         // Define field enableeyecheckreal to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('enableeyecheckreal', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableeyecheck');
@@ -359,7 +360,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $record->email     = $user->email;
         $record->domain    = $CFG->wwwroot;
         $record->moodle_v  = get_config('moodle', 'release');
-        $record->previously_installed_v = '(Build: '. $oldversion.')';
+        $record->previously_installed_v = '(Build: ' . $oldversion . ')';
         $record->proctorlink_version = $release;
         $SESSION->proctorlink_version = $release;
 
@@ -386,7 +387,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025061702) {
-
         // Define table quizaccess_main_proctor to be created.
         $table = new xmldb_table('quizaccess_main_proctor');
 
@@ -424,7 +424,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025061703) {
-
         // Define field enableuploadidentity to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
         $field = new xmldb_field('enableuploadidentity', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableeyecheck');
@@ -448,7 +447,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025062401) {
-
         // Define table quizaccess_proctor_alert to be created.
         $table = new xmldb_table('quizaccess_proctor_alert');
 
@@ -472,7 +470,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025070600) {
-
         // Changing type of field response on table quizaccess_proctor_data to text.
         $table = new xmldb_table('quizaccess_proctor_data');
         $field = new xmldb_field('response', XMLDB_TYPE_TEXT, null, null, null, null, null, 'isautosubmit');

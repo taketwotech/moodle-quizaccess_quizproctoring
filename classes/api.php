@@ -46,7 +46,6 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  * Provides all the functions for facematch call
  */
 class api {
-
     /** @var API accesstoken */
     private static $accesstoken = null;
 
@@ -193,8 +192,10 @@ class api {
      */
     public static function compare_faces($response) {
         $result = json_decode($response, true);
-        if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"])
-            && isset($result["FaceMatches"][0]["Similarity"])) {
+        if (
+            isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"])
+            && isset($result["FaceMatches"][0]["Similarity"])
+        ) {
             return $result["FaceMatches"][0]["Similarity"];
         }
         return false;

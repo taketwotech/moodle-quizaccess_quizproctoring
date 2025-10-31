@@ -216,5 +216,5 @@ foreach ($combinedimages as $img) {
     }
 }
 
-$filename = 'facial_analysis_report_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $user->firstname.' '.$user->lastname) . '.pdf';
+$filename = 'facial_analysis_report_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $user->firstname . ' ' . $user->lastname) . '.pdf';
 $pdf->Output($filename, 'D');

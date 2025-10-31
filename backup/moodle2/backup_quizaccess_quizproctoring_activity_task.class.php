@@ -32,7 +32,6 @@ require_once($CFG->dirroot . '/mod/quiz/quizproctoring/backup/moodle2/backup_qui
  * Provides all the settings and steps to perform one complete backup of the activity
  */
 class backup_quizaccess_quizproctoring_subplugin extends backup_subplugin {
-
     /**
      * No specific settings for this activity
      */
@@ -43,7 +42,9 @@ class backup_quizaccess_quizproctoring_subplugin extends backup_subplugin {
      * Defines a backup step to store the instance data in the quizaccess_quizproctoring.xml file
      */
     protected function define_attempt_subplugin_structure() {
-            $this->add_step(new backup_quizaccess_quizproctoring_activity_structure_step('quizaccess_quizproctoring_structure',
-                'quizaccess_quizproctoring.xml'));
+        $this->add_step(new backup_quizaccess_quizproctoring_activity_structure_step(
+            'quizaccess_quizproctoring_structure',
+            'quizaccess_quizproctoring.xml'
+        ));
     }
 }
