@@ -41,18 +41,18 @@ if (!$all) {
     $addsql = " (status != '') AND ";
 }
 $sql = "SELECT * FROM {quizaccess_proctor_data}
-        WHERE ".$addsql."userid = ".$userid."
-        AND quizid = ".$quizid."
-        AND attemptid = ".$attemptid."
+        WHERE " . $addsql . "userid = " . $userid . "
+        AND quizid = " . $quizid . "
+        AND attemptid = " . $attemptid . "
         AND deleted = 0 AND image_status != 'M'
         ORDER BY id ASC
-        LIMIT ".$perpage." OFFSET ".$offset;
+        LIMIT " . $perpage . " OFFSET " . $offset;
 
 $getimages = $DB->get_records_sql($sql);
 $sqlt = "SELECT * FROM {quizaccess_proctor_data}
-        WHERE ".$addsql."userid = ".$userid."
-        AND quizid = ".$quizid."
-        AND attemptid = ".$attemptid."
+        WHERE " . $addsql . "userid = " . $userid . "
+        AND quizid = " . $quizid . "
+        AND attemptid = " . $attemptid . "
         AND deleted = 0 AND image_status != 'M'
         ORDER BY id ASC";
 $totalimages = $DB->get_records_sql($sqlt);
@@ -74,7 +74,7 @@ if ($sqlm && !empty($sqlm->userimg)) {
     array_push($imgarray, [
         'title' => get_string('mainimage', 'quizaccess_quizproctoring'),
         'img' => $targetm,
-        'imagestatus' => get_string('mainimage', 'quizaccess_quizproctoring'),
+        'imagestatus' => 'main image',
         'timecreated' => userdate($sqlm->timecreated, '%H:%M'),
         'totalpage' => $totalpages,
         'total' => $totalrecord,
@@ -84,9 +84,9 @@ foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
         if ($img->status === 'minimizedetected') {
-            $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
+            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
         } else {
-            $imagepath = $CFG->dirroot. '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
         }
         if (file_exists($imagepath)) {
             $imagecontent = file_get_contents($imagepath);
@@ -120,11 +120,11 @@ foreach ($getimages as $img) {
     }
     $formattedtime = userdate($img->timecreated, '%H:%M');
     if ($img->image_status == 'M') {
-        $imagestatusstr = get_string('mainimage', 'quizaccess_quizproctoring');
+        $imagestatusstr = 'main image';
     } else if ($img->status != '') {
-        $imagestatusstr = get_string('imgwarning', 'quizaccess_quizproctoring');
+        $imagestatusstr = 'warning';
     } else {
-        $imagestatusstr = get_string('green', 'quizaccess_quizproctoring');
+        $imagestatusstr = 'green';
     }
     array_push($imgarray, ['title' => $img->image_status == 'M' ?
         get_string('mainimage', 'quizaccess_quizproctoring') :

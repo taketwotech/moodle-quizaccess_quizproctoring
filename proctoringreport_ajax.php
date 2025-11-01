@@ -105,6 +105,7 @@ $sql = "
         u.firstname,
         u.lastname,
         u.email,
+        mp.quizid,
         MAX(mp.timecreated) AS lastattempt,
         (
             SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
@@ -123,7 +124,7 @@ $sql = "
     FROM {user} u
     JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
     WHERE $where
-    GROUP BY u.id, u.firstname, u.lastname, u.email
+    GROUP BY u.id, u.firstname, u.lastname, u.email, mp.quizid
     ORDER BY $ordercolumn $orderdir
 ";
 
@@ -145,11 +146,6 @@ foreach ($records as $r) {
         'class' => 'imageicon',
         'alt' => 'review',
     ]));
-
-    if (is_siteadmin($r->id) || has_capability('moodle/course:update',
-            context_course::instance($courseid), $r->id)) {
-        $reviewicon = '';
-    }
 
     $deleteicon = html_writer::tag('a', '<i class="icon fa fa-trash"></i>', [
         'href' => '#',
@@ -178,4 +174,3 @@ echo json_encode([
     'recordsFiltered' => $recordstotal,
     'data' => $data,
 ]);
-

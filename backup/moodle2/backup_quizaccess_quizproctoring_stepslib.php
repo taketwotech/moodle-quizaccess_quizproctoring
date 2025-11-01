@@ -28,7 +28,6 @@
   * Define the complete quizaccess proctoring structure for backup, with file and id annotations
   */
 class backup_quizaccess_quizproctoring_activity_structure_step extends backup_activity_structure_step {
-
     /**
      * Define structure
      */
@@ -46,6 +45,5 @@ class backup_quizaccess_quizproctoring_activity_structure_step extends backup_ac
 
         // Return the root element (quizaccess_quizproctoring), wrapped into standard activity structure.
         return $this->prepare_activity_structure($quizaccessproctoring);
-
     }
 }

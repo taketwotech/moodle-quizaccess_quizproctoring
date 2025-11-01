@@ -141,7 +141,6 @@ function($, str, ModalFactory) {
         $('#' + this.takepictureid).hide();
         $('#' + this.canvasid).show();
         $('#' + this.retakeid).show();
-        $('#userimageset').val(1);
         $("#id_submitbutton").prop("disabled", true);
 
         $.ajax({
@@ -158,6 +157,7 @@ function($, str, ModalFactory) {
                     $('#userimageset').val(0);
                     $(document).trigger('popup', response.error);
                 } else {
+                    $('#userimageset').val(1);
                     if ($('#id_consentcheckbox').is(':checked')) {
                         $("#id_submitbutton").prop("disabled", false);
                     }
@@ -633,7 +633,8 @@ function($, str, ModalFactory) {
                         } else {
                             iframe[0].contentWindow.postMessage({
                                 type: 'init',
-                                timestamp: Date.now()
+                                timestamp: Date.now(),
+                                lang: $('html').attr('lang') || 'en'
                             }, externalserver);
                         }
                     }, setinterval * 1000);

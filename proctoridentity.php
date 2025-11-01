@@ -31,8 +31,15 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
 $url = '';
-if ($proctoringimage = $DB->get_record("quizaccess_main_proctor", ['attemptid' => $attemptid,
-    'userid' => $userid, 'quizid' => $quizid, 'image_status' => 'M'])) {
+if ($proctoringimage = $DB->get_record(
+        'quizaccess_main_proctor',
+        [
+            'attemptid' => $attemptid,
+            'userid' => $userid,
+            'quizid' => $quizid,
+            'image_status' => 'M',
+        ]
+    )) {
     if (class_exists('\mod_quiz\quiz_settings')) {
         $quizobj = \mod_quiz\quiz_settings::create($quizid, $userid);
     } else {
@@ -43,8 +50,10 @@ if ($proctoringimage = $DB->get_record("quizaccess_main_proctor", ['attemptid' =
     $files = $fs->get_area_files($context->id, 'quizaccess_quizproctoring', 'identity', $proctoringimage->id);
     foreach ($files as $file) {
         $filename = $file->get_filename();
-        $url = moodle_url::make_file_url('/pluginfile.php',
-            '/'.$file->get_contextid().'/quizaccess_quizproctoring/identity/'.$file->get_itemid().'/'.$filename);
+        $url = moodle_url::make_file_url(
+            '/pluginfile.php',
+            '/' . $file->get_contextid() . '/quizaccess_quizproctoring/identity/' . $file->get_itemid() . '/' . $filename
+        );
     }
 
     if ($url) {

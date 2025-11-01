@@ -133,27 +133,27 @@ foreach ($records as $record) {
     }
 
     $pimages = '<img class="imageicon proctoringimage"
-        data-attemptid="'.$attempt->id.'"
-        data-quizid="'.$quizid.'"
-        data-userid="'.$user->id.'"
-        data-startdate="'.$timestart.'"
+        data-attemptid="' . $attempt->id . '"
+        data-quizid="' . $quizid . '"
+        data-userid="' . $user->id . '"
+        data-startdate="' . $timestart . '"
         data-all="false"
-        src="'.$OUTPUT->image_url('icon', 'quizaccess_quizproctoring').'" alt="icon">';
+        src="' . $OUTPUT->image_url('icon', 'quizaccess_quizproctoring') . '" alt="icon">';
 
     $pindentity = !empty($record->user_identity) ? '<img class="imageicon proctoridentity"
-        data-attemptid="'.$attempt->id.'"
-        data-quizid="'.$quizid.'"
-        data-userid="'.$user->id.'"
-        src="'.$OUTPUT->image_url('identity', 'quizaccess_quizproctoring').'" alt="icon">' : '';
+        data-attemptid="' . $attempt->id . '"
+        data-quizid="' . $quizid . '"
+        data-userid="' . $user->id . '"
+        src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">' : '';
 
     $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
     $submiteye = !$record->iseyecheck ? '<div class="submittag">Yes</div>' : 'No';
 
     $generate = '<button class="btn btn-warning generate"
-        data-attemptid="'.$attempt->id.'"
-        data-username="'.s($user->username).'"
-        data-quizid="'.$quizid.'"
-        data-userid="'.$user->id.'">'.
+        data-attemptid="' . $attempt->id . '"
+        data-username="' . s($user->username) . '"
+        data-quizid="' . $quizid . '"
+        data-userid="' . $user->id . '">' .
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
