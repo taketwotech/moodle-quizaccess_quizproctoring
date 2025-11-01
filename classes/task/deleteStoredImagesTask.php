@@ -51,11 +51,11 @@ class deleteStoredImagesTask extends scheduled_task {
     public function execute() {
         global $DB, $CFG;
         mtrace("Delete Stored Images started");
-        require_once($CFG->dirroot.'/mod/quiz/accessrule/quizproctoring/lib.php');
+        require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
         try {
             clean_images_task();
         } catch (Exception $exception) {
-            mtrace('error in delete stored images '.$exception->getMessage());
+            mtrace('error in delete stored images ' . $exception->getMessage());
         }
         return true;
     }

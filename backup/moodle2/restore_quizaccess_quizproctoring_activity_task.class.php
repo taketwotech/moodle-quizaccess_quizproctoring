@@ -33,7 +33,6 @@ require_once($CFG->dirroot . '/mod/quiz/quizproctoring/backup/moodle2/restore_qu
  * quizaccess proctoring restore task that provides all the settings and steps to perform one
  */
 class restore_quizaccess_quizproctoring_subplugin extends restore_subplugin {
-
     /**
      * Define (add) particular settings this activity can have
      */
@@ -46,7 +45,9 @@ class restore_quizaccess_quizproctoring_subplugin extends restore_subplugin {
      */
     protected function define_attempt_subplugin_structure() {
         // Quizaccess proctoring only has one structure.
-        $this->add_step(new restore_quizaccess_quizproctoring_activity_structure_step('quizaccess_quizproctoring_structure',
-        'quizaccess_quizproctoring.xml'));
+        $this->add_step(new restore_quizaccess_quizproctoring_activity_structure_step(
+            'quizaccess_quizproctoring_structure',
+            'quizaccess_quizproctoring.xml'
+        ));
     }
 }

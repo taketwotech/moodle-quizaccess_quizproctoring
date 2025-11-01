@@ -37,12 +37,16 @@ $all = optional_param('all', false, PARAM_BOOL);
 
 // Check login and get context.
 $context = context_module::instance($cmid, MUST_EXIST);
-list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+$courseandcm = get_course_and_cm_from_cmid($cmid, 'quiz');
+$course = $courseandcm[0];
+$cm = $courseandcm[1];
 require_login($course, true);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
-$PAGE->set_url(new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php',
-        ['cmid' => $cmid]));
+$PAGE->set_url(new moodle_url(
+    '/mod/quiz/accessrule/quizproctoring/imagesreport.php',
+    ['cmid' => $cmid]
+));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('report');
 $PAGE->activityheader->disable();
@@ -77,7 +81,7 @@ $mainrecords = [];
 if ($deletequizid || $delcourse) {
     if ($deletequizid) {
         $sql = "SELECT * from {quizaccess_main_proctor} where quizid =
-        ".$deletequizid." AND deleted = 0";
+        " . $deletequizid . " AND deleted = 0";
         $usersrecords = $DB->get_records_sql($sql);
         $deletequiz = $deletequizid;
     } else if ($delcourse) {
@@ -89,7 +93,7 @@ if ($deletequizid || $delcourse) {
             SELECT id FROM {modules} WHERE name = 'quiz'
             )";
         $quizrecords = $DB->get_records_sql($sql);
-        $quizids = array_map(function($record) {
+        $quizids = array_map(function ($record) {
             return $record->quizid;
         }, $quizrecords);
         $quizidsstring = implode(',', array_map('intval', $quizids));
@@ -121,8 +125,14 @@ if ($deletequizid || $delcourse) {
                 'filepath' => '/',
                 'filename' => $usersrecord->userimg,
             ];
-            $file = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
-                $fileinfo['itemid'], $fileinfo['filepath'], $fileinfo['filename']);
+            $file = $fs->get_file(
+                $fileinfo['contextid'],
+                $fileinfo['component'],
+                $fileinfo['filearea'],
+                $fileinfo['itemid'],
+                $fileinfo['filepath'],
+                $fileinfo['filename']
+            );
             if ($file) {
                 $file->delete();
             }
@@ -151,8 +161,10 @@ if ($deletequizid || $delcourse) {
                 WHERE quizid IN ($deletequiz)
             ");
         }
-        $notification = new \core\output\notification(get_string('imagesdeleted',
-            'quizaccess_quizproctoring'), \core\output\notification::NOTIFY_SUCCESS);
+        $notification = new \core\output\notification(
+            get_string('imagesdeleted', 'quizaccess_quizproctoring'),
+            \core\output\notification::NOTIFY_SUCCESS
+        );
         echo $OUTPUT->render($notification);
         $redirecturl = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php', ['cmid' => $cmid]);
         redirect($redirecturl, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
@@ -173,7 +185,7 @@ if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) 
     $btn = '<a class="btn btn-primary delcourse" href="#"
     data-cmid="' . $cmid . '" data-courseid="' . $course->id . '"
     data-course="' . $course->fullname . '">
-    '.get_string("delcoursemages", "quizaccess_quizproctoring", $course->fullname).'</a>';
+    ' . get_string("delcoursemages", "quizaccess_quizproctoring", $course->fullname) . '</a>';
 }
 
 $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
@@ -262,7 +274,7 @@ if (empty($records)) {
         ]);
         $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quizname);
         $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quizname . '</a>';
-        $table->data[] = [$quizname, $record->total_users, $record->total_images , $deleteicon];
+        $table->data[] = [$quizname, $record->total_users, $record->total_images, $deleteicon];
     }
 }
 

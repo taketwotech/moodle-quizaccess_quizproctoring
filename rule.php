@@ -41,7 +41,6 @@ if (class_exists('\mod_quiz\local\access_rule_base')) {
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
-
     /**
      * * Information, such as might be shown on the quiz view page, relating to this restriction.
      * There is no obligation to return anything. If it is not appropriate to tell students
@@ -114,8 +113,12 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $button = '';
         $notice = '';
         $context = context_module::instance($id);
-        if ($DB->record_exists('quizaccess_quizproctoring', ['quizid' => $getquiz->instance,
-            'enableteacherproctor' => 1])) {
+        if (
+            $DB->record_exists('quizaccess_quizproctoring', [
+                'quizid' => $getquiz->instance,
+                'enableteacherproctor' => 1,
+            ])
+        ) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
                 $button = $OUTPUT->single_button(
                     new moodle_url('/mod/quiz/accessrule/quizproctoring/room.php', [
@@ -130,19 +133,19 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         }
         if (has_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context)) {
             $button .= $OUTPUT->single_button(
-                    new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-                        'cmid' => $id,
-                        'quizid' => $getquiz->instance,
-                    ]),
-                    get_string('viewproctoringreport', 'quizaccess_quizproctoring'),
-                    'get'
-                );
+                new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
+                    'cmid' => $id,
+                    'quizid' => $getquiz->instance,
+                ]),
+                get_string('viewproctoringreport', 'quizaccess_quizproctoring'),
+                'get'
+            );
         }
         $isactive = get_config('quizaccess_quizproctoring', 'getuserinfo');
         if ($isactive === '0' && $isadmin) {
             $notice = '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
         }
-        return get_string('proctoringnotice', 'quizaccess_quizproctoring').'<br>'.$notice.$button;
+        return get_string('proctoringnotice', 'quizaccess_quizproctoring') . '<br>' . $notice . $button;
     }
 
     /**
@@ -155,8 +158,15 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
     public function is_preflight_check_required($attemptid) {
         global $SESSION, $DB, $USER;
         $attemptid = $attemptid ? $attemptid : 0;
-        if ($DB->record_exists('quizaccess_main_proctor', ['quizid' => $this->quiz->id,
-            'image_status' => 'M', 'userid' => $USER->id, 'deleted' => 0, 'status' => '' ])) {
+        if (
+            $DB->record_exists('quizaccess_main_proctor', [
+                'quizid' => $this->quiz->id,
+                'image_status' => 'M',
+                'userid' => $USER->id,
+                'deleted' => 0,
+                'status' => '',
+            ])
+        ) {
             if ($attemptid) {
                 return false;
             } else {
@@ -176,22 +186,44 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
      * @return String
      *
      */
-    public function add_preflight_check_form_fields(quizaccess_quizproctoring_preflight_form $quizform,
-            MoodleQuickForm $mform, $attemptid) {
+    public function add_preflight_check_form_fields(
+        quizaccess_quizproctoring_preflight_form $quizform,
+        MoodleQuickForm $mform,
+        $attemptid
+    ) {
         global $PAGE, $DB, $USER;
 
         $securewindow = $DB->get_record('quiz', ['id' => $this->quiz->id]);
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
-        $PAGE->requires->js_call_amd('quizaccess_quizproctoring/add_camera',
-            'init', [$this->quiz->cmid, true, false, $attemptid, false,
-                $this->quiz->id, $proctoringdata->enableeyecheckreal,
-        null, $proctoringdata->enableteacherproctor, $securewindow->browsersecurity]);
-        $PAGE->requires->strings_for_js([
-        'nocameradetected',
-        'nocameradetectedm',
-        ], 'quizaccess_quizproctoring');
-        $element = $mform->addElement('static', 'proctoringmsg', '',
-            get_string('notice', 'quizaccess_quizproctoring'));
+        $PAGE->requires->js_call_amd(
+            'quizaccess_quizproctoring/add_camera',
+            'init',
+            [
+                $this->quiz->cmid,
+                true,
+                false,
+                $attemptid,
+                false,
+                $this->quiz->id,
+                $proctoringdata->enableeyecheckreal,
+                null,
+                $proctoringdata->enableteacherproctor,
+                $securewindow->browsersecurity,
+            ]
+        );
+        $PAGE->requires->strings_for_js(
+            [
+                'nocameradetected',
+                'nocameradetectedm',
+            ],
+            'quizaccess_quizproctoring'
+        );
+        $element = $mform->addElement(
+            'static',
+            'proctoringmsg',
+            '',
+            get_string('notice', 'quizaccess_quizproctoring')
+        );
         $element->setAttributes(['class' => 'proctoringmsg']);
 
         if ($proctoringdata->enableprofilematch == 1) {
@@ -219,17 +251,28 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 $datauri = 'data:image/jpeg;base64,' . $base64image;
             }
             if ($datauri) {
-                $mform->addElement('html', get_string('showprofileimage', 'quizaccess_quizproctoring').'
+                $mform->addElement(
+                    'html',
+                    get_string('showprofileimage', 'quizaccess_quizproctoring') . '
                     <div class="profile-image-wrapper">
                         <img src ="' . $datauri . '" alt = "User Profile Picture" class = "userimage">
-                    </div>');
+                    </div>'
+                );
             } else {
-                $mform->addElement('static', 'proctoringprofilemsg', '',
-                    get_string('showprofileimagemsg', 'quizaccess_quizproctoring'));
+                $mform->addElement(
+                    'static',
+                    'proctoringprofilemsg',
+                    '',
+                    get_string('showprofileimagemsg', 'quizaccess_quizproctoring')
+                );
             }
         }
-        $mform->addElement('static', 'proctoringmessage', '',
-                get_string('reqproctormsg', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'static',
+            'proctoringmessage',
+            '',
+            get_string('reqproctormsg', 'quizaccess_quizproctoring')
+        );
 
         $filemanageroptions = [];
         $filemanageroptions['accepted_types'] = '*';
@@ -253,30 +296,45 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->addElement('html', $html);
 
         // Add consent checkbox at the top.
-        $mform->addElement('advcheckbox', 'consentcheckbox', '',
+        $mform->addElement(
+            'advcheckbox',
+            'consentcheckbox',
+            '',
             get_string('confirmationconcent', 'quizaccess_quizproctoring'),
-            ['class' => 'consentcheckbox']);
+            ['class' => 'consentcheckbox']
+        );
 
         // Take picture button.
         $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_takepicture', 'class' => 'form-group row fitem']);
         $html .= html_writer::div('', 'col-md-3');
-        $button = html_writer::tag('button', get_string('takepicture', 'quizaccess_quizproctoring'),
-            ['class' => 'btn btn-primary', 'id' => 'takepicture']);
+        $button = html_writer::tag(
+            'button',
+            get_string('takepicture', 'quizaccess_quizproctoring'),
+            ['class' => 'btn btn-primary', 'id' => 'takepicture']
+        );
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         // Retake button.
         $html .= html_writer::start_tag('div', ['id' => 'fitem_id_user_retake', 'class' => 'form-group row fitem']);
         $html .= html_writer::div('', 'col-md-3');
-        $button = html_writer::tag('button', get_string('retake', 'quizaccess_quizproctoring'),
-            ['class' => 'btn btn-primary hidden', 'id' => 'retake']);
+        $button = html_writer::tag(
+            'button',
+            get_string('retake', 'quizaccess_quizproctoring'),
+            ['class' => 'btn btn-primary hidden', 'id' => 'retake']
+        );
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
 
         $mform->addElement('html', $html);
         if (!empty($proctoringdata) && $proctoringdata->enableuploadidentity == 1) {
-            $mform->addElement('filemanager', 'user_identity', get_string('uploadidentity',
-            'quizaccess_quizproctoring'), null, $filemanageroptions);
+            $mform->addElement(
+                'filemanager',
+                'user_identity',
+                get_string('uploadidentity', 'quizaccess_quizproctoring'),
+                null,
+                $filemanageroptions
+            );
         }
         $mform->addElement('hidden', 'userimageset', '', ['id' => 'userimageset']);
         $mform->setType('userimageset', PARAM_INT);
@@ -286,8 +344,11 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         if ($proctoringdata->proctoringvideo_link) {
             $html = html_writer::start_tag('div', ['id' => 'fitem_id_user_demovideo', 'class' => 'form-group row fitem']);
             $html .= html_writer::div('', 'col-md-3');
-            $link = html_writer::tag('a', get_string('demovideo', 'quizaccess_quizproctoring'),
-                ['id' => 'demovideo', 'target' => '_blank', 'href' => $proctoringdata->proctoringvideo_link]);
+            $link = html_writer::tag(
+                'a',
+                get_string('demovideo', 'quizaccess_quizproctoring'),
+                ['id' => 'demovideo', 'target' => '_blank', 'href' => $proctoringdata->proctoringvideo_link]
+            );
             $html .= html_writer::div($link, 'col-md-9');
             $html .= html_writer::end_tag('div');
             $mform->addElement('html', $html);
@@ -317,8 +378,14 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $record->attemptid = $attemptid;
         // We probably have an entry already in DB.
         $file = file_get_draft_area_info($useridentity);
-        if ($rc = $DB->get_record('quizaccess_main_proctor', ['userid' =>
-            $USER->id, 'quizid' => $this->quiz->id, 'attemptid' => $attemptid, 'image_status' => 'I' ])) {
+        if (
+            $rc = $DB->get_record('quizaccess_main_proctor', [
+                'userid' => $USER->id,
+                'quizid' => $this->quiz->id,
+                'attemptid' => $attemptid,
+                'image_status' => 'I',
+            ])
+        ) {
             $context = context_module::instance($cmid);
             $rc->image_status = 'M';
             if ($file['filecount'] > 0) {
@@ -328,12 +395,11 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             } else {
                 $DB->update_record('quizaccess_main_proctor', $rc);
             }
-
         } else {
             $id = $DB->insert_record('quizaccess_main_proctor', $record);
             if ($file['filecount'] > 0) {
                 $context = context_module::instance($cmid);
-                file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity' , $id);
+                file_save_draft_area_files($useridentity, $context->id, 'quizaccess_quizproctoring', 'identity', $id);
             }
         }
         return $errors;
@@ -374,42 +440,60 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('enableproctoring', 0);
 
         // Allow admin or teacher to setup proctored quiz.
-        $mform->addElement('selectyesno', 'enableteacherproctor',
-            get_string('enableteacherproctor', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'selectyesno',
+            'enableteacherproctor',
+            get_string('enableteacherproctor', 'quizaccess_quizproctoring')
+        );
         $mform->addHelpButton('enableteacherproctor', 'enableteacherproctor', 'quizaccess_quizproctoring');
         $mform->setDefault('enableteacherproctor', 0);
         $mform->hideIf('enableteacherproctor', 'enableproctoring', 'eq', '0');
 
         // Allow admin or teacher to capture all images not just warning images.
-        $mform->addElement('selectyesno', 'storeallimages',
-            get_string('storeallimages', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'selectyesno',
+            'storeallimages',
+            get_string('storeallimages', 'quizaccess_quizproctoring')
+        );
         $mform->addHelpButton('storeallimages', 'storeallimages', 'quizaccess_quizproctoring');
         $mform->setDefault('storeallimages', 0);
         $mform->hideIf('storeallimages', 'enableproctoring', 'eq', '0');
 
-        $mform->addElement('selectyesno', 'enableuploadidentity',
-        get_string('enableuploadidentity', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'selectyesno',
+            'enableuploadidentity',
+            get_string('enableuploadidentity', 'quizaccess_quizproctoring')
+        );
         $mform->addHelpButton('enableuploadidentity', 'enableuploadidentity', 'quizaccess_quizproctoring');
         $mform->setDefault('enableuploadidentity', 0);
         $mform->hideIf('enableuploadidentity', 'enableproctoring', 'eq', '0');
 
         // Allow admin or teacher to setup profile picture match.
-        $mform->addElement('selectyesno', 'enableprofilematch',
-            get_string('enableprofilematch', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'selectyesno',
+            'enableprofilematch',
+            get_string('enableprofilematch', 'quizaccess_quizproctoring')
+        );
         $mform->addHelpButton('enableprofilematch', 'enableprofilematch', 'quizaccess_quizproctoring');
         $mform->setDefault('enableprofilematch', 0);
         $mform->hideIf('enableprofilematch', 'enableproctoring', 'eq', '0');
 
         // Allow admin or teacher to setup student video.
-        $mform->addElement('selectyesno', 'enablestudentvideo',
-            get_string('enablestudentvideo', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'selectyesno',
+            'enablestudentvideo',
+            get_string('enablestudentvideo', 'quizaccess_quizproctoring')
+        );
         $mform->addHelpButton('enablestudentvideo', 'enablestudentvideo', 'quizaccess_quizproctoring');
         $mform->setDefault('enablestudentvideo', 1);
         $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
 
         // Allow admin or teacher to setup student video.
-        $mform->addElement('selectyesno', 'enableeyecheckreal',
-            get_string('enableeyecheckreal', 'quizaccess_quizproctoring'));
+        $mform->addElement(
+            'selectyesno',
+            'enableeyecheckreal',
+            get_string('enableeyecheckreal', 'quizaccess_quizproctoring')
+        );
         $mform->addHelpButton('enableeyecheckreal', 'enableeyecheckreal', 'quizaccess_quizproctoring');
         $mform->setDefault('enableeyecheckreal', 0);
         $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
@@ -426,17 +510,21 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setType('enableeyecheck', PARAM_INT);
 
         // Time interval set for proctoring image.
-        $mform->addElement('select', 'time_interval',
-            get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'), [
-            "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
-            "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'),
-            "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
-            "60" => get_string('oneminute', 'quizaccess_quizproctoring'),
-            "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
-            "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
-            "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
-            "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
-        ]);
+        $mform->addElement(
+            'select',
+            'time_interval',
+            get_string('proctoringtimeinterval', 'quizaccess_quizproctoring'),
+            [
+                "15" => get_string('fiftenseconds', 'quizaccess_quizproctoring'),
+                "20" => get_string('twentyseconds', 'quizaccess_quizproctoring'),
+                "30" => get_string('thirtyseconds', 'quizaccess_quizproctoring'),
+                "60" => get_string('oneminute', 'quizaccess_quizproctoring'),
+                "120" => get_string('twominutes', 'quizaccess_quizproctoring'),
+                "180" => get_string('threeminutes', 'quizaccess_quizproctoring'),
+                "240" => get_string('fourminutes', 'quizaccess_quizproctoring'),
+                "300" => get_string('fiveminutes', 'quizaccess_quizproctoring'),
+            ]
+        );
         $mform->addHelpButton('time_interval', 'proctoringtimeinterval', 'quizaccess_quizproctoring');
         $mform->setDefault('time_interval', get_config('quizaccess_quizproctoring', 'img_check_time'));
         $mform->hideIf('time_interval', 'enableproctoring', 'eq', '0');
@@ -450,8 +538,12 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             }
         }
         // Allow admin to setup warnings threshold.
-        $mform->addElement('select', 'warning_threshold', get_string('warning_threshold',
-         'quizaccess_quizproctoring'), $thresholds);
+        $mform->addElement(
+            'select',
+            'warning_threshold',
+            get_string('warning_threshold', 'quizaccess_quizproctoring'),
+            $thresholds
+        );
         $mform->addHelpButton('warning_threshold', 'warning_threshold', 'quizaccess_quizproctoring');
         $mform->setDefault('warning_threshold', 0);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
@@ -459,7 +551,6 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
         $mform->setType('proctoringvideo_link', PARAM_URL);
-
     }
 
     /**

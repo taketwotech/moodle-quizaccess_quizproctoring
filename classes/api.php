@@ -46,7 +46,6 @@ require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
  * Provides all the functions for facematch call
  */
 class api {
-
     /** @var API accesstoken */
     private static $accesstoken = null;
 
@@ -89,9 +88,10 @@ class api {
      * @param Longtext $imagedata data
      * @param int $userid user id
      * @param int $quizid quiz id
+     * @param int $attemptid attempt id
      * @return string
      */
-    public static function proctor_image_api($imagedata, $userid, $quizid) {
+    public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid) {
         global $SESSION;
         self::init();
         $curl = new \curl();
@@ -106,6 +106,7 @@ class api {
             'domain: ' . $domain,
             'user_id: ' . $userid,
             'quiz_id: ' . $quizid,
+            'attempt_id: ' . $attemptid,
         ];
 
         $curl->setHeader($header);
@@ -191,8 +192,10 @@ class api {
      */
     public static function compare_faces($response) {
         $result = json_decode($response, true);
-        if (isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"])
-            && isset($result["FaceMatches"][0]["Similarity"])) {
+        if (
+            isset($result["FaceMatches"]) && isset($result["FaceMatches"][0]["Face"])
+            && isset($result["FaceMatches"][0]["Similarity"])
+        ) {
             return $result["FaceMatches"][0]["Similarity"];
         }
         return false;
