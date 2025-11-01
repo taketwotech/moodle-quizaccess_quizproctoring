@@ -349,7 +349,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025052801) {
-
         $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
         $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
         $release = $plugin->release;

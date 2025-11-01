@@ -116,7 +116,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         if (
             $DB->record_exists('quizaccess_quizproctoring', [
                 'quizid' => $getquiz->instance,
-                'enableteacherproctor' => 1
+                'enableteacherproctor' => 1,
             ])
         ) {
             if (has_capability('quizaccess/quizproctoring:quizproctoringonlinestudent', $context)) {
@@ -164,7 +164,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 'image_status' => 'M',
                 'userid' => $USER->id,
                 'deleted' => 0,
-                'status' => ''
+                'status' => '',
             ])
         ) {
             if ($attemptid) {
@@ -208,7 +208,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 $proctoringdata->enableeyecheckreal,
                 null,
                 $proctoringdata->enableteacherproctor,
-                $securewindow->browsersecurity
+                $securewindow->browsersecurity,
             ]
         );
         $PAGE->requires->strings_for_js(
@@ -383,7 +383,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 'userid' => $USER->id,
                 'quizid' => $this->quiz->id,
                 'attemptid' => $attemptid,
-                'image_status' => 'I'
+                'image_status' => 'I',
             ])
         ) {
             $context = context_module::instance($cmid);
@@ -551,7 +551,6 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
         $mform->setType('proctoringvideo_link', PARAM_URL);
-
     }
 
     /**

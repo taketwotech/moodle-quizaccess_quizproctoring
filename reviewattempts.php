@@ -34,7 +34,9 @@ $page = optional_param('page', 0, PARAM_INT);
 
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 $context = context_module::instance($cmid, MUST_EXIST);
-list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'quiz');
+$coursemodule = get_course_and_cm_from_cmid($cmid, 'quiz');
+$course = $coursemodule[0];
+$cm = $coursemodule[1];
 require_login($course, true, $cm);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 $proctoringimageshow = 1;
@@ -44,8 +46,10 @@ if ($proctoringimageshow == 1) {
     ]));
     $PAGE->set_title(get_string('reviewattempts', 'quizaccess_quizproctoring'));
 
-    $PAGE->navbar->add(get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
-        '/mod/quiz/accessrule/quizproctoring/reviewattempts.php');
+    $PAGE->navbar->add(
+        get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
+        '/mod/quiz/accessrule/quizproctoring/reviewattempts.php'
+    );
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
     $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
@@ -106,7 +110,7 @@ if ($proctoringimageshow == 1) {
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
 
     $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
-    echo '<input type="hidden" id="storeallimages" name="storeallimages" value="'.$storerecord->storeallimages.'" />';
+    echo '<input type="hidden" id="storeallimages" name="storeallimages" value="' . $storerecord->storeallimages . '" />';
 
     $headers = [
         get_string("email", "quizaccess_quizproctoring"),
@@ -134,7 +138,7 @@ if ($proctoringimageshow == 1) {
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
             'cmid' => $cmid, 'quizid' => $quizid,
         ]);
-        $btn = '<a class="btn btn-primary" href="'.$backurl.'">'.get_string("userimagereport", "quizaccess_quizproctoring").'</a>';
+        $btn = '<a class="btn btn-primary" href="' . $backurl . '">' . get_string("userimagereport", "quizaccess_quizproctoring") . '</a>';
     }
     echo $OUTPUT->header();
     echo '<div class="headtitle">' .

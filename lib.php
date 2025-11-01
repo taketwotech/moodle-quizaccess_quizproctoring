@@ -277,18 +277,18 @@ function quizproctoring_storeimage(
                     'status' => 'true',
                     'redirect' => 'true',
                     'msg' => get_string('autosubmit', 'quizaccess_quizproctoring'),
-                    'url' => $attemptobj->review_url()->out()
+                    'url' => $attemptobj->review_url()->out(),
                 ]);
                 die();
             } else {
                 if ($status) {
                     $left = $quizaccessquizproctoring->warning_threshold - count($errorrecords);
                     if ($COURSE->lang == 'fr' || $COURSE->lang == 'fr_ca') {
-                    if ($left == 1) {
-                        $left = $left . get_string('avertissement', 'quizaccess_quizproctoring');
-                    } else {
-                        $left = $left . get_string('avertissements', 'quizaccess_quizproctoring');
-                    }
+                        if ($left == 1) {
+                            $left = $left . get_string('avertissement', 'quizaccess_quizproctoring');
+                        } else {
+                            $left = $left . get_string('avertissements', 'quizaccess_quizproctoring');
+                        }
                     } else {
                         if ($left == 1) {
                             $left = $left . get_string('warning', 'quizaccess_quizproctoring');
@@ -345,14 +345,12 @@ function quizproctoring_storemainimage(
         ])) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
-        if (
-            $qpd = $DB->get_record('quizaccess_main_proctor', [
-                'userid' => $USER->id,
-                'quizid' => $quizid,
-                'attemptid' => $attemptid,
-                'image_status' => 'I'
-            ])
-        ) {
+        if ($qpd = $DB->get_record('quizaccess_main_proctor', [
+            'userid' => $USER->id,
+            'quizid' => $quizid,
+            'attemptid' => $attemptid,
+            'image_status' => 'I',
+        ])) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
         $preferencename = 'eye_detection';

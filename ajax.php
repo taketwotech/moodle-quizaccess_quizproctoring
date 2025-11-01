@@ -308,7 +308,7 @@ if (!$mainentry->isautosubmit) {
             'quizaccess_quizproctoring',
             [
                 'quizid' => $cm->instance,
-                'storeallimages' => 1
+                'storeallimages' => 1,
             ]
         )) && !$mainimage
     ) {
