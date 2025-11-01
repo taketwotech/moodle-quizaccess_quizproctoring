@@ -337,20 +337,26 @@ function quizproctoring_storemainimage(
 
     // We are all good, store the image.
     if ($mainimage) {
-        if ($qpd = $DB->get_record('quizaccess_main_proctor', [
-            'userid' => $USER->id,
-            'quizid' => $quizid,
-            'attemptid' => $attemptid,
-            'image_status' => 'M',
-        ])) {
+        if ($qpd = $DB->get_record(
+            'quizaccess_main_proctor',
+            [
+                'userid' => $USER->id,
+                'quizid' => $quizid,
+                'attemptid' => $attemptid,
+                'image_status' => 'M',
+            ]
+        )) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
-        if ($qpd = $DB->get_record('quizaccess_main_proctor', [
-            'userid' => $USER->id,
-            'quizid' => $quizid,
-            'attemptid' => $attemptid,
-            'image_status' => 'I',
-        ])) {
+        if ($qpd = $DB->get_record(
+            'quizaccess_main_proctor',
+            [
+                'userid' => $USER->id,
+                'quizid' => $quizid,
+                'attemptid' => $attemptid,
+                'image_status' => 'I',
+            ]
+        )) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
         $preferencename = 'eye_detection';

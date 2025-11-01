@@ -31,12 +31,15 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
 $url = '';
-if ($proctoringimage = $DB->get_record("quizaccess_main_proctor", [
-    'attemptid' => $attemptid,
-    'userid' => $userid,
-    'quizid' => $quizid,
-    'image_status' => 'M'
-])) {
+if ($proctoringimage = $DB->get_record(
+        'quizaccess_main_proctor',
+        [
+            'attemptid' => $attemptid,
+            'userid' => $userid,
+            'quizid' => $quizid,
+            'image_status' => 'M',
+        ]
+    )) {
     if (class_exists('\mod_quiz\quiz_settings')) {
         $quizobj = \mod_quiz\quiz_settings::create($quizid, $userid);
     } else {

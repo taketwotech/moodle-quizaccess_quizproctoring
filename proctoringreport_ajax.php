@@ -174,4 +174,3 @@ echo json_encode([
     'recordsFiltered' => $recordstotal,
     'data' => $data,
 ]);
-

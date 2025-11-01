@@ -48,7 +48,7 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
     'userid' => $USER->id,
     'quizid' => $cm->instance,
     'image_status' => 'M',
-    'attemptid' => $attemptid
+    'attemptid' => $attemptid,
 ]);
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
