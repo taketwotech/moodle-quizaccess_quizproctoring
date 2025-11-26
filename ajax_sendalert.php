@@ -31,10 +31,24 @@ require_login();
 global $DB, $USER;
 use mod_quiz\quiz_attempt;
 
+$attemptid = required_param('attemptid', PARAM_INT);
+$eyeoff = optional_param('eyeoff', false, PARAM_BOOL);
+
+if ($eyeoff) {
+    $eyeoffdata = $DB->get_record('quizaccess_main_proctor', [
+        'attemptid' => $attemptid,
+    ]);
+    $response = [
+        'success' => true,
+        'eyeoffdisable' => (int)$eyeoffdata->iseyecheck,
+    ];
+    echo json_encode($response);
+    exit();
+}
+
 $quizid = required_param('quizid', PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
 $alertmessage = optional_param('alertmessage', '', PARAM_TEXT);
-$attemptid = required_param('attemptid', PARAM_INT);
 $quizsubmit = optional_param('quizsubmit', false, PARAM_BOOL);
 
 $cm = get_coursemodule_from_instance('quiz', $quizid);
@@ -43,19 +57,19 @@ if (!$cm) {
     die();
 }
 $context = context_module::instance($cm->id);
+$PAGE->set_context($context);
 
 if ($quizsubmit) {
     $attemptobj = quiz_attempt::create($attemptid);
     $attemptobj->process_finish(time(), false);
-    $autosubmitdata = $DB->get_record('quizaccess_proctor_data', [
+    $autosubmitdata = $DB->get_record('quizaccess_main_proctor', [
         'userid' => $userid,
         'quizid' => $quizid,
         'attemptid' => $attemptid,
         'image_status' => 'M',
     ]);
-    $autosubmitdata->isautosubmit = 1;
     $autosubmitdata->issubmitbyteacher = 1;
-    $DB->update_record('quizaccess_proctor_data', $autosubmitdata);
+    $DB->update_record('quizaccess_main_proctor', $autosubmitdata);
     echo json_encode(['success' => 'true', 'redirect' => 'true',
         'msg' => get_string('autosubmitbyteacher', 'quizaccess_quizproctoring'), 'url' => $attemptobj->review_url()->out()]);
     die();

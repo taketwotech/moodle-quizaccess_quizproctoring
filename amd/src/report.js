@@ -440,6 +440,49 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
 
                 window.open(url, '_blank');
             });
+
+            $('#attemptsreporttable').on('click', '.eyeoff', function(event) {
+                event.preventDefault();
+                const cmid = $(this).data('cmid');
+                const attemptid = $(this).data('attemptid');
+
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                    method: 'POST',
+                    data: {
+                        cmid: cmid,
+                        attemptid: attemptid,
+                        validate: 'eyecheckoff'
+                    },
+                    success: function(response) {
+                        if (response.status === 'eyecheckoff') {
+                            if (typeof window.attemptsReportTable !== 'undefined' &&
+                                window.attemptsReportTable &&
+                                typeof window.attemptsReportTable.ajax !== 'undefined' &&
+                                typeof window.attemptsReportTable.ajax.reload === 'function') {
+                                window.attemptsReportTable.ajax.reload(null, false);
+                            } else {
+                                window.location.reload();
+                            }
+                        }
+                    },
+                    error: function() {
+                        str.get_string('eyeofferror', 'quizaccess_quizproctoring').then(function(text) {
+                            notification.addNotification({
+                                message: text,
+                                type: 'error'
+                            });
+                            return undefined;
+                        }).catch(function() {
+                            notification.addNotification({
+                                message: 'Error disabling eye check',
+                                type: 'error'
+                            });
+                            return undefined;
+                        });
+                    }
+                });
+            });
         }
     };
 });

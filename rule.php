@@ -439,6 +439,110 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->addHelpButton('enableproctoring', 'enableproctoring', 'quizaccess_quizproctoring');
         $mform->setDefault('enableproctoring', 0);
 
+        // Display plan details and active plan status.
+        $planresponseempty = get_config('quizaccess_quizproctoring', 'getplanresponseempty');
+        $planinfo = get_config('quizaccess_quizproctoring', 'getplaninfo');
+        $planname = get_config('quizaccess_quizproctoring', 'getplanname');
+        $plancredits = get_config('quizaccess_quizproctoring', 'getplancredits');
+        $plantotalcredits = get_config('quizaccess_quizproctoring', 'getplantotalcredits');
+
+        // Check if plan response is empty.
+        if ($planresponseempty == 1) {
+            $linktext = get_string('purchaseplan', 'quizaccess_quizproctoring');
+            $planstatus = '<div class="plan-warning-box"><strong>' .
+            get_string('noplanresponse', 'quizaccess_quizproctoring') .
+            '</strong><span class="plan-separator">|</span>
+            <a href="https://proctorlink.com/#pricing"target="_blank" rel="noopener noreferrer">' .
+                    $linktext . '</a></div>';
+            $planstatus .= '<div class="plan-info-note">' .
+            get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
+        } else if ($planinfo == 1) {
+            // Check if it's a credit-based plan.
+            if ($planname === 'Credit Base Plan') {
+                // Display credit-based plan information.
+                $planstatus = '<div class="plan-info-box">';
+                $planstatus .= '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') .
+                '</strong> ' . get_string('creditbaseplan', 'quizaccess_quizproctoring');
+                $planstatus .= ' <span class="plan-separator">|</span> <strong>' .
+                get_string('credits', 'quizaccess_quizproctoring') .
+                '</strong> ' . (int)$plancredits;
+                    $planstatus .= '/' . (int)$plantotalcredits;
+                // Add renew link for credit plans on the same line.
+                $planstatus .= ' <span class="plan-separator">|</span> '
+                . '<a href="https://proctorlink.com/#pricing" target="_blank" rel="noopener noreferrer">'
+                . get_string('buycredit', 'quizaccess_quizproctoring')
+                . '</a>';
+                $planstatus .= '</div>';
+                $planstatus .= '<div class="plan-info-note">' .
+                    get_string('creditbalanceupdatenote', 'quizaccess_quizproctoring') . '</div>';
+            } else {
+                // Remove -india or -global suffix to show only base plan name.
+                $displayplanname = preg_replace('/-(india|global)$/i', '', $planname);
+                if ($displayplanname == 'starter') {
+                    $displayplanname = get_string('planstarter', 'quizaccess_quizproctoring');
+                } else if ($displayplanname == 'standard') {
+                    $displayplanname = get_string('planadvanced', 'quizaccess_quizproctoring');
+                } else if ($displayplanname == 'Free') {
+                    $displayplanname = get_string('planfree', 'quizaccess_quizproctoring');
+                }
+                // Get expiry date from config.
+                $expiredate = '';
+                $expiretimestamp = get_config('quizaccess_quizproctoring', 'getplanexpiry');
+                if (!empty($expiretimestamp)) {
+                    // Handle both milliseconds (13 digits) and seconds (10 digits) timestamp formats.
+                    $expiretimestamp = (int)$expiretimestamp;
+                    // If timestamp is in milliseconds (more than 10 digits), convert to seconds.
+                    if ($expiretimestamp > 9999999999) {
+                        $expiretimestamp = (int)($expiretimestamp / 1000);
+                    }
+                    // Format: "3 November 2025" (day without leading zero, full month name, year).
+                    $expiredate = ltrim(userdate($expiretimestamp, '%d %B %Y'), '0');
+                }
+
+                // Display plan, expiry date, and upgrade/renew link in a single line.
+                $planstatus = '<div class="plan-info-box">';
+                $planstatus .= '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') .
+                '</strong> ' . htmlspecialchars($displayplanname);
+                if (!empty($expiredate)) {
+                    $planstatus .= ' <span class="plan-separator">|</span> <strong>' .
+                    get_string('expirydate', 'quizaccess_quizproctoring') .
+                    '</strong> ' . $expiredate;
+                }
+
+                // Add upgrade/renew link after expiry date on the same line.
+                $originalplannameforlink = preg_replace('/-(india|global)$/i', '', $planname);
+                if (strtolower($originalplannameforlink) == 'free' ||
+                    strtolower($originalplannameforlink) == 'starter') {
+                    // Free plan -> show "Upgrade Plan" link.
+                    $planlinktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
+                    $planstatus .= ' <span class="plan-separator">|</span> '
+                    . '<a href="https://proctorlink.com/#pricing" target="_blank" rel="noopener noreferrer">'
+                    . $planlinktext
+                    . '</a>';
+                }
+                $planstatus .= '</div>';
+                $planstatus .= '<div class="plan-info-note">' .
+                    get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
+            }
+        } else {
+            $displayplanname = preg_replace('/-(india|global)$/i', '', $planname);
+            if ($displayplanname == 'Free') {
+                $planlinktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
+            } else {
+                $planlinktext = get_string('renewplan', 'quizaccess_quizproctoring');
+            }
+            $planstatus = '<div class="plan-warning-box"><strong>'
+            . get_string('noactiveplan', 'quizaccess_quizproctoring')
+            . '</strong><span class="plan-separator">|</span> '
+            . '<a href="https://proctorlink.com/#pricing" target="_blank" rel="noopener noreferrer">'
+            . $planlinktext
+            . '</a></div>';
+            $planstatus .= '<div class="plan-info-note">' .
+                get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
+        }
+        $element = $mform->addElement('static', 'planstatus', '', $planstatus);
+        $element->setAttributes(['class' => 'planstatus']);
+
         // Allow admin or teacher to setup proctored quiz.
         $mform->addElement(
             'selectyesno',

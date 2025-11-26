@@ -50,14 +50,40 @@ if ($proctoringimageshow == 1) {
         get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
         '/mod/quiz/accessrule/quizproctoring/reviewattempts.php'
     );
+    $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
+    $enableteacherproctor = $storerecord->enableteacherproctor ?? 0;
+    $enableteacherproctorjs = $enableteacherproctor;
+
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
     $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
     $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+
+    $columnsconfig = [
+        '{ orderable: true }',
+        '{ orderable: true }',
+        '{ orderable: true }',
+        '{ orderable: true }',
+        '{ orderable: true }',
+        '{ orderable: false }',
+        '{ orderable: false }',
+        '{ orderable: true }',
+    ];
+
+    if ($enableteacherproctor == 1) {
+        $columnsconfig[] = '{ orderable: true }';
+    }
+
+    $columnsconfig[] = '{ orderable: true }';
+    $columnsconfig[] = '{ orderable: false }';
+
+    $columnsjs = '[' . implode(',', $columnsconfig) . ']';
+
     $PAGE->requires->js_init_code("
         $(document).ready(function() {
-            $('#attemptsreporttable').DataTable({
+            var enableteacherproctor = {$enableteacherproctorjs};
+            window.attemptsReportTable = $('#attemptsreporttable').DataTable({
                 serverSide: true,
                 processing: true,
                 ajax: {
@@ -66,23 +92,13 @@ if ($proctoringimageshow == 1) {
                     data: {
                         userid: {$userid},
                         quizid: {$quizid},
-                        cmid: {$cmid}
+                        cmid: {$cmid},
+                        enableteacherproctor: enableteacherproctor
                     }
                 },
                 pageLength: 10,
                 lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
-                columns: [
-                    { orderable: true },
-                    { orderable: true },
-                    { orderable: true },
-                    { orderable: true },
-                    { orderable: true },
-                    { orderable: false },
-                    { orderable: false },
-                    { orderable: true },
-                    { orderable: true },
-                    { orderable: false }
-                ],
+                columns: {$columnsjs},
                 order: [[1, 'desc']],
                 language: {
                     search: 'Search:',
@@ -105,12 +121,12 @@ if ($proctoringimageshow == 1) {
 
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
     $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
-        'attemptstarted', 'proctoringidentity', 'allimages'], 'quizaccess_quizproctoring');
+        'attemptstarted', 'proctoringidentity', 'allimages', 'eyeofferror'], 'quizaccess_quizproctoring');
     $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
 
-    $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     echo '<input type="hidden" id="storeallimages" name="storeallimages" value="' . $storerecord->storeallimages . '" />';
+    echo '<input type="hidden" id="enableteacherproctor" name="enableteacherproctor" value="' . $enableteacherproctor . '" />';
 
     $headers = [
         get_string("email", "quizaccess_quizproctoring"),
@@ -127,11 +143,17 @@ if ($proctoringimageshow == 1) {
         $OUTPUT->render(new help_icon('proctoringidentity', 'quizaccess_quizproctoring')),
         get_string("isautosubmit", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
-        get_string("iseyeoff", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('iseyeoff', 'quizaccess_quizproctoring')),
-        get_string("generatereport", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('generatereport', 'quizaccess_quizproctoring')),
     ];
+
+    if ($enableteacherproctor == 1) {
+        $headers[] = get_string("teachersubmitted", "quizaccess_quizproctoring") .
+            $OUTPUT->render(new help_icon('teachersubmitted', 'quizaccess_quizproctoring'));
+    }
+
+    $headers[] = get_string("iseyeoff", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('iseyeoff', 'quizaccess_quizproctoring'));
+    $headers[] = get_string("generatereport", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('generatereport', 'quizaccess_quizproctoring'));
 
     $btn = '';
     if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {

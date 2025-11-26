@@ -33,6 +33,7 @@ global $DB, $OUTPUT, $PAGE;
 $userid = required_param('userid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
+$enableteacherproctor = optional_param('enableteacherproctor', 0, PARAM_INT);
 
 $PAGE->set_context(context_module::instance($cmid));
 
@@ -54,9 +55,14 @@ $columns = [
     '',
     '',
     'qmp.isautosubmit',
-    'qmp.iseyecheck',
-    '',
 ];
+
+if ($enableteacherproctor == 1) {
+    $columns[] = 'qmp.issubmitbyteacher';
+}
+
+$columns[] = 'qmp.iseyecheck';
+$columns[] = '';
 
 $ordercol = 'qa.attempt';
 $orderdir = 'DESC';
@@ -65,7 +71,8 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        if ($index === 8) {
+        $eyecheckindex = $enableteacherproctor == 1 ? 9 : 8;
+        if ($index === $eyecheckindex) {
             $ordercol = $columns[$index];
             $orderdir = ($dir === 'ASC') ? 'DESC' : 'ASC';
         } else {
@@ -146,8 +153,24 @@ foreach ($records as $record) {
         data-userid="' . $user->id . '"
         src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">' : '';
 
-    $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
-    $submiteye = !$record->iseyecheck ? '<div class="submittag">Yes</div>' : 'No';
+    $submit = $record->isautosubmit ? '<div class="submittag">' .
+    get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+    get_string('no', 'quizaccess_quizproctoring');
+
+    $eyeoffbutton = '';
+    if (!$attempt->timefinish && $record->iseyecheck) {
+        $eyeoffbutton = '<button class="btn btn-sm btn-warning eyeoff"
+            data-cmid="' . $cmid . '"
+            data-attemptid="' . $attempt->id . '">' .
+            get_string('eyeoff', 'quizaccess_quizproctoring') .
+            '</button>';
+    }
+
+    $submiteye = !$record->iseyecheck ? '<div class="submittag">' .
+    get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+    get_string('no', 'quizaccess_quizproctoring');
+
+    $submiteye = $submiteye . $eyeoffbutton;
 
     $generate = '<button class="btn btn-warning generate"
         data-attemptid="' . $attempt->id . '"
@@ -157,7 +180,20 @@ foreach ($records as $record) {
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
-    $data[] = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit, $submiteye, $generate];
+    $rowdata = [$namelink, $attempturl, $timestart, $finishtime, $timetaken,
+        $pimages, $pindentity, $submit];
+
+    if ($enableteacherproctor == 1) {
+        $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
+        get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+        get_string('no', 'quizaccess_quizproctoring');
+        $rowdata[] = $submitt;
+    }
+
+    $rowdata[] = $submiteye;
+    $rowdata[] = $generate;
+
+    $data[] = $rowdata;
 }
 
 echo json_encode([
