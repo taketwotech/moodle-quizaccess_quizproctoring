@@ -76,6 +76,7 @@ if ($proctoringimageshow == 1) {
     }
 
     $columnsconfig[] = '{ orderable: true }';
+    $columnsconfig[] = '{ orderable: true }';
     $columnsconfig[] = '{ orderable: false }';
 
     $columnsjs = '[' . implode(',', $columnsconfig) . ']';
@@ -152,6 +153,8 @@ if ($proctoringimageshow == 1) {
 
     $headers[] = get_string("iseyeoff", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('iseyeoff', 'quizaccess_quizproctoring'));
+    $headers[] = get_string("iseyedisabledbyteacher", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('iseyedisabledbyteacher', 'quizaccess_quizproctoring'));
     $headers[] = get_string("generatereport", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('generatereport', 'quizaccess_quizproctoring'));
 

@@ -441,43 +441,193 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 window.open(url, '_blank');
             });
 
-            $('#attemptsreporttable').on('click', '.eyeoff', function(event) {
+            // Handle eye detection toggle click
+            $('#attemptsreporttable').on('click', '.eyetoggle', function(event) {
                 event.preventDefault();
-                const cmid = $(this).data('cmid');
-                const attemptid = $(this).data('attemptid');
+                const $toggle = $(this);
+                const cmid = $toggle.data('cmid');
+                const attemptid = $toggle.data('attemptid');
+                const userid = $toggle.data('userid');
+                const useremail = $toggle.data('useremail');
+                const action = $toggle.data('action'); // 'enable' or 'disable'
 
+                // Get global preference to determine if checkbox should be checked
                 $.ajax({
-                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
                     method: 'POST',
                     data: {
                         cmid: cmid,
                         attemptid: attemptid,
-                        validate: 'eyecheckoff'
+                        userid: userid,
+                        action: 'getpreference'
                     },
-                    success: function(response) {
-                        if (response.status === 'eyecheckoff') {
-                            if (typeof window.attemptsReportTable !== 'undefined' &&
-                                window.attemptsReportTable &&
-                                typeof window.attemptsReportTable.ajax !== 'undefined' &&
-                                typeof window.attemptsReportTable.ajax.reload === 'function') {
-                                window.attemptsReportTable.ajax.reload(null, false);
+                    dataType: 'json',
+                    success: function(prefResponse) {
+                        const hasGlobalPref = (prefResponse.globalpreference !== null &&
+                                             prefResponse.globalpreference !== undefined);
+                        const globalPrefValue = prefResponse.globalpreference;
+
+                        // Determine message and checkbox state
+                        let messageKey, checkboxChecked;
+                        if (action === 'disable') {
+                            // If global preference is already set to disabled (0), use different message
+                            if (hasGlobalPref && globalPrefValue == 0) {
+                                messageKey = 'disableeyetrackingmessage_global';
+                                checkboxChecked = true; // Checkbox should be checked since already disabled globally
                             } else {
-                                window.location.reload();
+                                messageKey = 'disableeyetrackingmessage';
+                                // Check checkbox if global pref exists (regardless of value)
+                                checkboxChecked = hasGlobalPref;
+                            }
+                        } else {
+                            // If global preference is already set to enabled (1), use different message
+                            if (hasGlobalPref && globalPrefValue == 1) {
+                                messageKey = 'enableeyetrackingmessage_global';
+                                checkboxChecked = true; // Checkbox should be checked since already enabled globally
+                            } else {
+                                messageKey = 'enableeyetrackingmessage';
+                                // Check checkbox if global pref exists (regardless of value)
+                                checkboxChecked = hasGlobalPref;
                             }
                         }
-                    },
-                    error: function() {
-                        str.get_string('eyeofferror', 'quizaccess_quizproctoring').then(function(text) {
-                            notification.addNotification({
-                                message: text,
-                                type: 'error'
-                            });
+
+                        // Get strings for popup
+                        Promise.all([
+                            str.get_string(messageKey, 'quizaccess_quizproctoring', useremail),
+                            str.get_string('disableeyetrackingallquizzes', 'quizaccess_quizproctoring'),
+                            str.get_string('yes', 'moodle'),
+                            str.get_string('cancel', 'moodle')
+                        ]).then(function(strings) {
+                            const message = strings[0];
+                            const checkboxText = strings[1];
+                            const confirmLabel = strings[2];
+                            const cancelLabel = strings[3];
+
+                            const checkboxHtml = '<div style="margin-top: 15px;"><input type="checkbox" id="eyetrackingglobal" ' +
+                                (checkboxChecked ? 'checked' : '') + ' /><label for="eyetrackingglobal" style="margin-left: 5px;">' +
+                                checkboxText + '</label></div>';
+
+                            notification.confirm(
+                                '',
+                                message + checkboxHtml,
+                                confirmLabel,
+                                cancelLabel,
+                                function() {
+                                    const setGlobal = $('#eyetrackingglobal').is(':checked') ? 1 : 0;
+
+                                    // Call AJAX to update preferences
+                                    $.ajax({
+                                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
+                                        method: 'POST',
+                                        data: {
+                                            cmid: cmid,
+                                            attemptid: attemptid,
+                                            userid: userid,
+                                            action: action,
+                                            setglobal: setGlobal
+                                        },
+                                        dataType: 'json',
+                                        success: function(response) {
+                                            if (response.success) {
+                                                // Reload the table
+                                                if (typeof window.attemptsReportTable !== 'undefined' &&
+                                                    window.attemptsReportTable &&
+                                                    typeof window.attemptsReportTable.ajax !== 'undefined' &&
+                                                    typeof window.attemptsReportTable.ajax.reload === 'function') {
+                                                    window.attemptsReportTable.ajax.reload(null, false);
+                                                } else {
+                                                    window.location.reload();
+                                                }
+                                            }
+                                        },
+                                        error: function() {
+                                            str.get_string('eyeofferror', 'quizaccess_quizproctoring').then(function(text) {
+                                                notification.addNotification({
+                                                    message: text,
+                                                    type: 'error'
+                                                });
+                                                return undefined;
+                                            });
+                                        }
+                                    });
+                                },
+                                function() {
+                                    // Cancel - do nothing
+                                    return;
+                                }
+                            );
                             return undefined;
                         }).catch(function() {
                             notification.addNotification({
-                                message: 'Error disabling eye check',
+                                message: 'Error loading confirmation dialog',
                                 type: 'error'
                             });
+                            return undefined;
+                        });
+                    },
+                    error: function() {
+                        // If getting preference fails, proceed without checking checkbox
+                        // Use default messages (not the _global versions since we don't know the preference)
+                        let messageKey = action === 'disable' ? 'disableeyetrackingmessage' : 'enableeyetrackingmessage';
+                        Promise.all([
+                            str.get_string(messageKey, 'quizaccess_quizproctoring', useremail),
+                            str.get_string('disableeyetrackingallquizzes', 'quizaccess_quizproctoring'),
+                            str.get_string('yes', 'moodle'),
+                            str.get_string('cancel', 'moodle')
+                        ]).then(function(strings) {
+                            const message = strings[0];
+                            const checkboxText = strings[1];
+                            const confirmLabel = strings[2];
+                            const cancelLabel = strings[3];
+
+                            const checkboxHtml = '<div style="margin-top: 15px;"><input type="checkbox" id="eyetrackingglobal" />' +
+                                '<label for="eyetrackingglobal" style="margin-left: 5px;">' + checkboxText + '</label></div>';
+
+                            notification.confirm(
+                                '',
+                                message + checkboxHtml,
+                                confirmLabel,
+                                cancelLabel,
+                                function() {
+                                    const setGlobal = $('#eyetrackingglobal').is(':checked') ? 1 : 0;
+                                    $.ajax({
+                                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
+                                        method: 'POST',
+                                        data: {
+                                            cmid: cmid,
+                                            attemptid: attemptid,
+                                            userid: userid,
+                                            action: action,
+                                            setglobal: setGlobal
+                                        },
+                                        dataType: 'json',
+                                        success: function(response) {
+                                            if (response.success) {
+                                                if (typeof window.attemptsReportTable !== 'undefined' &&
+                                                    window.attemptsReportTable &&
+                                                    typeof window.attemptsReportTable.ajax !== 'undefined' &&
+                                                    typeof window.attemptsReportTable.ajax.reload === 'function') {
+                                                    window.attemptsReportTable.ajax.reload(null, false);
+                                                } else {
+                                                    window.location.reload();
+                                                }
+                                            }
+                                        },
+                                        error: function() {
+                                            str.get_string('eyeofferror', 'quizaccess_quizproctoring').then(function(text) {
+                                                notification.addNotification({
+                                                    message: text,
+                                                    type: 'error'
+                                                });
+                                                return undefined;
+                                            });
+                                        }
+                                    });
+                                },
+                                function() {
+                                    return;
+                                }
+                            );
                             return undefined;
                         });
                     }

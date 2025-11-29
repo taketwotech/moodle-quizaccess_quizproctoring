@@ -62,6 +62,7 @@ if ($enableteacherproctor == 1) {
 }
 
 $columns[] = 'qmp.iseyecheck';
+$columns[] = 'qmp.iseyedisabledbyteacher';
 $columns[] = '';
 
 $ordercol = 'qa.attempt';
@@ -157,20 +158,43 @@ foreach ($records as $record) {
     get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
     get_string('no', 'quizaccess_quizproctoring');
 
-    $eyeoffbutton = '';
-    if (!$attempt->timefinish && $record->iseyecheck) {
-        $eyeoffbutton = '<button class="btn btn-sm btn-warning eyeoff"
-            data-cmid="' . $cmid . '"
-            data-attemptid="' . $attempt->id . '">' .
-            get_string('eyeoff', 'quizaccess_quizproctoring') .
-            '</button>';
+    // Eye detection display - toggle for in-progress, yes/no for finished
+    $eyetoggle = '';
+    $submiteye = '';
+    
+    if (!$attempt->timefinish) {
+        // Quiz is in progress - show only toggle icon
+        $currenteyestate = $record->iseyecheck ? 1 : 0;
+        
+        // Determine which icon to show based on current state
+        if ($currenteyestate) {
+            // Eye tracking is ON, show eye OFF icon to disable
+            $eyetoggle = '<i class="icon fa fa-eye eyetoggle eyeoff-toggle" 
+                data-cmid="' . $cmid . '"
+                data-attemptid="' . $attempt->id . '"
+                data-userid="' . $user->id . '"
+                data-useremail="' . s($record->email) . '"
+                data-action="disable"
+                title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '"
+                style="cursor: pointer; font-size: 18px; color: #ffc107;"></i>';
+        } else {
+            // Eye tracking is OFF, show eye ON icon to enable
+            $eyetoggle = '<i class="icon fa fa-eye-slash eyetoggle eyeon-toggle" 
+                data-cmid="' . $cmid . '"
+                data-attemptid="' . $attempt->id . '"
+                data-userid="' . $user->id . '"
+                data-useremail="' . s($record->email) . '"
+                data-action="enable"
+                title="' . get_string('eyeon', 'quizaccess_quizproctoring') . '"
+                style="cursor: pointer; font-size: 18px; color: #28a745;"></i>';
+        }
+        $submiteye = $eyetoggle;
+    } else {
+        // Quiz is finished - show only yes/no
+        $submiteye = !$record->iseyecheck ? '<div class="submittag">' .
+            get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+            get_string('no', 'quizaccess_quizproctoring');
     }
-
-    $submiteye = !$record->iseyecheck ? '<div class="submittag">' .
-    get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
-    get_string('no', 'quizaccess_quizproctoring');
-
-    $submiteye = $submiteye . $eyeoffbutton;
 
     $generate = '<button class="btn btn-warning generate"
         data-attemptid="' . $attempt->id . '"
@@ -191,6 +215,13 @@ foreach ($records as $record) {
     }
 
     $rowdata[] = $submiteye;
+    
+    // Show if eye tracking was disabled by teacher
+    $eyedisabledbyteacher = (isset($record->iseyedisabledbyteacher) && $record->iseyedisabledbyteacher) ? 
+        '<div class="submittag">' . get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+        get_string('no', 'quizaccess_quizproctoring');
+    $rowdata[] = $eyedisabledbyteacher;
+    
     $rowdata[] = $generate;
 
     $data[] = $rowdata;

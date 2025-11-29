@@ -150,7 +150,9 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $fullname = $user->id . '-' . $user->firstname . ' ' . $user->lastname;
     $securewindow = $DB->get_record('quiz', ['id' => $quizid]);
 
-    $detectionval = get_user_preferences('eye_detection', null, $USER->id);
+    // Check global preference first, then quiz-specific preference
+    $globaldetectionval = get_user_preferences('eye_detection_global', null, $USER->id);
+    $detectionval = ($globaldetectionval !== null) ? $globaldetectionval : get_user_preferences('eye_detection', null, $USER->id);
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
@@ -359,8 +361,11 @@ function quizproctoring_storemainimage(
         )) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
-        $preferencename = 'eye_detection';
-        set_user_preference($preferencename, 1, $USER->id);
+        // Set eye_detection preference for this quiz
+        // If global preference is set, use that; otherwise default to enabled (1)
+        $globaleyepref = get_user_preferences('eye_detection_global', null, $USER->id);
+        $eyedetectionvalue = ($globaleyepref !== null) ? $globaleyepref : 1;
+        set_user_preference('eye_detection', $eyedetectionvalue, $USER->id);
     }
     $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.png';
     $record = new stdClass();

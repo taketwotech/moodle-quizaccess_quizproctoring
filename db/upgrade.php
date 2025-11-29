@@ -614,5 +614,19 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025110106, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2025112200) {
+        // Define field iseyedisabledbyteacher to be added to quizaccess_main_proctor.
+        $table = new xmldb_table('quizaccess_main_proctor');
+        $field = new xmldb_field('iseyedisabledbyteacher', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'iseyecheck');
+
+        // Conditionally launch add field iseyedisabledbyteacher.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025112200, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }
