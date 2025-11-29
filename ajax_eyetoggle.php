@@ -39,7 +39,6 @@ $setglobal = optional_param('setglobal', 0, PARAM_INT); // 1 if checkbox is chec
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
-// Handle getpreference action
 if ($action === 'getpreference') {
     $globalpref = get_user_preferences('eye_detection_global', null, $targetuserid);
     echo json_encode([
@@ -49,14 +48,12 @@ if ($action === 'getpreference') {
     exit;
 }
 
-// Verify the attempt belongs to the target user
 $attempt = $DB->get_record('quiz_attempts', ['id' => $attemptid], '*', MUST_EXIST);
 if ($attempt->userid != $targetuserid) {
     echo json_encode(['success' => false, 'error' => 'Invalid attempt']);
     exit;
 }
 
-// Get current eye check state
 $proctorrecord = $DB->get_record('quizaccess_main_proctor', [
     'attemptid' => $attemptid,
     'userid' => $targetuserid
@@ -64,22 +61,15 @@ $proctorrecord = $DB->get_record('quizaccess_main_proctor', [
 
 $newstate = ($action === 'enable') ? 1 : 0;
 
-// Update the attempt's eye check state
 $proctorrecord->iseyecheck = $newstate;
-// Track if teacher disabled/enabled eye tracking
-// Set to 1 if teacher is disabling (action = 'disable'), 0 if enabling
 $proctorrecord->iseyedisabledbyteacher = ($action === 'disable') ? 1 : 0;
 $DB->update_record('quizaccess_main_proctor', $proctorrecord);
 
-// Update user preference for current quiz
 set_user_preference('eye_detection', $newstate, $targetuserid);
 
-// Handle global preference based on checkbox state
 if ($setglobal == 1) {
-    // If checkbox is checked, set global preference to 0 (disabled)
     set_user_preference('eye_detection_global', 0, $targetuserid);
 } else {
-    // If checkbox is unchecked, remove global preference
     unset_user_preference('eye_detection_global', $targetuserid);
 }
 
