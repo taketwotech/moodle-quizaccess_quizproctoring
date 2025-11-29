@@ -56,9 +56,19 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
 
+// Event-based approach: Check database state to control warnings
+// If eye tracking is disabled, don't process eye detection warnings
 if ($mainentry && !$mainentry->iseyecheck && ($validate === 'eyesnotopen')) {
     echo json_encode(['status' => 'eyecheckoff']);
     exit;
+}
+
+// Check if eye tracking was re-enabled by teacher (when processing eye detection)
+$eyecheckon = false;
+if ($mainentry && $mainentry->iseyecheck == 1 && $validate === 'eyesnotopen') {
+    // If eye tracking is enabled, update user preference
+    set_user_preference('eye_detection', 1, $USER->id);
+    $eyecheckon = true; // Signal student that eye tracking is enabled
 }
 
 if (!$mainentry->isautosubmit) {
@@ -114,6 +124,12 @@ if (!$mainentry->isautosubmit) {
                     QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                     ''
                 );
+                // If eye tracking was re-enabled by teacher, signal student to remove flag
+                // This allows warnings to be shown while removing the localStorage flag
+                if ($eyecheckon) {
+                    echo json_encode(['status' => 'eyecheckon', 'errorcode' => 1, 'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', '')]);
+                    die();
+                }
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
