@@ -396,6 +396,9 @@ function quizproctoring_storemainimage(
     $record->timemodified = time();
     $record->aws_response = 'take2';
     $record->response = $response;
+    if ($mainimage && isset($eyedetectionvalue)) {
+        $record->iseyecheck = $eyedetectionvalue;
+    }
     $id = $DB->insert_record('quizaccess_main_proctor', $record);
 
     if ($data) {

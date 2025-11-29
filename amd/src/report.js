@@ -470,25 +470,11 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         // Determine message and checkbox state
                         let messageKey, checkboxChecked;
                         if (action === 'disable') {
-                            // If global preference is already set to disabled (0), use different message
-                            if (hasGlobalPref && globalPrefValue == 0) {
-                                messageKey = 'disableeyetrackingmessage_global';
-                                checkboxChecked = true; // Checkbox should be checked since already disabled globally
-                            } else {
-                                messageKey = 'disableeyetrackingmessage';
-                                // Check checkbox if global pref exists (regardless of value)
-                                checkboxChecked = hasGlobalPref;
-                            }
+                            messageKey = 'disableeyetrackingmessage';
+                            checkboxChecked = hasGlobalPref;
                         } else {
-                            // If global preference is already set to enabled (1), use different message
-                            if (hasGlobalPref && globalPrefValue == 1) {
-                                messageKey = 'enableeyetrackingmessage_global';
-                                checkboxChecked = true; // Checkbox should be checked since already enabled globally
-                            } else {
-                                messageKey = 'enableeyetrackingmessage';
-                                // Check checkbox if global pref exists (regardless of value)
-                                checkboxChecked = hasGlobalPref;
-                            }
+                            messageKey = 'enableeyetrackingmessage';
+                            checkboxChecked = hasGlobalPref;
                         }
 
                         // Get strings for popup
