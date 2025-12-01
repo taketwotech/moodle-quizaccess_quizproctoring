@@ -71,12 +71,11 @@ $columns[] = '';
 $ordercol = 'qa.attempt';
 $orderdir = 'DESC';
 
-    if (!empty($order[0])) {
+if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        // Calculate eye check index based on enabled features
-        $eyecheckindex = 8; // Base index
+        $eyecheckindex = 8;
         if ($enableteacherproctor == 1) {
             $eyecheckindex++;
         }
@@ -172,7 +171,7 @@ foreach ($records as $record) {
         $currenteyestate = $record->iseyecheck ? 1 : 0;
 
         if ($currenteyestate) {
-            $eyetoggle = '<i class="icon fa fa-eye eyetoggle eyeoff-toggle" 
+            $eyetoggle = '<i class="icon fa fa-eye eyetoggle eyeoff-toggle"
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
                 data-userid="' . $user->id . '"
@@ -181,7 +180,7 @@ foreach ($records as $record) {
                 title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '"
                 style="cursor: pointer; font-size: 18px; color: #ffc107;"></i>';
         } else {
-            $eyetoggle = '<i class="icon fa fa-eye-slash eyetoggle eyeon-toggle" 
+            $eyetoggle = '<i class="icon fa fa-eye-slash eyetoggle eyeon-toggle"
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
                 data-userid="' . $user->id . '"

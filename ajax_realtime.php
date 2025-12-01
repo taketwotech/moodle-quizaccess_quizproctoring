@@ -121,7 +121,7 @@ if (!$mainentry->isautosubmit) {
                     ''
                 );
                 if ($eyecheckon) {
-                    echo json_encode(['status' => 'eyecheckon','errorcode' => 1,
+                    echo json_encode(['status' => 'eyecheckon', 'errorcode' => 1,
                         'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', '')]);
                     die();
                 }
