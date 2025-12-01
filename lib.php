@@ -162,7 +162,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             $detectionval = $attemptrecord->iseyecheck;
         }
     }
-    
+
     if ($detectionval === null) {
         $quizspecific = get_user_preferences('eye_detection', null, $USER->id);
         if ($quizspecific !== null) {

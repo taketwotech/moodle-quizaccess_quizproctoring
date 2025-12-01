@@ -465,7 +465,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     success: function(prefResponse) {
                         const hasGlobalPref = (prefResponse.globalpreference !== null &&
                                              prefResponse.globalpreference !== undefined);
-                        const globalPrefValue = prefResponse.globalpreference;
 
                         // Determine message and checkbox state
                         let messageKey, checkboxChecked;
@@ -489,9 +488,15 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             const confirmLabel = strings[2];
                             const cancelLabel = strings[3];
 
-                            const checkboxHtml = '<div style="margin-top: 15px;"><input type="checkbox" id="eyetrackingglobal" ' +
-                                (checkboxChecked ? 'checked' : '') + ' /><label for="eyetrackingglobal" style="margin-left: 5px;">' +
-                                checkboxText + '</label></div>';
+                            const checkboxHtml = `
+                            <div style="margin-top: 15px;">
+                                <input type="checkbox" id="eyetrackingglobal" ${checkboxChecked ?
+                                    'checked' : ''} />
+                                <label for="eyetrackingglobal" style="margin-left: 5px;">
+                                    ${checkboxText}
+                                </label>
+                            </div>
+                        `;
 
                             notification.confirm(
                                 '',

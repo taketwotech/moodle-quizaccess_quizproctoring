@@ -541,7 +541,6 @@ function($, str, ModalFactory) {
 
                                     context.drawImage(img, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
                                     var imageData = canvas.toDataURL('image/png');
-                                    console.log('attemptid', camera.attemptid);
                                     $.ajax({
                                         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                         method: 'POST',
@@ -599,7 +598,6 @@ function($, str, ModalFactory) {
                                     },
                                     success: function(response) {
                                         if (response.status === 'eyecheckoff') {
-                                            // Trigger event that eye tracking is disabled
                                             $(document).trigger('eye-tracking-disabled');
                                         }
                                     },
@@ -1027,16 +1025,12 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
         method: 'POST',
         data: requestData,
         success: function(response) {
-            // Event-based approach: Server controls warnings based on database state
             if (response && response.status === 'eyecheckoff') {
-                // Eye tracking disabled - trigger event to stop warnings
                 $(document).trigger('eye-tracking-disabled');
                 return;
             }
             if (response && response.status === 'eyecheckon') {
-                // Teacher enabled eye tracking - trigger event to resume warnings
                 $(document).trigger('eye-tracking-enabled');
-                // If there's an error (eyes not open), show the warning
                 if (response.errorcode) {
                     var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                     var leftwarnings = Math.max(warningsl - 1, 0);
@@ -1046,7 +1040,6 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                 return;
             }
             if (response && response.errorcode) {
-                // Only show warnings if eye tracking is enabled (checked by server)
                 var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                 var leftwarnings = Math.max(warningsl - 1, 0);
                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));

@@ -33,8 +33,8 @@ global $DB, $USER;
 $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $targetuserid = required_param('userid', PARAM_INT);
-$action = required_param('action', PARAM_TEXT); // 'enable' or 'disable'
-$setglobal = optional_param('setglobal', 0, PARAM_INT); // 1 if checkbox is checked
+$action = required_param('action', PARAM_TEXT);
+$setglobal = optional_param('setglobal', 0, PARAM_INT);
 
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);

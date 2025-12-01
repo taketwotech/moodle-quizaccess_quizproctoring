@@ -165,17 +165,13 @@ foreach ($records as $record) {
     get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
     get_string('no', 'quizaccess_quizproctoring');
 
-    // Eye detection display - toggle for in-progress, yes/no for finished
     $eyetoggle = '';
     $submiteye = '';
-    
+
     if (!$attempt->timefinish) {
-        // Quiz is in progress - show only toggle icon
         $currenteyestate = $record->iseyecheck ? 1 : 0;
-        
-        // Determine which icon to show based on current state
+
         if ($currenteyestate) {
-            // Eye tracking is ON, show eye OFF icon to disable
             $eyetoggle = '<i class="icon fa fa-eye eyetoggle eyeoff-toggle" 
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
@@ -185,7 +181,6 @@ foreach ($records as $record) {
                 title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '"
                 style="cursor: pointer; font-size: 18px; color: #ffc107;"></i>';
         } else {
-            // Eye tracking is OFF, show eye ON icon to enable
             $eyetoggle = '<i class="icon fa fa-eye-slash eyetoggle eyeon-toggle" 
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
@@ -197,7 +192,6 @@ foreach ($records as $record) {
         }
         $submiteye = $eyetoggle;
     } else {
-        // Quiz is finished - show only yes/no
         $submiteye = !$record->iseyecheck ? '<div class="submittag">' .
             get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
             get_string('no', 'quizaccess_quizproctoring');
@@ -223,16 +217,13 @@ foreach ($records as $record) {
 
     if ($enableeyecheckreal == 1) {
         $rowdata[] = $submiteye;
-        
-        // Show if eye tracking was disabled by teacher
-        $eyedisabledbyteacher = (isset($record->iseyedisabledbyteacher) && $record->iseyedisabledbyteacher) ? 
+        $eyedisabledbyteacher = (isset($record->iseyedisabledbyteacher) && $record->iseyedisabledbyteacher) ?
             '<div class="submittag">' . get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
             get_string('no', 'quizaccess_quizproctoring');
         $rowdata[] = $eyedisabledbyteacher;
     }
-    
-    $rowdata[] = $generate;
 
+    $rowdata[] = $generate;
     $data[] = $rowdata;
 }
 

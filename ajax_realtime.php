@@ -64,7 +64,7 @@ if ($mainentry && !$mainentry->iseyecheck && ($validate === 'eyesnotopen')) {
 $eyecheckon = false;
 if ($mainentry && $mainentry->iseyecheck == 1 && $validate === 'eyesnotopen') {
     set_user_preference('eye_detection', 1, $USER->id);
-    $eyecheckon = true; // Signal student that eye tracking is enabled
+    $eyecheckon = true;
 }
 
 if (!$mainentry->isautosubmit) {
@@ -121,7 +121,8 @@ if (!$mainentry->isautosubmit) {
                     ''
                 );
                 if ($eyecheckon) {
-                    echo json_encode(['status' => 'eyecheckon', 'errorcode' => 1, 'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', '')]);
+                    echo json_encode(['status' => 'eyecheckon','errorcode' => 1,
+                        'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', '')]);
                     die();
                 }
             } else {
