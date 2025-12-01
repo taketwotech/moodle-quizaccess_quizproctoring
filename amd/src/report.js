@@ -465,8 +465,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     success: function(prefResponse) {
                         const hasGlobalPref = (prefResponse.globalpreference !== null &&
                                              prefResponse.globalpreference !== undefined);
-
-                        // Determine message and checkbox state
                         let messageKey, checkboxChecked;
                         if (action === 'disable') {
                             messageKey = 'disableeyetrackingmessage';
@@ -476,7 +474,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             checkboxChecked = hasGlobalPref;
                         }
 
-                        // Get strings for popup
                         Promise.all([
                             str.get_string(messageKey, 'quizaccess_quizproctoring', useremail),
                             str.get_string('disableeyetrackingallquizzes', 'quizaccess_quizproctoring'),
@@ -506,7 +503,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 function() {
                                     const setGlobal = $('#eyetrackingglobal').is(':checked') ? 1 : 0;
 
-                                    // Call AJAX to update preferences
                                     $.ajax({
                                         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
                                         method: 'POST',
@@ -520,7 +516,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         dataType: 'json',
                                         success: function(response) {
                                             if (response.success) {
-                                                // Reload the table
                                                 if (typeof window.attemptsReportTable !== 'undefined' &&
                                                     window.attemptsReportTable &&
                                                     typeof window.attemptsReportTable.ajax !== 'undefined' &&
@@ -538,12 +533,16 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                                     type: 'error'
                                                 });
                                                 return undefined;
+                                            }).catch(function() {
+                                                notification.addNotification({
+                                                    message: 'Error occurred',
+                                                    type: 'error'
+                                                });
                                             });
                                         }
                                     });
                                 },
                                 function() {
-                                    // Cancel - do nothing
                                     return;
                                 }
                             );
@@ -557,8 +556,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         });
                     },
                     error: function() {
-                        // If getting preference fails, proceed without checking checkbox
-                        // Use default messages (not the _global versions since we don't know the preference)
                         let messageKey = action === 'disable' ? 'disableeyetrackingmessage' : 'enableeyetrackingmessage';
                         Promise.all([
                             str.get_string(messageKey, 'quizaccess_quizproctoring', useremail),
@@ -611,6 +608,11 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                                     type: 'error'
                                                 });
                                                 return undefined;
+                                            }).catch(function() {
+                                                notification.addNotification({
+                                                    message: 'Error occurred',
+                                                    type: 'error'
+                                                });
                                             });
                                         }
                                     });
@@ -620,6 +622,11 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 }
                             );
                             return undefined;
+                        }).catch(function() {
+                            notification.addNotification({
+                                message: 'Error loading confirmation dialog',
+                                type: 'error'
+                            });
                         });
                     }
                 });

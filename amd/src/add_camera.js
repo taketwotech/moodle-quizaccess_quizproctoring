@@ -1032,16 +1032,16 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
             if (response && response.status === 'eyecheckon') {
                 $(document).trigger('eye-tracking-enabled');
                 if (response.errorcode) {
-                    var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                    var leftwarnings = Math.max(warningsl - 1, 0);
+                    const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                    const leftwarnings = Math.max(warningsl - 1, 0);
                     localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                     $(document).trigger('popup', response.error);
                 }
                 return;
             }
             if (response && response.errorcode) {
-                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                var leftwarnings = Math.max(warningsl - 1, 0);
+                const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                const leftwarnings = Math.max(warningsl - 1, 0);
                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                 $(document).trigger('popup', response.error);
             } else {
