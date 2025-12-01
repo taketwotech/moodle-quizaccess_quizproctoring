@@ -34,6 +34,7 @@ $userid = required_param('userid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
 $enableteacherproctor = optional_param('enableteacherproctor', 0, PARAM_INT);
+$enableeyecheckreal = optional_param('enableeyecheckreal', 0, PARAM_INT);
 
 $PAGE->set_context(context_module::instance($cmid));
 
@@ -61,19 +62,25 @@ if ($enableteacherproctor == 1) {
     $columns[] = 'qmp.issubmitbyteacher';
 }
 
-$columns[] = 'qmp.iseyecheck';
-$columns[] = 'qmp.iseyedisabledbyteacher';
+if ($enableeyecheckreal == 1) {
+    $columns[] = 'qmp.iseyecheck';
+    $columns[] = 'qmp.iseyedisabledbyteacher';
+}
 $columns[] = '';
 
 $ordercol = 'qa.attempt';
 $orderdir = 'DESC';
 
-if (!empty($order[0])) {
+    if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = $enableteacherproctor == 1 ? 9 : 8;
-        if ($index === $eyecheckindex) {
+        // Calculate eye check index based on enabled features
+        $eyecheckindex = 8; // Base index
+        if ($enableteacherproctor == 1) {
+            $eyecheckindex++;
+        }
+        if ($enableeyecheckreal == 1 && $index === $eyecheckindex) {
             $ordercol = $columns[$index];
             $orderdir = ($dir === 'ASC') ? 'DESC' : 'ASC';
         } else {
@@ -214,13 +221,15 @@ foreach ($records as $record) {
         $rowdata[] = $submitt;
     }
 
-    $rowdata[] = $submiteye;
-    
-    // Show if eye tracking was disabled by teacher
-    $eyedisabledbyteacher = (isset($record->iseyedisabledbyteacher) && $record->iseyedisabledbyteacher) ? 
-        '<div class="submittag">' . get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
-        get_string('no', 'quizaccess_quizproctoring');
-    $rowdata[] = $eyedisabledbyteacher;
+    if ($enableeyecheckreal == 1) {
+        $rowdata[] = $submiteye;
+        
+        // Show if eye tracking was disabled by teacher
+        $eyedisabledbyteacher = (isset($record->iseyedisabledbyteacher) && $record->iseyedisabledbyteacher) ? 
+            '<div class="submittag">' . get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+            get_string('no', 'quizaccess_quizproctoring');
+        $rowdata[] = $eyedisabledbyteacher;
+    }
     
     $rowdata[] = $generate;
 

@@ -53,6 +53,8 @@ if ($proctoringimageshow == 1) {
     $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
     $enableteacherproctor = $storerecord->enableteacherproctor ?? 0;
     $enableteacherproctorjs = $enableteacherproctor;
+    $enableeyecheckreal = $storerecord->enableeyecheckreal ?? 0;
+    $enableeyecheckrealjs = $enableeyecheckreal;
 
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
@@ -75,8 +77,10 @@ if ($proctoringimageshow == 1) {
         $columnsconfig[] = '{ orderable: true }';
     }
 
-    $columnsconfig[] = '{ orderable: true }';
-    $columnsconfig[] = '{ orderable: true }';
+    if ($enableeyecheckreal == 1) {
+        $columnsconfig[] = '{ orderable: true }';
+        $columnsconfig[] = '{ orderable: true }';
+    }
     $columnsconfig[] = '{ orderable: false }';
 
     $columnsjs = '[' . implode(',', $columnsconfig) . ']';
@@ -84,6 +88,7 @@ if ($proctoringimageshow == 1) {
     $PAGE->requires->js_init_code("
         $(document).ready(function() {
             var enableteacherproctor = {$enableteacherproctorjs};
+            var enableeyecheckreal = {$enableeyecheckrealjs};
             window.attemptsReportTable = $('#attemptsreporttable').DataTable({
                 serverSide: true,
                 processing: true,
@@ -94,7 +99,8 @@ if ($proctoringimageshow == 1) {
                         userid: {$userid},
                         quizid: {$quizid},
                         cmid: {$cmid},
-                        enableteacherproctor: enableteacherproctor
+                        enableteacherproctor: enableteacherproctor,
+                        enableeyecheckreal: enableeyecheckreal
                     }
                 },
                 pageLength: 10,
@@ -151,10 +157,12 @@ if ($proctoringimageshow == 1) {
             $OUTPUT->render(new help_icon('teachersubmitted', 'quizaccess_quizproctoring'));
     }
 
-    $headers[] = get_string("iseyeoff", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('iseyeoff', 'quizaccess_quizproctoring'));
-    $headers[] = get_string("iseyedisabledbyteacher", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('iseyedisabledbyteacher', 'quizaccess_quizproctoring'));
+    if ($enableeyecheckreal == 1) {
+        $headers[] = get_string("iseyeoff", "quizaccess_quizproctoring") .
+            $OUTPUT->render(new help_icon('iseyeoff', 'quizaccess_quizproctoring'));
+        $headers[] = get_string("iseyedisabledbyteacher", "quizaccess_quizproctoring") .
+            $OUTPUT->render(new help_icon('iseyedisabledbyteacher', 'quizaccess_quizproctoring'));
+    }
     $headers[] = get_string("generatereport", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('generatereport', 'quizaccess_quizproctoring'));
 
