@@ -50,7 +50,7 @@ function xmldb_quizaccess_quizproctoring_install() {
     $postdata = json_encode($record);
 
     $curl = new \curl();
-    $url = 'https://proctoring.taketwotechnologies.com/create';
+    $url = 'https://proctor-lb.taketwotechnologies.com/create';
     $header = [
         'Content-Type: application/json',
     ];

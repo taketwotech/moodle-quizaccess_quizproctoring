@@ -541,6 +541,7 @@ function($, str, ModalFactory) {
 
                                     context.drawImage(img, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
                                     var imageData = canvas.toDataURL('image/png');
+                                    console.log('attemptid', camera.attemptid);
                                     $.ajax({
                                         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
                                         method: 'POST',
