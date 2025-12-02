@@ -594,6 +594,7 @@ function($, str, ModalFactory) {
                                     data: {
                                         cmid: camera.cmid,
                                         attemptid: attemptid,
+                                        teachersub: 1,
                                         validate: 'eyecheckoff'
                                     },
                                     success: function(response) {

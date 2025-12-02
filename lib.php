@@ -398,6 +398,9 @@ function quizproctoring_storemainimage(
     $record->response = $response;
     if ($mainimage && isset($eyedetectionvalue)) {
         $record->iseyecheck = $eyedetectionvalue;
+        if ((int)$eyedetectionvalue === 0) {
+            $record->iseyedisabledbyteacher = 1;
+        }
     }
     $id = $DB->insert_record('quizaccess_main_proctor', $record);
 

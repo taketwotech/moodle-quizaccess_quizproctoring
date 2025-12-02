@@ -33,12 +33,24 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $validate = required_param('validate', PARAM_RAW);
+$teachersub = optional_param('teachersub', 0, PARAM_INT);
 $context = context_module::instance($cmid);
 $PAGE->set_context($context);
 
 if ($validate === 'eyecheckoff') {
     set_user_preference('eye_detection', 0, $USER->id);
-    $DB->execute("update {quizaccess_main_proctor} set iseyecheck = 0 where attemptid=" . $attemptid);
+    if ($teachersub) {
+        $DB->execute("UPDATE {quizaccess_main_proctor}
+                      SET iseyecheck = 0,
+                          iseyedisabledbyteacher = 1
+                      WHERE attemptid = ?",
+                      [$attemptid]);
+    } else {
+        $DB->execute("UPDATE {quizaccess_main_proctor}
+                      SET iseyecheck = 0
+                      WHERE attemptid = ?",
+                      [$attemptid]);
+    }
     echo json_encode(['status' => 'eyecheckoff']);
     exit;
 }
