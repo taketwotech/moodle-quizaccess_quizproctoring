@@ -366,7 +366,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctor-lb.taketwotechnologies.com/create';
+        $url = 'https://proctoring.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];
@@ -480,7 +480,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025070600, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025110103) {
+    if ($oldversion < 2025120101) {
         $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
         $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
         $release = $plugin->release;
@@ -498,17 +498,17 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctor-lb.taketwotechnologies.com/create';
+        $url = 'https://proctoring.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];
         $curl->setHeader($header);
         $result = $curl->post($url, $postdata);
 
-        upgrade_plugin_savepoint(true, 2025110103, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025120101, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025110105) {
+    if ($oldversion < 2025120102) {
         // Fetch and update plan information during plugin upgrade.
         require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
@@ -596,10 +596,10 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025110105, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025120102, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025110106) {
+    if ($oldversion < 2025120103) {
 
         // Define field issubmitbyteacher to be added to quizaccess_main_proctor.
         $table = new xmldb_table('quizaccess_main_proctor');
@@ -611,10 +611,10 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025110106, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025120103, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025112200) {
+    if ($oldversion < 2025120104) {
         // Define field iseyedisabledbyteacher to be added to quizaccess_main_proctor.
         $table = new xmldb_table('quizaccess_main_proctor');
         $field = new xmldb_field('iseyedisabledbyteacher', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'iseyecheck');
@@ -625,7 +625,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2025112200, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2025120104, 'quizaccess', 'quizproctoring');
     }
 
     return true;

@@ -95,7 +95,7 @@ class api {
         global $SESSION;
         self::init();
         $curl = new \curl();
-        $url = 'https://proctor-lb.taketwotechnologies.com/validate';
+        $url = 'https://proctoring.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::domain();
@@ -122,7 +122,7 @@ class api {
     public static function getuserinfo() {
         self::init();
         $curl = new \curl();
-        $url = 'https://proctor-lb.taketwotechnologies.com/getuserinfo';
+        $url = 'https://proctoring.taketwotechnologies.com/getuserinfo';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $header = [
@@ -149,7 +149,7 @@ class api {
 
         self::init();
         $curl = new \curl();
-        $url = 'https://proctor-lb.taketwotechnologies.com/plan-details';
+        $url = 'https://proctoring.taketwotechnologies.com/plan-details';
         $domain = parse_url($CFG->wwwroot, PHP_URL_HOST);
         $domain = preg_replace('/^www\./', '', $domain);
         $admin = get_admin();
