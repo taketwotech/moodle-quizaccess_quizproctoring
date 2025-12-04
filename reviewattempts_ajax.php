@@ -192,8 +192,8 @@ foreach ($records as $record) {
         $submiteye = $eyetoggle;
     } else {
         $submiteye = !$record->iseyecheck ? '<div class="submittag">' .
-            get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
-            get_string('no', 'quizaccess_quizproctoring');
+            get_string('disabled', 'quizaccess_quizproctoring') . '</div>' :
+            get_string('enabled', 'quizaccess_quizproctoring');
     }
 
     $generate = '<button class="btn btn-warning generate"
