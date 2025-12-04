@@ -171,23 +171,27 @@ foreach ($records as $record) {
         $currenteyestate = $record->iseyecheck ? 1 : 0;
 
         if ($currenteyestate) {
-            $eyetoggle = '<i class="icon fa fa-eye eyetoggle eyeoff-toggle"
+            $eyetoggle = '<label class="eyetoggle-switch eyetoggle eyeoff-toggle"
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
                 data-userid="' . $user->id . '"
                 data-useremail="' . s($record->email) . '"
                 data-action="disable"
-                title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '"
-                style="cursor: pointer; font-size: 18px; color: #ffc107;"></i>';
+                title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '">
+                <input type="checkbox" checked>
+                <span class="eyetoggle-slider"></span>
+            </label>';
         } else {
-            $eyetoggle = '<i class="icon fa fa-eye-slash eyetoggle eyeon-toggle"
+            $eyetoggle = '<label class="eyetoggle-switch eyetoggle eyeon-toggle"
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
                 data-userid="' . $user->id . '"
                 data-useremail="' . s($record->email) . '"
                 data-action="enable"
-                title="' . get_string('eyeon', 'quizaccess_quizproctoring') . '"
-                style="cursor: pointer; font-size: 18px; color: #28a745;"></i>';
+                title="' . get_string('eyeon', 'quizaccess_quizproctoring') . '">
+                <input type="checkbox">
+                <span class="eyetoggle-slider"></span>
+            </label>';
         }
         $submiteye = $eyetoggle;
     } else {

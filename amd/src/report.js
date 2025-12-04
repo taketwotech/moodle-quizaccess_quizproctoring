@@ -441,15 +441,23 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 window.open(url, '_blank');
             });
 
-            // Handle eye detection toggle click
             $('#attemptsreporttable').on('click', '.eyetoggle', function(event) {
                 event.preventDefault();
+                event.stopPropagation();
+
+                const $checkbox = $(this).find('input[type="checkbox"]');
+                const currentState = $checkbox.is(':checked');
+
                 const $toggle = $(this);
                 const cmid = $toggle.data('cmid');
                 const attemptid = $toggle.data('attemptid');
                 const userid = $toggle.data('userid');
                 const useremail = $toggle.data('useremail');
-                const action = $toggle.data('action'); // 'enable' or 'disable'
+                const action = $toggle.data('action');
+
+                setTimeout(function() {
+                    $checkbox.prop('checked', currentState);
+                }, 0);
 
                 /**
                  * Show error notification for eye toggle operation
