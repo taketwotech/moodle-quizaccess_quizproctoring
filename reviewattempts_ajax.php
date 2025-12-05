@@ -70,7 +70,7 @@ $columns[] = '';
 $ordercol = 'qa.attempt';
 $orderdir = 'DESC';
 
-    if (!empty($order[0])) {
+if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
