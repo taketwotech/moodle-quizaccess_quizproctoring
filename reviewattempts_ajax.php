@@ -48,7 +48,6 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 
 $order = $_POST['order'] ?? [];
 $columns = [
-    'u.email',
     'qa.attempt',
     'qa.timestart',
     'qa.timefinish',
@@ -71,11 +70,11 @@ $columns[] = '';
 $ordercol = 'qa.attempt';
 $orderdir = 'DESC';
 
-if (!empty($order[0])) {
+    if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = 8;
+        $eyecheckindex = 7;
         if ($enableteacherproctor == 1) {
             $eyecheckindex++;
         }
@@ -94,11 +93,9 @@ $wheresql = "WHERE qmp.quizid = :quizid AND qmp.userid = :userid AND qmp.image_s
 
 if (!empty($searchval)) {
     $wheresql .= " AND (
-        CAST(qa.attempt AS CHAR) LIKE :search1 OR
-        u.email LIKE :search2
+        CAST(qa.attempt AS CHAR) LIKE :search1
         )";
     $params['search1'] = "%$searchval%";
-    $params['search2'] = "%$searchval%";
 }
 
 $total = $DB->count_records_sql("
@@ -128,11 +125,6 @@ foreach ($records as $record) {
         'timefinish' => $record->timefinish,
         'attempt' => $record->attempt,
     ];
-
-    $namelink = html_writer::link(
-        new moodle_url('/user/view.php', ['id' => $user->id]),
-        s($record->email)
-    );
 
     $attempturl = html_writer::link(
         new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]),
@@ -208,7 +200,7 @@ foreach ($records as $record) {
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
-    $rowdata = [$namelink, $attempturl, $timestart, $finishtime, $timetaken,
+    $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
         $pimages, $pindentity, $submit];
 
     if ($enableteacherproctor == 1) {

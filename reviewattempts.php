@@ -67,7 +67,6 @@ if ($proctoringimageshow == 1) {
         '{ orderable: true }',
         '{ orderable: true }',
         '{ orderable: true }',
-        '{ orderable: true }',
         '{ orderable: false }',
         '{ orderable: false }',
         '{ orderable: true }',
@@ -136,7 +135,6 @@ if ($proctoringimageshow == 1) {
     echo '<input type="hidden" id="enableteacherproctor" name="enableteacherproctor" value="' . $enableteacherproctor . '" />';
 
     $headers = [
-        get_string("email", "quizaccess_quizproctoring"),
         get_string("attempts", "quizaccess_quizproctoring"),
         get_string("started", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('started', 'quizaccess_quizproctoring')),
@@ -177,7 +175,7 @@ if ($proctoringimageshow == 1) {
     }
     echo $OUTPUT->header();
     echo '<div class="headtitle">' .
-        '<p>' . get_string('reviewattemptsu', 'quizaccess_quizproctoring', fullname($user)) . '</p>' .
+        '<p>' . get_string('reviewattemptsu', 'quizaccess_quizproctoring', fullname($user) . ' (' . $user->email . ')') . '</p>' .
         '<div>' . $btn . '</div>' .
         '</div><br/>';
 
