@@ -56,7 +56,6 @@ $PAGE->set_url(new moodle_url(
 ));
 $PAGE->set_title(get_string('proctoringreport', 'quizaccess_quizproctoring'));
 $PAGE->set_pagelayout('report');
-$PAGE->activityheader->disable();
 $PAGE->navbar->add(
     get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
     '/mod/quiz/accessrule/quizproctoring/proctoringreport.php'
