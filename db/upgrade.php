@@ -600,7 +600,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025120103) {
-
         // Define field issubmitbyteacher to be added to quizaccess_main_proctor.
         $table = new xmldb_table('quizaccess_main_proctor');
         $field = new xmldb_field('issubmitbyteacher', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'isautosubmit');
