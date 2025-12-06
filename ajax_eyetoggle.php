@@ -43,7 +43,7 @@ if ($action === 'getpreference') {
     $globalpref = get_user_preferences('eye_detection_global', null, $targetuserid);
     echo json_encode([
         'success' => true,
-        'globalpreference' => $globalpref
+        'globalpreference' => $globalpref,
     ]);
     exit;
 }
@@ -56,7 +56,7 @@ if ($attempt->userid != $targetuserid) {
 
 $proctorrecord = $DB->get_record('quizaccess_main_proctor', [
     'attemptid' => $attemptid,
-    'userid' => $targetuserid
+    'userid' => $targetuserid,
 ], '*', MUST_EXIST);
 
 $newstate = ($action === 'enable') ? 1 : 0;
@@ -76,7 +76,6 @@ if ($setglobal == 1) {
 echo json_encode([
     'success' => true,
     'iseyecheck' => $newstate,
-    'action' => $action
+    'action' => $action,
 ]);
 exit;
-

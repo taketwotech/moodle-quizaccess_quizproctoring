@@ -156,7 +156,7 @@ class api {
         $email = $admin->email;
         $postdata = json_encode([
             'email' => $email,
-            'domain' => $domain
+            'domain' => $domain,
         ]);
         $header = [
             'Content-Type: application/json',

@@ -511,8 +511,10 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
 
                 // Add upgrade/renew link after expiry date on the same line.
                 $originalplannameforlink = preg_replace('/-(india|global)$/i', '', $planname);
-                if (strtolower($originalplannameforlink) == 'free' ||
-                    strtolower($originalplannameforlink) == 'starter') {
+                if (
+                    strtolower($originalplannameforlink) == 'free' ||
+                    strtolower($originalplannameforlink) == 'starter'
+                ) {
                     // Free plan -> show "Upgrade Plan" link.
                     $planlinktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
                     $planstatus .= ' <span class="plan-separator">|</span> '

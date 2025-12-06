@@ -156,7 +156,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             'userid' => $USER->id,
             'quizid' => $quizid,
             'attemptid' => $attemptid,
-            'image_status' => 'M'
+            'image_status' => 'M',
         ], 'iseyecheck');
         if ($attemptrecord && isset($attemptrecord->iseyecheck)) {
             $detectionval = $attemptrecord->iseyecheck;
@@ -359,25 +359,27 @@ function quizproctoring_storemainimage(
     // We are all good, store the image.
     if ($mainimage) {
         if ($qpd = $DB->get_record(
-            'quizaccess_main_proctor',
-            [
-                'userid' => $USER->id,
-                'quizid' => $quizid,
-                'attemptid' => $attemptid,
-                'image_status' => 'M',
-            ]
-        )) {
+                'quizaccess_main_proctor',
+                [
+                    'userid' => $USER->id,
+                    'quizid' => $quizid,
+                    'attemptid' => $attemptid,
+                    'image_status' => 'M',
+                ]
+            )
+        ) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
         if ($qpd = $DB->get_record(
-            'quizaccess_main_proctor',
-            [
-                'userid' => $USER->id,
-                'quizid' => $quizid,
-                'attemptid' => $attemptid,
-                'image_status' => 'I',
-            ]
-        )) {
+                'quizaccess_main_proctor',
+                [
+                    'userid' => $USER->id,
+                    'quizid' => $quizid,
+                    'attemptid' => $attemptid,
+                    'image_status' => 'I',
+                ]
+            )
+        ) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
         $globaleyepref = get_user_preferences('eye_detection_global', null, $USER->id);

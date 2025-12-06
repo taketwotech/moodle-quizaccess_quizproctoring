@@ -1,13 +1,14 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     require(['jquery'], function($) {
         const iframe = document.querySelector('.teacher-iframe-container iframe');
-        
-        if (!iframe) return;
 
-        iframe.addEventListener('load', function () {
+        if (!iframe) {
+            return;
+        }
+
+        iframe.addEventListener('load', function() {
             setTimeout(() => {
                 const lang = document.documentElement.getAttribute('lang') || 'en';
-                console.log('Detected language', lang);
 
                 iframe.contentWindow.postMessage({
                     type: 'init',
@@ -16,9 +17,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }, 2000);
         });
 
-        window.addEventListener('message', function (event) {
+        window.addEventListener('message', function(event) {
             const data = event.data;
-            console.log('Received message from iframe:', data);
 
             if (data && data.type === 'proctoring-eye-status') {
                 $.ajax({
