@@ -440,6 +440,151 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
 
                 window.open(url, '_blank');
             });
+
+            $('#attemptsreporttable').on('click', '.eyetoggle', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const $checkbox = $(this).find('input[type="checkbox"]');
+                const currentState = $checkbox.is(':checked');
+
+                const $toggle = $(this);
+                const cmid = $toggle.data('cmid');
+                const attemptid = $toggle.data('attemptid');
+                const userid = $toggle.data('userid');
+                const useremail = $toggle.data('useremail');
+                const action = $toggle.data('action');
+
+                setTimeout(function() {
+                    $checkbox.prop('checked', currentState);
+                }, 0);
+
+                /**
+                 * Show error notification for eye toggle operation
+                 * @return {Promise} Promise that resolves when notification is shown
+                 */
+                function showEyeToggleError() {
+                    return str.get_string('eyeofferror', 'quizaccess_quizproctoring')
+                        .then(function(text) {
+                            notification.addNotification({
+                                message: text,
+                                type: 'error'
+                            });
+                            return undefined;
+                        })
+                        .catch(function() {
+                            notification.addNotification({
+                                message: 'Error occurred',
+                                type: 'error'
+                            });
+                            return undefined;
+                        });
+                }
+
+                /**
+                 * Handle the AJAX toggle action
+                 * @param {string} setGlobalValue The value for setglobal parameter
+                 */
+                function handleToggleAction(setGlobalValue) {
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
+                        method: 'POST',
+                        data: {
+                            cmid: cmid,
+                            attemptid: attemptid,
+                            userid: userid,
+                            action: action,
+                            setglobal: setGlobalValue
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                if (typeof window.attemptsReportTable !== 'undefined' &&
+                                    window.attemptsReportTable &&
+                                    typeof window.attemptsReportTable.ajax !== 'undefined' &&
+                                    typeof window.attemptsReportTable.ajax.reload === 'function') {
+                                    window.attemptsReportTable.ajax.reload(null, false);
+                                } else {
+                                    window.location.reload();
+                                }
+                            }
+                        },
+                        error: showEyeToggleError
+                    });
+                }
+
+                /**
+                 * Show confirmation dialog with checkbox
+                 * @param {boolean} checkboxChecked Whether checkbox should be checked
+                 */
+                function showConfirmationDialog(checkboxChecked) {
+                    const messageKey = action === 'disable' ? 'disableeyetrackingmessage' : 'enableeyetrackingmessage';
+                    Promise.all([
+                        str.get_string(messageKey, 'quizaccess_quizproctoring', useremail),
+                        str.get_string('disableeyetrackingallquizzes', 'quizaccess_quizproctoring'),
+                        str.get_string('yes', 'moodle'),
+                        str.get_string('cancel', 'moodle')
+                    ]).then(function(strings) {
+                        const message = strings[0];
+                        const checkboxText = strings[1];
+                        const confirmLabel = strings[2];
+                        const cancelLabel = strings[3];
+
+                        const checkboxHtml = `
+                            <div style="margin-top: 15px;">
+                                <input type="checkbox" id="eyetrackingglobal" ${checkboxChecked ?
+                                    'checked' : ''} />
+                                <label for="eyetrackingglobal" style="margin-left: 5px;">
+                                    ${checkboxText}
+                                </label>
+                            </div>
+                        `;
+
+                        notification.confirm(
+                            '',
+                            message + checkboxHtml,
+                            confirmLabel,
+                            cancelLabel,
+                            function() {
+                                const setGlobal = $('#eyetrackingglobal').is(':checked') ? 1 : 0;
+                                handleToggleAction(setGlobal);
+                            },
+                            function() {
+                                return;
+                            }
+                        );
+                        return undefined;
+                    }).catch(function() {
+                        notification.addNotification({
+                            message: 'Error loading confirmation dialog',
+                            type: 'error'
+                        });
+                        return undefined;
+                    });
+                }
+
+                // Get global preference to determine if checkbox should be checked
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
+                    method: 'POST',
+                    data: {
+                        cmid: cmid,
+                        attemptid: attemptid,
+                        userid: userid,
+                        action: 'getpreference'
+                    },
+                    dataType: 'json',
+                    success: function(prefResponse) {
+                        const hasGlobalPref = (prefResponse.globalpreference !== null &&
+                                             prefResponse.globalpreference !== undefined);
+                        const checkboxChecked = hasGlobalPref;
+                        showConfirmationDialog(checkboxChecked);
+                    },
+                    error: function() {
+                        showConfirmationDialog(false);
+                    }
+                });
+            });
         }
     };
 });

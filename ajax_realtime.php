@@ -33,9 +33,24 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $validate = required_param('validate', PARAM_RAW);
+$teachersub = optional_param('teachersub', 0, PARAM_INT);
+$context = context_module::instance($cmid);
+$PAGE->set_context($context);
+
 if ($validate === 'eyecheckoff') {
     set_user_preference('eye_detection', 0, $USER->id);
-    $DB->execute("update {quizaccess_main_proctor} set iseyecheck = 0 where attemptid=" . $attemptid);
+    if ($teachersub) {
+        $DB->execute("UPDATE {quizaccess_main_proctor}
+                      SET iseyecheck = 0,
+                          iseyedisabledbyteacher = 1
+                      WHERE attemptid = ?",
+                      [$attemptid]);
+    } else {
+        $DB->execute("UPDATE {quizaccess_main_proctor}
+                      SET iseyecheck = 0
+                      WHERE attemptid = ?",
+                      [$attemptid]);
+    }
     echo json_encode(['status' => 'eyecheckoff']);
     exit;
 }
@@ -52,6 +67,18 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
 ]);
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
+
+if ($mainentry && !$mainentry->iseyecheck && ($validate === 'eyesnotopen')) {
+    echo json_encode(['status' => 'eyecheckoff']);
+    exit;
+}
+
+$eyecheckon = false;
+if ($mainentry && $mainentry->iseyecheck == 1 && $validate === 'eyesnotopen') {
+    set_user_preference('eye_detection', 1, $USER->id);
+    $eyecheckon = true;
+}
+
 if (!$mainentry->isautosubmit) {
     switch ($validate) {
         case 'noface':
@@ -105,6 +132,11 @@ if (!$mainentry->isautosubmit) {
                     QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                     ''
                 );
+                if ($eyecheckon) {
+                    echo json_encode(['status' => 'eyecheckon', 'errorcode' => 1,
+                        'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', '')]);
+                    die();
+                }
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
