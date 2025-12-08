@@ -386,6 +386,7 @@ function($, str, ModalFactory) {
                     id: studenthexstring,
                     name: userfullname,
                     examId: quizid,
+                    attemptid: attemptid,
                     room: room
                 });
                 const iframeUrl = `${baseUrl}?${params.toString()}`;
@@ -586,6 +587,46 @@ function($, str, ModalFactory) {
                                         }
                                     },
                                 });
+                            } else if (data.type === 'disable-eye-tracking') {
+                                $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                    method: 'POST',
+                                    data: {
+                                        cmid: camera.cmid,
+                                        attemptid: attemptid,
+                                        teachersub: 1,
+                                        validate: 'eyecheckoff'
+                                    },
+                                    success: function(response) {
+                                        if (response.status === 'eyecheckoff') {
+                                            $(document).trigger('eye-tracking-disabled');
+                                        }
+                                    },
+                                });
+                            } else if (data.type === 'terminate-quiz') {
+                                $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_sendalert.php',
+                                    method: 'POST',
+                                    data: {
+                                        quizid: quizid,
+                                        userid: userid,
+                                        attemptid: attemptid,
+                                        quizsubmit: 1
+                                    },
+                                    success: function(response) {
+                                        if (response && response.errorcode) {
+                                            $(document).trigger('popup', response.error);
+                                        } else {
+                                            if (response.success) {
+                                                window.onbeforeunload = null;
+                                                $(document).trigger('popup', response.msg);
+                                                setTimeout(function() {
+                                                    window.location.href = encodeURI(response.url);
+                                                }, 3000);
+                                            }
+                                        }
+                                    },
+                                });
                             }
                         }
                     });
@@ -776,6 +817,7 @@ function($, str, ModalFactory) {
                         callback();
                     }
                 });
+                // Promise is handled with catch, no need to return
             } else {
                 localMediaStream = createDummyMediaStream();
                 if (callback) {
@@ -985,12 +1027,22 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
         data: requestData,
         success: function(response) {
             if (response && response.status === 'eyecheckoff') {
-                localStorage.setItem('eyecheckoff', JSON.stringify(true));
+                $(document).trigger('eye-tracking-disabled');
+                return;
+            }
+            if (response && response.status === 'eyecheckon') {
+                $(document).trigger('eye-tracking-enabled');
+                if (response.errorcode) {
+                    const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                    const leftwarnings = Math.max(warningsl - 1, 0);
+                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                    $(document).trigger('popup', response.error);
+                }
                 return;
             }
             if (response && response.errorcode) {
-                var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                var leftwarnings = Math.max(warningsl - 1, 0);
+                const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                const leftwarnings = Math.max(warningsl - 1, 0);
                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                 $(document).trigger('popup', response.error);
             } else {

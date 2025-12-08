@@ -140,6 +140,38 @@ class api {
     }
 
     /**
+     * Get the plan details
+     *
+     * @return string
+     */
+    public static function getplaninfo() {
+        global $CFG;
+
+        self::init();
+        $curl = new \curl();
+        $url = 'https://proctoring.taketwotechnologies.com/plan-details';
+        $domain = parse_url($CFG->wwwroot, PHP_URL_HOST);
+        $domain = preg_replace('/^www\./', '', $domain);
+        $admin = get_admin();
+        $email = $admin->email;
+        $postdata = json_encode([
+            'email' => $email,
+            'domain' => $domain,
+        ]);
+        $header = [
+            'Content-Type: application/json',
+        ];
+        $curl->setHeader($header);
+        $response = $curl->post($url, $postdata);
+
+        if ($response === false) {
+            echo 'Curl error: ' . $curl->error();
+            return null;
+        }
+        return $response;
+    }
+
+    /**
      * Get the Domain Name captured
      *
      * @return string

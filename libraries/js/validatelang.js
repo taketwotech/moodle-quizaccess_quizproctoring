@@ -1,7 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const iframe = document.querySelector('.teacher-iframe-container iframe');
+    require(['jquery'], function($) {
+        const iframe = document.querySelector('.teacher-iframe-container iframe');
 
-    if (iframe) {
+        if (!iframe) {
+            return;
+        }
+
         iframe.addEventListener('load', function() {
             setTimeout(() => {
                 const lang = document.documentElement.getAttribute('lang') || 'en';
@@ -12,5 +16,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, '*');
             }, 2000);
         });
-    }
+
+        window.addEventListener('message', function(event) {
+            const data = event.data;
+
+            if (data && data.type === 'proctoring-eye-status') {
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_sendalert.php',
+                    method: 'POST',
+                    data: {
+                        eyeoff: true,
+                        attemptid: data.attemptid
+                    },
+                    success: function(response) {
+                        if (response) {
+                            iframe.contentWindow.postMessage({
+                                type: 'proctoring-eye-status-response',
+                                eyeoffstatus: response.eyeoffdisable,
+                                attemptid: data.attemptid
+                            }, '*');
+                        }
+                    },
+                });
+            }
+        });
+    });
 });

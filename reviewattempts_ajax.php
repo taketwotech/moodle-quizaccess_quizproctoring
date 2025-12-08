@@ -33,6 +33,8 @@ global $DB, $OUTPUT, $PAGE;
 $userid = required_param('userid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
+$enableteacherproctor = optional_param('enableteacherproctor', 0, PARAM_INT);
+$enableeyecheckreal = optional_param('enableeyecheckreal', 0, PARAM_INT);
 
 $PAGE->set_context(context_module::instance($cmid));
 
@@ -46,7 +48,6 @@ require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $con
 
 $order = $_POST['order'] ?? [];
 $columns = [
-    'u.email',
     'qa.attempt',
     'qa.timestart',
     'qa.timefinish',
@@ -54,9 +55,17 @@ $columns = [
     '',
     '',
     'qmp.isautosubmit',
-    'qmp.iseyecheck',
-    '',
 ];
+
+if ($enableteacherproctor == 1) {
+    $columns[] = 'qmp.issubmitbyteacher';
+}
+
+if ($enableeyecheckreal == 1) {
+    $columns[] = 'qmp.iseyecheck';
+    $columns[] = 'qmp.iseyedisabledbyteacher';
+}
+$columns[] = '';
 
 $ordercol = 'qa.attempt';
 $orderdir = 'DESC';
@@ -65,7 +74,11 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        if ($index === 8) {
+        $eyecheckindex = 7;
+        if ($enableteacherproctor == 1) {
+            $eyecheckindex++;
+        }
+        if ($enableeyecheckreal == 1 && $index === $eyecheckindex) {
             $ordercol = $columns[$index];
             $orderdir = ($dir === 'ASC') ? 'DESC' : 'ASC';
         } else {
@@ -80,11 +93,9 @@ $wheresql = "WHERE qmp.quizid = :quizid AND qmp.userid = :userid AND qmp.image_s
 
 if (!empty($searchval)) {
     $wheresql .= " AND (
-        CAST(qa.attempt AS CHAR) LIKE :search1 OR
-        u.email LIKE :search2
+        CAST(qa.attempt AS CHAR) LIKE :search1
         )";
     $params['search1'] = "%$searchval%";
-    $params['search2'] = "%$searchval%";
 }
 
 $total = $DB->count_records_sql("
@@ -115,11 +126,6 @@ foreach ($records as $record) {
         'attempt' => $record->attempt,
     ];
 
-    $namelink = html_writer::link(
-        new moodle_url('/user/view.php', ['id' => $user->id]),
-        s($record->email)
-    );
-
     $attempturl = html_writer::link(
         new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]),
         s($attempt->attempt)
@@ -146,8 +152,45 @@ foreach ($records as $record) {
         data-userid="' . $user->id . '"
         src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">' : '';
 
-    $submit = $record->isautosubmit ? '<div class="submittag">Yes</div>' : 'No';
-    $submiteye = !$record->iseyecheck ? '<div class="submittag">Yes</div>' : 'No';
+    $submit = $record->isautosubmit ? '<div class="submittag">' .
+    get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+    get_string('no', 'quizaccess_quizproctoring');
+
+    $eyetoggle = '';
+    $submiteye = '';
+
+    if (!$attempt->timefinish) {
+        $currenteyestate = $record->iseyecheck ? 1 : 0;
+
+        if ($currenteyestate) {
+            $eyetoggle = '<label class="eyetoggle-switch eyetoggle eyeoff-toggle"
+                data-cmid="' . $cmid . '"
+                data-attemptid="' . $attempt->id . '"
+                data-userid="' . $user->id . '"
+                data-useremail="' . s($record->email) . '"
+                data-action="disable"
+                title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '">
+                <input type="checkbox" checked>
+                <span class="eyetoggle-slider"></span>
+            </label>';
+        } else {
+            $eyetoggle = '<label class="eyetoggle-switch eyetoggle eyeon-toggle"
+                data-cmid="' . $cmid . '"
+                data-attemptid="' . $attempt->id . '"
+                data-userid="' . $user->id . '"
+                data-useremail="' . s($record->email) . '"
+                data-action="enable"
+                title="' . get_string('eyeon', 'quizaccess_quizproctoring') . '">
+                <input type="checkbox">
+                <span class="eyetoggle-slider"></span>
+            </label>';
+        }
+        $submiteye = $eyetoggle;
+    } else {
+        $submiteye = !$record->iseyecheck ? '<div class="submittag">' .
+            get_string('disabled', 'quizaccess_quizproctoring') . '</div>' :
+            get_string('enabled', 'quizaccess_quizproctoring');
+    }
 
     $generate = '<button class="btn btn-warning generate"
         data-attemptid="' . $attempt->id . '"
@@ -157,7 +200,26 @@ foreach ($records as $record) {
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
-    $data[] = [$namelink, $attempturl, $timestart, $finishtime, $timetaken, $pimages, $pindentity, $submit, $submiteye, $generate];
+    $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
+        $pimages, $pindentity, $submit];
+
+    if ($enableteacherproctor == 1) {
+        $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
+        get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+        get_string('no', 'quizaccess_quizproctoring');
+        $rowdata[] = $submitt;
+    }
+
+    if ($enableeyecheckreal == 1) {
+        $rowdata[] = $submiteye;
+        $eyedisabledbyteacher = (isset($record->iseyedisabledbyteacher) && $record->iseyedisabledbyteacher) ?
+            '<div class="submittag">' . get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
+            get_string('no', 'quizaccess_quizproctoring');
+        $rowdata[] = $eyedisabledbyteacher;
+    }
+
+    $rowdata[] = $generate;
+    $data[] = $rowdata;
 }
 
 echo json_encode([
