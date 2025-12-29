@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * AJAX call to show proctor images on review attempt page
+ * AJAX call to show proctor images on review attempt page.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -60,6 +60,23 @@ $imgarray = [];
 $totalrecord = count($totalimages) + 1;
 $totalpages = ceil($totalrecord / $perpage);
 $tmpdir = $CFG->dataroot . '/proctorlink';
+
+// Helper function to detect image MIME type.
+$getimagemimetype = function($imagepath) {
+    if (!file_exists($imagepath)) {
+        return 'image/png'; // Default fallback.
+    }
+    $extension = strtolower(pathinfo($imagepath, PATHINFO_EXTENSION));
+    if ($extension === 'jpg' || $extension === 'jpeg') {
+        return 'image/jpeg';
+    }
+    // Check file signature for more accurate detection.
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimetype = finfo_file($finfo, $imagepath);
+    finfo_close($finfo);
+    return $mimetype ?: 'image/png';
+};
+
 $sqlm = $DB->get_record('quizaccess_main_proctor', ['userid' => $userid,
             'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'M', 'deleted' => 0 ]);
 $targetm = '';
@@ -68,7 +85,8 @@ if ($sqlm && !empty($sqlm->userimg)) {
     if (file_exists($imagepath)) {
         $imagedata = file_get_contents($imagepath);
         if ($imagedata) {
-            $targetm = 'data:image/png;base64,' . base64_encode($imagedata);
+            $mimetype = $getimagemimetype($imagepath);
+            $targetm = 'data:' . $mimetype . ';base64,' . base64_encode($imagedata);
         }
     }
     array_push($imgarray, [
@@ -104,9 +122,12 @@ foreach ($getimages as $img) {
         $f1 = $fs->get_file($context->id, 'quizaccess_quizproctoring', 'cameraimages', $img->id, '/', $img->userimg);
         if (!$f1) {
             $imagepath = $tmpdir . '/' . $img->userimg;
-            $imagedata = file_get_contents($imagepath);
-            if ($imagedata) {
-                $target = 'data:image/png;base64,' . base64_encode($imagedata);
+            if (file_exists($imagepath)) {
+                $imagedata = file_get_contents($imagepath);
+                if ($imagedata) {
+                    $mimetype = $getimagemimetype($imagepath);
+                    $target = 'data:' . $mimetype . ';base64,' . base64_encode($imagedata);
+                }
             }
         } else {
             $target = $f1->get_content();

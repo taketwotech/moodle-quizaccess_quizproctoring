@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * AJAX call to save image file and make it part of moodle file
+ * AJAX call to save image file and make it part of moodle file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -90,9 +90,23 @@ if (!$mainentry->isautosubmit) {
             );
             if (!$f1) {
                 $imagepath = $tmpdir . '/' . $mainentry->userimg;
-                $imagedata = file_get_contents($imagepath);
-                if ($imagedata) {
-                    $target = 'data:image/png;base64,' . base64_encode($imagedata);
+                if (file_exists($imagepath)) {
+                    $imagedata = file_get_contents($imagepath);
+                    if ($imagedata) {
+                        // Detect image MIME type.
+                        $extension = strtolower(pathinfo($imagepath, PATHINFO_EXTENSION));
+                        $mimetype = ($extension === 'jpg' || $extension === 'jpeg') ? 'image/jpeg' : 'image/png';
+                        // Fallback to fileinfo if available.
+                        if (function_exists('finfo_open')) {
+                            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                            $detectedmime = finfo_file($finfo, $imagepath);
+                            finfo_close($finfo);
+                            if ($detectedmime) {
+                                $mimetype = $detectedmime;
+                            }
+                        }
+                        $target = 'data:' . $mimetype . ';base64,' . base64_encode($imagedata);
+                    }
                 }
             } else {
                 $target = $f1->get_content();
