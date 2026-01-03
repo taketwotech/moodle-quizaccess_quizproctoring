@@ -350,7 +350,7 @@ function quizproctoring_storeimage(
     if ($data) {
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
-        
+
         // Compress image to target size (15-20KB).
         $compresseddata = quizproctoring_compress_image($imagedata, 17500);
         if ($compresseddata === false) {
