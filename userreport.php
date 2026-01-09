@@ -208,13 +208,21 @@ foreach ($combinedimages as $img) {
     $pdf->Image($imagepath, $x, $y, $imagewidth, $imageheight);
 
     $pdf->SetFont('freeserif', '', 7);
-    $pdf->SetXY($x, $y + $imageheight + 1);
-    $pdf->Cell($imagewidth, 3.5, $status, 0, 2, 'C');
+    $textstarty = $y + $imageheight + 1;
+    $pdf->SetXY($x, $textstarty);
+    
+    $statusheight = $pdf->getStringHeight($imagewidth, $status);
+    $pdf->MultiCell($imagewidth, 3.5, $status, 0, 'C', false, 1, '', '', true, 0, false, true, $statusheight, 'T');
+    
+    $statusendy = $pdf->GetY();
+    $pdf->SetXY($x, $statusendy);
     $pdf->Cell($imagewidth, 3.5, $formattedtime, 0, 0, 'C');
+    
+    $totaltextheight = $statusendy - $textstarty + 3.5;
 
     $col++;
     if ($col % $imagesperrow === 0) {
-        $pdf->SetXY($startx, $y + $imageheight + $textheight + 2);
+        $pdf->SetXY($startx, $y + $imageheight + $totaltextheight + 2);
     } else {
         $pdf->SetXY($x + $imagewidth + $cellpadding, $y);
     }
