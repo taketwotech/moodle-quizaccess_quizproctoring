@@ -164,15 +164,31 @@ $col = 0;
 $startx = $pdf->GetX();
 $starty = $pdf->GetY();
 
+$tempdir = $CFG->dataroot . '/proctorlink/';
+if (!file_exists($tempdir)) {
+    mkdir($tempdir, 0777, true);
+}
+
 foreach ($combinedimages as $img) {
+    $processedpath = null;
     if (empty($img->userimg)) {
         $imagepath = ($img->status === 'minimizedetected') ?
             $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png' :
             $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        $imagepath = str_replace('\\', '/', $imagepath);
+        if (!file_exists($imagepath)) {
+            continue;
+        }
+        $processedpath = preprocessimage($imagepath, $tempdir);
+        if (!$processedpath || !file_exists($processedpath)) {
+            continue;
+        }
+        $imagepath = $processedpath;
     } else {
         $imagepath = $CFG->dataroot . '/proctorlink/' . $img->userimg;
+        $imagepath = str_replace('\\', '/', $imagepath);
         if (strpos($imagepath, $CFG->dataroot) === 0) {
-            $processedpath = preprocessimage($imagepath, $CFG->dataroot . '/proctorlink/');
+            $processedpath = preprocessimage($imagepath, $tempdir);
             if (!$processedpath || !file_exists($processedpath)) {
                 continue;
             }
@@ -180,7 +196,6 @@ foreach ($combinedimages as $img) {
         }
     }
 
-    $imagepath = str_replace('\\', '/', $imagepath);
     if (!file_exists($imagepath) || !getimagesize($imagepath)) {
         continue;
     }
