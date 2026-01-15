@@ -109,7 +109,7 @@ $total = $DB->count_records_sql("
 ", $params);
 
 $sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades, 
-        q.grade AS maxgrade, u.email, u.username
+        q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
         JOIN {quiz} q ON q.id = qa.quiz
@@ -121,6 +121,9 @@ $records = $DB->get_records_sql($sql, $params, $start, $length);
 
 $data = [];
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
+// Get quiz object once for grade formatting functions.
+$quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
+require_once($CFG->dirroot . '/mod/quiz/lib.php');
 
 foreach ($records as $record) {
     $attempt = (object)[
@@ -204,17 +207,36 @@ foreach ($records as $record) {
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
-    // Format grades/marks.
+    // Format grades/marks using Moodle's standard quiz grade formatting.
     $gradesdisplay = '-';
-    if (isset($record->sumgrades) && $record->sumgrades !== null) {
-        $sumgrades = (float)$record->sumgrades;
+    if (isset($record->sumgrades) && $record->sumgrades !== null && $attempt->timefinish) {
+        $rawgrade = (float)$record->sumgrades;
+        $maxsumgrades = (float)($record->maxsumgrades ?? 0);
         $maxgrade = (float)($record->maxgrade ?? 0);
-        if ($maxgrade > 0) {
-            $percentage = round(($sumgrades / $maxgrade) * 100, 2);
-            $gradesdisplay = format_float($sumgrades, 2, true) . ' / ' .
-                format_float($maxgrade, 2, true) . ' (' . format_float($percentage, 2, true) . '%)';
+        
+        // Calculate scaled grade (same as quiz_rescale_grade).
+        if ($maxsumgrades > 0) {
+            $scaledgrade = $rawgrade * $maxgrade / $maxsumgrades;
         } else {
-            $gradesdisplay = format_float($sumgrades, 2, true);
+            $scaledgrade = 0;
+        }
+        
+        // Format using quiz_format_grade to respect decimal points setting.
+        $formattedgrade = quiz_format_grade($quiz, $scaledgrade);
+        $formattedmaxgrade = quiz_format_grade($quiz, $maxgrade);
+        
+        // Display format: scaled grade / max scaled grade (with percentage if max is 100).
+        if ($maxgrade > 0) {
+            if (abs($maxgrade - 100) < 0.01) {
+                // Max grade is 100, show percentage.
+                $percentage = format_float($scaledgrade, $quiz->decimalpoints, true, true);
+                $gradesdisplay = $formattedgrade . ' / ' . $formattedmaxgrade . ' (' . $percentage . '%)';
+            } else {
+                // Max grade is not 100, show grade out of max.
+                $gradesdisplay = $formattedgrade . ' / ' . $formattedmaxgrade;
+            }
+        } else {
+            $gradesdisplay = $formattedgrade;
         }
     }
 
