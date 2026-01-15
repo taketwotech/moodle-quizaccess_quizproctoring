@@ -70,6 +70,7 @@ if ($proctoringimageshow == 1) {
         '{ orderable: false }',
         '{ orderable: false }',
         '{ orderable: true }',
+        '{ orderable: true }',
     ];
 
     if ($enableteacherproctor == 1) {
@@ -148,6 +149,8 @@ if ($proctoringimageshow == 1) {
         $OUTPUT->render(new help_icon('proctoringidentity', 'quizaccess_quizproctoring')),
         get_string("isautosubmit", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
+        get_string("grades", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('grades', 'quizaccess_quizproctoring')),
     ];
 
     if ($enableteacherproctor == 1) {

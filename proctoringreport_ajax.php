@@ -46,7 +46,7 @@ if (isset($_POST['search']['value'])) {
     $searchvalue = trim($_POST['search']['value']);
 }
 
-$columns = ['fullname', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
+$columns = ['fullname', 'username', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
 $ordercolumn = 'u.firstname';
 $orderdir = 'ASC';
 
@@ -58,6 +58,9 @@ if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
         switch ($columns[$colindex]) {
             case 'fullname':
                 $ordercolumn = 'u.firstname';
+                break;
+            case 'username':
+                $ordercolumn = 'u.username';
                 break;
             case 'email':
                 $ordercolumn = 'u.email';
@@ -84,10 +87,12 @@ $params = ['quizid' => $quizid];
 
 if (!empty($searchvalue)) {
     $where .= " AND (
+        u.username LIKE :searchusername OR
         u.firstname LIKE :searchfirstname OR
         u.lastname LIKE :searchlastname OR
         u.email LIKE :searchemail
     )";
+    $params['searchusername'] = "%{$searchvalue}%";
     $params['searchfirstname'] = "%{$searchvalue}%";
     $params['searchlastname'] = "%{$searchvalue}%";
     $params['searchemail'] = "%{$searchvalue}%";
@@ -102,6 +107,7 @@ $recordstotal = $DB->count_records_sql($totalsql, $params);
 $sql = "
     SELECT
         u.id,
+        u.username,
         u.firstname,
         u.lastname,
         u.email,
@@ -124,7 +130,7 @@ $sql = "
     FROM {user} u
     JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
     WHERE $where
-    GROUP BY u.id, u.firstname, u.lastname, u.email, mp.quizid
+    GROUP BY u.id, u.username, u.firstname, u.lastname, u.email, mp.quizid
     ORDER BY $ordercolumn $orderdir
 ";
 
@@ -159,6 +165,7 @@ foreach ($records as $r) {
 
     $data[] = [
         'fullname' => $namelink,
+        'username' => s($r->username),
         'email' => $r->email,
         'lastattempt' => $lastattempt,
         'totalimages' => $r->totalimages + $r->totalmimages,

@@ -81,6 +81,7 @@ $PAGE->requires->js_init_code("
             },
             columns: [
                 { data: 'fullname', orderable: true },
+                { data: 'username', orderable: true },
                 { data: 'email', orderable: true },
                 { data: 'lastattempt', orderable: true },
                 { data: 'totalimages', orderable: true },
@@ -232,6 +233,7 @@ if ($deleteuserid) {
 
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
+    get_string("username", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
     get_string("attemptslast", "quizaccess_quizproctoring"),
     get_string("usersimages", "quizaccess_quizproctoring") .

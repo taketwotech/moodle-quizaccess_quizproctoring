@@ -55,6 +55,7 @@ $columns = [
     '',
     '',
     'qmp.isautosubmit',
+    'qa.sumgrades',
 ];
 
 if ($enableteacherproctor == 1) {
@@ -74,7 +75,7 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = 7;
+        $eyecheckindex = 8; // Updated index after adding grades column (index 7).
         if ($enableteacherproctor == 1) {
             $eyecheckindex++;
         }
@@ -102,13 +103,16 @@ $total = $DB->count_records_sql("
     SELECT COUNT(*)
     FROM {quizaccess_main_proctor} qmp
     JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
+    JOIN {quiz} q ON q.id = qa.quiz
     JOIN {user} u ON u.id = qmp.userid
     $wheresql
 ", $params);
 
-$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, u.email, u.username
+$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades, 
+        q.grade AS maxgrade, u.email, u.username
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
+        JOIN {quiz} q ON q.id = qa.quiz
         JOIN {user} u ON u.id = qmp.userid
         $wheresql
         ORDER BY $ordercol $orderdir";
@@ -200,8 +204,22 @@ foreach ($records as $record) {
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
+    // Format grades/marks.
+    $gradesdisplay = '-';
+    if (isset($record->sumgrades) && $record->sumgrades !== null) {
+        $sumgrades = (float)$record->sumgrades;
+        $maxgrade = (float)($record->maxgrade ?? 0);
+        if ($maxgrade > 0) {
+            $percentage = round(($sumgrades / $maxgrade) * 100, 2);
+            $gradesdisplay = format_float($sumgrades, 2, true) . ' / ' .
+                format_float($maxgrade, 2, true) . ' (' . format_float($percentage, 2, true) . '%)';
+        } else {
+            $gradesdisplay = format_float($sumgrades, 2, true);
+        }
+    }
+
     $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
-        $pimages, $pindentity, $submit];
+        $pimages, $pindentity, $submit, $gradesdisplay];
 
     if ($enableteacherproctor == 1) {
         $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
