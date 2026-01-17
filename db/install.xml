@@ -70,6 +70,7 @@
         <FIELD NAME="response" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="iseyecheck" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="iseyedisabledbyteacher" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Track if eye tracking was disabled by teacher"/>
+        <FIELD NAME="deviceinfo" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="Device information (Windows, Mac, Mobile, etc.)"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

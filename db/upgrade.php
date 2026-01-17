@@ -627,5 +627,19 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025120104, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2025120602) {
+        // Define field deviceinfo to be added to quizaccess_main_proctor.
+        $table = new xmldb_table('quizaccess_main_proctor');
+        $field = new xmldb_field('deviceinfo', XMLDB_TYPE_CHAR, '50', null, null, null, null, 'iseyedisabledbyteacher');
+
+        // Conditionally launch add field deviceinfo.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025120602, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }
