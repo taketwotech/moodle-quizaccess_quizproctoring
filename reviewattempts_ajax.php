@@ -139,13 +139,15 @@ foreach ($records as $record) {
     
     if (!empty($deviceinfo)) {
         // Determine device icon based on device info.
-        // Match the device types from detectDeviceInfo(): Mobile, Mac, Windows, Unknown
+        // Match the device types from detectDeviceInfo(): Mobile, Mac iPad, Mac Desktop, Windows, Unknown
         $deviceinfo_lower = strtolower(trim($deviceinfo));
-        $deviceiconclass = 'fa-desktop'; // Default for Unknown and Windows.
+        $deviceiconclass = 'fa-desktop'; // Default for Unknown.
         
         if ($deviceinfo_lower === 'mobile') {
             $deviceiconclass = 'fa-mobile-alt';
-        } else if ($deviceinfo_lower === 'mac') {
+        } else if ($deviceinfo_lower === 'mac ipad') {
+            $deviceiconclass = 'fa-tablet-alt';
+        } else if ($deviceinfo_lower === 'mac desktop') {
             $deviceiconclass = 'fa-laptop';
         } else if ($deviceinfo_lower === 'windows') {
             $deviceiconclass = 'fa-desktop';

@@ -855,14 +855,28 @@ function($, str, ModalFactory) {
 
         const ua = useragent.toLowerCase();
 
-        // Check for mobile devices first.
-        if (/mobile|android|iphone|ipad|ipod|blackberry|windows phone|opera mini/i.test(ua)) {
+        // Check for iPad first - iPad has "ipad" in user agent and is a Mac/iOS device.
+        if (/ipad/i.test(ua)) {
+            return 'Mac iPad';
+        }
+        
+        // Android tablets - check for "tablet" keyword or Android without "mobile" keyword.
+        // Some Android tablets have "tablet" in user agent, or Android without "mobile".
+        // This check must come before the general mobile check to avoid misclassification.
+        if ((/android/i.test(ua) && /tablet/i.test(ua)) || 
+            (/android/i.test(ua) && !/mobile/i.test(ua))) {
+            return 'Mobile'; // Android tablets are classified as mobile devices.
+        }
+
+        // Check for mobile phones (iPhone, Android phones, etc.).
+        // Exclude iPad and Android tablets which were already checked above.
+        if (/mobile|android|iphone|ipod|blackberry|windows phone|opera mini/i.test(ua)) {
             return 'Mobile';
         }
 
-        // Check for Mac.
+        // Check for Mac desktop/laptop (not iPad, which was already checked above).
         if (/macintosh|mac os x|mac_powerpc/i.test(ua)) {
-            return 'Mac';
+            return 'Mac Desktop';
         }
 
         // Check for Windows.
