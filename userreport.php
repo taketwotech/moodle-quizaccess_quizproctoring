@@ -210,14 +210,14 @@ foreach ($combinedimages as $img) {
     $pdf->SetFont('freeserif', '', 7);
     $textstarty = $y + $imageheight + 1;
     $pdf->SetXY($x, $textstarty);
-    
+
     $statusheight = $pdf->getStringHeight($imagewidth, $status);
     $pdf->MultiCell($imagewidth, 3.5, $status, 0, 'C', false, 1, '', '', true, 0, false, true, $statusheight, 'T');
-    
+
     $statusendy = $pdf->GetY();
     $pdf->SetXY($x, $statusendy);
     $pdf->Cell($imagewidth, 3.5, $formattedtime, 0, 0, 'C');
-    
+
     $totaltextheight = $statusendy - $textstarty + 3.5;
 
     $col++;

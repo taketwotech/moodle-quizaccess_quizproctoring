@@ -125,7 +125,7 @@ label[for="id_consentcheckbox"] {
 }
 
 .device-info-icon {
-    cursor: pointer !important;
+    cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.2s ease;
 }
@@ -423,7 +423,7 @@ label[for="id_consentcheckbox"] {
 }
 
 .alert-icon:hover {
-    color: #b02a37 !important;
+    color: #b02a37;
 }
 
 .alert-icon-wrapper {

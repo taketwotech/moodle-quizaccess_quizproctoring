@@ -109,7 +109,7 @@ $total = $DB->count_records_sql("
     $wheresql
 ", $params);
 
-$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades, 
+$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
         q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
@@ -137,29 +137,24 @@ foreach ($records as $record) {
     // Build attempt link with device info icon if available.
     $deviceinfo = !empty($record->deviceinfo) ? trim($record->deviceinfo) : '';
     $attempttext = s($attempt->attempt);
-    
+
     if (!empty($deviceinfo)) {
-        // Determine device icon based on device info.
-        // Match the device types from detectDeviceInfo(): Mobile, Mac iPad, Mac Desktop, Windows, Unknown
-        $deviceinfo_lower = strtolower(trim($deviceinfo));
-        $deviceiconclass = 'fa-desktop'; // Default for Unknown.
-        
-        if ($deviceinfo_lower === 'mobile') {
+        $deviceinfolower = strtolower(trim($deviceinfo));
+        $deviceiconclass = 'fa-desktop';
+
+        if ($deviceinfolower === 'mobile') {
             $deviceiconclass = 'fa-mobile-alt';
-        } else if ($deviceinfo_lower === 'mac ipad') {
+        } else if ($deviceinfolower === 'mac ipad') {
             $deviceiconclass = 'fa-tablet-alt';
-        } else if ($deviceinfo_lower === 'mac desktop') {
+        } else if ($deviceinfolower === 'mac desktop') {
             $deviceiconclass = 'fa-laptop';
-        } else if ($deviceinfo_lower === 'windows') {
+        } else if ($deviceinfolower === 'windows') {
             $deviceiconclass = 'fa-desktop';
         }
-        // Unknown uses default fa-desktop
-        
-        // Add device info icon with tooltip using Moodle Font Awesome standards.
-        // Properly escape the title attribute to avoid question mark issues.
+
         $devicetitle = 'Device: ' . $deviceinfo;
-        $deviceicon = ' <i class="icon fa ' . s($deviceiconclass) . ' device-info-icon" 
-            style="margin-left: 5px; color: #007bff; cursor: pointer; font-size: 0.9em; vertical-align: middle;" 
+        $deviceicon = ' <i class="icon fa ' . s($deviceiconclass) . ' device-info-icon"
+            style="margin-left: 5px; color: #007bff; cursor: pointer; font-size: 0.9em; vertical-align: middle;"
             title="' . s($devicetitle) . '"
             aria-label="' . s($devicetitle) . '"
             role="img"></i>';
@@ -281,9 +276,12 @@ foreach ($records as $record) {
     
     $alertsdisplay = '-';
     if (!empty($alerts)) {
-        $alertcount = count($alerts);
         $alertdata = [];
         foreach ($alerts as $alert) {
+            // Skip alerts with null or empty alert_message.
+            if (empty($alert->alert_message)) {
+                continue;
+            }
             $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
             $alerttext = s($alert->alert_message);
             $alertdata[] = [
@@ -292,18 +290,32 @@ foreach ($records as $record) {
                 'timestamp' => $alert->timecreated
             ];
         }
-        // Encode alert data for JavaScript
-        $alertdatajson = json_encode($alertdata);
-        $warningtext = $alertcount == 1 ? trim(get_string('warning', 'quizaccess_quizproctoring')) : trim(get_string('warnings', 'quizaccess_quizproctoring'));
-        $tooltiptext = $alertcount . ' ' . $warningtext;
-        $alertsdisplay = '<span class="alert-icon-wrapper" style="position: relative; display: inline-block; vertical-align: middle;">
-            <i class="icon fa fa-bell alert-icon" 
-                style="color: #dc3545; font-size: 1.2em; cursor: pointer; vertical-align: middle; transition: color 0.2s;" 
-                data-alerts=\'' . htmlspecialchars($alertdatajson, ENT_QUOTES, 'UTF-8') . '\'
-                data-attemptid="' . $attempt->id . '"
-                title="' . s($tooltiptext) . '"></i>
-            <span class="alert-badge-count" style="position: absolute; top: -5px; right: -8px; background-color: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; line-height: 1;">' . $alertcount . '</span>
-        </span>';
+        
+        // Only show alert icon if there are valid alerts.
+        if (!empty($alertdata)) {
+            $alertcount = count($alertdata);
+            // Encode alert data for JavaScript.
+            $alertdatajson = json_encode($alertdata);
+            $warningtext = $alertcount == 1 ? trim(get_string('warning', 'quizaccess_quizproctoring')) : trim(get_string('warnings', 'quizaccess_quizproctoring'));
+            $tooltiptext = $alertcount . ' ' . $warningtext;
+            $alertsdisplay =
+            '<span class="alert-icon-wrapper" style="position: relative; display: inline-block; vertical-align: middle;">' .
+                '<i class="icon fa fa-bell alert-icon" ' .
+                    'style="color: #dc3545; font-size: 1.2em; cursor: pointer; vertical-align: middle; ' .
+                           'transition: color 0.2s;" ' .
+                    'data-alerts="' . htmlspecialchars($alertdatajson, ENT_QUOTES, 'UTF-8') . '" ' .
+                    'data-attemptid="' . $attempt->id . '" ' .
+                    'title="' . s($tooltiptext) . '">' .
+                '</i>' .
+                '<span class="alert-badge-count" ' .
+                      'style="position: absolute; top: -5px; right: -8px; background-color: #dc3545; ' .
+                             'color: white; border-radius: 50%; width: 18px; height: 18px; ' .
+                             'font-size: 10px; font-weight: bold; display: flex; align-items: center; ' .
+                             'justify-content: center; line-height: 1;">' .
+                    $alertcount .
+                '</span>' .
+            '</span>';
+        }
     }
 
     $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,

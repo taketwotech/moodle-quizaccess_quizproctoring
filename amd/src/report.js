@@ -457,15 +457,12 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 try {
                     alertsData = JSON.parse(alertsDataJson);
                 } catch (e) {
-                    str.get_string('error', 'moodle').then(function(errorMsg) {
+                    // Show error notification without blocking.
+                    str.get_string('error', 'moodle').catch(function() {
+                        return 'Error parsing alerts data';
+                    }).then(function(errorMsg) {
                         notification.addNotification({
                             message: errorMsg,
-                            type: 'error'
-                        });
-                        return undefined;
-                    }).catch(function() {
-                        notification.addNotification({
-                            message: 'Error parsing alerts data',
                             type: 'error'
                         });
                         return undefined;
@@ -596,7 +593,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
 
                     return undefined;
                 }).catch(function() {
-                    str.get_string('error', 'moodle').then(function(errorMsg) {
+                    return str.get_string('error', 'moodle').then(function(errorMsg) {
                         notification.addNotification({
                             message: errorMsg,
                             type: 'error'
@@ -609,7 +606,6 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         });
                         return undefined;
                     });
-                    return undefined;
                 });
             });
 
