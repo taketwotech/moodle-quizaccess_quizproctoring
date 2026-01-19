@@ -124,6 +124,16 @@ label[for="id_consentcheckbox"] {
     cursor: pointer;
 }
 
+.device-info-icon {
+    cursor: pointer !important;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.device-info-icon:hover {
+    opacity: 1;
+}
+
 .proctoring-images-modal {
     display: flex;
     flex-wrap: wrap;

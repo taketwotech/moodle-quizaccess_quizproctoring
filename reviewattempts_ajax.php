@@ -158,9 +158,10 @@ foreach ($records as $record) {
         // Properly escape the title attribute to avoid question mark issues.
         $devicetitle = 'Device: ' . $deviceinfo;
         $deviceicon = ' <i class="icon fa ' . s($deviceiconclass) . ' device-info-icon" 
-            style="margin-left: 5px; color: #007bff; cursor: help; font-size: 0.9em; vertical-align: middle;" 
+            style="margin-left: 5px; color: #007bff; cursor: pointer; font-size: 0.9em; vertical-align: middle;" 
             title="' . s($devicetitle) . '"
-            aria-label="' . s($devicetitle) . '"></i>';
+            aria-label="' . s($devicetitle) . '"
+            role="img"></i>';
         $attempttext .= $deviceicon;
     }
     
