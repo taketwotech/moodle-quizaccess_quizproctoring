@@ -860,6 +860,12 @@ function($, str, ModalFactory) {
             return 'Mac iPad';
         }
         
+        // Check for Mac desktop/laptop BEFORE mobile check to avoid misclassification.
+        // Mac user agents might contain "mobile" in some browser contexts.
+        if (/macintosh|mac os x|mac_powerpc/i.test(ua)) {
+            return 'Mac Desktop';
+        }
+        
         // Android tablets - check for "tablet" keyword or Android without "mobile" keyword.
         // Some Android tablets have "tablet" in user agent, or Android without "mobile".
         // This check must come before the general mobile check to avoid misclassification.
@@ -869,14 +875,10 @@ function($, str, ModalFactory) {
         }
 
         // Check for mobile phones (iPhone, Android phones, etc.).
-        // Exclude iPad and Android tablets which were already checked above.
-        if (/mobile|android|iphone|ipod|blackberry|windows phone|opera mini/i.test(ua)) {
+        // Exclude iPad and Mac Desktop which were already checked above.
+        if (/iphone|ipod|blackberry|windows phone|opera mini/i.test(ua) ||
+            (/android/i.test(ua) && /mobile/i.test(ua))) {
             return 'Mobile';
-        }
-
-        // Check for Mac desktop/laptop (not iPad, which was already checked above).
-        if (/macintosh|mac os x|mac_powerpc/i.test(ua)) {
-            return 'Mac Desktop';
         }
 
         // Check for Windows.
