@@ -133,9 +133,38 @@ foreach ($records as $record) {
         'attempt' => $record->attempt,
     ];
 
+    // Build attempt link with device info icon if available.
+    $deviceinfo = !empty($record->deviceinfo) ? trim($record->deviceinfo) : '';
+    $attempttext = s($attempt->attempt);
+    
+    if (!empty($deviceinfo)) {
+        // Determine device icon based on device info.
+        // Match the device types from detectDeviceInfo(): Mobile, Mac, Windows, Unknown
+        $deviceinfo_lower = strtolower(trim($deviceinfo));
+        $deviceiconclass = 'fa-desktop'; // Default for Unknown and Windows.
+        
+        if ($deviceinfo_lower === 'mobile') {
+            $deviceiconclass = 'fa-mobile-alt';
+        } else if ($deviceinfo_lower === 'mac') {
+            $deviceiconclass = 'fa-laptop';
+        } else if ($deviceinfo_lower === 'windows') {
+            $deviceiconclass = 'fa-desktop';
+        }
+        // Unknown uses default fa-desktop
+        
+        // Add device info icon with tooltip using Moodle Font Awesome standards.
+        // Properly escape the title attribute to avoid question mark issues.
+        $devicetitle = 'Device: ' . $deviceinfo;
+        $deviceicon = ' <i class="icon fa ' . s($deviceiconclass) . ' device-info-icon" 
+            style="margin-left: 5px; color: #007bff; cursor: help; font-size: 0.9em; vertical-align: middle;" 
+            title="' . s($devicetitle) . '"
+            aria-label="' . s($devicetitle) . '"></i>';
+        $attempttext .= $deviceicon;
+    }
+    
     $attempturl = html_writer::link(
         new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]),
-        s($attempt->attempt)
+        $attempttext
     );
 
     $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
