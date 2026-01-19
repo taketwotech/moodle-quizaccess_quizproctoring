@@ -462,7 +462,8 @@ function quizproctoring_storemainimage(
     $mainimage,
     $status = '',
     $response = '',
-    $storeallimg = false
+    $storeallimg = false,
+    $deviceinfo = ''
 ) {
     global $USER, $DB, $COURSE, $CFG;
 
@@ -515,6 +516,10 @@ function quizproctoring_storemainimage(
         if ((int)$eyedetectionvalue === 0) {
             $record->iseyedisabledbyteacher = 1;
         }
+    }
+    // Store device information if provided.
+    if (!empty($deviceinfo)) {
+        $record->deviceinfo = $deviceinfo;
     }
     $id = $DB->insert_record('quizaccess_main_proctor', $record);
 

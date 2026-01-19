@@ -143,15 +143,21 @@ function($, str, ModalFactory) {
         $('#' + this.retakeid).show();
         $("#id_submitbutton").prop("disabled", true);
 
+        // Get device information when saving main image.
+        let requestData = {
+            imgBase64: data,
+            cmid: this.cmid,
+            attemptid: this.attemptid,
+            mainimage: this.mainimage
+        };
+        if (this.mainimage) {
+            requestData.deviceinfo = detectDeviceInfo();
+        }
+
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
-            data: {
-                imgBase64: data,
-                cmid: this.cmid,
-                attemptid: this.attemptid,
-                mainimage: this.mainimage
-            },
+            data: requestData,
             success: function(response) {
                 if (response && response.errorcode) {
                     $('#userimageset').val(0);
@@ -834,6 +840,37 @@ function($, str, ModalFactory) {
      */
     function ismobiledevice() {
         return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Detect device information from user agent string.
+     *
+     * @returns {string} Device type (Windows, Mac, Mobile, or Unknown)
+     */
+    function detectDeviceInfo() {
+        const useragent = navigator.userAgent || '';
+        if (!useragent) {
+            return 'Unknown';
+        }
+
+        const ua = useragent.toLowerCase();
+
+        // Check for mobile devices first.
+        if (/mobile|android|iphone|ipad|ipod|blackberry|windows phone|opera mini/i.test(ua)) {
+            return 'Mobile';
+        }
+
+        // Check for Mac.
+        if (/macintosh|mac os x|mac_powerpc/i.test(ua)) {
+            return 'Mac';
+        }
+
+        // Check for Windows.
+        if (/windows|win32|win64|wow64/i.test(ua)) {
+            return 'Windows';
+        }
+
+        return 'Unknown';
     }
     /**
      * Setup visibility change

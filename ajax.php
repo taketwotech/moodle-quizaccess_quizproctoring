@@ -33,6 +33,7 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $tab = optional_param('tab', false, PARAM_BOOL);
+$deviceinfo = optional_param('deviceinfo', '', PARAM_TEXT);
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
@@ -312,7 +313,9 @@ if (!$mainentry->isautosubmit) {
                     $cm->instance,
                     $mainimage,
                     '',
-                    $response
+                    $response,
+                    false,
+                    $deviceinfo
                 );
             }
             break;
