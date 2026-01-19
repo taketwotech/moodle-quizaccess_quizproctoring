@@ -441,6 +441,178 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 window.open(url, '_blank');
             });
 
+            // Handle alerts modal.
+            $(document).on('click', '.alert-icon', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                var $icon = $(this);
+                var alertsDataJson = $icon.attr('data-alerts');
+
+                if (!alertsDataJson) {
+                    return;
+                }
+
+                var alertsData;
+                try {
+                    alertsData = JSON.parse(alertsDataJson);
+                } catch (e) {
+                    str.get_string('error', 'moodle').then(function(errorMsg) {
+                        notification.addNotification({
+                            message: errorMsg,
+                            type: 'error'
+                        });
+                        return undefined;
+                    }).catch(function() {
+                        notification.addNotification({
+                            message: 'Error parsing alerts data',
+                            type: 'error'
+                        });
+                        return undefined;
+                    });
+                    return;
+                }
+
+                Promise.all([
+                    str.get_string('alerts', 'quizaccess_quizproctoring'),
+                    str.get_string('close', 'moodle')
+                ]).then(function(strings) {
+                    var alertTitle = strings[0];
+                    var closeLabel = strings[1];
+
+                    /**
+                     * Escape HTML to prevent XSS attacks.
+                     *
+                     * @param {string} text Text to escape
+                     * @return {string} Escaped text
+                     */
+                    function escapeHtml(text) {
+                        if (!text) {
+                            return '';
+                        }
+                        return String(text)
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, '&#039;');
+                    }
+
+                    /**
+                     * Build alert row HTML.
+                     *
+                     * @param {Object} alert Alert object with message and time
+                     * @return {string} HTML string for alert row
+                     */
+                    function buildAlertRow(alert) {
+                        var message = escapeHtml(alert.message || '');
+                        var time = escapeHtml(alert.time || '');
+
+                        return '<div class="alert-row">' +
+                            '<div class="alert-message">' + message + '</div>' +
+                            '<div class="alert-time">' + time + '</div>' +
+                            '</div>';
+                    }
+
+                    /**
+                     * Build modal HTML.
+                     *
+                     * @param {string} title Modal title
+                     * @param {Array} alerts Array of alert objects
+                     * @return {string} Complete modal HTML
+                     */
+                    function buildModalHtml(title, alerts) {
+                        var bodyContent = '';
+                        if (alerts && alerts.length > 0) {
+                            alerts.forEach(function(alert) {
+                                bodyContent += buildAlertRow(alert);
+                            });
+                        } else {
+                            bodyContent = '<p class="no-alerts">No alerts found</p>';
+                        }
+
+                        return '<div id="alertsModal" class="alerts-modal">' +
+                            '<div class="alerts-modal-content">' +
+                            '<div class="alerts-modal-header">' +
+                            '<h4 class="alerts-modal-title">' + escapeHtml(title) + '</h4>' +
+                            '<button type="button" class="alerts-close" aria-label="' + escapeHtml(closeLabel) + '">' +
+                            '<span aria-hidden="true">&times;</span>' +
+                            '</button>' +
+                            '</div>' +
+                            '<div class="alerts-modal-body">' + bodyContent + '</div>' +
+                            '</div>' +
+                            '</div>';
+                    }
+
+                    /**
+                     * Close alerts modal and clean up event listeners.
+                     */
+                    function closeAlertsModal() {
+                        var modalElement = $('#alertsModal');
+                        if (modalElement.length > 0) {
+                            modalElement.removeClass('show');
+                            setTimeout(function() {
+                                modalElement.remove();
+                                $(document).off('keydown.alertsModal');
+                            }, 300);
+                        }
+                    }
+
+                    // Remove existing modal if any.
+                    var existingModal = $('#alertsModal');
+                    if (existingModal.length > 0) {
+                        existingModal.remove();
+                        $(document).off('keydown.alertsModal');
+                    }
+
+                    // Build and add modal to body.
+                    var modalHtml = buildModalHtml(alertTitle, alertsData);
+                    $('body').append(modalHtml);
+
+                    // Show modal with animation.
+                    var modal = $('#alertsModal');
+                    setTimeout(function() {
+                        modal.addClass('show');
+                    }, 10);
+
+                    // Close handlers.
+                    modal.on('click', '.alerts-close', function() {
+                        closeAlertsModal();
+                    });
+
+                    // Close on backdrop click.
+                    modal.on('click', function(e) {
+                        if ($(e.target).is('#alertsModal')) {
+                            closeAlertsModal();
+                        }
+                    });
+
+                    // Close on Escape key.
+                    $(document).on('keydown.alertsModal', function(e) {
+                        if (e.key === 'Escape' && modal.is(':visible')) {
+                            closeAlertsModal();
+                        }
+                    });
+
+                    return undefined;
+                }).catch(function() {
+                    str.get_string('error', 'moodle').then(function(errorMsg) {
+                        notification.addNotification({
+                            message: errorMsg,
+                            type: 'error'
+                        });
+                        return undefined;
+                    }).catch(function() {
+                        notification.addNotification({
+                            message: 'Error loading alerts',
+                            type: 'error'
+                        });
+                        return undefined;
+                    });
+                    return undefined;
+                });
+            });
+
             $('#attemptsreporttable').on('click', '.eyetoggle', function(event) {
                 event.preventDefault();
                 event.stopPropagation();

@@ -78,7 +78,7 @@ if ($quizsubmit) {
     $record->userid = $userid;
     $record->quizid = $quizid;
     $record->attemptid = $attemptid;
-    $record->alertmessage = $alertmessage;
+    $record->alert_message = $alertmessage;
     $record->timecreated = time();
 
     $DB->insert_record('quizaccess_proctor_alert', $record);

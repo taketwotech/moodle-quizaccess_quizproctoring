@@ -56,6 +56,7 @@ $columns = [
     '',
     'qmp.isautosubmit',
     'qa.sumgrades',
+    '',
 ];
 
 if ($enableteacherproctor == 1) {
@@ -75,7 +76,7 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = 8; // Updated index after adding grades column (index 7).
+        $eyecheckindex = 9; // Updated index after adding grades column (index 7) and alerts column (index 8).
         if ($enableteacherproctor == 1) {
             $eyecheckindex++;
         }
@@ -272,8 +273,41 @@ foreach ($records as $record) {
         }
     }
 
+    $alerts = $DB->get_records('quizaccess_proctor_alert', [
+        'attemptid' => $attempt->id,
+        'userid' => $userid,
+        'quizid' => $quizid
+    ], 'timecreated ASC');
+    
+    $alertsdisplay = '-';
+    if (!empty($alerts)) {
+        $alertcount = count($alerts);
+        $alertdata = [];
+        foreach ($alerts as $alert) {
+            $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
+            $alerttext = s($alert->alert_message);
+            $alertdata[] = [
+                'message' => $alerttext,
+                'time' => $alerttime,
+                'timestamp' => $alert->timecreated
+            ];
+        }
+        // Encode alert data for JavaScript
+        $alertdatajson = json_encode($alertdata);
+        $warningtext = $alertcount == 1 ? trim(get_string('warning', 'quizaccess_quizproctoring')) : trim(get_string('warnings', 'quizaccess_quizproctoring'));
+        $tooltiptext = $alertcount . ' ' . $warningtext;
+        $alertsdisplay = '<span class="alert-icon-wrapper" style="position: relative; display: inline-block; vertical-align: middle;">
+            <i class="icon fa fa-bell alert-icon" 
+                style="color: #dc3545; font-size: 1.2em; cursor: pointer; vertical-align: middle; transition: color 0.2s;" 
+                data-alerts=\'' . htmlspecialchars($alertdatajson, ENT_QUOTES, 'UTF-8') . '\'
+                data-attemptid="' . $attempt->id . '"
+                title="' . s($tooltiptext) . '"></i>
+            <span class="alert-badge-count" style="position: absolute; top: -5px; right: -8px; background-color: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: bold; display: flex; align-items: center; justify-content: center; line-height: 1;">' . $alertcount . '</span>
+        </span>';
+    }
+
     $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
-        $pimages, $pindentity, $submit, $gradesdisplay];
+        $pimages, $pindentity, $submit, $gradesdisplay, $alertsdisplay];
 
     if ($enableteacherproctor == 1) {
         $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
