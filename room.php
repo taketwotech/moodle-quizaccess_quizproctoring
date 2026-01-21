@@ -79,6 +79,7 @@ if ($proctorrecord->enableteacherproctor) {
         'cmid' => $cmid,
         'disablecontrol' => 0,
         'enableeyeoff' => $enableeyeoff,
+        'teacherid' => $USER->id,
         'teacher' => 'true',
     ];
 

@@ -581,7 +581,8 @@ function($, str, ModalFactory) {
                                         quizid: quizid,
                                         userid: userid,
                                         attemptid: attemptid,
-                                        alertmessage: data.text
+                                        alertmessage: data.text,
+                                        teacherid: data.teacherid
                                     },
                                     success: function(response) {
                                         if (response && response.errorcode) {

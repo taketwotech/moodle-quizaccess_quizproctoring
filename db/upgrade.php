@@ -641,5 +641,19 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025120602, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2025120603) {
+        // Define field teacherid to be added to quizaccess_proctor_alert.
+        $table = new xmldb_table('quizaccess_proctor_alert');
+        $field = new xmldb_field('teacherid', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'attemptid');
+
+        // Conditionally launch add field teacherid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025120603, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }

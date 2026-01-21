@@ -50,6 +50,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $userid = required_param('userid', PARAM_INT);
 $alertmessage = optional_param('alertmessage', '', PARAM_TEXT);
 $quizsubmit = optional_param('quizsubmit', false, PARAM_BOOL);
+$teacherid = optional_param('teacherid', '', PARAM_INT);
 
 $cm = get_coursemodule_from_instance('quiz', $quizid);
 if (!$cm) {
@@ -79,6 +80,7 @@ if ($quizsubmit) {
     $record->quizid = $quizid;
     $record->attemptid = $attemptid;
     $record->alert_message = $alertmessage;
+    $record->teacherid = $teacherid;
     $record->timecreated = time();
 
     $DB->insert_record('quizaccess_proctor_alert', $record);
