@@ -277,6 +277,20 @@ foreach ($records as $record) {
     $alertsdisplay = '-';
     if (!empty($alerts)) {
         $alertdata = [];
+        // Get unique teacher IDs from alerts
+        $teacherids = array_filter(array_unique(array_column($alerts, 'teacherid')));
+        $teachers = [];
+        if (!empty($teacherids)) {
+            list($insql, $inparams) = $DB->get_in_or_equal($teacherids);
+            $teacherrecords = $DB->get_records_sql(
+                "SELECT id, firstname, lastname FROM {user} WHERE id $insql",
+                $inparams
+            );
+            foreach ($teacherrecords as $teacher) {
+                $teachers[$teacher->id] = fullname($teacher);
+            }
+        }
+        
         foreach ($alerts as $alert) {
             // Skip alerts with null or empty alert_message.
             if (empty($alert->alert_message)) {
@@ -284,10 +298,15 @@ foreach ($records as $record) {
             }
             $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
             $alerttext = s($alert->alert_message);
+            $teachername = '';
+            if (!empty($alert->teacherid) && isset($teachers[$alert->teacherid])) {
+                $teachername = $teachers[$alert->teacherid];
+            }
             $alertdata[] = [
                 'message' => $alerttext,
                 'time' => $alerttime,
-                'timestamp' => $alert->timecreated
+                'timestamp' => $alert->timecreated,
+                'teacher' => $teachername
             ];
         }
         

@@ -498,16 +498,27 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     /**
                      * Build alert row HTML.
                      *
-                     * @param {Object} alert Alert object with message and time
+                     * @param {Object} alert Alert object with message, time, and teacher
                      * @return {string} HTML string for alert row
                      */
                     function buildAlertRow(alert) {
                         var message = escapeHtml(alert.message || '');
                         var time = escapeHtml(alert.time || '');
+                        var teacher = escapeHtml(alert.teacher || '');
+
+                        var teacherHtml = '';
+                        if (teacher) {
+                            teacherHtml = '<div class="alert-teacher">' +
+                                '<strong>Teacher:</strong> ' + teacher +
+                                '</div>';
+                        }
 
                         return '<div class="alert-row">' +
+                            teacherHtml +
+                            '<div class="alert-content">' +
                             '<div class="alert-message">' + message + '</div>' +
                             '<div class="alert-time">' + time + '</div>' +
+                            '</div>' +
                             '</div>';
                     }
 

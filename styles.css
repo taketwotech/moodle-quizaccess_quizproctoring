@@ -526,15 +526,25 @@ label[for="id_consentcheckbox"] {
 }
 
 .alert-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     padding: 10px 0;
     border-bottom: 1px solid #e9ecef;
 }
 
 .alert-row:last-child {
     border-bottom: none;
+}
+
+.alert-teacher {
+    font-size: 12px;
+    color: #495057;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.alert-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .alert-message {
