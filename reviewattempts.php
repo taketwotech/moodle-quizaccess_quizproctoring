@@ -71,11 +71,11 @@ if ($proctoringimageshow == 1) {
         '{ orderable: false }',
         '{ orderable: true }',
         '{ orderable: true }',
-        '{ orderable: false }',
     ];
 
     if ($enableteacherproctor == 1) {
-        $columnsconfig[] = '{ orderable: true }';
+        $columnsconfig[] = '{ orderable: false }'; // Alerts column
+        $columnsconfig[] = '{ orderable: true }'; // Teacher submitted column
     }
 
     if ($enableeyecheckreal == 1) {
@@ -152,11 +152,11 @@ if ($proctoringimageshow == 1) {
         $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
         get_string("grades", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('grades', 'quizaccess_quizproctoring')),
-        get_string("alerts", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('alerts', 'quizaccess_quizproctoring')),
     ];
 
     if ($enableteacherproctor == 1) {
+        $headers[] = get_string("alerts", "quizaccess_quizproctoring") .
+            $OUTPUT->render(new help_icon('alerts', 'quizaccess_quizproctoring'));
         $headers[] = get_string("teachersubmitted", "quizaccess_quizproctoring") .
             $OUTPUT->render(new help_icon('teachersubmitted', 'quizaccess_quizproctoring'));
     }

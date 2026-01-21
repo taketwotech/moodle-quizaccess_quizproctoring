@@ -56,11 +56,11 @@ $columns = [
     '',
     'qmp.isautosubmit',
     'qa.sumgrades',
-    '',
 ];
 
 if ($enableteacherproctor == 1) {
-    $columns[] = 'qmp.issubmitbyteacher';
+    $columns[] = ''; // Alerts column
+    $columns[] = 'qmp.issubmitbyteacher'; // Teacher submitted column
 }
 
 if ($enableeyecheckreal == 1) {
@@ -76,9 +76,9 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = 9; // Updated index after adding grades column (index 7) and alerts column (index 8).
+        $eyecheckindex = 8; // Base index after grades column (index 7)
         if ($enableteacherproctor == 1) {
-            $eyecheckindex++;
+            $eyecheckindex += 2; // Add alerts and teacher submitted columns
         }
         if ($enableeyecheckreal == 1 && $index === $eyecheckindex) {
             $ordercol = $columns[$index];
@@ -338,13 +338,14 @@ foreach ($records as $record) {
     }
 
     $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
-        $pimages, $pindentity, $submit, $gradesdisplay, $alertsdisplay];
+        $pimages, $pindentity, $submit, $gradesdisplay];
 
     if ($enableteacherproctor == 1) {
+        $rowdata[] = $alertsdisplay; // Alerts column
         $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
         get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
         get_string('no', 'quizaccess_quizproctoring');
-        $rowdata[] = $submitt;
+        $rowdata[] = $submitt; // Teacher submitted column
     }
 
     if ($enableeyecheckreal == 1) {
