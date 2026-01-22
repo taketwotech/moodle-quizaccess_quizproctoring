@@ -55,13 +55,18 @@ $columns = [
     '(qa.timefinish - qa.timestart)',
     '',
     '',
-    'qmp.isautosubmit',
-    'qa.sumgrades',
 ];
 
+if ($enableaudio) {
+    $columns[] = '';
+}
+
+$columns[] = 'qmp.isautosubmit';
+$columns[] = 'qa.sumgrades';
+
 if ($enableteacherproctor == 1) {
-    $columns[] = ''; // Alerts column
-    $columns[] = 'qmp.issubmitbyteacher'; // Teacher submitted column
+    $columns[] = 'alertcount';
+    $columns[] = 'qmp.issubmitbyteacher';
 }
 
 if ($enableeyecheckreal == 1) {
@@ -77,9 +82,9 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = 8; // Base index after grades column (index 7)
+        $eyecheckindex = 8;
         if ($enableteacherproctor == 1) {
-            $eyecheckindex += 2; // Add alerts and teacher submitted columns
+            $eyecheckindex += 2;
         }
         if ($enableeyecheckreal == 1 && $index === $eyecheckindex) {
             $ordercol = $columns[$index];
@@ -111,7 +116,11 @@ $total = $DB->count_records_sql("
 ", $params);
 
 $sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
-        q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username
+        q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username,
+        (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa 
+         WHERE qpa.attemptid = qa.id 
+         AND qpa.alert_message IS NOT NULL 
+         AND qpa.alert_message != '') AS alertcount
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
         JOIN {quiz} q ON q.id = qa.quiz

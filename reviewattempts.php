@@ -71,16 +71,17 @@ if ($proctoringimageshow == 1) {
         '{ orderable: true }',
         '{ orderable: false }',
         '{ orderable: false }',
-        '{ orderable: true }',
-        '{ orderable: true }',
     ];
 
     if ($enableaudio) {
-        $columnsconfig[] = '{ orderable: false }'; // Audio column
+        $columnsconfig[] = '{ orderable: false }';
     }
 
+    $columnsconfig[] = '{ orderable: true }';
+    $columnsconfig[] = '{ orderable: true }';
+
     if ($enableteacherproctor == 1) {
-        $columnsconfig[] = '{ orderable: false }'; // Alerts column
+        $columnsconfig[] = '{ orderable: true }'; // Alerts column
         $columnsconfig[] = '{ orderable: true }'; // Teacher submitted column
     }
 
