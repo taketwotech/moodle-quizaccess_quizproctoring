@@ -610,6 +610,16 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->freeze('eyecheckrealnote');
         $mform->hideIf('eyecheckrealnote', 'enableproctoring', 'eq', 0);
         $mform->hideIf('eyecheckrealnote', 'enableeyecheckreal', 'eq', 0);
+        
+        // Allow admin or teacher to store student audio.
+        $mform->addElement(
+            'selectyesno',
+            'enablerecordaudio',
+            get_string('enablerecordaudio', 'quizaccess_quizproctoring')
+        );
+        $mform->addHelpButton('enablerecordaudio', 'enablerecordaudio', 'quizaccess_quizproctoring');
+        $mform->setDefault('enablerecordaudio', 0);
+        $mform->hideIf('enablerecordaudio', 'enableproctoring', 'eq', '0');
 
         // Allow admin or teacher to setup student video.
         $mform->addElement('hidden', 'enableeyecheck', 0);
@@ -677,6 +687,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enablestudentvideo = 1;
             $record->enableeyecheckreal = 1;
             $record->enableeyecheck = 0;
+            $record->enablerecordaudio = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -693,6 +704,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enablestudentvideo = $quiz->enablestudentvideo;
             $record->enableeyecheckreal = $quiz->enableeyecheckreal;
             $record->enableeyecheck = $quiz->enableeyecheck;
+            $record->enablerecordaudio = isset($quiz->enablerecordaudio) ? $quiz->enablerecordaudio : 0;
             $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = $quiz->time_interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -721,7 +733,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
             enablestudentvideo,time_interval,enableeyecheck,enableeyecheckreal,
-            enableuploadidentity,warning_threshold,proctoringvideo_link',
+            enableuploadidentity,enablerecordaudio,warning_threshold,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctorlink ON proctorlink.quizid = quiz.id',
             [],
         ];

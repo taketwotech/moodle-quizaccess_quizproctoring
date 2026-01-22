@@ -289,7 +289,7 @@ function($, str, ModalFactory) {
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
-        enablestudentvideo = 1, setinterval = 300,
+        enablestudentvideo = 1, enablerecordaudio = 0, setinterval = 300,
         warnings = 0, userid, usergroup = '', detectionval = null) {
         let camera;
         if (!verifyduringattempt) {
@@ -360,6 +360,7 @@ function($, str, ModalFactory) {
                 }
             }
         } else {
+            localStorage.setItem('quizid', JSON.stringify(quizid));
             localStorage.setItem('warningThreshold', JSON.stringify(warnings));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
@@ -457,6 +458,9 @@ function($, str, ModalFactory) {
                                             vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
+                                            if (enablerecordaudio) {
+                                                useraudiorecord(stream);
+                                            }
                                             $(".student-iframe-container").css({display: 'none'});
                                         })
                                         .catch((err) => {
@@ -713,7 +717,7 @@ function($, str, ModalFactory) {
                     }, 500);
                 }
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-                    teacher, enablestudentvideo, setinterval,
+                    teacher, enablestudentvideo, enablerecordaudio, setinterval,
                     quizid);
             }
         }
@@ -732,13 +736,14 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablestudentvideo - boolean value
      * @param {bigint} setinterval - int value
      * @param {int} quizid - int value
      * @param {function} callback - The callback function to execute after setting up the media stream.
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo,
+        teacher, enablestudentvideo, enablerecordaudio,
         setinterval, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
@@ -769,6 +774,9 @@ function($, str, ModalFactory) {
                             'autoplay': 'autoplay'
                         }).css('display', enablestudentvideo ? 'block' : 'none')
                           .appendTo('body');
+                        if (enablerecordaudio) {
+                            useraudiorecord(stream);
+                        }
                         let allowproctoring = true;
 
                         document.addEventListener('visibilitychange', function() {
@@ -885,6 +893,22 @@ function($, str, ModalFactory) {
         // Check for Windows.
         if (/windows|win32|win64|wow64/i.test(ua)) {
             return 'Windows';
+        }
+
+        // Check for Chrome OS (must come before Linux check as Chrome OS reports as Linux).
+        // Chrome OS user agents contain "CrOS" specifically.
+        if (/cros/i.test(ua)) {
+            return 'Chrome OS';
+        }
+
+        // Check for Linux (exclude Android which is already handled above).
+        if (/linux/i.test(ua) && !/android/i.test(ua)) {
+            return 'Linux';
+        }
+
+        // Check for other Unix-like systems.
+        if (/x11|unix|bsd/i.test(ua) && !/android|linux/i.test(ua)) {
+            return 'Unix';
         }
 
         return 'Unknown';

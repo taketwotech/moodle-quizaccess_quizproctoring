@@ -15,18 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Audio File
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2026 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+require_once(__DIR__ . '/../../../../config.php');
 
-$plugin->version = 2025120605;
-$plugin->requires = 2019111800;
-$plugin->release = 'v5.1.3';
-$plugin->maturity = 'MATURITY_STABLE';
-$plugin->component = 'quizaccess_quizproctoring';
+$filename = required_param('file', PARAM_FILE);
+require_login();
+
+$filepath = $CFG->dataroot . '/quizproctoring/audio/' . $filename;
+
+if (!file_exists($filepath)) {
+    header("HTTP/1.0 404 Not Found");
+    echo "File not found.";
+    exit;
+}
+$mime = mime_content_type($filepath);
+header('Content-Type: ' . $mime);
+header('Content-Length: ' . filesize($filepath));
+header('Accept-Ranges: bytes');
+header('Content-Disposition: inline; filename="' . basename($filepath) . '"');
+readfile($filepath);
+exit;

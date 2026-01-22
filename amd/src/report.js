@@ -43,7 +43,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             }
                         },
                         function() {
-                            // Do nothing on 'Cancel'
+                            // Do nothing on 'Cancel'.
                             return;
                         }
                     );
@@ -58,7 +58,61 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return undefined;
                 })
                 .catch(function() {
-                    // Console.log(err);
+                    // Error logging disabled.
+                });
+            });
+
+            $('#proctoringreporttable').on('click', '.delete-aicon', function(event) {
+                event.preventDefault();
+                var username = $(this).data('username');
+                var cmid = $(this).data('cmid');
+                var quizid = $(this).data('quizid');
+                var userid = $(this).data('userid');
+                var newUrl = M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoringreport.php?deleteaudio='
+                + userid + '&cmid=' + cmid + '&quizid=' + quizid;
+                Promise.all([
+                    str.get_string('deleteallaudiosuser', 'quizaccess_quizproctoring', username),
+                    str.get_string('confirmation', 'quizaccess_quizproctoring'),
+                    str.get_string('deleteallaudios', 'quizaccess_quizproctoring'),
+                    str.get_string('delete', 'moodle'),
+                    str.get_string('cancel', 'moodle'),
+                ]).then(function(strings) {
+                    var message = strings[0];
+                    var title = strings[1];
+                    var checkboxtext = strings[2];
+                    var deleteLabel = strings[3];
+                    var cancelLabel = strings[4];
+                    var checkboxHtml = '<div><input type="checkbox" id="deleteallaudios" /><label class="deleteall">'
+                    + checkboxtext + '</label></div>';
+                    notification.confirm(
+                        title,
+                        message + checkboxHtml,
+                        deleteLabel,
+                        cancelLabel,
+                        function() {
+                            var allaudioss = $('#deleteallaudios').is(':checked');
+                            if (allaudioss) {
+                                newUrl += '&all=true';
+                                window.location.href = newUrl;
+                            }
+                        },
+                        function() {
+                            // Do nothing on 'Cancel'.
+                            return;
+                        }
+                    );
+                    setTimeout(function() {
+                        $('.modal-footer').addClass('deletenotifbtn');
+                        var deleteButton = $('.modal-footer button[data-action="save"]');
+                        deleteButton.prop('disabled', true);
+                        $(document).off('change', '#deleteallaudios').on('change', '#deleteallaudios', function() {
+                            deleteButton.prop('disabled', !$(this).is(':checked'));
+                        });
+                    }, 300);
+                    return undefined;
+                })
+                .catch(function() {
+                    // Error logging disabled.
                 });
             });
 
@@ -96,7 +150,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             }
                         },
                         function() {
-                            // Do nothing on 'Cancel'
+                            // Do nothing on 'Cancel'.
                             return;
                         }
                     );
@@ -111,7 +165,113 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return undefined;
                 })
                 .catch(function() {
-                    // Console.log(err);
+                    // Error logging disabled.
+                });
+            });
+
+            $('.delete-audio-quiz').on('click', function(event) {
+                event.preventDefault();
+                var quizname = $(this).data('quiz');
+                var cmid = $(this).data('cmid');
+                var quizid = $(this).data('quizid');
+                var newUrl = M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid='
+                + cmid + '&deleteaudioquiz=' + quizid;
+                Promise.all([
+                    str.get_string('deleteallaudiosquiz', 'quizaccess_quizproctoring', quizname),
+                    str.get_string('confirmation', 'quizaccess_quizproctoring'),
+                    str.get_string('deleteallaudios', 'quizaccess_quizproctoring'),
+                    str.get_string('delete', 'moodle'),
+                    str.get_string('cancel', 'moodle'),
+                ]).then(function(strings) {
+                    var message = strings[0];
+                    var title = strings[1];
+                    var checkboxtext = strings[2];
+                    var deleteLabel = strings[3];
+                    var cancelLabel = strings[4];
+                    var checkboxHtml = '<div><input type="checkbox" id="deleteallaudio" /><label class="deleteall">'
+                    + checkboxtext + '</label></div>';
+                    notification.confirm(
+                        title,
+                        message + checkboxHtml,
+                        deleteLabel,
+                        cancelLabel,
+                        function() {
+                            var allAudios = $('#deleteallaudio').is(':checked');
+                            if (allAudios) {
+                                newUrl += '&all=true';
+                                window.location.href = newUrl;
+                            }
+                        },
+                        function() {
+                            // Do nothing on 'Cancel'.
+                            return;
+                        }
+                    );
+                    setTimeout(function() {
+                        $('.modal-footer').addClass('deletenotifbtn');
+                        var deleteButton = $('.modal-footer button[data-action="save"]');
+                        deleteButton.prop('disabled', true);
+                        $(document).off('change', '#deleteallaudio').on('change', '#deleteallaudio', function() {
+                            deleteButton.prop('disabled', !$(this).is(':checked'));
+                        });
+                    }, 300);
+                    return undefined;
+                })
+                .catch(function() {
+                    // Error logging disabled.
+                });
+            });
+
+            $('.delcourseaudio').on('click', function(event) {
+                event.preventDefault();
+                var coursename = $(this).data('course');
+                var cmid = $(this).data('cmid');
+                var courseid = $(this).data('courseid');
+                var newUrl = M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/imagesreport.php?cmid='
+                + cmid + '&deleteaudiocourse=' + courseid;
+                Promise.all([
+                    str.get_string('deleteallaudioscourse', 'quizaccess_quizproctoring', coursename),
+                    str.get_string('confirmation', 'quizaccess_quizproctoring'),
+                    str.get_string('deleteallaudios', 'quizaccess_quizproctoring'),
+                    str.get_string('delete', 'moodle'),
+                    str.get_string('cancel', 'moodle'),
+                ]).then(function(strings) {
+                    var message = strings[0];
+                    var title = strings[1];
+                    var checkboxtext = strings[2];
+                    var deleteLabel = strings[3];
+                    var cancelLabel = strings[4];
+                    var checkboxHtml = '<div><input type="checkbox" id="deleteallaudioc" /><label class="deleteall">'
+                    + checkboxtext + '</label></div>';
+                    notification.confirm(
+                        title,
+                        message + checkboxHtml,
+                        deleteLabel,
+                        cancelLabel,
+                        function() {
+                            var allAudios = $('#deleteallaudioc').is(':checked');
+                            if (allAudios) {
+                                newUrl += '&all=true';
+                                window.location.href = newUrl;
+                            }
+                        },
+                        function() {
+                            // Do nothing on 'Cancel'.
+                            return;
+                        }
+                    );
+                    setTimeout(function() {
+                        $('.modal-footer').addClass('deletenotifbtn');
+                        var deleteButton = $('.modal-footer button[data-action="save"]');
+                        deleteButton.prop('disabled', true);
+                        $(document).off('change', '#deleteallaudioc').on('change', '#deleteallaudioc', function() {
+                            deleteButton.prop('disabled', !$(this).is(':checked'));
+                        });
+                    }, 300);
+                    return undefined;
+                })
+                .catch(function() {
+                    // Error logging disabled.
                 });
             });
 
@@ -149,7 +309,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             }
                         },
                         function() {
-                            // Do nothing on 'Cancel'
+                            // Do nothing on 'Cancel'.
                             return;
                         }
                     );
@@ -164,7 +324,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return undefined;
                 })
                 .catch(function() {
-                    // Console.log(err);
+                    // Error logging disabled.
                 });
             });
 
@@ -344,7 +504,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     });
 
                     modal.getBody().on('change', '.imgcheckbox', function() {
-                        all = $(this).is(':checked'); // Store boolean directly
+                        all = $(this).is(':checked'); // Store boolean directly.
                         modaltitle = all ? M.util.get_string('allimages', 'quizaccess_quizproctoring')
                                          : M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                         modal.setTitle(modaltitle);
@@ -386,12 +546,156 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 escapePressed = false;
                             }, 50);
                             event.stopPropagation();
-                            $('.imgcheckbox').prop('checked', false); // Reset checkbox
+                            $('.imgcheckbox').prop('checked', false); // Reset checkbox.
                         }
                     });
                     return undefined;
                 }).catch(function() {
-                    // Console.log(err);
+                    // Error logging disabled.
+                });
+            });
+
+            $('#attemptsreporttable').on('click', '.proctoringaudio', function(event) {
+                event.preventDefault();
+
+                var attemptid = $(this).data('attemptid');
+                var startdate = $(this).data('startdate');
+                var modaltitle = M.util.get_string('proctoringaudio', 'quizaccess_quizproctoring');
+
+                ModalFactory.create({
+                    type: ModalFactory.types.DEFAULT,
+                    body: '<div class="audio-content"><p>Loading audios...</p></div><div class="pagination-controls"></div>',
+                    title: modaltitle,
+                    large: true,
+                }).then(function(modal) {
+                    modal.show();
+
+                    var perpage = 20;
+                    var currentPage = 1;
+                    var totalPages = 1;
+
+                    /**
+                     * Stops all audio playback in the modal by pausing and resetting all audio elements.
+                     */
+                    function stopAllAudioInModal() {
+                        modal.getRoot().find('audio').each(function() {
+                            this.pause();
+                            this.currentTime = 0;
+                        });
+                    }
+
+                    modal.getRoot().on(ModalEvents.hidden, function () {
+                        stopAllAudioInModal();
+                        $(document).off('keydown.stopAllAudioOnEsc');
+                    });
+
+                    $(document).on('keydown.stopAllAudioOnEsc', function(e) {
+                        if (e.key === 'Escape') {
+                            stopAllAudioInModal();
+                        }
+                    });
+
+                    modal.getRoot().on('click', '.prev-page, .next-page', function() {
+                        stopAllAudioInModal();
+                    });
+
+                    /**
+                     * Loads audio files for a specific page via AJAX and renders them in the modal.
+                     * @param {number} page - The page number to load.
+                     */
+                    function loadAudios(page) {
+                        $.ajax({
+                            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/audio_report.php',
+                            data: {
+                                attemptid: attemptid,
+                                page: page,
+                                perpage: perpage,
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (!response || !Array.isArray(response.audios)) {
+                                    modal.getBody().find('.audio-content').html('<p>Error: Invalid audio.</p>');
+                                    modal.getBody().find('.pagination-controls').html('');
+                                    return;
+                                }
+
+                                totalPages = response.totalPages;
+
+                                var audios = response.audios.map(function(audio) {
+                                    return {
+                                        url: audio.audiofile,
+                                        time: audio.timecreated
+                                    };
+                                });
+
+                                var data = {
+                                    attemptdate: startdate,
+                                    audios: audios,
+                                    currentPage: response.currentPage,
+                                    totalPages: response.totalPages,
+                                    isFirstPage: response.currentPage === 1,
+                                    isLastPage: response.currentPage === response.totalPages,
+                                    str: function(key) {
+                                        return M.util.get_string(key, 'quizaccess_quizproctoring');
+                                    }
+                                };
+
+                                modal.getBody().find('.audio-content').html('');
+                                Templates.render('quizaccess_quizproctoring/response_audio_modal', data)
+                                    .done(function(renderedHtml) {
+                                        modal.getBody().find('.audio-content').html(renderedHtml);
+
+                                        $('audio').on('play', function () {
+                                            $('audio').not(this).each(function () {
+                                                this.pause();
+                                                this.currentTime = 0;
+                                            });
+                                        });
+
+                                        if (audios.length > 0) {
+                                            modal.getBody().find('.pagination-controls')
+                                                .html(getPaginationControls(response.currentPage, response.totalPages));
+                                        } else {
+                                            modal.getBody().find('.pagination-controls').html('');
+                                        }
+                                    });
+                            },
+                            error: function(jqXHR, textStatus) {
+                                modal.getBody().find('.audio-content').html('<p>Error loading audios: ' + textStatus + '</p>');
+                            }
+                        });
+                    }
+
+                    /**
+                     * Generates HTML for pagination controls (Previous/Next buttons).
+                     * @param {number} currentPage - The current page number.
+                     * @param {number} totalPages - The total number of pages.
+                     * @returns {string} HTML string containing pagination controls.
+                     */
+                    function getPaginationControls(currentPage, totalPages) {
+                        var prevButton = '<button class="prev-page" ' +
+                            (currentPage === 1 ? 'disabled' : '') + '>Previous</button>';
+                        var nextButton = '<button class="next-page" ' +
+                            (currentPage === totalPages ? 'disabled' : '') + '>Next</button>';
+
+                        return '<div>' + prevButton + ' Page ' + currentPage + ' of ' + totalPages + ' ' + nextButton + '</div>';
+                    }
+
+                    modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            loadAudios(currentPage);
+                        }
+                    });
+
+                    modal.getBody().off('click', '.next-page').on('click', '.next-page', function() {
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                            loadAudios(currentPage);
+                        }
+                    });
+
+                    loadAudios(currentPage);
                 });
             });
 
@@ -430,7 +734,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 const attemptid = $(this).data('attemptid');
                 const quizid = $(this).data('quizid');
                 const userid = $(this).data('userid');
-                const username = encodeURIComponent($(this).data('username')); // URL-safe
+                const username = encodeURIComponent($(this).data('username')); // URL-safe.
 
                 const url = `${M.cfg.wwwroot}/mod/quiz/accessrule/quizproctoring/userreport.php` +
                 `?attemptid=${attemptid}` +
@@ -742,7 +1046,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     });
                 }
 
-                // Get global preference to determine if checkbox should be checked
+                // Get global preference to determine if checkbox should be checked.
                 $.ajax({
                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
                     method: 'POST',

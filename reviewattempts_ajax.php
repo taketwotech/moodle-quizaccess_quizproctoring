@@ -35,6 +35,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
 $enableteacherproctor = optional_param('enableteacherproctor', 0, PARAM_INT);
 $enableeyecheckreal = optional_param('enableeyecheckreal', 0, PARAM_INT);
+$enableaudio = optional_param('enableaudio', 0, PARAM_INT);
 
 $PAGE->set_context(context_module::instance($cmid));
 
@@ -150,6 +151,12 @@ foreach ($records as $record) {
             $deviceiconclass = 'fa-laptop';
         } else if ($deviceinfolower === 'windows') {
             $deviceiconclass = 'fa-desktop';
+        } else if ($deviceinfolower === 'linux') {
+            $deviceiconclass = 'fa-desktop';
+        } else if ($deviceinfolower === 'chrome os') {
+            $deviceiconclass = 'fa-laptop';
+        } else if ($deviceinfolower === 'unix') {
+            $deviceiconclass = 'fa-desktop';
         }
 
         $devicetitle = 'Device: ' . $deviceinfo;
@@ -186,6 +193,23 @@ foreach ($records as $record) {
         data-quizid="' . $quizid . '"
         data-userid="' . $user->id . '"
         src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">' : '';
+
+    $paudio = '';
+    if ($enableaudio) {
+        $sql = "SELECT * FROM {quizaccess_proctor_audio}
+                WHERE attemptid = :attemptid AND deleted = 0 ORDER BY id ASC LIMIT 1";
+        $params = ['attemptid' => $attempt->id];
+        $proctoringaudiorecord = $DB->get_record_sql($sql, $params);
+        if ($proctoringaudiorecord) {
+            $paudio = '<a href="#" class="proctoringaudio"
+                data-attemptid="' . $attempt->id . '"
+                data-startdate="' . $timestart . '">' .
+                get_string("viewaudio", "quizaccess_quizproctoring") .
+                '</a>';
+        } else {
+            $paudio = get_string("noaudio", "quizaccess_quizproctoring");
+        }
+    }
 
     $submit = $record->isautosubmit ? '<div class="submittag">' .
     get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
@@ -338,14 +362,21 @@ foreach ($records as $record) {
     }
 
     $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
-        $pimages, $pindentity, $submit, $gradesdisplay];
+        $pimages, $pindentity];
+
+    if ($enableaudio) {
+        $rowdata[] = $paudio;
+    }
+
+    $rowdata[] = $submit;
+    $rowdata[] = $gradesdisplay;
 
     if ($enableteacherproctor == 1) {
-        $rowdata[] = $alertsdisplay; // Alerts column
+        $rowdata[] = $alertsdisplay;
         $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
         get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
         get_string('no', 'quizaccess_quizproctoring');
-        $rowdata[] = $submitt; // Teacher submitted column
+        $rowdata[] = $submitt;
     }
 
     if ($enableeyecheckreal == 1) {

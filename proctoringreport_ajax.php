@@ -29,6 +29,8 @@ require_once('../../../../config.php');
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $courseid = required_param('courseid', PARAM_INT);
+$proctoringimageshow = optional_param('proctoringimageshow', 1, PARAM_INT);
+$enableaudio = optional_param('enableaudio', 0, PARAM_INT);
 
 require_login();
 $context = context_module::instance($cmid);
@@ -163,16 +165,42 @@ foreach ($records as $r) {
         'data-username' => $fullname,
     ]);
 
-    $data[] = [
+    $rowdata = [
         'fullname' => $namelink,
         'username' => s($r->username),
         'email' => $r->email,
         'lastattempt' => $lastattempt,
         'totalimages' => $r->totalimages + $r->totalmimages,
         'warnings' => $r->warnings,
-        'review' => $reviewicon,
-        'actions' => $deleteicon,
     ];
+
+    if ($proctoringimageshow == 1) {
+        $rowdata['review'] = $reviewicon;
+    }
+    $rowdata['actions'] = $deleteicon;
+
+    if ($enableaudio) {
+        $sql = "SELECT COUNT(*) as count FROM {quizaccess_proctor_audio}
+                WHERE userid = ? AND quizid = ? and deleted = 0";
+        $totalrecords = $DB->get_field_sql($sql, [$r->id, $quizid]);
+
+        if ($totalrecords > 0) {
+            $deleteaicon = html_writer::tag('a', '<i class="icon fa fa-trash"></i>', [
+                'href' => '#',
+                'class' => 'delete-aicon',
+                'title' => get_string('delete'),
+                'data-cmid' => $cmid,
+                'data-quizid' => $quizid,
+                'data-userid' => $r->id,
+                'data-username' => $fullname,
+            ]);
+        } else {
+            $deleteaicon = get_string("noaudio", "quizaccess_quizproctoring");
+        }
+        $rowdata['actionas'] = $deleteaicon;
+    }
+
+    $data[] = $rowdata;
 }
 
 echo json_encode([

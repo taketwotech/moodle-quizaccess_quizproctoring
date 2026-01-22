@@ -55,6 +55,8 @@ if ($proctoringimageshow == 1) {
     $enableteacherproctorjs = $enableteacherproctor;
     $enableeyecheckreal = $storerecord->enableeyecheckreal ?? 0;
     $enableeyecheckrealjs = $enableeyecheckreal;
+    $enableaudio = !empty($storerecord->enablerecordaudio);
+    $enableaudiojs = $enableaudio ? 1 : 0;
 
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
@@ -72,6 +74,10 @@ if ($proctoringimageshow == 1) {
         '{ orderable: true }',
         '{ orderable: true }',
     ];
+
+    if ($enableaudio) {
+        $columnsconfig[] = '{ orderable: false }'; // Audio column
+    }
 
     if ($enableteacherproctor == 1) {
         $columnsconfig[] = '{ orderable: false }'; // Alerts column
@@ -101,7 +107,8 @@ if ($proctoringimageshow == 1) {
                         quizid: {$quizid},
                         cmid: {$cmid},
                         enableteacherproctor: enableteacherproctor,
-                        enableeyecheckreal: enableeyecheckreal
+                        enableeyecheckreal: enableeyecheckreal,
+                        enableaudio: {$enableaudiojs}
                     }
                 },
                 pageLength: 10,
@@ -129,7 +136,7 @@ if ($proctoringimageshow == 1) {
 
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
     $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
-        'attemptstarted', 'proctoringidentity', 'allimages', 'eyeofferror', 'alerts'], 'quizaccess_quizproctoring');
+        'attemptstarted', 'proctoringidentity', 'allimages', 'eyeofferror', 'alerts', 'proctoringaudio'], 'quizaccess_quizproctoring');
     $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);
 
@@ -148,11 +155,17 @@ if ($proctoringimageshow == 1) {
         $OUTPUT->render(new help_icon('proctoringimages', 'quizaccess_quizproctoring')),
         get_string("proctoringidentity", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('proctoringidentity', 'quizaccess_quizproctoring')),
-        get_string("isautosubmit", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring')),
-        get_string("grades", "quizaccess_quizproctoring") .
-        $OUTPUT->render(new help_icon('grades', 'quizaccess_quizproctoring')),
     ];
+
+    if ($enableaudio) {
+        $headers[] = get_string("proctoringaudio", "quizaccess_quizproctoring") .
+            $OUTPUT->render(new help_icon('proctoringaudio', 'quizaccess_quizproctoring'));
+    }
+
+    $headers[] = get_string("isautosubmit", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('isautosubmit', 'quizaccess_quizproctoring'));
+    $headers[] = get_string("grades", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('grades', 'quizaccess_quizproctoring'));
 
     if ($enableteacherproctor == 1) {
         $headers[] = get_string("alerts", "quizaccess_quizproctoring") .

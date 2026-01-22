@@ -176,6 +176,16 @@ label[for="id_consentcheckbox"] {
     border-color: #880808;
 }
 
+.headtitle .delcourseaudio {
+    background-color: #dc143c;
+    border-color: #dc143c;
+}
+
+.headtitle .delcourseaudio:hover {
+    background-color: #880808;
+    border-color: #880808;
+}
+
 .deleteall {
     margin-left: 2px;
     display: inline;
@@ -249,12 +259,30 @@ label[for="id_consentcheckbox"] {
     color: #880808;
 }
 
+.delete-aicon {
+    color: #dc143c;
+    transition: color 0.3s;
+}
+
+.delete-aicon:hover {
+    color: #880808;
+}
+
 .delete-quiz {
     color: #dc143c;
     transition: color 0.3s;
 }
 
 .delete-quiz:hover {
+    color: #880808;
+}
+
+.delete-audio-quiz {
+    color: #dc143c;
+    transition: color 0.3s;
+}
+
+.delete-audio-quiz:hover {
     color: #880808;
 }
 
@@ -820,4 +848,42 @@ label[for="id_consentcheckbox"] {
 
 .eyetoggle-switch:hover .eyetoggle-slider {
     box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+}
+
+.audio-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 10px;
+}
+
+.audio-item {
+    flex: 1 1 calc(50% - 15px);
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+}
+
+.audio-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.audio-time {
+    font-style: italic;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 14px;
+    min-width: 50px;
+    text-align: center;
+}
+
+.audio-inline audio {
+    flex-grow: 1;
+    max-width: 100%;
 }
