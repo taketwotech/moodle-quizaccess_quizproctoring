@@ -367,9 +367,11 @@ if (empty($records)) {
                 data-quiz="' . $record->quizname . '">
                 <i class="icon fa fa-trash"></i></a>';
         }
+        // Get the correct cmid for this specific quiz.
+        $quizcm = get_coursemodule_from_instance('quiz', $record->quizid, $course->id);
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-        'cmid' => $cm->id,
-        'quizid' => $record->quizid,
+            'cmid' => $quizcm->id,
+            'quizid' => $record->quizid,
         ]);
         $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quizname);
         $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quizname . '</a>';
