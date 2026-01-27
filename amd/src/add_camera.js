@@ -869,8 +869,15 @@ function($, str, ModalFactory) {
             return 'Mac iPad';
         }
 
-        // Check for Mac desktop/laptop BEFORE mobile check to avoid misclassification.
-        // Mac user agents might contain "mobile" in some browser contexts.
+        // Check for iPhone/iPod BEFORE Mac Desktop check.
+        // iOS 13+ user agents contain "Macintosh" or "Mac OS X" but also contain "iPhone" or "iPod".
+        // This must be checked first to avoid misclassifying iOS devices as Mac Desktop.
+        if (/iphone|ipod/i.test(ua)) {
+            return 'Mobile';
+        }
+
+        // Check for Mac desktop/laptop AFTER iOS device checks.
+        // Mac user agents contain "macintosh|mac os x|mac_powerpc" but NOT "iphone|ipod".
         if (/macintosh|mac os x|mac_powerpc/i.test(ua)) {
             return 'Mac Desktop';
         }
@@ -883,9 +890,9 @@ function($, str, ModalFactory) {
             return 'Mobile'; // Android tablets are classified as mobile devices.
         }
 
-        // Check for mobile phones (iPhone, Android phones, etc.).
-        // Exclude iPad and Mac Desktop which were already checked above.
-        if (/iphone|ipod|blackberry|windows phone|opera mini/i.test(ua) ||
+        // Check for other mobile phones (Android phones, Blackberry, Windows Phone, etc.).
+        // iPhone/iPod were already checked above.
+        if (/blackberry|windows phone|opera mini/i.test(ua) ||
             (/android/i.test(ua) && /mobile/i.test(ua))) {
             return 'Mobile';
         }

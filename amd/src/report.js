@@ -728,6 +728,25 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 });
             });
 
+            // Handle click on device info icon to display device name in modal
+            $(document).on('click', '.device-info-icon', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                var deviceinfo = $(this).data('deviceinfo');
+                if (deviceinfo) {
+                    // Escape device info to prevent XSS
+                    var escapedDeviceInfo = $('<div>').text(deviceinfo).html();
+                    return ModalFactory.create({
+                        type: ModalFactory.types.DEFAULT,
+                        body: '<div class="device-info-content"><p>' + escapedDeviceInfo + '</p></div>',
+                        title: 'Device Information',
+                    }).then(function(modal) {
+                        modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
+                        modal.show();
+                    });
+                }
+            });
+
             $('#attemptsreporttable').on('click', '.generate', function(event) {
                 event.preventDefault();
 

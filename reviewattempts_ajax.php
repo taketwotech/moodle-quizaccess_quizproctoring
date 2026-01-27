@@ -173,6 +173,7 @@ foreach ($records as $record) {
             style="margin-left: 5px; color: #007bff; cursor: pointer; font-size: 0.9em; vertical-align: middle;"
             title="' . s($devicetitle) . '"
             aria-label="' . s($devicetitle) . '"
+            data-deviceinfo="' . s($deviceinfo) . '"
             role="img"></i>';
         $attempttext .= $deviceicon;
     }
