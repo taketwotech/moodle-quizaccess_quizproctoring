@@ -35,15 +35,15 @@ if (!file_exists($dest)) {
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $timestamps = isset($_POST['timestamps']) ? json_decode($_POST['timestamps'], true) : [];
-$savedFiles = [];
+$savedfiles = [];
 
 foreach ($_FILES as $key => $file) {
     if (!empty($file['tmp_name']) && is_uploaded_file($file['tmp_name'])) {
         preg_match('/audio(\d+)/', $key, $matches);
         $index = isset($matches[1]) ? intval($matches[1]) : null;
-        $captureTime = ($index !== null && isset($timestamps[$index])) ? intval($timestamps[$index]) : time();
+        $capturetime = ($index !== null && isset($timestamps[$index])) ? intval($timestamps[$index]) : time();
 
-        $filename = 'audio_' . $USER->id . '_' . $captureTime . '_' . $key . '.webm';
+        $filename = 'audio_' . $USER->id . '_' . $capturetime . '_' . $key . '.webm';
         $filepath = $dest . $filename;
 
         if (move_uploaded_file($file['tmp_name'], $filepath)) {
@@ -52,9 +52,9 @@ foreach ($_FILES as $key => $file) {
             $record->userid = $USER->id;
             $record->attemptid = $attemptid;
             $record->audioname = $filename;
-            $record->timecreated = $captureTime;
+            $record->timecreated = $capturetime;
             $DB->insert_record('quizaccess_proctor_audio', $record);
-            $savedFiles[] = $filename;
+            $savedfiles[] = $filename;
         } else {
             echo json_encode([
                 'status' => 'error',
@@ -65,10 +65,10 @@ foreach ($_FILES as $key => $file) {
     }
 }
 
-if (!empty($savedFiles)) {
+if (!empty($savedfiles)) {
     echo json_encode([
         'status' => 'success',
-        'files' => $savedFiles
+        'files' => $savedfiles
     ]);
 } else {
     echo json_encode([

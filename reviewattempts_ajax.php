@@ -117,9 +117,9 @@ $total = $DB->count_records_sql("
 
 $sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
         q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username,
-        (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa 
-         WHERE qpa.attemptid = qa.id 
-         AND qpa.alert_message IS NOT NULL 
+        (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa
+         WHERE qpa.attemptid = qa.id
+         AND qpa.alert_message IS NOT NULL
          AND qpa.alert_message != '') AS alertcount
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
@@ -177,7 +177,7 @@ foreach ($records as $record) {
             role="img"></i>';
         $attempttext .= $deviceicon;
     }
-    
+
     $attempturl = html_writer::link(
         new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]),
         $attempttext
@@ -275,18 +275,18 @@ foreach ($records as $record) {
         $rawgrade = (float)$record->sumgrades;
         $maxsumgrades = (float)($record->maxsumgrades ?? 0);
         $maxgrade = (float)($record->maxgrade ?? 0);
-        
+
         // Calculate scaled grade (same as quiz_rescale_grade).
         if ($maxsumgrades > 0) {
             $scaledgrade = $rawgrade * $maxgrade / $maxsumgrades;
         } else {
             $scaledgrade = 0;
         }
-        
+
         // Format using quiz_format_grade to respect decimal points setting.
         $formattedgrade = quiz_format_grade($quiz, $scaledgrade);
         $formattedmaxgrade = quiz_format_grade($quiz, $maxgrade);
-        
+
         // Display format: scaled grade / max scaled grade (with percentage if max is 100).
         if ($maxgrade > 0) {
             if (abs($maxgrade - 100) < 0.01) {
@@ -307,11 +307,11 @@ foreach ($records as $record) {
         'userid' => $userid,
         'quizid' => $quizid
     ], 'timecreated ASC');
-    
+
     $alertsdisplay = '-';
     if (!empty($alerts)) {
         $alertdata = [];
-        // Get unique teacher IDs from alerts
+        // Get unique teacher IDs from alerts.
         $teacherids = array_filter(array_unique(array_column($alerts, 'teacherid')));
         $teachers = [];
         if (!empty($teacherids)) {
@@ -324,7 +324,7 @@ foreach ($records as $record) {
                 $teachers[$teacher->id] = fullname($teacher);
             }
         }
-        
+
         foreach ($alerts as $alert) {
             // Skip alerts with null or empty alert_message.
             if (empty($alert->alert_message)) {
@@ -343,13 +343,15 @@ foreach ($records as $record) {
                 'teacher' => $teachername
             ];
         }
-        
+
         // Only show alert icon if there are valid alerts.
         if (!empty($alertdata)) {
             $alertcount = count($alertdata);
             // Encode alert data for JavaScript.
             $alertdatajson = json_encode($alertdata);
-            $warningtext = $alertcount == 1 ? trim(get_string('warning', 'quizaccess_quizproctoring')) : trim(get_string('warnings', 'quizaccess_quizproctoring'));
+            $warningtext = $alertcount == 1 ?
+                trim(get_string('warning', 'quizaccess_quizproctoring')) :
+                trim(get_string('warnings', 'quizaccess_quizproctoring'));
             $tooltiptext = $alertcount . ' ' . $warningtext;
             $alertsdisplay =
             '<span class="alert-icon-wrapper" style="position: relative; display: inline-block; vertical-align: middle;">' .

@@ -451,7 +451,6 @@ function($, str, ModalFactory) {
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
                                         navigator.mediaDevices.getUserMedia({video: true, audio: true})
-                                        // eslint-disable-next-line promise/always-return
                                         .then((stream) => {
                                             vElement.srcObject = stream;
                                             vElement.play();
@@ -459,9 +458,11 @@ function($, str, ModalFactory) {
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
                                             if (enablerecordaudio) {
+                                                // eslint-disable-next-line no-undef
                                                 useraudiorecord(stream);
                                             }
                                             $(".student-iframe-container").css({display: 'none'});
+                                            return stream;
                                         })
                                         .catch((err) => {
                                             if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -736,7 +737,7 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
-     * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablerecordaudio - boolean value
      * @param {bigint} setinterval - int value
      * @param {int} quizid - int value
      * @param {function} callback - The callback function to execute after setting up the media stream.
@@ -775,39 +776,41 @@ function($, str, ModalFactory) {
                         }).css('display', enablestudentvideo ? 'block' : 'none')
                           .appendTo('body');
                         if (enablerecordaudio) {
+                            // eslint-disable-next-line no-undef
                             useraudiorecord(stream);
                         }
-                        let allowproctoring = true;
-
-                        document.addEventListener('visibilitychange', function() {
-                            if (ismobiledevice()) {
-                                if (document.visibilityState === 'hidden') {
-                                    allowproctoring = false;
-                                } else {
-                                    allowproctoring = true;
-                                    visibilitychange(cmid, attemptid, mainimage);
-                                }
-                            } else {
-                                if (document.visibilityState === 'visible') {
-                                    visibilitychange(cmid, attemptid, mainimage);
-                                }
-                            }
-                        });
-
-                        var camera = new Camera(cmid, mainimage, attemptid, quizid);
-                        camera.startcamera();
-
-                        let intervalinms = setinterval * 1000;
-                        let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
-
-                        setTimeout(function() {
-                            setInterval(function() {
-                                if (allowproctoring) {
-                                    camera.proctoringimage();
-                                }
-                            }, intervalinms);
-                        }, randomdelayms);
                     }
+                    let allowproctoring = true;
+
+                    document.addEventListener('visibilitychange', function() {
+                        if (ismobiledevice()) {
+                            if (document.visibilityState === 'hidden') {
+                                allowproctoring = false;
+                            } else {
+                                allowproctoring = true;
+                                visibilitychange(cmid, attemptid, mainimage);
+                            }
+                        } else {
+                            if (document.visibilityState === 'visible') {
+                                visibilitychange(cmid, attemptid, mainimage);
+                            }
+                        }
+                    });
+
+                    var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                    camera.startcamera();
+
+                    let intervalinms = setinterval * 1000;
+                    let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
+
+                    setTimeout(function() {
+                        setInterval(function() {
+                            if (allowproctoring) {
+                                camera.proctoringimage();
+                            }
+                        }, intervalinms);
+                    }, randomdelayms);
+
                     return stream;
                 })
                 .catch(function(error) {

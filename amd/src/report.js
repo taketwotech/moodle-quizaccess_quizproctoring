@@ -584,7 +584,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         });
                     }
 
-                    modal.getRoot().on(ModalEvents.hidden, function () {
+                    modal.getRoot().on(ModalEvents.hidden, function() {
                         stopAllAudioInModal();
                         $(document).off('keydown.stopAllAudioOnEsc');
                     });
@@ -645,8 +645,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                     .done(function(renderedHtml) {
                                         modal.getBody().find('.audio-content').html(renderedHtml);
 
-                                        $('audio').on('play', function () {
-                                            $('audio').not(this).each(function () {
+                                        $('audio').on('play', function() {
+                                            $('audio').not(this).each(function() {
                                                 this.pause();
                                                 this.currentTime = 0;
                                             });
@@ -696,6 +696,9 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     });
 
                     loadAudios(currentPage);
+                    return modal;
+                }).catch(function() {
+                    // Error logging disabled.
                 });
             });
 
@@ -721,6 +724,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                                 modal.show();
                                 return null;
+                            }).catch(function() {
+                                // Error logging disabled.
                             });
                         }
                         return true;
@@ -743,6 +748,9 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     }).then(function(modal) {
                         modal.getRoot().on(ModalEvents.hidden, modal.destroy.bind(modal));
                         modal.show();
+                        return null;
+                    }).catch(function() {
+                        // Error logging disabled.
                     });
                 }
             });
@@ -927,15 +935,11 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
 
                     return undefined;
                 }).catch(function() {
-                    return str.get_string('error', 'moodle').then(function(errorMsg) {
+                    return str.get_string('error', 'moodle').catch(function() {
+                        return 'Error loading alerts';
+                    }).then(function(errorMsg) {
                         notification.addNotification({
                             message: errorMsg,
-                            type: 'error'
-                        });
-                        return undefined;
-                    }).catch(function() {
-                        notification.addNotification({
-                            message: 'Error loading alerts',
                             type: 'error'
                         });
                         return undefined;

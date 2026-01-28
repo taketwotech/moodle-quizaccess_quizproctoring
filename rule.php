@@ -610,7 +610,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->freeze('eyecheckrealnote');
         $mform->hideIf('eyecheckrealnote', 'enableproctoring', 'eq', 0);
         $mform->hideIf('eyecheckrealnote', 'enableeyecheckreal', 'eq', 0);
-        
+
         // Allow admin or teacher to store student audio.
         $mform->addElement(
             'selectyesno',

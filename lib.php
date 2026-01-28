@@ -455,6 +455,7 @@ function quizproctoring_storeimage(
  * @param string $status Status string
  * @param string $response Response string
  * @param boolean $storeallimg Store all images flag
+ * @param string $deviceinfo Device information string
  */
 function quizproctoring_storemainimage(
     $data,

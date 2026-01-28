@@ -658,7 +658,8 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     if ($oldversion < 2025120604) {
         // Define field enablerecordaudio to be added to quizaccess_quizproctoring.
         $table = new xmldb_table('quizaccess_quizproctoring');
-        $field = new xmldb_field('enablerecordaudio', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enableeyecheckreal');
+        $field = new xmldb_field('enablerecordaudio', XMLDB_TYPE_INTEGER, '1', null,
+            XMLDB_NOTNULL, null, '0', 'enableeyecheckreal');
 
         // Conditionally launch add field enablerecordaudio.
         if (!$dbman->field_exists($table, $field)) {
