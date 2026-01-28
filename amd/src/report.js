@@ -753,6 +753,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                         // Error logging disabled.
                     });
                 }
+                return undefined;
             });
 
             $('#attemptsreporttable').on('click', '.generate', function(event) {
@@ -797,6 +798,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             type: 'error'
                         });
                         return undefined;
+                    }).catch(function() {
+                        // Error logging disabled.
                     });
                     return;
                 }
@@ -935,15 +938,19 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
 
                     return undefined;
                 }).catch(function() {
-                    return str.get_string('error', 'moodle').catch(function() {
-                        return 'Error loading alerts';
-                    }).then(function(errorMsg) {
+                    // Handle error by showing notification.
+                    str.get_string('error', 'moodle').then(function(errorMsg) {
                         notification.addNotification({
                             message: errorMsg,
                             type: 'error'
                         });
-                        return undefined;
+                    }).catch(function() {
+                        notification.addNotification({
+                            message: 'Error loading alerts',
+                            type: 'error'
+                        });
                     });
+                    return undefined;
                 });
             });
 
