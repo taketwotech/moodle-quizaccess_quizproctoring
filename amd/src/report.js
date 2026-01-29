@@ -804,6 +804,28 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return;
                 }
 
+                /**
+                 * Show error notification for alerts loading failure.
+                 * @return {Promise} Promise that resolves when notification is shown
+                 */
+                function showAlertsError() {
+                    return str.get_string('error', 'moodle')
+                        .then(function(errorMsg) {
+                            notification.addNotification({
+                                message: errorMsg,
+                                type: 'error'
+                            });
+                            return undefined;
+                        })
+                        .catch(function() {
+                            notification.addNotification({
+                                message: 'Error loading alerts',
+                                type: 'error'
+                            });
+                            return undefined;
+                        });
+                }
+
                 Promise.all([
                     str.get_string('alerts', 'quizaccess_quizproctoring'),
                     str.get_string('close', 'moodle')
@@ -939,19 +961,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return undefined;
                 }).catch(function() {
                     // Handle error by showing notification.
-                    return str.get_string('error', 'moodle').then(function(errorMsg) {
-                        notification.addNotification({
-                            message: errorMsg,
-                            type: 'error'
-                        });
-                        return undefined;
-                    }).catch(function() {
-                        notification.addNotification({
-                            message: 'Error loading alerts',
-                            type: 'error'
-                        });
-                        return undefined;
-                    });
+                    return showAlertsError();
                 });
             });
 
