@@ -939,18 +939,19 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return undefined;
                 }).catch(function() {
                     // Handle error by showing notification.
-                    str.get_string('error', 'moodle').then(function(errorMsg) {
+                    return str.get_string('error', 'moodle').then(function(errorMsg) {
                         notification.addNotification({
                             message: errorMsg,
                             type: 'error'
                         });
+                        return undefined;
                     }).catch(function() {
                         notification.addNotification({
                             message: 'Error loading alerts',
                             type: 'error'
                         });
+                        return undefined;
                     });
-                    return undefined;
                 });
             });
 
