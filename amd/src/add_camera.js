@@ -751,6 +751,7 @@ function($, str, ModalFactory) {
                 if (callback) {
                     callback();
                 }
+                // eslint-disable-next-line promise/catch-or-return.
                 return;
             }
             var teacherroom = getTeacherroom();
