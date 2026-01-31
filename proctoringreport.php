@@ -255,10 +255,10 @@ if ($deleteaudio) {
             }
         }
         $DB->set_field(
-        'quizaccess_proctor_audio',
-        'deleted',
-        1,
-        ['userid' => $deleteaudio, 'quizid' => $quizid]
+            'quizaccess_proctor_audio',
+            'deleted',
+            1,
+            ['userid' => $deleteaudio, 'quizid' => $quizid]
         );
         $notification = new \core\output\notification(
             get_string('audiosdeleted', 'quizaccess_quizproctoring'),
