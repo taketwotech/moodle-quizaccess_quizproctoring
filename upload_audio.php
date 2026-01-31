@@ -58,7 +58,7 @@ foreach ($_FILES as $key => $file) {
         } else {
             echo json_encode([
                 'status' => 'error',
-                'message' => "Failed to move file for key $key"
+                'message' => "Failed to move file for key $key",
             ]);
             exit;
         }
@@ -68,11 +68,11 @@ foreach ($_FILES as $key => $file) {
 if (!empty($savedfiles)) {
     echo json_encode([
         'status' => 'success',
-        'files' => $savedfiles
+        'files' => $savedfiles,
     ]);
 } else {
     echo json_encode([
         'status' => 'error',
-        'message' => 'No valid audio files received'
+        'message' => 'No valid audio files received',
     ]);
 }

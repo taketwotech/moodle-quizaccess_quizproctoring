@@ -62,7 +62,7 @@ $totalpages = ceil($totalrecord / $perpage);
 $tmpdir = $CFG->dataroot . '/proctorlink';
 
 // Helper function to detect image MIME type.
-$getimagemimetype = function($imagepath) {
+$getimagemimetype = function ($imagepath) {
     if (!file_exists($imagepath)) {
         return 'image/png'; // Default fallback.
     }

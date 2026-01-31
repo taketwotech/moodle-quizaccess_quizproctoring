@@ -96,11 +96,11 @@ if ($deletequizid || $delcourse) {
             )";
         $params = ['courseid' => $delcourse];
         $quizrecords = $DB->get_records_sql($sql, $params);
-        $quizids = array_map(function($record) {
+        $quizids = array_map(function ($record) {
             return $record->quizid;
         }, $quizrecords);
         if (!empty($quizids)) {
-            list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+            [$insql, $inparams] = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
             $sql = "SELECT * FROM {quizaccess_proctor_data} WHERE quizid $insql AND deleted = 0";
             $usersrecords = $DB->get_records_sql($sql, $inparams);
 
@@ -158,7 +158,7 @@ if ($deletequizid || $delcourse) {
         }
         if (!empty($deletequiz)) {
             if (is_array($deletequiz)) {
-                list($insql, $inparams) = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
+                [$insql, $inparams] = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
                 $sql = "UPDATE {quizaccess_proctor_data}
                         SET deleted = 1 WHERE quizid $insql";
                 $DB->execute($sql, $inparams);
@@ -203,11 +203,11 @@ if ($deleteaudioquiz || $deleteaudiocourse) {
             )";
         $params = ['courseid' => $deleteaudiocourse];
         $quizrecords = $DB->get_records_sql($sql, $params);
-        $quizids = array_map(function($record) {
+        $quizids = array_map(function ($record) {
             return $record->quizid;
         }, $quizrecords);
         if (!empty($quizids)) {
-            list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+            [$insql, $inparams] = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
             $sql = "SELECT * FROM {quizaccess_proctor_audio} WHERE quizid $insql AND deleted = 0";
             $audiorecords = $DB->get_records_sql($sql, $inparams);
             $deletequiz = $quizids;
@@ -226,7 +226,7 @@ if ($deleteaudioquiz || $deleteaudiocourse) {
         }
         if (!empty($deletequiz)) {
             if (is_array($deletequiz)) {
-                list($insql, $inparams) = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
+                [$insql, $inparams] = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
                 $sql = "UPDATE {quizaccess_proctor_audio}
                         SET deleted = 1 WHERE quizid $insql";
                 $DB->execute($sql, $inparams);

@@ -305,7 +305,7 @@ foreach ($records as $record) {
     $alerts = $DB->get_records('quizaccess_proctor_alert', [
         'attemptid' => $attempt->id,
         'userid' => $userid,
-        'quizid' => $quizid
+        'quizid' => $quizid,
     ], 'timecreated ASC');
 
     $alertsdisplay = '-';
@@ -315,7 +315,7 @@ foreach ($records as $record) {
         $teacherids = array_filter(array_unique(array_column($alerts, 'teacherid')));
         $teachers = [];
         if (!empty($teacherids)) {
-            list($insql, $inparams) = $DB->get_in_or_equal($teacherids);
+            [$insql, $inparams] = $DB->get_in_or_equal($teacherids);
             $teacherrecords = $DB->get_records_sql(
                 "SELECT id, firstname, lastname FROM {user} WHERE id $insql",
                 $inparams
@@ -340,7 +340,7 @@ foreach ($records as $record) {
                 'message' => $alerttext,
                 'time' => $alerttime,
                 'timestamp' => $alert->timecreated,
-                'teacher' => $teachername
+                'teacher' => $teachername,
             ];
         }
 
