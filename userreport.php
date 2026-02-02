@@ -164,15 +164,31 @@ $col = 0;
 $startx = $pdf->GetX();
 $starty = $pdf->GetY();
 
+$tempdir = $CFG->dataroot . '/proctorlink/';
+if (!file_exists($tempdir)) {
+    mkdir($tempdir, 0777, true);
+}
+
 foreach ($combinedimages as $img) {
+    $processedpath = null;
     if (empty($img->userimg)) {
         $imagepath = ($img->status === 'minimizedetected') ?
             $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png' :
             $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
+        $imagepath = str_replace('\\', '/', $imagepath);
+        if (!file_exists($imagepath)) {
+            continue;
+        }
+        $processedpath = preprocessimage($imagepath, $tempdir);
+        if (!$processedpath || !file_exists($processedpath)) {
+            continue;
+        }
+        $imagepath = $processedpath;
     } else {
         $imagepath = $CFG->dataroot . '/proctorlink/' . $img->userimg;
+        $imagepath = str_replace('\\', '/', $imagepath);
         if (strpos($imagepath, $CFG->dataroot) === 0) {
-            $processedpath = preprocessimage($imagepath, $CFG->dataroot . '/proctorlink/');
+            $processedpath = preprocessimage($imagepath, $tempdir);
             if (!$processedpath || !file_exists($processedpath)) {
                 continue;
             }
@@ -180,7 +196,6 @@ foreach ($combinedimages as $img) {
         }
     }
 
-    $imagepath = str_replace('\\', '/', $imagepath);
     if (!file_exists($imagepath) || !getimagesize($imagepath)) {
         continue;
     }
@@ -193,13 +208,21 @@ foreach ($combinedimages as $img) {
     $pdf->Image($imagepath, $x, $y, $imagewidth, $imageheight);
 
     $pdf->SetFont('freeserif', '', 7);
-    $pdf->SetXY($x, $y + $imageheight + 1);
-    $pdf->Cell($imagewidth, 3.5, $status, 0, 2, 'C');
+    $textstarty = $y + $imageheight + 1;
+    $pdf->SetXY($x, $textstarty);
+
+    $statusheight = $pdf->getStringHeight($imagewidth, $status);
+    $pdf->MultiCell($imagewidth, 3.5, $status, 0, 'C', false, 1, '', '', true, 0, false, true, $statusheight, 'T');
+
+    $statusendy = $pdf->GetY();
+    $pdf->SetXY($x, $statusendy);
     $pdf->Cell($imagewidth, 3.5, $formattedtime, 0, 0, 'C');
+
+    $totaltextheight = $statusendy - $textstarty + 3.5;
 
     $col++;
     if ($col % $imagesperrow === 0) {
-        $pdf->SetXY($startx, $y + $imageheight + $textheight + 2);
+        $pdf->SetXY($startx, $y + $imageheight + $totaltextheight + 2);
     } else {
         $pdf->SetXY($x + $imagewidth + $cellpadding, $y);
     }

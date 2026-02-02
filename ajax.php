@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * AJAX call to save image file and make it part of moodle file
+ * AJAX call to save image file and make it part of moodle file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -33,6 +33,7 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $tab = optional_param('tab', false, PARAM_BOOL);
+$deviceinfo = optional_param('deviceinfo', '', PARAM_TEXT);
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
@@ -90,9 +91,23 @@ if (!$mainentry->isautosubmit) {
             );
             if (!$f1) {
                 $imagepath = $tmpdir . '/' . $mainentry->userimg;
-                $imagedata = file_get_contents($imagepath);
-                if ($imagedata) {
-                    $target = 'data:image/png;base64,' . base64_encode($imagedata);
+                if (file_exists($imagepath)) {
+                    $imagedata = file_get_contents($imagepath);
+                    if ($imagedata) {
+                        // Detect image MIME type.
+                        $extension = strtolower(pathinfo($imagepath, PATHINFO_EXTENSION));
+                        $mimetype = ($extension === 'jpg' || $extension === 'jpeg') ? 'image/jpeg' : 'image/png';
+                        // Fallback to fileinfo if available.
+                        if (function_exists('finfo_open')) {
+                            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                            $detectedmime = finfo_file($finfo, $imagepath);
+                            finfo_close($finfo);
+                            if ($detectedmime) {
+                                $mimetype = $detectedmime;
+                            }
+                        }
+                        $target = 'data:' . $mimetype . ';base64,' . base64_encode($imagedata);
+                    }
                 }
             } else {
                 $target = $f1->get_content();
@@ -298,7 +313,9 @@ if (!$mainentry->isautosubmit) {
                     $cm->instance,
                     $mainimage,
                     '',
-                    $response
+                    $response,
+                    false,
+                    $deviceinfo
                 );
             }
             break;
