@@ -51,6 +51,6 @@ foreach ($records as $record) {
 echo json_encode([
     'audios' => $audios,
     'currentPage' => $page,
-    'totalPages' => $totalpages
+    'totalPages' => $totalpages,
 ]);
 exit;
