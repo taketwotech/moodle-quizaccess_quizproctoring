@@ -35,6 +35,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
 $enableteacherproctor = optional_param('enableteacherproctor', 0, PARAM_INT);
 $enableeyecheckreal = optional_param('enableeyecheckreal', 0, PARAM_INT);
+$enableaudio = optional_param('enableaudio', 0, PARAM_INT);
 
 $PAGE->set_context(context_module::instance($cmid));
 
@@ -54,10 +55,17 @@ $columns = [
     '(qa.timefinish - qa.timestart)',
     '',
     '',
-    'qmp.isautosubmit',
 ];
 
+if ($enableaudio) {
+    $columns[] = '';
+}
+
+$columns[] = 'qmp.isautosubmit';
+$columns[] = 'qa.sumgrades';
+
 if ($enableteacherproctor == 1) {
+    $columns[] = 'alertcount';
     $columns[] = 'qmp.issubmitbyteacher';
 }
 
@@ -74,9 +82,9 @@ if (!empty($order[0])) {
     $index = intval($order[0]['column']);
     $dir = strtoupper($order[0]['dir']);
     if (isset($columns[$index]) && in_array($dir, ['ASC', 'DESC']) && $columns[$index] !== '') {
-        $eyecheckindex = 7;
+        $eyecheckindex = 8;
         if ($enableteacherproctor == 1) {
-            $eyecheckindex++;
+            $eyecheckindex += 2;
         }
         if ($enableeyecheckreal == 1 && $index === $eyecheckindex) {
             $ordercol = $columns[$index];
@@ -102,13 +110,20 @@ $total = $DB->count_records_sql("
     SELECT COUNT(*)
     FROM {quizaccess_main_proctor} qmp
     JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
+    JOIN {quiz} q ON q.id = qa.quiz
     JOIN {user} u ON u.id = qmp.userid
     $wheresql
 ", $params);
 
-$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, u.email, u.username
+$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
+        q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username,
+        (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa
+         WHERE qpa.attemptid = qa.id
+         AND qpa.alert_message IS NOT NULL
+         AND qpa.alert_message != '') AS alertcount
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
+        JOIN {quiz} q ON q.id = qa.quiz
         JOIN {user} u ON u.id = qmp.userid
         $wheresql
         ORDER BY $ordercol $orderdir";
@@ -117,6 +132,9 @@ $records = $DB->get_records_sql($sql, $params, $start, $length);
 
 $data = [];
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
+// Get quiz object once for grade formatting functions.
+$quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
+require_once($CFG->dirroot . '/mod/quiz/lib.php');
 
 foreach ($records as $record) {
     $attempt = (object)[
@@ -126,9 +144,43 @@ foreach ($records as $record) {
         'attempt' => $record->attempt,
     ];
 
+    // Build attempt link with device info icon if available.
+    $deviceinfo = !empty($record->deviceinfo) ? trim($record->deviceinfo) : '';
+    $attempttext = s($attempt->attempt);
+
+    if (!empty($deviceinfo)) {
+        $deviceinfolower = strtolower(trim($deviceinfo));
+        $deviceiconclass = 'fa-desktop';
+
+        if ($deviceinfolower === 'mobile') {
+            $deviceiconclass = 'fa-mobile-alt';
+        } else if ($deviceinfolower === 'mac ipad') {
+            $deviceiconclass = 'fa-tablet-alt';
+        } else if ($deviceinfolower === 'mac desktop') {
+            $deviceiconclass = 'fa-laptop';
+        } else if ($deviceinfolower === 'windows') {
+            $deviceiconclass = 'fa-desktop';
+        } else if ($deviceinfolower === 'linux') {
+            $deviceiconclass = 'fa-desktop';
+        } else if ($deviceinfolower === 'chrome os') {
+            $deviceiconclass = 'fa-laptop';
+        } else if ($deviceinfolower === 'unix') {
+            $deviceiconclass = 'fa-desktop';
+        }
+
+        $devicetitle = 'Device: ' . $deviceinfo;
+        $deviceicon = ' <i class="icon fa ' . s($deviceiconclass) . ' device-info-icon"
+            style="margin-left: 5px; color: #007bff; cursor: pointer; font-size: 0.9em; vertical-align: middle;"
+            title="' . s($devicetitle) . '"
+            aria-label="' . s($devicetitle) . '"
+            data-deviceinfo="' . s($deviceinfo) . '"
+            role="img"></i>';
+        $attempttext .= $deviceicon;
+    }
+
     $attempturl = html_writer::link(
         new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]),
-        s($attempt->attempt)
+        $attempttext
     );
 
     $timestart = userdate($attempt->timestart, get_string('strftimerecent', 'langconfig'));
@@ -151,6 +203,23 @@ foreach ($records as $record) {
         data-quizid="' . $quizid . '"
         data-userid="' . $user->id . '"
         src="' . $OUTPUT->image_url('identity', 'quizaccess_quizproctoring') . '" alt="icon">' : '';
+
+    $paudio = '';
+    if ($enableaudio) {
+        $sql = "SELECT * FROM {quizaccess_proctor_audio}
+                WHERE attemptid = :attemptid AND deleted = 0 ORDER BY id ASC LIMIT 1";
+        $params = ['attemptid' => $attempt->id];
+        $proctoringaudiorecord = $DB->get_record_sql($sql, $params);
+        if ($proctoringaudiorecord) {
+            $paudio = '<a href="#" class="proctoringaudio"
+                data-attemptid="' . $attempt->id . '"
+                data-startdate="' . $timestart . '">' .
+                get_string("viewaudio", "quizaccess_quizproctoring") .
+                '</a>';
+        } else {
+            $paudio = get_string("noaudio", "quizaccess_quizproctoring");
+        }
+    }
 
     $submit = $record->isautosubmit ? '<div class="submittag">' .
     get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
@@ -200,10 +269,122 @@ foreach ($records as $record) {
         get_string('generate', 'quizaccess_quizproctoring') .
         '</button>';
 
+    // Format grades/marks using Moodle's standard quiz grade formatting.
+    $gradesdisplay = '-';
+    if (isset($record->sumgrades) && $record->sumgrades !== null && $attempt->timefinish) {
+        $rawgrade = (float)$record->sumgrades;
+        $maxsumgrades = (float)($record->maxsumgrades ?? 0);
+        $maxgrade = (float)($record->maxgrade ?? 0);
+
+        // Calculate scaled grade (same as quiz_rescale_grade).
+        if ($maxsumgrades > 0) {
+            $scaledgrade = $rawgrade * $maxgrade / $maxsumgrades;
+        } else {
+            $scaledgrade = 0;
+        }
+
+        // Format using quiz_format_grade to respect decimal points setting.
+        $formattedgrade = quiz_format_grade($quiz, $scaledgrade);
+        $formattedmaxgrade = quiz_format_grade($quiz, $maxgrade);
+
+        // Display format: scaled grade / max scaled grade (with percentage if max is 100).
+        if ($maxgrade > 0) {
+            if (abs($maxgrade - 100) < 0.01) {
+                // Max grade is 100, show percentage.
+                $percentage = format_float($scaledgrade, $quiz->decimalpoints, true, true);
+                $gradesdisplay = $formattedgrade . ' / ' . $formattedmaxgrade . ' (' . $percentage . '%)';
+            } else {
+                // Max grade is not 100, show grade out of max.
+                $gradesdisplay = $formattedgrade . ' / ' . $formattedmaxgrade;
+            }
+        } else {
+            $gradesdisplay = $formattedgrade;
+        }
+    }
+
+    $alerts = $DB->get_records('quizaccess_proctor_alert', [
+        'attemptid' => $attempt->id,
+        'userid' => $userid,
+        'quizid' => $quizid
+    ], 'timecreated ASC');
+
+    $alertsdisplay = '-';
+    if (!empty($alerts)) {
+        $alertdata = [];
+        // Get unique teacher IDs from alerts.
+        $teacherids = array_filter(array_unique(array_column($alerts, 'teacherid')));
+        $teachers = [];
+        if (!empty($teacherids)) {
+            list($insql, $inparams) = $DB->get_in_or_equal($teacherids);
+            $teacherrecords = $DB->get_records_sql(
+                "SELECT id, firstname, lastname FROM {user} WHERE id $insql",
+                $inparams
+            );
+            foreach ($teacherrecords as $teacher) {
+                $teachers[$teacher->id] = fullname($teacher);
+            }
+        }
+
+        foreach ($alerts as $alert) {
+            // Skip alerts with null or empty alert_message.
+            if (empty($alert->alert_message)) {
+                continue;
+            }
+            $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
+            $alerttext = s($alert->alert_message);
+            $teachername = '';
+            if (!empty($alert->teacherid) && isset($teachers[$alert->teacherid])) {
+                $teachername = $teachers[$alert->teacherid];
+            }
+            $alertdata[] = [
+                'message' => $alerttext,
+                'time' => $alerttime,
+                'timestamp' => $alert->timecreated,
+                'teacher' => $teachername
+            ];
+        }
+
+        // Only show alert icon if there are valid alerts.
+        if (!empty($alertdata)) {
+            $alertcount = count($alertdata);
+            // Encode alert data for JavaScript.
+            $alertdatajson = json_encode($alertdata);
+            $warningtext = $alertcount == 1 ?
+                trim(get_string('warning', 'quizaccess_quizproctoring')) :
+                trim(get_string('warnings', 'quizaccess_quizproctoring'));
+            $tooltiptext = $alertcount . ' ' . $warningtext;
+            $alertsdisplay =
+            '<span class="alert-icon-wrapper" style="position: relative; display: inline-block; vertical-align: middle;">' .
+                '<i class="icon fa fa-bell alert-icon" ' .
+                    'style="color: #dc3545; font-size: 1.2em; cursor: pointer; vertical-align: middle; ' .
+                           'transition: color 0.2s;" ' .
+                    'data-alerts="' . htmlspecialchars($alertdatajson, ENT_QUOTES, 'UTF-8') . '" ' .
+                    'data-attemptid="' . $attempt->id . '" ' .
+                    'title="' . s($tooltiptext) . '">' .
+                '</i>' .
+                '<span class="alert-badge-count" ' .
+                      'style="position: absolute; top: -5px; right: -8px; background-color: #dc3545; ' .
+                             'color: white; border-radius: 50%; width: 18px; height: 18px; ' .
+                             'font-size: 10px; font-weight: bold; display: flex; align-items: center; ' .
+                             'justify-content: center; line-height: 1;">' .
+                    $alertcount .
+                '</span>' .
+            '</span>';
+        }
+    }
+
     $rowdata = [$attempturl, $timestart, $finishtime, $timetaken,
-        $pimages, $pindentity, $submit];
+        $pimages, $pindentity];
+
+    if ($enableaudio) {
+        $rowdata[] = $paudio;
+    }
+
+    $rowdata[] = $submit;
+    $rowdata[] = $gradesdisplay;
 
     if ($enableteacherproctor == 1) {
+        $rowdata[] = $alertsdisplay;
         $submitt = $record->issubmitbyteacher ? '<div class="submittag">' .
         get_string('yes', 'quizaccess_quizproctoring') . '</div>' :
         get_string('no', 'quizaccess_quizproctoring');

@@ -143,15 +143,21 @@ function($, str, ModalFactory) {
         $('#' + this.retakeid).show();
         $("#id_submitbutton").prop("disabled", true);
 
+        // Get device information when saving main image.
+        let requestData = {
+            imgBase64: data,
+            cmid: this.cmid,
+            attemptid: this.attemptid,
+            mainimage: this.mainimage
+        };
+        if (this.mainimage) {
+            requestData.deviceinfo = detectDeviceInfo();
+        }
+
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
-            data: {
-                imgBase64: data,
-                cmid: this.cmid,
-                attemptid: this.attemptid,
-                mainimage: this.mainimage
-            },
+            data: requestData,
             success: function(response) {
                 if (response && response.errorcode) {
                     $('#userimageset').val(0);
@@ -283,7 +289,7 @@ function($, str, ModalFactory) {
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
-        enablestudentvideo = 1, setinterval = 300,
+        enablestudentvideo = 1, enablerecordaudio = 0, setinterval = 300,
         warnings = 0, userid, usergroup = '', detectionval = null) {
         let camera;
         if (!verifyduringattempt) {
@@ -354,6 +360,7 @@ function($, str, ModalFactory) {
                 }
             }
         } else {
+            localStorage.setItem('quizid', JSON.stringify(quizid));
             localStorage.setItem('warningThreshold', JSON.stringify(warnings));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
@@ -444,14 +451,18 @@ function($, str, ModalFactory) {
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
                                         navigator.mediaDevices.getUserMedia({video: true, audio: true})
-                                        // eslint-disable-next-line promise/always-return
                                         .then((stream) => {
                                             vElement.srcObject = stream;
                                             vElement.play();
                                             vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
+                                            if (enablerecordaudio) {
+                                                // eslint-disable-next-line no-undef
+                                                useraudiorecord(stream);
+                                            }
                                             $(".student-iframe-container").css({display: 'none'});
+                                            return stream;
                                         })
                                         .catch((err) => {
                                             if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -575,7 +586,8 @@ function($, str, ModalFactory) {
                                         quizid: quizid,
                                         userid: userid,
                                         attemptid: attemptid,
-                                        alertmessage: data.text
+                                        alertmessage: data.text,
+                                        teacherid: data.teacherid
                                     },
                                     success: function(response) {
                                         if (response && response.errorcode) {
@@ -706,7 +718,7 @@ function($, str, ModalFactory) {
                     }, 500);
                 }
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-                    teacher, enablestudentvideo, setinterval,
+                    teacher, enablestudentvideo, enablerecordaudio, setinterval,
                     quizid);
             }
         }
@@ -725,13 +737,14 @@ function($, str, ModalFactory) {
      * @param {int} attemptid - Attempt Id
      * @param {boolean} teacher - boolean value
      * @param {boolean} enablestudentvideo - boolean value
+     * @param {boolean} enablerecordaudio - boolean value
      * @param {bigint} setinterval - int value
      * @param {int} quizid - int value
      * @param {function} callback - The callback function to execute after setting up the media stream.
      * @return {void}
      */
     function setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
-        teacher, enablestudentvideo,
+        teacher, enablestudentvideo, enablerecordaudio,
         setinterval, quizid, callback) {
         require(['core/ajax'], function() {
             if (localMediaStream !== null) {
@@ -762,37 +775,42 @@ function($, str, ModalFactory) {
                             'autoplay': 'autoplay'
                         }).css('display', enablestudentvideo ? 'block' : 'none')
                           .appendTo('body');
-                        let allowproctoring = true;
-
-                        document.addEventListener('visibilitychange', function() {
-                            if (ismobiledevice()) {
-                                if (document.visibilityState === 'hidden') {
-                                    allowproctoring = false;
-                                } else {
-                                    allowproctoring = true;
-                                    visibilitychange(cmid, attemptid, mainimage);
-                                }
-                            } else {
-                                if (document.visibilityState === 'visible') {
-                                    visibilitychange(cmid, attemptid, mainimage);
-                                }
-                            }
-                        });
-
-                        var camera = new Camera(cmid, mainimage, attemptid, quizid);
-                        camera.startcamera();
-
-                        let intervalinms = setinterval * 1000;
-                        let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
-
-                        setTimeout(function() {
-                            setInterval(function() {
-                                if (allowproctoring) {
-                                    camera.proctoringimage();
-                                }
-                            }, intervalinms);
-                        }, randomdelayms);
+                        if (enablerecordaudio) {
+                            // eslint-disable-next-line no-undef
+                            useraudiorecord(stream);
+                        }
                     }
+                    let allowproctoring = true;
+
+                    document.addEventListener('visibilitychange', function() {
+                        if (ismobiledevice()) {
+                            if (document.visibilityState === 'hidden') {
+                                allowproctoring = false;
+                            } else {
+                                allowproctoring = true;
+                                visibilitychange(cmid, attemptid, mainimage);
+                            }
+                        } else {
+                            if (document.visibilityState === 'visible') {
+                                visibilitychange(cmid, attemptid, mainimage);
+                            }
+                        }
+                    });
+
+                    var camera = new Camera(cmid, mainimage, attemptid, quizid);
+                    camera.startcamera();
+
+                    let intervalinms = setinterval * 1000;
+                    let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
+
+                    setTimeout(function() {
+                        setInterval(function() {
+                            if (allowproctoring) {
+                                camera.proctoringimage();
+                            }
+                        }, intervalinms);
+                    }, randomdelayms);
+
                     return stream;
                 })
                 .catch(function(error) {
@@ -834,6 +852,76 @@ function($, str, ModalFactory) {
      */
     function ismobiledevice() {
         return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Detect device information from user agent string.
+     *
+     * @returns {string} Device type (Windows, Mac, Mobile, or Unknown)
+     */
+    function detectDeviceInfo() {
+        const useragent = navigator.userAgent || '';
+        if (!useragent) {
+            return 'Unknown';
+        }
+
+        const ua = useragent.toLowerCase();
+
+        // Check for iPad first - iPad has "ipad" in user agent and is a Mac/iOS device.
+        if (/ipad/i.test(ua)) {
+            return 'Mac iPad';
+        }
+
+        // Check for iPhone/iPod BEFORE Mac Desktop check.
+        // iOS 13+ user agents contain "Macintosh" or "Mac OS X" but also contain "iPhone" or "iPod".
+        // This must be checked first to avoid misclassifying iOS devices as Mac Desktop.
+        if (/iphone|ipod/i.test(ua)) {
+            return 'Mobile';
+        }
+
+        // Check for Mac desktop/laptop AFTER iOS device checks.
+        // Mac user agents contain "macintosh|mac os x|mac_powerpc" but NOT "iphone|ipod".
+        if (/macintosh|mac os x|mac_powerpc/i.test(ua)) {
+            return 'Mac Desktop';
+        }
+
+        // Android tablets - check for "tablet" keyword or Android without "mobile" keyword.
+        // Some Android tablets have "tablet" in user agent, or Android without "mobile".
+        // This check must come before the general mobile check to avoid misclassification.
+        if ((/android/i.test(ua) && /tablet/i.test(ua)) ||
+            (/android/i.test(ua) && !/mobile/i.test(ua))) {
+            return 'Mobile'; // Android tablets are classified as mobile devices.
+        }
+
+        // Check for other mobile phones (Android phones, Blackberry, Windows Phone, etc.).
+        // iPhone/iPod were already checked above.
+        if (/blackberry|windows phone|opera mini/i.test(ua) ||
+            (/android/i.test(ua) && /mobile/i.test(ua))) {
+            return 'Mobile';
+        }
+
+        // Check for Windows.
+        if (/windows|win32|win64|wow64/i.test(ua)) {
+            return 'Windows';
+        }
+
+        // Check for Chrome OS (must come before Linux check as Chrome OS reports as Linux).
+        // Chrome OS user agents contain "CrOS" specifically.
+        if (/cros/i.test(ua)) {
+            return 'Chrome OS';
+        }
+
+        // Check for Linux (exclude Android which is already handled above).
+        if (/linux/i.test(ua) && !/android/i.test(ua)) {
+            return 'Linux';
+        }
+
+        // Check for other Unix-like systems.
+        if (/x11|unix|bsd/i.test(ua) && !/android|linux/i.test(ua)) {
+            return 'Unix';
+        }
+
+        return 'Unknown';
     }
     /**
      * Setup visibility change

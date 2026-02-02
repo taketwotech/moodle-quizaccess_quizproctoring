@@ -33,6 +33,8 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $cmid = required_param('cmid', PARAM_INT);
 $deletequizid = optional_param('delete', '', PARAM_INT);
 $delcourse = optional_param('delcourse', '', PARAM_INT);
+$deleteaudioquiz = optional_param('deleteaudioquiz', '', PARAM_INT);
+$deleteaudiocourse = optional_param('deleteaudiocourse', '', PARAM_INT);
 $all = optional_param('all', false, PARAM_BOOL);
 
 // Check login and get context.
@@ -80,32 +82,37 @@ $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 $mainrecords = [];
 if ($deletequizid || $delcourse) {
     if ($deletequizid) {
-        $sql = "SELECT * from {quizaccess_main_proctor} where quizid =
-        " . $deletequizid . " AND deleted = 0";
-        $usersrecords = $DB->get_records_sql($sql);
+        $sql = "SELECT * FROM {quizaccess_main_proctor} WHERE quizid = :quizid AND deleted = 0";
+        $params = ['quizid' => $deletequizid];
+        $usersrecords = $DB->get_records_sql($sql, $params);
         $deletequiz = $deletequizid;
     } else if ($delcourse) {
         $sql = "SELECT q.id AS quizid
             FROM {quiz} q
             JOIN {course_modules} cm ON cm.instance = q.id
-            WHERE cm.course = $delcourse
+            WHERE cm.course = :courseid
             AND cm.module = (
-            SELECT id FROM {modules} WHERE name = 'quiz'
+                SELECT id FROM {modules} WHERE name = 'quiz'
             )";
-        $quizrecords = $DB->get_records_sql($sql);
-        $quizids = array_map(function ($record) {
+        $params = ['courseid' => $delcourse];
+        $quizrecords = $DB->get_records_sql($sql, $params);
+        $quizids = array_map(function($record) {
             return $record->quizid;
         }, $quizrecords);
-        $quizidsstring = implode(',', array_map('intval', $quizids));
-        $sql = "SELECT * from {quizaccess_proctor_data} where quizid
-          IN ($quizidsstring) AND deleted = 0";
-        $usersrecords = $DB->get_records_sql($sql);
+        if (!empty($quizids)) {
+            list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+            $sql = "SELECT * FROM {quizaccess_proctor_data} WHERE quizid $insql AND deleted = 0";
+            $usersrecords = $DB->get_records_sql($sql, $inparams);
 
-        $sqlm = "SELECT * from {quizaccess_main_proctor} where quizid
-          IN ($quizidsstring) AND deleted = 0";
-        $mainrecords = $DB->get_records_sql($sqlm);
+            $sqlm = "SELECT * FROM {quizaccess_main_proctor} WHERE quizid $insql AND deleted = 0";
+            $mainrecords = $DB->get_records_sql($sqlm, $inparams);
 
-        $deletequiz = $quizidsstring;
+            $deletequiz = $quizids;
+        } else {
+            $usersrecords = [];
+            $mainrecords = [];
+            $deletequiz = [];
+        }
     }
     if ($all) {
         $tmpdir = $CFG->dataroot . '/proctorlink/';
@@ -150,24 +157,94 @@ if ($deletequizid || $delcourse) {
             }
         }
         if (!empty($deletequiz)) {
-            $DB->execute("
-                UPDATE {quizaccess_proctor_data}
-                SET deleted = 1
-                WHERE quizid IN ($deletequiz)
-            ");
-            $DB->execute("
-                UPDATE {quizaccess_main_proctor}
-                SET deleted = 1
-                WHERE quizid IN ($deletequiz)
-            ");
+            if (is_array($deletequiz)) {
+                list($insql, $inparams) = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
+                $sql = "UPDATE {quizaccess_proctor_data}
+                        SET deleted = 1 WHERE quizid $insql";
+                $DB->execute($sql, $inparams);
+                $sql = "UPDATE {quizaccess_main_proctor}
+                        SET deleted = 1 WHERE quizid $insql";
+                $DB->execute($sql, $inparams);
+            } else {
+                $sql = "UPDATE {quizaccess_proctor_data}
+                        SET deleted = 1 WHERE quizid = :quizid";
+                $DB->execute($sql, ['quizid' => $deletequiz]);
+                $sql = "UPDATE {quizaccess_main_proctor}
+                        SET deleted = 1 WHERE quizid = :quizid";
+                $DB->execute($sql, ['quizid' => $deletequiz]);
+            }
         }
         $notification = new \core\output\notification(
             get_string('imagesdeleted', 'quizaccess_quizproctoring'),
             \core\output\notification::NOTIFY_SUCCESS
         );
         echo $OUTPUT->render($notification);
-        $redirecturl = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport.php', ['cmid' => $cmid]);
+        $redirecturl = new moodle_url(
+            '/mod/quiz/accessrule/quizproctoring/imagesreport.php',
+            ['cmid' => $cmid]
+        );
         redirect($redirecturl, get_string('imagesdeleted', 'quizaccess_quizproctoring'), 3);
+    }
+}
+
+if ($deleteaudioquiz || $deleteaudiocourse) {
+    if ($deleteaudioquiz) {
+        $sql = "SELECT * FROM {quizaccess_proctor_audio} WHERE quizid = :quizid AND deleted = 0";
+        $params = ['quizid' => $deleteaudioquiz];
+        $audiorecords = $DB->get_records_sql($sql, $params);
+        $deletequiz = $deleteaudioquiz;
+    } else if ($deleteaudiocourse) {
+        $sql = "SELECT q.id AS quizid
+            FROM {quiz} q
+            JOIN {course_modules} cm ON cm.instance = q.id
+            WHERE cm.course = :courseid
+            AND cm.module = (
+                SELECT id FROM {modules} WHERE name = 'quiz'
+            )";
+        $params = ['courseid' => $deleteaudiocourse];
+        $quizrecords = $DB->get_records_sql($sql, $params);
+        $quizids = array_map(function($record) {
+            return $record->quizid;
+        }, $quizrecords);
+        if (!empty($quizids)) {
+            list($insql, $inparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+            $sql = "SELECT * FROM {quizaccess_proctor_audio} WHERE quizid $insql AND deleted = 0";
+            $audiorecords = $DB->get_records_sql($sql, $inparams);
+            $deletequiz = $quizids;
+        } else {
+            $audiorecords = [];
+            $deletequiz = [];
+        }
+    }
+    $dest = $CFG->dataroot . '/quizproctoring/audio/';
+    if ($all) {
+        foreach ($audiorecords as $audiorecord) {
+            $tempfilepath = $dest . '/' . $audiorecord->audioname;
+            if (file_exists($tempfilepath) && is_file($tempfilepath)) {
+                unlink($tempfilepath);
+            }
+        }
+        if (!empty($deletequiz)) {
+            if (is_array($deletequiz)) {
+                list($insql, $inparams) = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
+                $sql = "UPDATE {quizaccess_proctor_audio}
+                        SET deleted = 1 WHERE quizid $insql";
+                $DB->execute($sql, $inparams);
+            } else {
+                $sql = "UPDATE {quizaccess_proctor_audio} SET deleted = 1 WHERE quizid = :quizid";
+                $DB->execute($sql, ['quizid' => $deletequiz]);
+            }
+        }
+        $notification = new \core\output\notification(
+            get_string('audiosdeleted', 'quizaccess_quizproctoring'),
+            \core\output\notification::NOTIFY_SUCCESS
+        );
+        echo $OUTPUT->render($notification);
+        $redirecturl = new moodle_url(
+            '/mod/quiz/accessrule/quizproctoring/imagesreport.php',
+            ['cmid' => $cmid]
+        );
+        redirect($redirecturl, get_string('audiosdeleted', 'quizaccess_quizproctoring'), 3);
     }
 }
 
@@ -178,6 +255,7 @@ $headers = [
     get_string("users", "quizaccess_quizproctoring"),
     get_string("usersimages", "quizaccess_quizproctoring"),
     get_string("actions", "quizaccess_quizproctoring"),
+    get_string("actionas", "quizaccess_quizproctoring"),
 ];
 $table->head = $headers;
 echo $OUTPUT->header();
@@ -186,6 +264,10 @@ if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) 
     data-cmid="' . $cmid . '" data-courseid="' . $course->id . '"
     data-course="' . $course->fullname . '">
     ' . get_string("delcoursemages", "quizaccess_quizproctoring", $course->fullname) . '</a>';
+    $btnaudio = '<a class="btn btn-primary delcourseaudio" href="#"
+    data-cmid="' . $cmid . '" data-courseid="' . $course->id . '"
+    data-course="' . $course->fullname . '">
+    ' . get_string("delcourseaudios", "quizaccess_quizproctoring", $course->fullname) . '</a>';
 }
 
 $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
@@ -197,7 +279,7 @@ $totalcount = $DB->count_records_sql($sqlcount, ['courseid' => $course->id]);
 if ($totalcount > 0) {
     echo '<div class="headtitle">' .
      '<p>' . get_string("delinformation", "quizaccess_quizproctoring", $course->fullname) . '</p>' .
-     '<div>' . $btn . '</div>' .
+     '<div>' . $btn . ' ' . (isset($btnaudio) ? $btnaudio : '') . '</div>' .
      '</div><br/>';
 }
 $sql = "SELECT
@@ -243,7 +325,12 @@ $sql = "SELECT
         SELECT COUNT(DISTINCT userid)
         FROM {quizaccess_main_proctor}
             WHERE quizid = q.id AND deleted = 0
-    ) AS total_users
+    ) AS total_users,
+    (
+        SELECT COUNT(*)
+        FROM {quizaccess_proctor_audio}
+        WHERE quizid = q.id AND deleted = 0
+    ) AS total_audios
 FROM {quiz} q
 WHERE q.course = :courseid
 ORDER BY q.name ASC";
@@ -251,6 +338,7 @@ $records = $DB->get_records_sql($sql, ['courseid' => $course->id]);
 if (empty($records)) {
     $table->data[] = [
         get_string('norecordsfound', 'quizaccess_quizproctoring'),
+        '',
         '',
         '',
         '',
@@ -268,13 +356,26 @@ if (empty($records)) {
                 data-quiz="' . $record->quizname . '">
                 <i class="icon fa fa-trash"></i></a>';
         }
+        if ($record->total_audios == 0) {
+            $deleteaudioicon = '<span title="' . get_string('delete') . '" class="delete-audio-quizs disabled"
+            style="opacity: 0.5; cursor: not-allowed;">
+                <i class="icon fa fa-trash"></i>
+            </span>';
+        } else {
+            $deleteaudioicon = '<a href="#" title="' . get_string('delete') . '"
+                class="delete-audio-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
+                data-quiz="' . $record->quizname . '">
+                <i class="icon fa fa-trash"></i></a>';
+        }
+        // Get the correct cmid for this specific quiz.
+        $quizcm = get_coursemodule_from_instance('quiz', $record->quizid, $course->id);
         $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-        'cmid' => $cm->id,
-        'quizid' => $record->quizid,
+            'cmid' => $quizcm->id,
+            'quizid' => $record->quizid,
         ]);
         $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quizname);
         $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quizname . '</a>';
-        $table->data[] = [$quizname, $record->total_users, $record->total_images, $deleteicon];
+        $table->data[] = [$quizname, $record->total_users, $record->total_images, $deleteicon, $deleteaudioicon];
     }
 }
 

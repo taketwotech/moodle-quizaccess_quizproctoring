@@ -600,7 +600,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025120103) {
-
         // Define field issubmitbyteacher to be added to quizaccess_main_proctor.
         $table = new xmldb_table('quizaccess_main_proctor');
         $field = new xmldb_field('issubmitbyteacher', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'isautosubmit');
@@ -626,6 +625,74 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025120104, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025120602) {
+        // Define field deviceinfo to be added to quizaccess_main_proctor.
+        $table = new xmldb_table('quizaccess_main_proctor');
+        $field = new xmldb_field('deviceinfo', XMLDB_TYPE_CHAR, '50', null, null, null, null, 'iseyedisabledbyteacher');
+
+        // Conditionally launch add field deviceinfo.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025120602, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025120603) {
+        // Define field teacherid to be added to quizaccess_proctor_alert.
+        $table = new xmldb_table('quizaccess_proctor_alert');
+        $field = new xmldb_field('teacherid', XMLDB_TYPE_INTEGER, '20', null, null, null, null, 'attemptid');
+
+        // Conditionally launch add field teacherid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025120603, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025120604) {
+        // Define field enablerecordaudio to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field('enablerecordaudio', XMLDB_TYPE_INTEGER, '1', null,
+            XMLDB_NOTNULL, null, '0', 'enableeyecheckreal');
+
+        // Conditionally launch add field enablerecordaudio.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025120604, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2025120605) {
+        // Define table quizaccess_proctor_audio to be created.
+        $table = new xmldb_table('quizaccess_proctor_audio');
+
+        // Adding fields to table quizaccess_proctor_audio.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('quizid', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('attemptid', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '20', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('audioname', XMLDB_TYPE_CHAR, '100', null, null, null, null);
+        $table->add_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table quizaccess_proctor_audio.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for quizaccess_proctor_audio.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2025120605, 'quizaccess', 'quizproctoring');
     }
 
     return true;

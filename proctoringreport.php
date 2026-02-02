@@ -29,6 +29,7 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = optional_param('quizid', '', PARAM_INT);
 $deleteuserid = optional_param('delete', '', PARAM_INT);
+$deleteaudio = optional_param('deleteaudio', '', PARAM_INT);
 $all = optional_param('all', false, PARAM_BOOL);
 
 $context = context_module::instance($cmid, MUST_EXIST);
@@ -65,28 +66,38 @@ $PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2
 $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
 $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+$storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+$enableaudio = !empty($storerecord->enablerecordaudio);
+$proctoringimageshow = 1;
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
         const table = $('#proctoringreporttable').DataTable({
             serverSide: true,
             processing: true,
             ajax: {
-                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/proctoringreport_ajax.php',
+                url: M.cfg.wwwroot +
+                    '/mod/quiz/accessrule/quizproctoring/proctoringreport_ajax.php',
                 type: 'POST',
                 data: function(d) {
                     d.cmid = {$cmid};
                     d.quizid = {$quizid};
                     d.courseid = {$course->id};
+                    d.proctoringimageshow = {$proctoringimageshow};
+                    d.enableaudio = " . ($enableaudio ? 1 : 0) . ";
                 }
             },
             columns: [
                 { data: 'fullname', orderable: true },
+                { data: 'username', orderable: true },
                 { data: 'email', orderable: true },
                 { data: 'lastattempt', orderable: true },
                 { data: 'totalimages', orderable: true },
-                { data: 'warnings', orderable: true },
-                { data: 'review', orderable: false },
-                { data: 'actions', orderable: false }
+                { data: 'warnings', orderable: true }" .
+                ($proctoringimageshow == 1 ? ",
+                { data: 'review', orderable: false }" : "") . ",
+                { data: 'actions', orderable: false }" .
+                ($enableaudio ? ",
+                { data: 'actionas', orderable: false }" : "") . "
             ],
             order: [[0, 'asc']],
             responsive: true
@@ -165,9 +176,9 @@ $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deleteuserid) {
     $tmpdir = $CFG->dataroot . '/proctorlink';
-    $sqlm = "SELECT * from {quizaccess_main_proctor} where userid = " . $deleteuserid .
-    " AND quizid = " . $quizid . " AND deleted = 0";
-    $usersmrecords = $DB->get_records_sql($sqlm);
+    $sqlm = "SELECT * FROM {quizaccess_main_proctor} WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
+    $params = ['userid' => $deleteuserid, 'quizid' => $quizid];
+    $usersmrecords = $DB->get_records_sql($sqlm, $params);
     if ($all) {
         foreach ($usersmrecords as $usersmrecord) {
             $tempfilepath = $tmpdir . '/' . $usersmrecord->userimg;
@@ -178,9 +189,9 @@ if ($deleteuserid) {
         $DB->set_field('quizaccess_main_proctor', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
     }
 
-    $sql = "SELECT * from {quizaccess_proctor_data} where userid = " . $deleteuserid .
-    " AND quizid = " . $quizid . " AND deleted = 0";
-    $usersrecords = $DB->get_records_sql($sql);
+    $sql = "SELECT * FROM {quizaccess_proctor_data} WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
+    $params = ['userid' => $deleteuserid, 'quizid' => $quizid];
+    $usersrecords = $DB->get_records_sql($sql, $params);
     if ($all) {
         foreach ($usersrecords as $usersrecord) {
             if (class_exists('\mod_quiz\quiz_settings')) {
@@ -230,8 +241,37 @@ if ($deleteuserid) {
     }
 }
 
+if ($deleteaudio) {
+    $dest = $CFG->dataroot . '/quizproctoring/audio/';
+    $sqlm = "SELECT * FROM {quizaccess_proctor_audio}
+             WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
+    $params = ['userid' => $deleteaudio, 'quizid' => $quizid];
+    $usersmrecords = $DB->get_records_sql($sqlm, $params);
+    if ($all) {
+        foreach ($usersmrecords as $usersmrecord) {
+            $tempfilepath = $dest . '/' . $usersmrecord->audioname;
+            if (file_exists($tempfilepath) && is_file($tempfilepath)) {
+                unlink($tempfilepath);
+            }
+        }
+        $DB->set_field('quizaccess_proctor_audio', 'deleted', 1,
+            ['userid' => $deleteaudio, 'quizid' => $quizid]);
+        $notification = new \core\output\notification(
+            get_string('audiosdeleted', 'quizaccess_quizproctoring'),
+            \core\output\notification::NOTIFY_SUCCESS
+        );
+        echo $OUTPUT->render($notification);
+        $redirecturl = new moodle_url(
+            '/mod/quiz/accessrule/quizproctoring/proctoringreport.php',
+            ['cmid' => $cmid, 'quizid' => $quizid]
+        );
+        redirect($redirecturl, get_string('audiosdeleted', 'quizaccess_quizproctoring'), 3);
+    }
+}
+
 $headers = [
     get_string("fullname", "quizaccess_quizproctoring"),
+    get_string("username", "quizaccess_quizproctoring"),
     get_string("email", "quizaccess_quizproctoring"),
     get_string("attemptslast", "quizaccess_quizproctoring"),
     get_string("usersimages", "quizaccess_quizproctoring") .
@@ -241,10 +281,13 @@ $headers = [
     get_string("actions", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('actions', 'quizaccess_quizproctoring')),
 ];
-$proctoringimageshow = 1;
 if ($proctoringimageshow == 1) {
     array_splice($headers, -1, 0, get_string("reviewattempts", "quizaccess_quizproctoring") .
         $OUTPUT->render(new help_icon('reviewattempts', 'quizaccess_quizproctoring')));
+}
+if ($enableaudio) {
+    $headers[] = get_string("actionas", "quizaccess_quizproctoring") .
+        $OUTPUT->render(new help_icon('actionas', 'quizaccess_quizproctoring'));
 }
 
 $output = $PAGE->get_renderer('mod_quiz');

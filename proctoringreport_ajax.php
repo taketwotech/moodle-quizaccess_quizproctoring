@@ -29,6 +29,8 @@ require_once('../../../../config.php');
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 $courseid = required_param('courseid', PARAM_INT);
+$proctoringimageshow = optional_param('proctoringimageshow', 1, PARAM_INT);
+$enableaudio = optional_param('enableaudio', 0, PARAM_INT);
 
 require_login();
 $context = context_module::instance($cmid);
@@ -46,7 +48,7 @@ if (isset($_POST['search']['value'])) {
     $searchvalue = trim($_POST['search']['value']);
 }
 
-$columns = ['fullname', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
+$columns = ['fullname', 'username', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
 $ordercolumn = 'u.firstname';
 $orderdir = 'ASC';
 
@@ -58,6 +60,9 @@ if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
         switch ($columns[$colindex]) {
             case 'fullname':
                 $ordercolumn = 'u.firstname';
+                break;
+            case 'username':
+                $ordercolumn = 'u.username';
                 break;
             case 'email':
                 $ordercolumn = 'u.email';
@@ -84,10 +89,12 @@ $params = ['quizid' => $quizid];
 
 if (!empty($searchvalue)) {
     $where .= " AND (
+        u.username LIKE :searchusername OR
         u.firstname LIKE :searchfirstname OR
         u.lastname LIKE :searchlastname OR
         u.email LIKE :searchemail
     )";
+    $params['searchusername'] = "%{$searchvalue}%";
     $params['searchfirstname'] = "%{$searchvalue}%";
     $params['searchlastname'] = "%{$searchvalue}%";
     $params['searchemail'] = "%{$searchvalue}%";
@@ -102,6 +109,7 @@ $recordstotal = $DB->count_records_sql($totalsql, $params);
 $sql = "
     SELECT
         u.id,
+        u.username,
         u.firstname,
         u.lastname,
         u.email,
@@ -124,7 +132,7 @@ $sql = "
     FROM {user} u
     JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
     WHERE $where
-    GROUP BY u.id, u.firstname, u.lastname, u.email, mp.quizid
+    GROUP BY u.id, u.username, u.firstname, u.lastname, u.email, mp.quizid
     ORDER BY $ordercolumn $orderdir
 ";
 
@@ -157,15 +165,42 @@ foreach ($records as $r) {
         'data-username' => $fullname,
     ]);
 
-    $data[] = [
+    $rowdata = [
         'fullname' => $namelink,
+        'username' => s($r->username),
         'email' => $r->email,
         'lastattempt' => $lastattempt,
         'totalimages' => $r->totalimages + $r->totalmimages,
         'warnings' => $r->warnings,
-        'review' => $reviewicon,
-        'actions' => $deleteicon,
     ];
+
+    if ($proctoringimageshow == 1) {
+        $rowdata['review'] = $reviewicon;
+    }
+    $rowdata['actions'] = $deleteicon;
+
+    if ($enableaudio) {
+        $sql = "SELECT COUNT(*) as count FROM {quizaccess_proctor_audio}
+                WHERE userid = ? AND quizid = ? and deleted = 0";
+        $totalrecords = $DB->get_field_sql($sql, [$r->id, $quizid]);
+
+        if ($totalrecords > 0) {
+            $deleteaicon = html_writer::tag('a', '<i class="icon fa fa-trash"></i>', [
+                'href' => '#',
+                'class' => 'delete-aicon',
+                'title' => get_string('delete'),
+                'data-cmid' => $cmid,
+                'data-quizid' => $quizid,
+                'data-userid' => $r->id,
+                'data-username' => $fullname,
+            ]);
+        } else {
+            $deleteaicon = get_string("noaudio", "quizaccess_quizproctoring");
+        }
+        $rowdata['actionas'] = $deleteaicon;
+    }
+
+    $data[] = $rowdata;
 }
 
 echo json_encode([

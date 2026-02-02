@@ -40,16 +40,20 @@ $PAGE->set_context($context);
 if ($validate === 'eyecheckoff') {
     set_user_preference('eye_detection', 0, $USER->id);
     if ($teachersub) {
-        $DB->execute("UPDATE {quizaccess_main_proctor}
+        $DB->execute(
+            "UPDATE {quizaccess_main_proctor}
                       SET iseyecheck = 0,
                           iseyedisabledbyteacher = 1
                       WHERE attemptid = ?",
-                      [$attemptid]);
+            [$attemptid]
+        );
     } else {
-        $DB->execute("UPDATE {quizaccess_main_proctor}
+        $DB->execute(
+            "UPDATE {quizaccess_main_proctor}
                       SET iseyecheck = 0
                       WHERE attemptid = ?",
-                      [$attemptid]);
+            [$attemptid]
+        );
     }
     echo json_encode(['status' => 'eyecheckoff']);
     exit;

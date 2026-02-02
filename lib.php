@@ -24,6 +24,7 @@
  */
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once($CFG->libdir . '/filelib.php');
 use mod_quiz\quiz_attempt;
 
 define('QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED', 'nofacedetected');
@@ -92,7 +93,7 @@ function quizaccess_quizproctoring_pluginfile(
  */
 function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     global $DB, $PAGE, $OUTPUT, $USER, $COURSE, $SESSION;
-    // Update main image attempt id as soon as user landed on attemp page.
+    // Update main image attempt id as soon as user landed on attempt page.
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
     $warningsleft = 0;
     $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
@@ -156,7 +157,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             'userid' => $USER->id,
             'quizid' => $quizid,
             'attemptid' => $attemptid,
-            'image_status' => 'M'
+            'image_status' => 'M',
         ], 'iseyecheck');
         if ($attemptrecord && isset($attemptrecord->iseyecheck)) {
             $detectionval = $attemptrecord->iseyecheck;
@@ -178,6 +179,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js'), true);
+    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.js', true);
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
@@ -189,6 +191,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         '$securewindow->browsersecurity',
         '$fullname',
         $quizaproctoring->enablestudentvideo,
+        $quizaproctoring->enablerecordaudio,
         $quizaproctoring->time_interval,
         $warningsleft,
         $USER->id,
@@ -207,16 +210,113 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
 }
 
 /**
- * Proctoring images store
+ * Compress image data to target size (15-20KB) while preserving quality for proctoring analysis.
  *
- * @param string $data user image in base64
- * @param int $cmid course module id
- * @param int $attemptid attempt id
- * @param int $quizid quiz id
- * @param boolean $mainimage main image
- * @param string $status
- * @param string $response
- * @param boolean $storeallimg store images
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @param string $imagedata Binary image data
+ * @param int $targetsize Target size in bytes (default 17500 = ~17.5KB)
+ * @return string|false Compressed JPEG image data or false on failure
+ */
+function quizproctoring_compress_image($imagedata, $targetsize = 17500) {
+    // Check if GD extension is available.
+    if (!function_exists('imagecreatefromstring') || !function_exists('imagejpeg')) {
+        return false;
+    }
+
+    // Create image resource from binary data.
+    $sourceimage = @imagecreatefromstring($imagedata);
+    if (!$sourceimage) {
+        return false;
+    }
+
+    // Get original dimensions.
+    $width = imagesx($sourceimage);
+    $height = imagesy($sourceimage);
+
+    // Calculate optimal dimensions (max 1280px width to reduce size while maintaining quality).
+    $maxwidth = 1280;
+    $maxheight = 960;
+    if ($width > $maxwidth || $height > $maxheight) {
+        $ratio = min($maxwidth / $width, $maxheight / $height);
+        $newwidth = (int)($width * $ratio);
+        $newheight = (int)($height * $ratio);
+    } else {
+        $newwidth = $width;
+        $newheight = $height;
+    }
+
+    // Create resized image if needed.
+    if ($newwidth !== $width || $newheight !== $height) {
+        $resizedimage = imagecreatetruecolor($newwidth, $newheight);
+        // Convert palette images to truecolor for better quality.
+        if (!imageistruecolor($sourceimage) && function_exists('imagepalettetotruecolor')) {
+            $sourceimage = imagepalettetotruecolor($sourceimage);
+        }
+        imagecopyresampled($resizedimage, $sourceimage, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
+        imagedestroy($sourceimage);
+        $sourceimage = $resizedimage;
+    }
+
+    // Binary search for optimal quality to hit target size.
+    $minquality = 40;
+    $maxquality = 85;
+    $bestquality = 70;
+    $bestdata = null;
+    $bestsize = PHP_INT_MAX;
+
+    // Try to find quality that gets us close to target size.
+    for ($quality = $maxquality; $quality >= $minquality; $quality -= 5) {
+        ob_start();
+        imagejpeg($sourceimage, null, $quality);
+        $compressed = ob_get_clean();
+        $size = strlen($compressed);
+
+        if ($size <= $targetsize) {
+            // We found a quality that meets our target.
+            imagedestroy($sourceimage);
+            return $compressed;
+        }
+
+        // Track the closest match.
+        if ($size < $bestsize && $size > $targetsize * 0.8) {
+            $bestsize = $size;
+            $bestquality = $quality;
+            $bestdata = $compressed;
+        }
+    }
+
+    // If we couldn't hit target, use the best we found.
+    if ($bestdata !== null) {
+        imagedestroy($sourceimage);
+        return $bestdata;
+    }
+
+    // Fallback: use quality 65.
+    ob_start();
+    imagejpeg($sourceimage, null, 65);
+    $compressed = ob_get_clean();
+    imagedestroy($sourceimage);
+    return $compressed;
+}
+
+/**
+ * Proctoring images store.
+ *
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @param string $data User image in base64 format
+ * @param int $cmid Course module id
+ * @param int $attemptid Attempt id
+ * @param int $quizid Quiz id
+ * @param boolean $mainimage Main image flag
+ * @param string $status Status string
+ * @param string $response Response string
+ * @param boolean $storeallimg Store all images flag
  */
 function quizproctoring_storeimage(
     $data,
@@ -232,7 +332,7 @@ function quizproctoring_storeimage(
     $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     // We are all good, store the image.
     if ($data) {
-        $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.png';
+        $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.jpg';
     } else {
         $imagename = '';
     }
@@ -252,11 +352,19 @@ function quizproctoring_storeimage(
     if ($data) {
         $base64string = preg_replace('/^data:image\/\w+;base64,/', '', $data);
         $imagedata = base64_decode($base64string);
+
+        // Compress image to target size (15-20KB).
+        $compresseddata = quizproctoring_compress_image($imagedata, 17500);
+        if ($compresseddata === false) {
+            // Fallback to original if compression fails.
+            $compresseddata = $imagedata;
+        }
+
         $tmpdir = $CFG->dataroot . '/proctorlink/';
         if (!file_exists($tmpdir)) {
-            mkdir($tmpdir, 0777, true);
+            check_dir_exists($tmpdir, true, true);
         }
-        file_put_contents($tmpdir . $imagename, $imagedata);
+        file_put_contents($tmpdir . $imagename, $compresseddata);
     }
 
     if (!$mainimage && $status != '') {
@@ -333,16 +441,21 @@ function quizproctoring_storeimage(
 }
 
 /**
- * Proctoring images store
+ * Proctoring images store.
  *
- * @param string $data user image in base64
- * @param int $cmid course module id
- * @param int $attemptid attempt id
- * @param int $quizid quiz id
- * @param boolean $mainimage main image
- * @param string $status
- * @param string $response
- * @param boolean $storeallimg store images
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @param string $data User image in base64 format
+ * @param int $cmid Course module id
+ * @param int $attemptid Attempt id
+ * @param int $quizid Quiz id
+ * @param boolean $mainimage Main image flag
+ * @param string $status Status string
+ * @param string $response Response string
+ * @param boolean $storeallimg Store all images flag
+ * @param string $deviceinfo Device information string
  */
 function quizproctoring_storemainimage(
     $data,
@@ -352,39 +465,44 @@ function quizproctoring_storemainimage(
     $mainimage,
     $status = '',
     $response = '',
-    $storeallimg = false
+    $storeallimg = false,
+    $deviceinfo = ''
 ) {
     global $USER, $DB, $COURSE, $CFG;
 
     // We are all good, store the image.
     if ($mainimage) {
-        if ($qpd = $DB->get_record(
-            'quizaccess_main_proctor',
-            [
-                'userid' => $USER->id,
-                'quizid' => $quizid,
-                'attemptid' => $attemptid,
-                'image_status' => 'M',
-            ]
-        )) {
+        if (
+            $qpd = $DB->get_record(
+                'quizaccess_main_proctor',
+                [
+                    'userid' => $USER->id,
+                    'quizid' => $quizid,
+                    'attemptid' => $attemptid,
+                    'image_status' => 'M',
+                ]
+            )
+        ) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
-        if ($qpd = $DB->get_record(
-            'quizaccess_main_proctor',
-            [
-                'userid' => $USER->id,
-                'quizid' => $quizid,
-                'attemptid' => $attemptid,
-                'image_status' => 'I',
-            ]
-        )) {
+        if (
+            $qpd = $DB->get_record(
+                'quizaccess_main_proctor',
+                [
+                    'userid' => $USER->id,
+                    'quizid' => $quizid,
+                    'attemptid' => $attemptid,
+                    'image_status' => 'I',
+                ]
+            )
+        ) {
             $DB->delete_records('quizaccess_main_proctor', ['id' => $qpd->id]);
         }
         $globaleyepref = get_user_preferences('eye_detection_global', null, $USER->id);
         $eyedetectionvalue = ($globaleyepref !== null) ? $globaleyepref : 1;
         set_user_preference('eye_detection', $eyedetectionvalue, $USER->id);
     }
-    $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.png';
+    $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.jpg';
     $record = new stdClass();
     $record->userid = $USER->id;
     $record->quizid = $quizid;
@@ -402,6 +520,10 @@ function quizproctoring_storemainimage(
             $record->iseyedisabledbyteacher = 1;
         }
     }
+    // Store device information if provided.
+    if (!empty($deviceinfo)) {
+        $record->deviceinfo = $deviceinfo;
+    }
     $id = $DB->insert_record('quizaccess_main_proctor', $record);
 
     if ($data) {
@@ -409,11 +531,18 @@ function quizproctoring_storemainimage(
         $imagedata = base64_decode($base64string);
 
         if ($imagedata !== false) {
+            // Compress image to target size (15-20KB).
+            $compresseddata = quizproctoring_compress_image($imagedata, 17500);
+            if ($compresseddata === false) {
+                // Fallback to original if compression fails.
+                $compresseddata = $imagedata;
+            }
+
             $tmpdir = $CFG->dataroot . '/proctorlink';
             if (!file_exists($tmpdir)) {
-                mkdir($tmpdir, 0755, true);
+                check_dir_exists($tmpdir, true, true);
             }
-            file_put_contents($tmpdir . '/' . $imagename, $imagedata);
+            file_put_contents($tmpdir . '/' . $imagename, $compresseddata);
         }
     }
 }
@@ -421,7 +550,11 @@ function quizproctoring_storemainimage(
 /**
  * Clean Stored Images task.
  *
- * @return bool false if no record found
+ * @package    quizaccess_quizproctoring
+ * @subpackage quizproctoring
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @return bool False if no record found
  */
 function clean_images_task() {
     global $DB;
