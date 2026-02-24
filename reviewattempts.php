@@ -29,7 +29,11 @@ require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 $userid = required_param('userid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-$perpage = 10;
+$reportingpagination = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
+if (!in_array($reportingpagination, [10, 25, 50, 100], true)) {
+    $reportingpagination = 10;
+}
+$perpage = $reportingpagination;
 $page = optional_param('page', 0, PARAM_INT);
 
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
@@ -112,8 +116,8 @@ if ($proctoringimageshow == 1) {
                         enableaudio: {$enableaudiojs}
                     }
                 },
-                pageLength: 10,
-                lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
+                pageLength: {$reportingpagination},
+                lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
                 columns: {$columnsjs},
                 order: [[1, 'desc']],
                 language: {

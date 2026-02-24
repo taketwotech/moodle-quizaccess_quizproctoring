@@ -69,11 +69,17 @@ $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.
 $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 $enableaudio = !empty($storerecord->enablerecordaudio);
 $proctoringimageshow = 1;
+$reportingpagination = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
+if (!in_array($reportingpagination, [10, 25, 50, 100], true)) {
+    $reportingpagination = 10;
+}
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
         const table = $('#proctoringreporttable').DataTable({
             serverSide: true,
             processing: true,
+            pageLength: {$reportingpagination},
+            lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
             ajax: {
                 url: M.cfg.wwwroot +
                     '/mod/quiz/accessrule/quizproctoring/proctoringreport_ajax.php',

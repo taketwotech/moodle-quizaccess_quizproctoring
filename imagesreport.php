@@ -55,11 +55,15 @@ $PAGE->activityheader->disable();
 $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
 $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+$reportingpagination = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
+if (!in_array($reportingpagination, [10, 25, 50, 100], true)) {
+    $reportingpagination = 10;
+}
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
         $('#imagesreporttable').DataTable({
-            pageLength: 10,
-            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
+            pageLength: {$reportingpagination},
+            lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
             language: {
                 search: 'Search:',
                 lengthMenu: 'Show _MENU_ per page',

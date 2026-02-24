@@ -41,7 +41,14 @@ global $DB, $CFG, $OUTPUT;
 
 $draw = optional_param('draw', 1, PARAM_INT);
 $start = optional_param('start', 0, PARAM_INT);
-$length = optional_param('length', 10, PARAM_INT);
+$defaultlength = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
+if (!in_array($defaultlength, [10, 25, 50, 100], true)) {
+    $defaultlength = 10;
+}
+$length = optional_param('length', $defaultlength, PARAM_INT);
+if (!in_array($length, [10, 25, 50, 100], true)) {
+    $length = $defaultlength;
+}
 
 $searchvalue = '';
 if (isset($_POST['search']['value'])) {

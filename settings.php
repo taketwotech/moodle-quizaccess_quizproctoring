@@ -70,4 +70,18 @@ if ($hassiteconfig && !empty($USER->id)) {
             300 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]
     ));
+
+    // Reporting page pagination (default records per page).
+    $settings->add(new admin_setting_configselect(
+        'quizaccess_quizproctoring/reporting_pagination',
+        get_string('reportingpagination', 'quizaccess_quizproctoring'),
+        get_string('reportingpagination_help', 'quizaccess_quizproctoring'),
+        10,
+        [
+            10 => '10',
+            25 => '25',
+            50 => '50',
+            100 => '100',
+        ]
+    ));
 }
