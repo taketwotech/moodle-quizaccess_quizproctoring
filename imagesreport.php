@@ -281,9 +281,12 @@ $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
              AND p.userimg !='' AND q.course = :courseid";
 $totalcount = $DB->count_records_sql($sqlcount, ['courseid' => $course->id]);
 if ($totalcount > 0) {
-    echo '<div class="headtitle">' .
-     '<p>' . get_string("delinformation", "quizaccess_quizproctoring", $course->fullname) . '</p>' .
-     '<div>' . $btn . ' ' . (isset($btnaudio) ? $btnaudio : '') . '</div>' .
+    echo '<div class="headtitle d-flex justify-content-between align-items-center flex-wrap gap-2">' .
+     '<p class="mb-0">' . get_string("delinformation", "quizaccess_quizproctoring", $course->fullname) . '</p>' .
+     '<div class="d-flex flex-wrap gap-2 ms-auto">' .
+     $btn .
+     (isset($btnaudio) ? $btnaudio : '') .
+     '</div>' .
      '</div><br/>';
 }
 $sql = "SELECT
