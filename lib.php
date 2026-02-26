@@ -42,6 +42,44 @@ define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
 
+/** User preference key for reporting page pagination (records per page). */
+define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
+
+/** Allowed values for reporting pagination. */
+define('QUIZACCESS_QUIZPROCTORING_PAGINATION_OPTIONS', [10, 25, 50, 100]);
+
+/**
+ * Get effective reporting pagination: user preference if set, otherwise global setting.
+ *
+ * @return int Records per page (10, 25, 50, or 100).
+ */
+function quizaccess_quizproctoring_get_reporting_pagination() {
+    global $USER;
+    $allowed = QUIZACCESS_QUIZPROCTORING_PAGINATION_OPTIONS;
+    $userpref = get_user_preferences(QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION, null);
+    if ($userpref !== null && in_array((int) $userpref, $allowed, true)) {
+        return (int) $userpref;
+    }
+    $global = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
+    return in_array($global, $allowed, true) ? $global : 10;
+}
+
+/**
+ * Save reporting pagination to user preference (used when user changes the dropdown).
+ *
+ * @param int $length Value to save (10, 25, 50, or 100).
+ * @return bool True if value was valid and saved.
+ */
+function quizaccess_quizproctoring_set_reporting_pagination($length) {
+    $allowed = QUIZACCESS_QUIZPROCTORING_PAGINATION_OPTIONS;
+    $length = (int) $length;
+    if (!in_array($length, $allowed, true)) {
+        return false;
+    }
+    set_user_preference(QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION, $length);
+    return true;
+}
+
 /**
  * Serves the quizaccess proctoring files.
  *

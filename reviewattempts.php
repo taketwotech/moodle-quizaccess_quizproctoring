@@ -25,14 +25,12 @@
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
 $userid = required_param('userid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-$reportingpagination = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
-if (!in_array($reportingpagination, [10, 25, 50, 100], true)) {
-    $reportingpagination = 10;
-}
+$reportingpagination = quizaccess_quizproctoring_get_reporting_pagination();
 $perpage = $reportingpagination;
 $page = optional_param('page', 0, PARAM_INT);
 
