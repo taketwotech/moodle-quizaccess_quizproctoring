@@ -664,6 +664,27 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('warning_threshold', 0);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
+        // Optional email trigger threshold when warnings are unlimited.
+        $emailthresholds = [];
+        $emailthresholds[0] = get_string('disabled', 'quizaccess_quizproctoring');
+        for ($i = 5; $i <= 30; $i += 5) {
+            $emailthresholds[$i] = $i;
+        }
+        $mform->addElement(
+            'select',
+            'warning_email_threshold',
+            get_string('warning_email_threshold', 'quizaccess_quizproctoring'),
+            $emailthresholds
+        );
+        $mform->addHelpButton(
+            'warning_email_threshold',
+            'warning_email_threshold',
+            'quizaccess_quizproctoring'
+        );
+        $mform->setDefault('warning_email_threshold', 0);
+        $mform->hideIf('warning_email_threshold', 'enableproctoring', 'eq', '0');
+        $mform->hideIf('warning_email_threshold', 'warning_threshold', 'neq', 0);
+
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
         $mform->setType('proctoringvideo_link', PARAM_URL);
@@ -691,6 +712,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
+            $record->warning_email_threshold = isset($quiz->warning_email_threshold) ?
+                $quiz->warning_email_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
@@ -708,6 +731,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = $quiz->time_interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
+            $record->warning_email_threshold = isset($quiz->warning_email_threshold) ?
+                $quiz->warning_email_threshold : 0;
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         }
@@ -733,7 +758,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
             enablestudentvideo,time_interval,enableeyecheck,enableeyecheckreal,
-            enableuploadidentity,enablerecordaudio,warning_threshold,proctoringvideo_link',
+            enableuploadidentity,enablerecordaudio,warning_threshold,warning_email_threshold,
+            proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctorlink ON proctorlink.quizid = quiz.id',
             [],
         ];

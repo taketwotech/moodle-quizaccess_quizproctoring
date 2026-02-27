@@ -703,5 +703,28 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025120605, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2026013103) {
+        // Define field warning_email_threshold to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field(
+            'warning_email_threshold',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            null,
+            null,
+            null,
+            'warning_threshold'
+        );
+
+        // Conditionally launch add field warning_email_threshold.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026013103, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }
