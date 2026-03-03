@@ -222,6 +222,7 @@ function($, str, ModalFactory) {
                     var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                     var leftwarnings = Math.max(warningsl - 1, 0);
                     localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                    trackWarningAndMaybeQueueEmail(requestData.cmid, requestData.attemptid);
                     $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
@@ -362,6 +363,10 @@ function($, str, ModalFactory) {
         } else {
             localStorage.setItem('quizid', JSON.stringify(quizid));
             localStorage.setItem('warningThreshold', JSON.stringify(warnings));
+            // Track original configured warnings threshold and a separate counter
+            // for how many warnings have occurred (used for email threshold logic).
+            localStorage.setItem('warningOriginalThreshold', JSON.stringify(warnings));
+            localStorage.setItem('warningEmailCount', JSON.stringify(0));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -476,11 +481,12 @@ function($, str, ModalFactory) {
                                                     mainimage: mainimage,
                                                 },
                                                 success: function(response) {
-                                                    if (response && response.errorcode) {
-                                                        const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                                                        const leftwarnings = Math.max(warningsl - 1, 0);
-                                                        localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                                                        $(document).trigger('popup', response.error);
+                        if (response && response.errorcode) {
+                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                            const leftwarnings = Math.max(warningsl - 1, 0);
+                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
+                            $(document).trigger('popup', response.error);
                                                     } else if (response.redirect && response.url) {
                                                         window.onbeforeunload = null;
                                                         $(document).trigger('popup', response.msg);
@@ -566,6 +572,7 @@ function($, str, ModalFactory) {
                                                 var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                                                 var leftwarnings = Math.max(warningsl - 1, 0);
                                                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                                trackWarningAndMaybeQueueEmail(camera.cmid, camera.attemptid);
                                                 $(document).trigger('popup', response.error);
                                             } else if (response.redirect && response.url) {
                                                 window.onbeforeunload = null;
@@ -662,6 +669,7 @@ function($, str, ModalFactory) {
                                             const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                                             const leftwarnings = Math.max(warningsl - 1, 0);
                                             localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
                                             $(document).trigger('popup', response.error);
                                         } else if (response.redirect && response.url) {
                                             window.onbeforeunload = null;
@@ -924,6 +932,42 @@ function($, str, ModalFactory) {
         return 'Unknown';
     }
     /**
+     * Track warnings for email threshold and, when needed, schedule
+     * an adhoc email task via AJAX without affecting quiz flow.
+     *
+     * @param {int} cmid - course module id
+     * @param {int} attemptid - quiz attempt id
+     * @return {void}
+     */
+    function trackWarningAndMaybeQueueEmail(cmid, attemptid) {
+        var original = JSON.parse(localStorage.getItem('warningOriginalThreshold')) || 0;
+        // Only interested when original threshold is Unlimited (0).
+        if (original !== 0) {
+            return;
+        }
+
+        var emailCount = JSON.parse(localStorage.getItem('warningEmailCount')) || 0;
+        emailCount += 1;
+        localStorage.setItem('warningEmailCount', JSON.stringify(emailCount));
+
+        var quizid = JSON.parse(localStorage.getItem('quizid')) || null;
+        if (!quizid) {
+            return;
+        }
+
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_warningemail.php',
+            method: 'POST',
+            data: {
+                cmid: cmid,
+                quizid: quizid,
+                attemptid: attemptid,
+                warningemailcount: emailCount
+            }
+        });
+    }
+
+    /**
      * Setup visibility change
      *
      * @param {int} cmid - cmid
@@ -942,6 +986,7 @@ function($, str, ModalFactory) {
             message = M.util.get_string('tabwarningmultiple', 'quizaccess_quizproctoring', leftwarnings);
         }
         $(document).trigger('popup', message);
+        trackWarningAndMaybeQueueEmail(cmid, attemptid);
         $.ajax({
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
         method: 'POST',
@@ -1124,6 +1169,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                     const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                     const leftwarnings = Math.max(warningsl - 1, 0);
                     localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                    trackWarningAndMaybeQueueEmail(cmid, attemptid);
                     $(document).trigger('popup', response.error);
                 }
                 return;
@@ -1132,6 +1178,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                 const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                 const leftwarnings = Math.max(warningsl - 1, 0);
                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                trackWarningAndMaybeQueueEmail(cmid, attemptid);
                 $(document).trigger('popup', response.error);
             } else {
                 if (response.redirect && response.url) {

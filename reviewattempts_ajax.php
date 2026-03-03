@@ -126,8 +126,8 @@ $sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
         q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username,
         (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa
          WHERE qpa.attemptid = qa.id
-         AND qpa.alert_message IS NOT NULL
-         AND qpa.alert_message != '') AS alertcount
+         AND qpa.alertmessage IS NOT NULL
+         AND qpa.alertmessage != '') AS alertcount
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
         JOIN {quiz} q ON q.id = qa.quiz
@@ -333,12 +333,12 @@ foreach ($records as $record) {
         }
 
         foreach ($alerts as $alert) {
-            // Skip alerts with null or empty alert_message.
-            if (empty($alert->alert_message)) {
+            // Skip alerts with null or empty alertmessage.
+            if (empty($alert->alertmessage)) {
                 continue;
             }
             $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
-            $alerttext = s($alert->alert_message);
+            $alerttext = s($alert->alertmessage);
             $teachername = '';
             if (!empty($alert->teacherid) && isset($teachers[$alert->teacherid])) {
                 $teachername = $teachers[$alert->teacherid];

@@ -91,8 +91,6 @@ $string['disableeyetrackingmessage_global'] = 'Göz takibi {$a} kullanıcısı i
 $string['duration'] = 'Süre';
 $string['duration_help'] = 'Bu test denemesinde harcanan toplam süre.';
 $string['email'] = 'E-posta Adresi';
-$string['warning_email_threshold'] = 'Uyarı eşiği aşıldığında öğretmene e-posta gönder';
-$string['warning_email_threshold_help'] = 'Uyarı eşiği Sınırsız olarak ayarlandığında, bir öğrencinin bu test için toplam uyarı sayısı bu değere ulaştığında veya geçtiğinde öğretmenlere e-posta gönderin. E-posta göndermemek için Devre Dışı olarak bırakın.';
 $string['enabled'] = 'Etkin';
 $string['enableeyecheckreal'] = 'Göz takibini etkinleştir';
 $string['enableeyecheckreal_help'] = 'Etkinleştirildiğinde, kullanıcının gözleri kapandığında veya kamera odağı kaybolduğunda bir uyarı tetiklenir.';
@@ -262,6 +260,22 @@ $string['viewaudio'] = 'Sesi Görüntüle';
 $string['viewproctoringreport'] = 'Gözetim Raporunu Görüntüle';
 $string['viewstudentonline'] = 'Çevrimiçi Kullanıcıları Görüntüle';
 $string['warning'] = ' uyarı';
+$string['warning_email_body'] = 'Sayın Öğretmen,
+
+Kursunuzdaki bir öğrenci için "{$a->coursename}" dersinde gözetim uyarı eşiğine ulaşıldı.
+
+Detaylar:
+- Test: {$a->quizname}
+- Öğrenci: {$a->studentname}
+- Kaydedilen toplam uyarı sayısı: {$a->warningcount}
+
+İlgili denemeyi ve gözetim verilerini aşağıdaki bağlantıdan inceleyebilirsiniz:
+{$a->attempturl}
+
+Bu mesaj ProctorLink test erişim kuralı tarafından otomatik olarak oluşturulmuştur.';
+$string['warning_email_subject'] = '{$a->quizname} sınavı için gözetim uyarı eşiğine ulaşıldı';
+$string['warning_email_threshold'] = 'Uyarı eşiği aşıldığında öğretmene e-posta gönder';
+$string['warning_email_threshold_help'] = 'Uyarı eşiği Sınırsız olarak ayarlandığında, bir öğrencinin bu test için toplam uyarı sayısı bu değere ulaştığında veya geçtiğinde öğretmenlere e-posta gönderin. E-posta göndermemek için Devre Dışı olarak bırakın.';
 $string['warning_threshold'] = 'Gözetimli testte uyarı eşiği';
 $string['warning_threshold_help'] = 'Bir kullanıcının gözetimli testte diskalifiye edilmeden önce alabileceği maksimum uyarı sayısını ayarlayın.';
 $string['warningaws'] = 'Teste devam etmek için lütfen <a href="{$a}">AWS yapılandırmasını</a> tamamlayın.';

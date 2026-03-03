@@ -479,6 +479,53 @@ function quizproctoring_storeimage(
 }
 
 /**
+ * Schedule an adhoc task to send a warning email to course teachers.
+ *
+ * This helper creates a task with all required context. It does not send
+ * any email itself and returns immediately after queuing the task.
+ *
+ * @param int $courseid Course id
+ * @param int $cmid Course module id
+ * @param int $quizid Quiz id
+ * @param int $userid User id (student)
+ * @param int $attemptid Attempt id
+ * @param int $warningcount Total warnings recorded
+ */
+function quizaccess_quizproctoring_schedule_warning_email(
+    $courseid,
+    $cmid,
+    $quizid,
+    $userid,
+    $attemptid,
+    $warningcount
+) {
+    $task = new \quizaccess_quizproctoring\task\warning_email_task();
+    $data = new stdClass();
+    $data->courseid = (int)$courseid;
+    $data->cmid = (int)$cmid;
+    $data->quizid = (int)$quizid;
+    $data->userid = (int)$userid;
+    $data->attemptid = (int)$attemptid;
+    $data->warningcount = (int)$warningcount;
+    $task->set_custom_data($data);
+    \core\task\manager::queue_adhoc_task($task);
+
+    // Mark on main proctor record that a warning email has been triggered
+    // for this user's attempt, so it can be tracked later.
+    global $DB;
+    $mainproctor = $DB->get_record('quizaccess_main_proctor', [
+        'userid' => (int)$userid,
+        'quizid' => (int)$quizid,
+        'attemptid' => (int)$attemptid,
+        'image_status' => 'M',
+    ]);
+    if ($mainproctor && empty($mainproctor->warningemailtriggered)) {
+        $mainproctor->warningemailtriggered = 1;
+        $DB->update_record('quizaccess_main_proctor', $mainproctor);
+    }
+}
+
+/**
  * Proctoring images store.
  *
  * @package    quizaccess_quizproctoring

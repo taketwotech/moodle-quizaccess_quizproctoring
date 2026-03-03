@@ -91,8 +91,6 @@ $string['disableeyetrackingmessage_global'] = 'Le suivi oculaire est déjà dés
 $string['duration'] = 'Durée';
 $string['duration_help'] = 'Temps total passé sur cette tentative de quiz.';
 $string['email'] = 'Adresse e-mail';
-$string['warning_email_threshold'] = 'Envoyer un e-mail au professeur lorsque le seuil d\'avertissements est dépassé';
-$string['warning_email_threshold_help'] = 'Lorsque le seuil d\'avertissements est défini sur Illimité, envoyer un e-mail aux enseignants lorsque le nombre total d\'avertissements d\'un étudiant pour ce quiz atteint ou dépasse cette valeur. Définissez sur Désactivé pour ne pas envoyer d\'e-mails.';
 $string['enabled'] = 'Activé';
 $string['enableeyecheckreal'] = 'Activer le suivi oculaire';
 $string['enableeyecheckreal_help'] = 'Lorsqu\'il est activé, une alerte se déclenche si les yeux de l\'utilisateur sont fermés ou si la caméra perd le focus.';
@@ -262,6 +260,22 @@ $string['viewaudio'] = 'Voir l\'audio';
 $string['viewproctoringreport'] = 'Voir le rapport de surveillance';
 $string['viewstudentonline'] = 'Voir les utilisateurs en ligne';
 $string['warning'] = ' avertissement';
+$string['warning_email_body'] = 'Cher enseignant,
+
+Le seuil d\'avertissements de surveillance a été atteint pour un étudiant dans votre cours "{$a->coursename}".
+
+Détails :
+- Quiz : {$a->quizname}
+- Étudiant : {$a->studentname}
+- Nombre total d\'avertissements enregistrés : {$a->warningcount}
+
+Vous pouvez consulter la tentative et les données de surveillance associées en utilisant le lien ci-dessous :
+{$a->attempturl}
+
+Ce message a été généré automatiquement par la règle d\'accès au quiz ProctorLink.';
+$string['warning_email_subject'] = 'Seuil d\'avertissements de surveillance atteint pour {$a->quizname}';
+$string['warning_email_threshold'] = 'Envoyer un e-mail au professeur lorsque le seuil d\'avertissements est dépassé';
+$string['warning_email_threshold_help'] = 'Lorsque le seuil d\'avertissements est défini sur Illimité, envoyer un e-mail aux enseignants lorsque le nombre total d\'avertissements d\'un étudiant pour ce quiz atteint ou dépasse cette valeur. Définissez sur Désactivé pour ne pas envoyer d\'e-mails.';
 $string['warning_threshold'] = 'Seuil d\'avertissements pendant le quiz surveillé';
 $string['warning_threshold_help'] = 'Définir le nombre maximum d\'avertissements autorisés avant disqualification.';
 $string['warningaws'] = 'Veuillez compléter la <a href="{$a}">configuration AWS</a> pour continuer le quiz.';

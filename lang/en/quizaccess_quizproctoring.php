@@ -82,7 +82,7 @@ $string['deleteallimagesquiz'] = 'Do you want to delete all images associated wi
 $string['deleteallimagesuser'] = 'Do you want to delete all images associated with "{$a}"? Please be aware that this action is permanent and cannot be undone.<br/><br/>';
 $string['deletestoredimagestask'] = 'Delete Stored Images Task';
 $string['delinformation'] = '<b>"{$a}" Quiz Report:</b> You can remove all images from this quiz. This will delete images for all users.';
-$string['delinformationu'] = '<b>User Images Report:</b> View full proctoring information for each user in this quiz, including attempts, captured images, warnings, and identity.';
+$string['delinformationu'] = '<b>User Images Report:</b> View full proctoring information for each user in this quiz, including attempts, captured images, warnings and identity.';
 $string['demovideo'] = 'To watch full process, please click here';
 $string['disabled'] = 'Disabled';
 $string['disableeyetrackingallquizzes'] = 'Disable eye-tracking for all quizzes associated with this user.';
@@ -91,8 +91,6 @@ $string['disableeyetrackingmessage_global'] = 'Eye tracking is already disabled 
 $string['duration'] = 'Duration';
 $string['duration_help'] = 'The total time spent on this quiz attempt.';
 $string['email'] = 'Email Address';
-$string['warning_email_threshold'] = 'Trigger email to teacher when warnings exceed';
-$string['warning_email_threshold_help'] = 'When the warnings threshold is set to Unlimited, send an email to teachers when a student\'s total warnings for this quiz reaches or exceeds this value. Set this to Disabled to avoid sending emails.';
 $string['enabled'] = 'Enabled';
 $string['enableeyecheckreal'] = 'Enable eye tracking';
 $string['enableeyecheckreal_help'] = ' When enabled, an alert triggers if the user\'s eyes are closed or if the camera loses focus.';
@@ -262,6 +260,22 @@ $string['viewaudio'] = 'View Audio';
 $string['viewproctoringreport'] = 'View Proctoring Report';
 $string['viewstudentonline'] = 'View Online Users';
 $string['warning'] = ' warning';
+$string['warning_email_body'] = 'Dear Teacher,
+
+The proctoring warnings threshold has been reached for a student in your course "{$a->coursename}".
+
+Details:
+- Quiz: {$a->quizname}
+- Student: {$a->studentname}
+- Total warnings recorded: {$a->warningcount}
+
+You can review the attempt and associated proctoring data using the link below:
+{$a->attempturl}
+
+This message was generated automatically by the ProctorLink quiz access rule.';
+$string['warning_email_subject'] = 'Proctoring warnings threshold reached for {$a->quizname}';
+$string['warning_email_threshold'] = 'Trigger email to teacher when warnings exceed';
+$string['warning_email_threshold_help'] = 'When the warnings threshold is set to Unlimited, send an email to teachers when a student\'s total warnings for this quiz reaches or exceeds this value. Set this to Disabled to avoid sending emails.';
 $string['warning_threshold'] = 'Warnings threshold during proctored quiz';
 $string['warning_threshold_help'] = 'Set the maximum number of warnings a user may recieve before being disqualified from the proctored quiz.';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
