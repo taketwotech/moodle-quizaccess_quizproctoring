@@ -685,6 +685,37 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->hideIf('warning_email_threshold', 'enableproctoring', 'eq', '0');
         $mform->hideIf('warning_email_threshold', 'warning_threshold', 'neq', 0);
 
+        // Email trigger role when threshold exceeds (shown only when email threshold is shown).
+        // Use only roles from admin/roles/manage.php (role table).
+        global $DB;
+        $rolechoices = [];
+        $roles = $DB->get_records_select(
+            'role',
+            "archetype != 'guest' OR archetype IS NULL",
+            null,
+            'sortorder',
+            'id, name, shortname'
+        );
+        $defaultroleid = 0;
+        foreach ($roles as $role) {
+            $rolechoices[$role->id] = $role->name ?: $role->shortname;
+            if ($defaultroleid === 0) {
+                $defaultroleid = $role->id;
+            }
+        }
+        $savedroleid = (int) get_config('quizaccess_quizproctoring', 'warning_email_trigger_role');
+        $mform->addElement(
+            'select',
+            'warning_email_trigger_role',
+            get_string('warning_email_trigger_role', 'quizaccess_quizproctoring'),
+            $rolechoices
+        );
+        $mform->addHelpButton('warning_email_trigger_role', 'warning_email_trigger_role', 'quizaccess_quizproctoring');
+        $mform->setDefault('warning_email_trigger_role',
+            ($savedroleid > 0 && isset($rolechoices[$savedroleid])) ? $savedroleid : $defaultroleid);
+        $mform->hideIf('warning_email_trigger_role', 'enableproctoring', 'eq', '0');
+        $mform->hideIf('warning_email_trigger_role', 'warning_threshold', 'neq', 0);
+
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
         $mform->setType('proctoringvideo_link', PARAM_URL);
@@ -714,6 +745,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->warning_email_threshold = isset($quiz->warning_email_threshold) ?
                 $quiz->warning_email_threshold : 0;
+            $roleid = isset($quiz->warning_email_trigger_role) ? (int)$quiz->warning_email_trigger_role : 0;
+            $record->warning_email_trigger_role = $roleid > 0 ? $roleid : self::get_first_trigger_role_id();
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
@@ -733,9 +766,29 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
             $record->warning_email_threshold = isset($quiz->warning_email_threshold) ?
                 $quiz->warning_email_threshold : 0;
+            $roleid = isset($quiz->warning_email_trigger_role) ? (int)$quiz->warning_email_trigger_role : 0;
+            $record->warning_email_trigger_role = $roleid > 0 ? $roleid : self::get_first_trigger_role_id();
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         }
+    }
+
+    /**
+     * Return the first role id (by sortorder) for the email trigger role dropdown.
+     * Used when no role is selected (e.g. default or legacy 0).
+     *
+     * @return int Role id
+     */
+    public static function get_first_trigger_role_id() {
+        global $DB;
+        $role = $DB->get_record_select(
+            'role',
+            "archetype != 'guest' OR archetype IS NULL",
+            null,
+            'sortorder ASC',
+            'id'
+        );
+        return $role ? (int)$role->id : 0;
     }
 
     /**
@@ -759,7 +812,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
             enablestudentvideo,time_interval,enableeyecheck,enableeyecheckreal,
             enableuploadidentity,enablerecordaudio,warning_threshold,warning_email_threshold,
-            proctoringvideo_link',
+            warning_email_trigger_role,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctorlink ON proctorlink.quizid = quiz.id',
             [],
         ];

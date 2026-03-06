@@ -749,7 +749,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026013103, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2026013104) {
+    if ($oldversion < 2026030101) {
         // Rename legacy column alert_message to alertmessage in quizaccess_proctor_alert, if it exists.
         $table = new xmldb_table('quizaccess_proctor_alert');
         $field = new xmldb_field('alert_message', XMLDB_TYPE_TEXT, null, null, null, null, null, 'quizid');
@@ -759,7 +759,30 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         }
 
         // Quizproctoring savepoint reached.
-        upgrade_plugin_savepoint(true, 2026013104, 'quizaccess', 'quizproctoring');
+        upgrade_plugin_savepoint(true, 2026030101, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026030103) {
+        // Define field warning_email_trigger_role to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field(
+            'warning_email_trigger_role',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            null,
+            'warning_email_threshold'
+        );
+
+        // Conditionally launch add field warning_email_trigger_role.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026030103, 'quizaccess', 'quizproctoring');
     }
 
     return true;

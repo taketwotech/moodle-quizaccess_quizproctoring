@@ -84,4 +84,29 @@ if ($hassiteconfig && !empty($USER->id)) {
             100 => '100',
         ]
     ));
+
+    // Email trigger role when threshold exceeds. Use only roles from admin/roles/manage.php (role table).
+    global $DB;
+    $rolechoices = [];
+    $roles = $DB->get_records_select(
+        'role',
+        "archetype != 'guest' OR archetype IS NULL",
+        null,
+        'sortorder',
+        'id, name, shortname'
+    );
+    $defaultroleid = 0;
+    foreach ($roles as $role) {
+        $rolechoices[$role->id] = $role->name ?: $role->shortname;
+        if ($defaultroleid === 0) {
+            $defaultroleid = $role->id;
+        }
+    }
+    $settings->add(new admin_setting_configselect(
+        'quizaccess_quizproctoring/warning_email_trigger_role',
+        get_string('warning_email_trigger_role', 'quizaccess_quizproctoring'),
+        get_string('warning_email_trigger_role_help', 'quizaccess_quizproctoring'),
+        $defaultroleid,
+        $rolechoices
+    ));
 }

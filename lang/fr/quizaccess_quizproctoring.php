@@ -260,7 +260,7 @@ $string['viewaudio'] = 'Voir l\'audio';
 $string['viewproctoringreport'] = 'Voir le rapport de surveillance';
 $string['viewstudentonline'] = 'Voir les utilisateurs en ligne';
 $string['warning'] = ' avertissement';
-$string['warning_email_body'] = 'Cher enseignant,
+$string['warning_email_body'] = 'Bonjour,
 
 Le seuil d\'avertissements de surveillance a été atteint pour un étudiant dans votre cours "{$a->coursename}".
 
@@ -276,6 +276,8 @@ Ce message a été généré automatiquement par la règle d\'accès au quiz Pro
 $string['warning_email_subject'] = 'Seuil d\'avertissements de surveillance atteint pour {$a->quizname}';
 $string['warning_email_threshold'] = 'Envoyer un e-mail au professeur lorsque le seuil d\'avertissements est dépassé';
 $string['warning_email_threshold_help'] = 'Lorsque le seuil d\'avertissements est défini sur Illimité, envoyer un e-mail aux enseignants lorsque le nombre total d\'avertissements d\'un étudiant pour ce quiz atteint ou dépasse cette valeur. Définissez sur Désactivé pour ne pas envoyer d\'e-mails.';
+$string['warning_email_trigger_role'] = 'Rôle destinataire de l\'e-mail lorsque le seuil est dépassé';
+$string['warning_email_trigger_role_help'] = 'Lorsque le seuil d\'e-mail d\'avertissement est utilisé, choisissez quel rôle doit recevoir l\'e-mail de notification.';
 $string['warning_threshold'] = 'Seuil d\'avertissements pendant le quiz surveillé';
 $string['warning_threshold_help'] = 'Définir le nombre maximum d\'avertissements autorisés avant disqualification.';
 $string['warningaws'] = 'Veuillez compléter la <a href="{$a}">configuration AWS</a> pour continuer le quiz.';

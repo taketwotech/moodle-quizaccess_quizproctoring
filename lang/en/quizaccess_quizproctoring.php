@@ -260,7 +260,7 @@ $string['viewaudio'] = 'View Audio';
 $string['viewproctoringreport'] = 'View Proctoring Report';
 $string['viewstudentonline'] = 'View Online Users';
 $string['warning'] = ' warning';
-$string['warning_email_body'] = 'Dear Teacher,
+$string['warning_email_body'] = 'Hi,
 
 The proctoring warnings threshold has been reached for a student in your course "{$a->coursename}".
 
@@ -276,6 +276,8 @@ This message was generated automatically by the ProctorLink quiz access rule.';
 $string['warning_email_subject'] = 'Proctoring warnings threshold reached for {$a->quizname}';
 $string['warning_email_threshold'] = 'Trigger email to teacher when warnings exceed';
 $string['warning_email_threshold_help'] = 'When the warnings threshold is set to Unlimited, send an email to teachers when a student\'s total warnings for this quiz reaches or exceeds this value. Set this to Disabled to avoid sending emails.';
+$string['warning_email_trigger_role'] = 'Email trigger role when threshold exceeds';
+$string['warning_email_trigger_role_help'] = 'When the warning email threshold is used, choose which role should receive the notification email.';
 $string['warning_threshold'] = 'Warnings threshold during proctored quiz';
 $string['warning_threshold_help'] = 'Set the maximum number of warnings a user may recieve before being disqualified from the proctored quiz.';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';

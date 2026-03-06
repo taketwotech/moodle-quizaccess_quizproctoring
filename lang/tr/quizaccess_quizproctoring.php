@@ -260,7 +260,7 @@ $string['viewaudio'] = 'Sesi Görüntüle';
 $string['viewproctoringreport'] = 'Gözetim Raporunu Görüntüle';
 $string['viewstudentonline'] = 'Çevrimiçi Kullanıcıları Görüntüle';
 $string['warning'] = ' uyarı';
-$string['warning_email_body'] = 'Sayın Öğretmen,
+$string['warning_email_body'] = 'Merhaba,
 
 Kursunuzdaki bir öğrenci için "{$a->coursename}" dersinde gözetim uyarı eşiğine ulaşıldı.
 
@@ -276,6 +276,8 @@ Bu mesaj ProctorLink test erişim kuralı tarafından otomatik olarak oluşturul
 $string['warning_email_subject'] = '{$a->quizname} sınavı için gözetim uyarı eşiğine ulaşıldı';
 $string['warning_email_threshold'] = 'Uyarı eşiği aşıldığında öğretmene e-posta gönder';
 $string['warning_email_threshold_help'] = 'Uyarı eşiği Sınırsız olarak ayarlandığında, bir öğrencinin bu test için toplam uyarı sayısı bu değere ulaştığında veya geçtiğinde öğretmenlere e-posta gönderin. E-posta göndermemek için Devre Dışı olarak bırakın.';
+$string['warning_email_trigger_role'] = 'Eşik aşıldığında e-posta gönderilecek rol';
+$string['warning_email_trigger_role_help'] = 'Uyarı e-posta eşiği kullanıldığında, bildirim e-postasını hangi rolün alacağını seçin.';
 $string['warning_threshold'] = 'Gözetimli testte uyarı eşiği';
 $string['warning_threshold_help'] = 'Bir kullanıcının gözetimli testte diskalifiye edilmeden önce alabileceği maksimum uyarı sayısını ayarlayın.';
 $string['warningaws'] = 'Teste devam etmek için lütfen <a href="{$a}">AWS yapılandırmasını</a> tamamlayın.';

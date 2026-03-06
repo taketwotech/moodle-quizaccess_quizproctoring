@@ -69,7 +69,21 @@ class warning_email_task extends adhoc_task {
         }
 
         $context = \context_course::instance($course->id);
-        $teachers = get_enrolled_users($context, 'mod/quiz:grade');
+
+        // Determine which role receives the email: quiz setting or site default; 0 = course teachers.
+        $proctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $data->quizid]);
+        $roleid = 0;
+        if ($proctoring && isset($proctoring->warning_email_trigger_role) && (int)$proctoring->warning_email_trigger_role > 0) {
+            $roleid = (int)$proctoring->warning_email_trigger_role;
+        } else {
+            $roleid = (int)get_config('quizaccess_quizproctoring', 'warning_email_trigger_role');
+        }
+
+        if ($roleid > 0) {
+            $teachers = get_role_users($roleid, $context);
+        } else {
+            $teachers = get_enrolled_users($context, 'mod/quiz:grade');
+        }
         if (empty($teachers)) {
             return;
         }
@@ -88,13 +102,16 @@ class warning_email_task extends adhoc_task {
         $a->warningcount = isset($data->warningcount) ? (int)$data->warningcount : 0;
         $a->attempturl = $attempturl->out(false);
 
-        $subject = get_string('warning_email_subject', 'quizaccess_quizproctoring', $a);
-        $body = get_string('warning_email_body', 'quizaccess_quizproctoring', $a);
-
         $fromuser = \core_user::get_support_user();
+        $stringmanager = get_string_manager();
 
         foreach ($teachers as $teacher) {
-            // Send a plain-text email to each enrolled teacher.
+            // Respect each recipient's language preference.
+            $lang = !empty($teacher->lang) ? $teacher->lang : (!empty($course->lang) ? $course->lang : $CFG->lang);
+            $subject = $stringmanager->get_string('warning_email_subject', 'quizaccess_quizproctoring', $a, $lang);
+            $body = $stringmanager->get_string('warning_email_body', 'quizaccess_quizproctoring', $a, $lang);
+
+            // Send a plain-text email to each recipient in their preferred language.
             email_to_user($teacher, $fromuser, $subject, $body);
         }
     }
