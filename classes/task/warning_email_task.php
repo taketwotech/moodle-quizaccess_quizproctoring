@@ -25,13 +25,10 @@
 
 namespace quizaccess_quizproctoring\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\task\adhoc_task;
 
 /**
- * Adhoc task that sends a notification email when the warning email
- * threshold is reached for a student's quiz attempt.
+ * Adhoc task that sends a notification email when the warning email threshold is reached.
  */
 class warning_email_task extends adhoc_task {
     /**
