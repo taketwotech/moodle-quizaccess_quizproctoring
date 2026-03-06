@@ -94,6 +94,12 @@ class restore_quizaccess_quizproctoring_subplugin extends restore_mod_quiz_acces
         if (!isset($data->warning_threshold)) {
             $data->warning_threshold = null;
         }
+        if (!isset($data->warning_email_threshold)) {
+            $data->warning_email_threshold = 0;
+        }
+        if (!isset($data->warning_email_trigger_role)) {
+            $data->warning_email_trigger_role = 0;
+        }
         if (!isset($data->proctoringvideo_link)) {
             $data->proctoringvideo_link = null;
         }

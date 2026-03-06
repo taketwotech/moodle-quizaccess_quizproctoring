@@ -51,6 +51,8 @@ class backup_quizaccess_quizproctoring_subplugin extends backup_mod_quiz_access_
             'enableproctoring',
             'time_interval',
             'warning_threshold',
+            'warning_email_threshold',
+            'warning_email_trigger_role',
             'proctoringvideo_link',
             'enableteacherproctor',
             'storeallimages',
