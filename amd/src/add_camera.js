@@ -291,7 +291,7 @@ function($, str, ModalFactory) {
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
         enablestudentvideo = 1, enablerecordaudio = 0, setinterval = 300,
-        warnings = 0, userid, usergroup = '', detectionval = null) {
+        warnings = 0, userid, usergroup = '', detectionval = null, warningEmailThreshold = 0) {
         let camera;
         if (!verifyduringattempt) {
             localStorage.removeItem('eyecheckoff');
@@ -367,6 +367,7 @@ function($, str, ModalFactory) {
             // for how many warnings have occurred (used for email threshold logic).
             localStorage.setItem('warningOriginalThreshold', JSON.stringify(warnings));
             localStorage.setItem('warningEmailCount', JSON.stringify(0));
+            localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -946,9 +947,19 @@ function($, str, ModalFactory) {
             return;
         }
 
+        var warningEmailThreshold = JSON.parse(localStorage.getItem('warningEmailThreshold')) || 0;
+        if (warningEmailThreshold <= 0) {
+            return;
+        }
+
         var emailCount = JSON.parse(localStorage.getItem('warningEmailCount')) || 0;
         emailCount += 1;
         localStorage.setItem('warningEmailCount', JSON.stringify(emailCount));
+
+        // Only trigger the email task when count equals the configured threshold.
+        if (emailCount !== warningEmailThreshold) {
+            return;
+        }
 
         var quizid = JSON.parse(localStorage.getItem('quizid')) || null;
         if (!quizid) {
