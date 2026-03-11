@@ -270,6 +270,7 @@ Kursunuzdaki bir öğrenci için "{$a->coursename}" dersinde gözetim uyarı eş
 Detaylar:
 - Test: {$a->quizname}
 - Öğrenci: {$a->studentname}
+- Deneme ID: {$a->attemptid}
 - Kaydedilen toplam uyarı sayısı: {$a->warningcount}
 
 İlgili denemeyi ve gözetim verilerini aşağıdaki bağlantıdan inceleyebilirsiniz:

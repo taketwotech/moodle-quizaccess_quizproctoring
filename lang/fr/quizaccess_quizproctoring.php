@@ -270,6 +270,7 @@ Le seuil d\'avertissements de surveillance a été atteint pour un étudiant dan
 Détails :
 - Quiz : {$a->quizname}
 - Étudiant : {$a->studentname}
+- ID de la tentative : {$a->attemptid}
 - Nombre total d\'avertissements enregistrés : {$a->warningcount}
 
 Vous pouvez consulter la tentative et les données de surveillance associées en utilisant le lien ci-dessous :
