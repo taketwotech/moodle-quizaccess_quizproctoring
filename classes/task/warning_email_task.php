@@ -96,6 +96,7 @@ class warning_email_task extends adhoc_task {
         $a->coursename = format_string($course->fullname, true, ['context' => $context]);
         $a->quizname = format_string($quiz->name, true);
         $a->studentname = fullname($student);
+        $a->attemptid = (int)$data->attemptid;
         $a->warningcount = isset($data->warningcount) ? (int)$data->warningcount : 0;
         $a->attempturl = $attempturl->out(false);
 

@@ -267,6 +267,7 @@ The proctoring warnings threshold has been reached for a student in your course 
 Details:
 - Quiz: {$a->quizname}
 - Student: {$a->studentname}
+- Attempt ID: {$a->attemptid}
 - Total warnings recorded: {$a->warningcount}
 
 You can review the attempt and associated proctoring data using the link below:

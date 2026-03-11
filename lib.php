@@ -501,6 +501,26 @@ function quizaccess_quizproctoring_schedule_warning_email(
     $attemptid,
     $warningcount
 ) {
+    global $DB;
+
+    // Only one warning email per user/quiz/attempt. Check and claim before queueing
+    // so duplicate AJAX calls (e.g. double visibility events) do not queue multiple tasks.
+    $mainproctor = $DB->get_record('quizaccess_main_proctor', [
+        'userid' => (int)$userid,
+        'quizid' => (int)$quizid,
+        'attemptid' => (int)$attemptid,
+        'image_status' => 'M',
+    ]);
+    if ($mainproctor && !empty($mainproctor->warningemailtriggered)) {
+        return; // Already triggered for this attempt; do not queue again.
+    }
+
+    // Claim this attempt so a concurrent request will not queue a second task.
+    if ($mainproctor) {
+        $mainproctor->warningemailtriggered = 1;
+        $DB->update_record('quizaccess_main_proctor', $mainproctor);
+    }
+
     $task = new \quizaccess_quizproctoring\task\warning_email_task();
     $data = new stdClass();
     $data->courseid = (int)$courseid;
@@ -511,20 +531,6 @@ function quizaccess_quizproctoring_schedule_warning_email(
     $data->warningcount = (int)$warningcount;
     $task->set_custom_data($data);
     \core\task\manager::queue_adhoc_task($task);
-
-    // Mark on main proctor record that a warning email has been triggered
-    // for this user's attempt, so it can be tracked later.
-    global $DB;
-    $mainproctor = $DB->get_record('quizaccess_main_proctor', [
-        'userid' => (int)$userid,
-        'quizid' => (int)$quizid,
-        'attemptid' => (int)$attemptid,
-        'image_status' => 'M',
-    ]);
-    if ($mainproctor && empty($mainproctor->warningemailtriggered)) {
-        $mainproctor->warningemailtriggered = 1;
-        $DB->update_record('quizaccess_main_proctor', $mainproctor);
-    }
 }
 
 /**
