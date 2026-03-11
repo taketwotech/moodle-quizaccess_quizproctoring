@@ -150,6 +150,26 @@ if (!$mainentry->isautosubmit) {
                 );
             }
             break;
+        case 'objectsdetected':
+            if (!$mainimage) {
+                quizproctoring_storeimage(
+                    $img,
+                    $cmid,
+                    $attemptid,
+                    $cm->instance,
+                    $mainimage,
+                    QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
+                    ''
+                );
+            } else {
+                throw new moodle_exception(
+                    QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
+                    'quizaccess_quizproctoring',
+                    '',
+                    ''
+                );
+            }
+            break;
     }
     die();
 }

@@ -376,6 +376,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $record->userimg = $userimg;
         $attemptid = $attemptid ? $attemptid : 0;
         $record->attemptid = $attemptid;
+        $record->image_status = 'I';
         // We probably have an entry already in DB.
         $file = file_get_draft_area_info($useridentity);
         if (
@@ -621,6 +622,16 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('enablerecordaudio', 0);
         $mform->hideIf('enablerecordaudio', 'enableproctoring', 'eq', '0');
 
+        // Allow admin or teacher record object detection.
+        $mform->addElement(
+            'selectyesno',
+            'enableobjectdetect',
+            get_string('enableobjectdetect', 'quizaccess_quizproctoring')
+        );
+        $mform->addHelpButton('enableobjectdetect', 'enableobjectdetect', 'quizaccess_quizproctoring');
+        $mform->setDefault('enableobjectdetect', 0);
+        $mform->hideIf('enableobjectdetect', 'enableproctoring', 'eq', '0');
+
         // Allow admin or teacher to setup student video.
         $mform->addElement('hidden', 'enableeyecheck', 0);
         $mform->setType('enableeyecheck', PARAM_INT);
@@ -740,6 +751,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enableeyecheckreal = 1;
             $record->enableeyecheck = 0;
             $record->enablerecordaudio = 0;
+            $record->enableobjectdetect = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -761,6 +773,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enableeyecheckreal = $quiz->enableeyecheckreal;
             $record->enableeyecheck = $quiz->enableeyecheck;
             $record->enablerecordaudio = isset($quiz->enablerecordaudio) ? $quiz->enablerecordaudio : 0;
+            $record->enableobjectdetect = isset($quiz->enableobjectdetect) ? $quiz->enableobjectdetect : 0;
             $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = $quiz->time_interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
@@ -811,8 +824,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
             enablestudentvideo,time_interval,enableeyecheck,enableeyecheckreal,
-            enableuploadidentity,enablerecordaudio,warning_threshold,warning_email_threshold,
-            warning_email_trigger_role,proctoringvideo_link',
+            enableuploadidentity,enablerecordaudio,enableobjectdetect,warning_threshold,
+            warning_email_threshold,warning_email_trigger_role,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctorlink ON proctorlink.quizid = quiz.id',
             [],
         ];

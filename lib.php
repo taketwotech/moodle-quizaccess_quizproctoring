@@ -41,6 +41,7 @@ define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
+define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
 
 /** User preference key for reporting page pagination (records per page). */
 define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
@@ -174,6 +175,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
                 'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
                 'userid' => $user->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -181,7 +183,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
             $warningsleft = $quizaproctoring->warning_threshold - count($errorrecords);
         }
@@ -231,6 +233,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         '$fullname',
         $quizaproctoring->enablestudentvideo,
         $quizaproctoring->enablerecordaudio,
+        $quizaproctoring->enableobjectdetect,
         $quizaproctoring->time_interval,
         $warningsleft,
         $USER->id,
@@ -420,6 +423,7 @@ function quizproctoring_storeimage(
                 'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
                 'userid' => $USER->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -427,7 +431,7 @@ function quizproctoring_storeimage(
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {

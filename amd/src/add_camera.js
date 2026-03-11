@@ -290,7 +290,7 @@ function($, str, ModalFactory) {
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
-        enablestudentvideo = 1, enablerecordaudio = 0, setinterval = 300,
+        enablestudentvideo = 1, enablerecordaudio = 0, enableobjectdetect = 1, setinterval = 300,
         warnings = 0, userid, usergroup = '', detectionval = null, warningEmailThreshold = 0) {
         let camera;
         if (!verifyduringattempt) {
@@ -501,7 +501,7 @@ function($, str, ModalFactory) {
                                             }
                                         });
                                         clearInterval(waitForElements);
-                                        if (enableeyecheckreal) {
+                                        if (enableeyecheckreal || enableobjectdetect === 1) {
                                             // eslint-disable-next-line no-undef
                                             const faceMesh = new FaceMesh({
                                                 locateFile: (file) => {
@@ -509,13 +509,19 @@ function($, str, ModalFactory) {
                                                 }
                                             });
                                             if (typeof setupFaceMesh !== 'undefined') {
+                                                if (enableobjectdetect === 1) {
+                                                    window.objectDetectionCallback = function(result) {
+                                                        realtimeDetection(cmid, attemptid, mainimage,
+                                                            result.status, result.data);
+                                                    };
+                                                }
                                                 // eslint-disable-next-line no-undef
                                                 setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
                                                     if (result.status) {
                                                         realtimeDetection(cmid, attemptid, mainimage,
                                                             result.status, result.data);
                                                     }
-                                                });
+                                                }, enableobjectdetect, enableeyecheckreal);
                                             }
                                         }
                                     }
@@ -702,30 +708,34 @@ function($, str, ModalFactory) {
                     }, setinterval * 1000);
                 }
             } else {
-                if (enableeyecheckreal) {
-                    const waitForElements = setInterval(() => {
-                        const vElement = document.getElementById('video');
-                        const cElement = document.getElementById('canvas');
-                        if (vElement && cElement) {
-                            // eslint-disable-next-line no-undef
-                            const faceMesh = new FaceMesh({
-                                locateFile: (file) => {
-                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                }
-                            });
-                            clearInterval(waitForElements);
-                            if (typeof setupFaceMesh !== 'undefined') {
-                                // eslint-disable-next-line no-undef
-                                setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                    if (result.status) {
-                                        realtimeDetection(cmid, attemptid, mainimage,
-                                                result.status, result.data);
-                                    }
-                                });
+                const waitForElements = setInterval(() => {
+                    const vElement = document.getElementById('video');
+                    const cElement = document.getElementById('canvas');
+                    if (vElement && cElement && (enableeyecheckreal || enableobjectdetect === 1)) {
+                        // eslint-disable-next-line no-undef
+                        const faceMesh = new FaceMesh({
+                            locateFile: (file) => {
+                                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
                             }
+                        });
+                        clearInterval(waitForElements);
+                        if (typeof setupFaceMesh !== 'undefined') {
+                            if (enableobjectdetect === 1) {
+                                window.objectDetectionCallback = function(result) {
+                                    realtimeDetection(cmid, attemptid, mainimage,
+                                        result.status, result.data);
+                                };
+                            }
+                            // eslint-disable-next-line no-undef
+                            setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
+                                if (result.status) {
+                                    realtimeDetection(cmid, attemptid, mainimage,
+                                            result.status, result.data);
+                                }
+                            }, enableobjectdetect, enableeyecheckreal);
                         }
-                    }, 500);
-                }
+                    }
+                }, 500);
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, enablerecordaudio, setinterval,
                     quizid);
