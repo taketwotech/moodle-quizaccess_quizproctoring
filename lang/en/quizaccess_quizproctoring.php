@@ -265,6 +265,7 @@ $string['warningexpire'] = 'The token for your Take2 proctoring service has expi
 $string['warningopensourse'] = 'Please complete <a href="{$a}">configuration</a> to continue with quiz.';
 $string['warnings'] = ' warnings';
 $string['warningsleft'] = 'You have only {$a} left.';
+$string['deviceinfo'] = 'Device info';
 $string['warningstudent'] = 'The quiz is not properly configured. Please contact site administrator.';
 $string['yes'] = 'Yes';
 $string['yesapproveimage_label'] = 'Approved image';

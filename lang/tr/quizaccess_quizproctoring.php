@@ -265,6 +265,7 @@ $string['warningexpire'] = 'Take2 gözetim hizmeti jetonunuzun süresi doldu. L�
 $string['warningopensourse'] = 'Teste devam etmek için lütfen <a href="{$a}">yapılandırmayı</a> tamamlayın.';
 $string['warnings'] = ' uyarı';
 $string['warningsleft'] = 'Sadece {$a} uyarınız kaldı.';
+$string['deviceinfo'] = 'Cihaz bilgisi';
 $string['warningstudent'] = 'Test düzgün yapılandırılmamış. Lütfen site yöneticisine başvurun.';
 $string['yes'] = 'Evet';
 $string['yesapproveimage_label'] = 'Onaylanmış Görsel';

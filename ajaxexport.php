@@ -47,7 +47,7 @@ if (!empty($USER->lang)) {
 }
 
 $sql = "SELECT
-    mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username,
+    mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username, mp.deviceinfo,
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS
 noface_count, COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END)
 AS minimize_count, COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END)
@@ -65,7 +65,7 @@ LEFT JOIN {quizaccess_proctor_data} p
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0
      AND mp.attemptid= p.attemptid
 WHERE mp.userimg IS NOT NULL AND mp.userimg != '' AND p.image_status != 'M'
-GROUP BY mp.attemptid, u.id, u.firstname, u.lastname
+GROUP BY mp.attemptid, u.id, u.firstname, u.lastname, u.username, mp.deviceinfo
 ORDER BY totalwarnings DESC";
 $params = [
     'quizid1' => $quizid,
@@ -133,7 +133,8 @@ if (empty($records)) {
     $pdf->Cell(16, 7, get_string('pdf_noeye', 'quizaccess_quizproctoring'), 1, 0, 'C');
     $pdf->Cell(20, 7, get_string('pdf_multiface', 'quizaccess_quizproctoring'), 1, 0, 'C');
     $pdf->Cell(17, 7, get_string('pdf_total', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(28, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(20, 7, get_string('deviceinfo', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(24, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
     $pdf->Cell(17, 7, get_string('pdf_photos', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
     $pdf->SetFont('freeserif', '', 6.5);
@@ -161,7 +162,8 @@ if (empty($records)) {
         $wnoeye = 16;
         $wmultiface = 20;
         $wfacemismatch = 17;
-        $wtime = 28;
+        $wdevice = 20;
+        $wtime = 24;
         $wphotos = 17;
 
         $hstudent = $pdf->getStringHeight($wstudent, $fullname);
@@ -171,10 +173,22 @@ if (empty($records)) {
         $hnoeye = $pdf->getStringHeight($wnoeye, $r->eyesnotopened);
         $hmultiface = $pdf->getStringHeight($wmultiface, $r->multifacesdetected);
         $hfacemismatch = $pdf->getStringHeight($wfacemismatch, $r->totalwarnings);
+        $hdevice = $pdf->getStringHeight($wdevice, $r->deviceinfo);
         $htime = $pdf->getStringHeight($wtime, $timestart);
         $hphotos = $pdf->getStringHeight($wphotos, $linktext);
 
-        $maxheight = max($hstudent, $htabswitch, $hcamera, $hnoface, $hnoeye, $hmultiface, $hfacemismatch, $htime, $hphotos);
+        $maxheight = max(
+            $hstudent,
+            $htabswitch,
+            $hcamera,
+            $hnoface,
+            $hnoeye,
+            $hmultiface,
+            $hfacemismatch,
+            $hdevice,
+            $htime,
+            $hphotos
+        );
 
         $x = $pdf->GetX();
         $y = $pdf->GetY();
@@ -201,6 +215,12 @@ if (empty($records)) {
         $pdf->MultiCell($wfacemismatch, $maxheight, $r->totalwarnings, 1, 'C', false, 0);
 
         $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface + $wfacemismatch, $y);
+        $pdf->MultiCell($wdevice, $maxheight, $r->deviceinfo, 1, 'C', false, 0);
+
+        $pdf->SetXY(
+            $x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface + $wfacemismatch + $wdevice,
+            $y
+        );
         $pdf->MultiCell($wtime, $maxheight, $timestart, 1, 'C', false, 0);
 
         $pdf->SetXY($pdf->GetX(), $pdf->GetY());

@@ -265,6 +265,7 @@ $string['warningexpire'] = 'Le jeton pour votre service de surveillance Take2 a 
 $string['warningopensourse'] = 'Veuillez compléter la <a href="{$a}">configuration</a> pour continuer le quiz.';
 $string['warnings'] = ' avertissements';
 $string['warningsleft'] = 'Il vous reste {$a} avertissements.';
+$string['deviceinfo'] = 'Informations appareil';
 $string['warningstudent'] = 'Le quiz n\'est pas correctement configuré. Veuillez contacter l\'administrateur du site.';
 $string['yes'] = 'Oui';
 $string['yesapproveimage_label'] = 'Image approuvée';
