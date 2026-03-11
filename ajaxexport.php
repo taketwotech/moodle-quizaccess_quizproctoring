@@ -60,7 +60,7 @@ COUNT(CASE WHEN p.status IN
     THEN 1 END) AS totalwarnings
 FROM {user} u
 JOIN {quizaccess_main_proctor} mp
-    ON mp.userid = u.id AND mp.quizid = :quizid1AND mp.deleted = 0
+    ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
 LEFT JOIN {quizaccess_proctor_data} p
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0
      AND mp.attemptid= p.attemptid
@@ -126,16 +126,16 @@ if (empty($records)) {
     $pdf->Write(0, get_string('norecordsfound', 'quizaccess_quizproctoring'));
 } else {
     $pdf->SetFont('freeserif', 'B', 6.5);
-    $pdf->Cell(30, 7, get_string('pdf_student', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(24, 7, get_string('pdf_tabswitch', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(20, 7, get_string('pdf_nocamera', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(18, 7, get_string('pdf_noface', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(16, 7, get_string('pdf_noeye', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(20, 7, get_string('pdf_multiface', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(17, 7, get_string('pdf_total', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(20, 7, get_string('deviceinfo', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(24, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(17, 7, get_string('pdf_photos', 'quizaccess_quizproctoring'), 1, 1, 'C');
+    $pdf->Cell(32, 7, get_string('pdf_student', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(20, 7, get_string('pdf_tabswitch', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(18, 7, get_string('pdf_nocamera', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(16, 7, get_string('pdf_noface', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('pdf_noeye', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(18, 7, get_string('pdf_multiface', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(16, 7, get_string('pdf_total', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(16, 7, get_string('deviceinfo', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(20, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(16, 7, get_string('pdf_photos', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
     $pdf->SetFont('freeserif', '', 6.5);
     foreach ($records as $r) {
@@ -155,16 +155,16 @@ if (empty($records)) {
         $linkurl = $imagessurl->out();
         $fullname = $r->firstname . ' ' . $r->lastname . ' (' . $r->username . ')';
 
-        $wstudent = 30;
-        $wtabswitch = 24;
-        $wcamera = 20;
-        $wnoface = 18;
-        $wnoeye = 16;
-        $wmultiface = 20;
-        $wfacemismatch = 17;
-        $wdevice = 20;
-        $wtime = 24;
-        $wphotos = 17;
+        $wstudent = 32;
+        $wtabswitch = 20;
+        $wcamera = 18;
+        $wnoface = 16;
+        $wnoeye = 14;
+        $wmultiface = 18;
+        $wfacemismatch = 16;
+        $wdevice = 16;
+        $wtime = 20;
+        $wphotos = 16;
 
         $hstudent = $pdf->getStringHeight($wstudent, $fullname);
         $htabswitch = $pdf->getStringHeight($wtabswitch, $r->minimize_count);
