@@ -85,19 +85,19 @@ if ($hassiteconfig && !empty($USER->id)) {
         ]
     ));
 
-    // Email trigger role when threshold exceeds. Use only roles from admin/roles/manage.php (role table).
     global $DB;
     $rolechoices = [];
-    $roles = $DB->get_records_select(
-        'role',
-        "archetype != 'guest' OR archetype IS NULL",
-        null,
-        'sortorder',
-        'id, name, shortname'
+    $roles = $DB->get_records_sql(
+        "SELECT r.id, r.name, r.shortname
+           FROM {role} r
+           JOIN {role_context_levels} rcl ON rcl.roleid = r.id
+          WHERE rcl.contextlevel = ?
+          ORDER BY r.sortorder",
+        [CONTEXT_COURSE]
     );
     $defaultroleid = 0;
     foreach ($roles as $role) {
-        $rolechoices[$role->id] = $role->name ?: $role->shortname;
+        $rolechoices[$role->id] = role_get_name($role);
         if ($defaultroleid === 0) {
             $defaultroleid = $role->id;
         }

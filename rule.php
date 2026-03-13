@@ -696,22 +696,15 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->hideIf('warning_email_threshold', 'enableproctoring', 'eq', '0');
         $mform->hideIf('warning_email_threshold', 'warning_threshold', 'neq', 0);
 
-        // Email trigger role when threshold exceeds (shown only when email threshold is shown).
-        // Use only roles from admin/roles/manage.php (role table).
-        global $DB;
         $rolechoices = [];
-        $roles = $DB->get_records_select(
-            'role',
-            "archetype != 'guest' OR archetype IS NULL",
-            null,
-            'sortorder',
-            'id, name, shortname'
-        );
+        $course = $quizform->get_course();
+        $context = \context_course::instance($course->id);
+        $roles = get_assignable_roles($context);
         $defaultroleid = 0;
-        foreach ($roles as $role) {
-            $rolechoices[$role->id] = $role->name ?: $role->shortname;
+        foreach ($roles as $roleid => $rolename) {
+            $rolechoices[$roleid] = $rolename;
             if ($defaultroleid === 0) {
-                $defaultroleid = $role->id;
+                $defaultroleid = $roleid;
             }
         }
         $savedroleid = (int) get_config('quizaccess_quizproctoring', 'warning_email_trigger_role');
