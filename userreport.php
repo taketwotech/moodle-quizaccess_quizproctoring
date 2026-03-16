@@ -130,27 +130,33 @@ $pdf->SetTextColor(0, 0, 0);
 $pdf->Ln(5);
 
 $pdf->SetFont('freeserif', 'B', 10);
-$pdf->Cell(60, 8, get_string('userreport_studentname', 'quizaccess_quizproctoring'), 1, 0, 'C');
-$pdf->Cell(60, 8, get_string('userreport_attemptid', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(50, 8, get_string('userreport_studentname', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(30, 8, get_string('userreport_attemptid', 'quizaccess_quizproctoring'), 1, 0, 'C');
+$pdf->Cell(40, 8, get_string('deviceinfo', 'quizaccess_quizproctoring'), 1, 0, 'C');
 $pdf->Cell(60, 8, get_string('userreport_attempttime', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
-$wname = 60;
-$wattemptid = 60;
+$wname = 50;
+$wattemptid = 30;
+$wdevice = 40;
 $wtimestart = 60;
 
 $studentname = $user->firstname . ' ' . $user->lastname;
 $attemptidstr = (string)$attemptid;
 $timestr = $timestart;
+$mainproctor = reset($getmimages);
+$deviceinfo = ($mainproctor && !empty($mainproctor->deviceinfo)) ? $mainproctor->deviceinfo : '-';
 
 $pdf->SetFont('freeserif', '', 10);
 $hname = $pdf->getStringHeight($wname, $studentname);
 $hid = $pdf->getStringHeight($wattemptid, $attemptidstr);
+$hdevice = $pdf->getStringHeight($wdevice, $deviceinfo);
 $htime = $pdf->getStringHeight($wtimestart, $timestr);
 
-$maxheight = max($hname, $hid, $htime);
+$maxheight = max($hname, $hid, $hdevice, $htime);
 
 $pdf->MultiCell($wname, $maxheight, $studentname, 1, 'C', false, 0, '', '', true, 0, false, true, $maxheight, 'M');
 $pdf->MultiCell($wattemptid, $maxheight, $attemptidstr, 1, 'C', false, 0, '', '', true, 0, false, true, $maxheight, 'M');
+$pdf->MultiCell($wdevice, $maxheight, $deviceinfo, 1, 'C', false, 0, '', '', true, 0, false, true, $maxheight, 'M');
 $pdf->MultiCell($wtimestart, $maxheight, $timestr, 1, 'C', false, 1, '', '', true, 0, false, true, $maxheight, 'M');
 
 $pdf->Ln(8);
