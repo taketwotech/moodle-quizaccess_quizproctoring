@@ -876,7 +876,7 @@ function($, str, ModalFactory) {
     /**
      * Detect device information from user agent string.
      *
-     * @returns {string} Device type (Windows, Mac, Mobile, or Unknown)
+     * @returns {string} Device type (Windows, Mac, Tablet, Mobile, or Unknown)
      */
     function detectDeviceInfo() {
         const useragent = navigator.userAgent || '';
@@ -905,11 +905,10 @@ function($, str, ModalFactory) {
         }
 
         // Android tablets - check for "tablet" keyword or Android without "mobile" keyword.
-        // Some Android tablets have "tablet" in user agent, or Android without "mobile".
-        // This check must come before the general mobile check to avoid misclassification.
+        // This check must come before the general mobile phone check.
         if ((/android/i.test(ua) && /tablet/i.test(ua)) ||
             (/android/i.test(ua) && !/mobile/i.test(ua))) {
-            return 'Mobile'; // Android tablets are classified as mobile devices.
+            return 'Tablet';
         }
 
         // Check for other mobile phones (Android phones, Blackberry, Windows Phone, etc.).

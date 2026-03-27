@@ -161,6 +161,8 @@ foreach ($records as $record) {
 
         if ($deviceinfolower === 'mobile') {
             $deviceiconclass = 'fa-mobile-alt';
+        } else if ($deviceinfolower === 'tablet') {
+            $deviceiconclass = 'fa-tablet-alt';
         } else if ($deviceinfolower === 'mac ipad') {
             $deviceiconclass = 'fa-tablet-alt';
         } else if ($deviceinfolower === 'mac desktop') {
