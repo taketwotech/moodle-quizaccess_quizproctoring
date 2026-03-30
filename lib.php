@@ -261,9 +261,11 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @param string $imagedata Binary image data
  * @param int $targetsize Target size in bytes (default 17500 = ~17.5KB)
+ * @param int $maxwidth Maximum stored image width in pixels
+ * @param int $maxheight Maximum stored image height in pixels
  * @return string|false Compressed JPEG image data or false on failure
  */
-function quizproctoring_compress_image($imagedata, $targetsize = 17500) {
+function quizproctoring_compress_image($imagedata, $targetsize = 17500, $maxwidth = 320, $maxheight = 240) {
     // Check if GD extension is available.
     if (!function_exists('imagecreatefromstring') || !function_exists('imagejpeg')) {
         return false;
@@ -279,9 +281,7 @@ function quizproctoring_compress_image($imagedata, $targetsize = 17500) {
     $width = imagesx($sourceimage);
     $height = imagesy($sourceimage);
 
-    // Calculate optimal dimensions (max 1280px width to reduce size while maintaining quality).
-    $maxwidth = 1280;
-    $maxheight = 960;
+    // Calculate optimal dimensions for stored proctoring images.
     if ($width > $maxwidth || $height > $maxheight) {
         $ratio = min($maxwidth / $width, $maxheight / $height);
         $newwidth = (int)($width * $ratio);
