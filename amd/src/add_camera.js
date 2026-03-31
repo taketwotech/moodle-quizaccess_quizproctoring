@@ -671,60 +671,6 @@ function($, str, ModalFactory) {
                                             vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
-                                            let sentDeviceDisabledWarning = false;
-                                            const triggerImmediateDeviceWarning = () => {
-                                                if (sentDeviceDisabledWarning || quizTerminationInProgress) {
-                                                    return;
-                                                }
-                                                sentDeviceDisabledWarning = true;
-                                                const validatekey = requireaudiopermission ?
-                                                    'nocameradetected' : 'nocameradisabled';
-                                                const fallbackmessage = requireaudiopermission ?
-                                                    M.util.get_string('nocameradetectedm',
-                                                        'quizaccess_quizproctoring', '') :
-                                                    getNormalizedCameraDisabledMessage();
-                                                $(document).trigger('popup', fallbackmessage);
-                                                suppressRealtimePopupUntil = Date.now() + 1500;
-                                                $.ajax({
-                                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
-                                                    method: 'POST',
-                                                    data: {
-                                                        cmid: cmid,
-                                                        attemptid: attemptid,
-                                                        mainimage: mainimage,
-                                                        validate: validatekey,
-                                                    },
-                                                    success: function(response) {
-                                                        handleRealtimeWarningResponse(
-                                                            response,
-                                                            fallbackmessage,
-                                                            cmid,
-                                                            attemptid
-                                                        );
-                                                    },
-                                                    error: function(xhr) {
-                                                        handleRealtimeWarningXhrError(
-                                                            xhr,
-                                                            fallbackmessage,
-                                                            cmid,
-                                                            attemptid
-                                                        );
-                                                    }
-                                                });
-                                            };
-                                            const immediateVideoTrack = stream.getVideoTracks()[0];
-                                            if (immediateVideoTrack) {
-                                                immediateVideoTrack.onended = triggerImmediateDeviceWarning;
-                                                immediateVideoTrack.onmute = triggerImmediateDeviceWarning;
-                                            }
-                                            if (requireaudiopermission) {
-                                                const immediateAudioTrack = stream.getAudioTracks()[0];
-                                                if (immediateAudioTrack) {
-                                                    immediateAudioTrack.onended = triggerImmediateDeviceWarning;
-                                                    immediateAudioTrack.onmute = triggerImmediateDeviceWarning;
-                                                }
-                                            }
-                                            stream.oninactive = triggerImmediateDeviceWarning;
                                             if (enablerecordaudio) {
                                                 // eslint-disable-next-line no-undef
                                                 useraudiorecord(stream);
