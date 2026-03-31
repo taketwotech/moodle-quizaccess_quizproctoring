@@ -209,10 +209,14 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 null,
                 $proctoringdata->enableteacherproctor,
                 $securewindow->browsersecurity,
+                null,
+                1,
+                $proctoringdata->enablerecordaudio,
             ]
         );
         $PAGE->requires->strings_for_js(
             [
+                'nomicrophonedisabled',
                 'nocameradisabled',
                 'nocameradetected',
                 'nocameradetectedm',

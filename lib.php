@@ -30,6 +30,7 @@ use mod_quiz\quiz_attempt;
 define('QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED', 'nofacedetected');
 define('QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED', 'nocameradetected');
 define('QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED', 'nocameradisabled');
+define('QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED', 'nomicrophonedisabled');
 define('QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED', 'multifacesdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED', 'facesnotmatched');
 define('QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED', 'eyesnotopened');
@@ -178,6 +179,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
                 'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
                 'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
                 'userid' => $user->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -185,7 +187,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
             $warningsleft = $quizaproctoring->warning_threshold - count($errorrecords);
         }
@@ -248,6 +250,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'tabwarning',
         'tabwarningoneleft',
         'tabwarningmultiple',
+        'nomicrophonedisabled',
         'nocameradisabled',
         'nocameradetected',
         'nocameradetectedm',
@@ -377,10 +380,18 @@ function quizproctoring_storeimage(
     global $CFG, $USER, $DB, $COURSE;
     $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 
-    // When the client signals camera being manually disabled (and no image was sent),
-    // store the configured fallback icon as the proctoring evidence.
+    // When the client signals camera/microphone being manually disabled
+    // (and no image was sent), store configured fallback icon as evidence.
     if (empty($data) && $status === QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED) {
         $pixfile = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/cameradisabled.png';
+        if (file_exists($pixfile)) {
+            $pixbytes = file_get_contents($pixfile);
+            if ($pixbytes !== false) {
+                $data = 'data:image/png;base64,' . base64_encode($pixbytes);
+            }
+        }
+    } else if (empty($data) && $status === QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED) {
+        $pixfile = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/microphonedisabled.png';
         if (file_exists($pixfile)) {
             $pixbytes = file_get_contents($pixfile);
             if ($pixbytes !== false) {
@@ -440,6 +451,7 @@ function quizproctoring_storeimage(
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
                 'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
                 'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
                 'userid' => $USER->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -447,7 +459,7 @@ function quizproctoring_storeimage(
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
