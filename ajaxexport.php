@@ -51,12 +51,12 @@ $sql = "SELECT
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS
 noface_count, COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END)
 AS minimize_count, COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END)
-AS multifacesdetected, COUNT(CASE WHEN p.status = 'nocameradetected' THEN 1 END)
+AS multifacesdetected, COUNT(CASE WHEN p.status IN ('nocameradetected', 'nocameradisabled') THEN 1 END)
 AS nocameradetected,
 COUNT(CASE WHEN p.status = 'eyesnotopened' THEN 1 END)
 AS eyesnotopened,
 COUNT(CASE WHEN p.status IN
-('minimizedetected', 'multifacesdetected', 'nofacedetected', 'nocameradetected', 'eyesnotopened')
+('minimizedetected', 'multifacesdetected', 'nofacedetected', 'nocameradetected', 'nocameradisabled', 'eyesnotopened')
     THEN 1 END) AS totalwarnings
 FROM {user} u
 JOIN {quizaccess_main_proctor} mp

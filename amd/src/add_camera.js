@@ -62,6 +62,8 @@ function($, str, ModalFactory) {
     Camera.prototype.startcamera = function() {
         const takePictureButton = $('#' + this.takepictureid);
         takePictureButton.prop('disabled', true);
+        const cameraInstance = this;
+        let sentCameraDisabled = false;
         return navigator.mediaDevices.getUserMedia({video: true, audio: USE_AUDIO})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
@@ -79,7 +81,41 @@ function($, str, ModalFactory) {
                     stream.getVideoTracks()[0].onended = function() {
                         takePictureButton.prop('disabled', true);
                         const cameradisabledkey = USE_AUDIO ? 'nocameradetectedm' : 'nocameradisabled';
-                        $(document).trigger('popup', M.util.get_string(cameradisabledkey, 'quizaccess_quizproctoring'));
+                        const warningmessage = (cameradisabledkey === 'nocameradisabled') ?
+                            getNormalizedCameraDisabledMessage() :
+                            M.util.get_string(cameradisabledkey, 'quizaccess_quizproctoring');
+                        $(document).trigger('popup', warningmessage);
+                        // If camera was manually disabled during an active attempt (both
+                        // teacher-proctor and audio-recording are NO), store an evidence
+                        // image and count it as a warning on the backend.
+                        if (!USE_AUDIO && !sentCameraDisabled && cameraInstance && cameraInstance.attemptid && !cameraInstance.mainimage) {
+                            sentCameraDisabled = true;
+                            $.ajax({
+                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                method: 'POST',
+                                data: {
+                                    cmid: cameraInstance.cmid,
+                                    attemptid: cameraInstance.attemptid,
+                                    mainimage: cameraInstance.mainimage,
+                                    validate: 'nocameradisabled',
+                                },
+                                success: function(response) {
+                                    if (response && response.redirect && response.url) {
+                                        window.onbeforeunload = null;
+                                        $(document).trigger('popup', response.msg);
+                                        setTimeout(function() {
+                                            window.location.href = encodeURI(response.url);
+                                        }, 3000);
+                                    } else if (response && response.errorcode) {
+                                        const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                        const leftwarnings = Math.max(warningsl - 1, 0);
+                                        localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                        // Schedule warning email (if configured) without affecting quiz flow.
+                                        trackWarningAndMaybeQueueEmail(cameraInstance.cmid, cameraInstance.attemptid);
+                                    }
+                                }
+                            });
+                        }
                     };
 
                     if (USE_AUDIO) {
@@ -92,7 +128,7 @@ function($, str, ModalFactory) {
                             $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
                         }
                     }
-                    if (this.attemptid) {
+                    if (cameraInstance.attemptid) {
                         restoreVideoPosition(videoElement);
                         makeDraggable(videoElement);
                     }
@@ -176,6 +212,44 @@ function($, str, ModalFactory) {
     };
 
     Camera.prototype.proctoringimage = function() {
+        if (!USE_AUDIO) {
+            const hasLiveVideoTrack = localMediaStream &&
+                localMediaStream.getVideoTracks &&
+                localMediaStream.getVideoTracks().some((track) => track.readyState === 'live');
+            if (!hasLiveVideoTrack) {
+                const now = Date.now();
+                // Prevent repetitive warnings from the polling interval loop.
+                if ((now - lastCameraDisabledReportAt) > 5000) {
+                    lastCameraDisabledReportAt = now;
+                    $(document).trigger('popup', getNormalizedCameraDisabledMessage());
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                        method: 'POST',
+                        data: {
+                            cmid: this.cmid,
+                            attemptid: this.attemptid,
+                            mainimage: this.mainimage,
+                            validate: 'nocameradisabled',
+                        },
+                        success: (response) => {
+                            if (response && response.redirect && response.url) {
+                                window.onbeforeunload = null;
+                                $(document).trigger('popup', response.msg);
+                                setTimeout(function() {
+                                    window.location.href = encodeURI(response.url);
+                                }, 3000);
+                            } else if (response && response.errorcode) {
+                                const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                                const leftwarnings = Math.max(warningsl - 1, 0);
+                                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                trackWarningAndMaybeQueueEmail(this.cmid, this.attemptid);
+                            }
+                        }
+                    });
+                }
+                return;
+            }
+        }
         var requestData = {
             cmid: this.cmid,
             attemptid: this.attemptid,
@@ -255,6 +329,7 @@ function($, str, ModalFactory) {
     var localMediaStream = null;
     var USE_AUDIO = true;
     var USE_VIDEO = true;
+    var lastCameraDisabledReportAt = 0;
     let hiddenCloseButton = null;
 
     Camera.prototype.retake = function() {
@@ -1271,5 +1346,20 @@ function closeCustomModal() {
     });
     $(document).off('click');
     $(document).off('keydown');
+}
+
+/**
+ * Normalize legacy cached camera disabled message formatting.
+ *
+ * @return {string} Camera disabled warning message.
+ */
+function getNormalizedCameraDisabledMessage() {
+    const key = 'nocameradisabled';
+    const component = 'quizaccess_quizproctoring';
+    const message = M.util.get_string(key, component);
+    if (message === 'Camera is disabled.Please enable to continue.') {
+        return 'Camera is disabled. Please enable to continue.';
+    }
+    return message;
 }
 });
