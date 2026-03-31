@@ -170,66 +170,66 @@ if (!$mainentry->isautosubmit) {
                 );
             }
             break;
-            case 'nocameradetected':
-                if (!$mainimage) {
-                    quizproctoring_storeimage(
-                        $img,
-                        $cmid,
-                        $attemptid,
-                        $cm->instance,
-                        $mainimage,
-                        QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
-                        ''
-                    );
-                } else {
-                    throw new moodle_exception(
-                        QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
-                        'quizaccess_quizproctoring',
-                        '',
-                        ''
-                    );
-                }
-                break;
-            case 'nocameradisabled':
-                if (!$mainimage) {
-                    quizproctoring_storeimage(
-                        $img,
-                        $cmid,
-                        $attemptid,
-                        $cm->instance,
-                        $mainimage,
-                        QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
-                        ''
-                    );
-                } else {
-                    throw new moodle_exception(
-                        QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
-                        'quizaccess_quizproctoring',
-                        '',
-                        ''
-                    );
-                }
-                break;
-            case 'nomicrophonedisabled':
-                if (!$mainimage) {
-                    quizproctoring_storeimage(
-                        $img,
-                        $cmid,
-                        $attemptid,
-                        $cm->instance,
-                        $mainimage,
-                        QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
-                        ''
-                    );
-                } else {
-                    throw new moodle_exception(
-                        QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
-                        'quizaccess_quizproctoring',
-                        '',
-                        ''
-                    );
-                }
-                break;
+        case 'nocameradetected':
+            if (!$mainimage) {
+                quizproctoring_storeimage(
+                    $img,
+                    $cmid,
+                    $attemptid,
+                    $cm->instance,
+                    $mainimage,
+                    QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                    ''
+                );
+            } else {
+                throw new moodle_exception(
+                    QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                    'quizaccess_quizproctoring',
+                    '',
+                    ''
+                );
+            }
+            break;
+        case 'nocameradisabled':
+            if (!$mainimage) {
+                quizproctoring_storeimage(
+                    $img,
+                    $cmid,
+                    $attemptid,
+                    $cm->instance,
+                    $mainimage,
+                    QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                    ''
+                );
+            } else {
+                throw new moodle_exception(
+                    QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                    'quizaccess_quizproctoring',
+                    '',
+                    ''
+                );
+            }
+            break;
+        case 'nomicrophonedisabled':
+            if (!$mainimage) {
+                quizproctoring_storeimage(
+                    $img,
+                    $cmid,
+                    $attemptid,
+                    $cm->instance,
+                    $mainimage,
+                    QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
+                    ''
+                );
+            } else {
+                throw new moodle_exception(
+                    QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
+                    'quizaccess_quizproctoring',
+                    '',
+                    ''
+                );
+            }
+            break;
     }
     die();
 }

@@ -639,7 +639,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025120602, 'quizaccess', 'quizproctoring');
-    }    
+    }
 
     if ($oldversion < 2025120603) {
         // Define field teacherid to be added to quizaccess_proctor_alert.
