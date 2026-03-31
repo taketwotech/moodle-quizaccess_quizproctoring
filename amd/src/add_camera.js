@@ -92,9 +92,12 @@ function($, str, ModalFactory) {
                             M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', '') :
                             getNormalizedCameraDisabledMessage();
                         const shouldreportrealtime = cameraInstance && cameraInstance.attemptid && !cameraInstance.mainimage;
-                        if (!shouldreportrealtime && (Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
                             lastDeviceWarningPopupAt = Date.now();
                             $(document).trigger('popup', popupmessage);
+                            if (shouldreportrealtime) {
+                                suppressRealtimePopupUntil = Date.now() + 1500;
+                            }
                         }
                         if (!sentCameraDisabled && shouldreportrealtime) {
                             sentCameraDisabled = true;
@@ -109,6 +112,7 @@ function($, str, ModalFactory) {
                                 },
                                 success: function(response) {
                                     if (response && response.redirect && response.url) {
+                                        quizTerminationInProgress = true;
                                         window.onbeforeunload = null;
                                         $(document).trigger('popup', response.msg);
                                         setTimeout(function() {
@@ -146,10 +150,13 @@ function($, str, ModalFactory) {
                                 }
                                 const shouldreportrealtime = cameraInstance &&
                                     cameraInstance.attemptid && !cameraInstance.mainimage;
-                                if (!shouldreportrealtime && (Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
                                     lastDeviceWarningPopupAt = Date.now();
                                     $(document).trigger('popup',
                                         M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''));
+                                    if (shouldreportrealtime) {
+                                        suppressRealtimePopupUntil = Date.now() + 1500;
+                                    }
                                 }
                                 if (!sentCameraDisabled && shouldreportrealtime) {
                                     sentCameraDisabled = true;
@@ -447,6 +454,7 @@ function($, str, ModalFactory) {
     var USE_VIDEO = true;
     var lastCameraDisabledReportAt = 0;
     var quizTerminationInProgress = false;
+    var suppressRealtimePopupUntil = 0;
     let hiddenCloseButton = null;
 
     Camera.prototype.retake = function() {
@@ -657,11 +665,66 @@ function($, str, ModalFactory) {
                                     if (vElement && cElement) {
                                         navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
                                         .then((stream) => {
+                                            localMediaStream = stream;
                                             vElement.srcObject = stream;
                                             vElement.play();
                                             vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
+                                            let sentDeviceDisabledWarning = false;
+                                            const triggerImmediateDeviceWarning = () => {
+                                                if (sentDeviceDisabledWarning || quizTerminationInProgress) {
+                                                    return;
+                                                }
+                                                sentDeviceDisabledWarning = true;
+                                                const validatekey = requireaudiopermission ?
+                                                    'nocameradetected' : 'nocameradisabled';
+                                                const fallbackmessage = requireaudiopermission ?
+                                                    M.util.get_string('nocameradetectedm',
+                                                        'quizaccess_quizproctoring', '') :
+                                                    getNormalizedCameraDisabledMessage();
+                                                $(document).trigger('popup', fallbackmessage);
+                                                suppressRealtimePopupUntil = Date.now() + 1500;
+                                                $.ajax({
+                                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                                    method: 'POST',
+                                                    data: {
+                                                        cmid: cmid,
+                                                        attemptid: attemptid,
+                                                        mainimage: mainimage,
+                                                        validate: validatekey,
+                                                    },
+                                                    success: function(response) {
+                                                        handleRealtimeWarningResponse(
+                                                            response,
+                                                            fallbackmessage,
+                                                            cmid,
+                                                            attemptid
+                                                        );
+                                                    },
+                                                    error: function(xhr) {
+                                                        handleRealtimeWarningXhrError(
+                                                            xhr,
+                                                            fallbackmessage,
+                                                            cmid,
+                                                            attemptid
+                                                        );
+                                                    }
+                                                });
+                                            };
+                                            const immediateVideoTrack = stream.getVideoTracks()[0];
+                                            if (immediateVideoTrack) {
+                                                immediateVideoTrack.onended = triggerImmediateDeviceWarning;
+                                                immediateVideoTrack.onmute = triggerImmediateDeviceWarning;
+                                            }
+                                            if (requireaudiopermission) {
+                                                const immediateAudioTrack = stream.getAudioTracks()[0];
+                                                if (immediateAudioTrack) {
+                                                    immediateAudioTrack.onended = triggerImmediateDeviceWarning;
+                                                    immediateAudioTrack.onmute = triggerImmediateDeviceWarning;
+                                                }
+                                            }
+                                            stream.oninactive = triggerImmediateDeviceWarning;
                                             if (enablerecordaudio) {
                                                 // eslint-disable-next-line no-undef
                                                 useraudiorecord(stream);
@@ -1496,7 +1559,11 @@ function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attempti
     if (quizTerminationInProgress) {
         return;
     }
-    $(document).trigger('popup', response.error || fallbackmessage);
+    if (Date.now() < suppressRealtimePopupUntil) {
+        suppressRealtimePopupUntil = 0;
+    } else {
+        $(document).trigger('popup', response.error || fallbackmessage);
+    }
     decrementWarningCounter();
     trackWarningAndMaybeQueueEmail(cmid, attemptid);
 }
