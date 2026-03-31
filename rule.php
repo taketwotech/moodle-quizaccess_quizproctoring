@@ -213,6 +213,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         );
         $PAGE->requires->strings_for_js(
             [
+                'nocameradisabled',
                 'nocameradetected',
                 'nocameradetectedm',
             ],

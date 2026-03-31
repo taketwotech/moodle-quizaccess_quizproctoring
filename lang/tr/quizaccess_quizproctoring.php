@@ -151,6 +151,7 @@ $string['multifacesdetected'] = 'Birden fazla yüz algılandı. {$a}';
 $string['no'] = 'Hayır';
 $string['noactiveplan'] = 'Önceki planınızın süresi doldu !';
 $string['noaudio'] = 'Ses Yok';
+$string['nocameradisabled'] = 'Kamera devre dışı. Devam etmek için lütfen etkinleştirin.';
 $string['nocameradetected'] = 'Kamera veya mikrofon devre dışı. Lütfen ikisini de etkinleştirin. {$a}';
 $string['nocameradetectedm'] = 'Kamera veya mikrofon devre dışı. Lütfen ikisini de etkinleştirin.';
 $string['nofacedetected'] = 'Yüz algılanmadı. {$a}';

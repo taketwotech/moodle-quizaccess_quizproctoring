@@ -151,6 +151,7 @@ $string['multifacesdetected'] = 'Plus d\'un visage détecté. {$a}';
 $string['no'] = 'Non';
 $string['noactiveplan'] = 'Votre plan précédent a expiré !';
 $string['noaudio'] = 'Aucun audio';
+$string['nocameradisabled'] = 'La caméra est désactivée. Veuillez l\'activer pour continuer.';
 $string['nocameradetected'] = 'Caméra ou microphone désactivé. Veuillez activer les deux pour continuer. {$a}';
 $string['nocameradetectedm'] = 'Caméra ou microphone désactivé. Veuillez activer les deux pour continuer.';
 $string['nofacedetected'] = 'Aucun visage détecté. {$a}';

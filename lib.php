@@ -246,6 +246,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'tabwarning',
         'tabwarningoneleft',
         'tabwarningmultiple',
+        'nocameradisabled',
         'nocameradetected',
         'nocameradetectedm',
     ], 'quizaccess_quizproctoring');

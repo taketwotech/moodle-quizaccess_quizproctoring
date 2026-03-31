@@ -62,7 +62,7 @@ function($, str, ModalFactory) {
     Camera.prototype.startcamera = function() {
         const takePictureButton = $('#' + this.takepictureid);
         takePictureButton.prop('disabled', true);
-        return navigator.mediaDevices.getUserMedia({video: true, audio: true})
+        return navigator.mediaDevices.getUserMedia({video: true, audio: USE_AUDIO})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
                 if (videoElement) {
@@ -78,16 +78,19 @@ function($, str, ModalFactory) {
 
                     stream.getVideoTracks()[0].onended = function() {
                         takePictureButton.prop('disabled', true);
-                        $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
+                        const cameradisabledkey = USE_AUDIO ? 'nocameradetectedm' : 'nocameradisabled';
+                        $(document).trigger('popup', M.util.get_string(cameradisabledkey, 'quizaccess_quizproctoring'));
                     };
 
-                    const audioTrack = stream.getAudioTracks()[0];
-                    if (audioTrack) {
-                        audioTrack.onended = function() {
+                    if (USE_AUDIO) {
+                        const audioTrack = stream.getAudioTracks()[0];
+                        if (audioTrack) {
+                            audioTrack.onended = function() {
+                                $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
+                            };
+                        } else {
                             $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
-                        };
-                    } else {
-                        $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
+                        }
                     }
                     if (this.attemptid) {
                         restoreVideoPosition(videoElement);
@@ -293,6 +296,10 @@ function($, str, ModalFactory) {
         enablestudentvideo = 1, enablerecordaudio = 0, enableobjectdetect = 1, setinterval = 300,
         warnings = 0, userid, usergroup = '', detectionval = null, warningEmailThreshold = 0) {
         let camera;
+        // Require microphone when either teacher proctoring or
+        // audio recording is enabled.
+        const requireaudiopermission = Boolean(Number(onlinestudent)) || Boolean(Number(enablerecordaudio));
+        USE_AUDIO = requireaudiopermission;
         if (!verifyduringattempt) {
             localStorage.removeItem('eyecheckoff');
             if (document.readyState === 'complete') {
@@ -456,7 +463,7 @@ function($, str, ModalFactory) {
                                     const vElement = document.getElementById('video');
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
-                                        navigator.mediaDevices.getUserMedia({video: true, audio: true})
+                                        navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
                                         .then((stream) => {
                                             vElement.srcObject = stream;
                                             vElement.play();
