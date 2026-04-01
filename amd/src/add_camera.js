@@ -670,7 +670,7 @@ function($, str, ModalFactory) {
                                             vElement.play();
                                             vElement.muted = true;
                                             restoreVideoPosition(vElement);
-                                            makeDraggable(vElement);                                            
+                                            makeDraggable(vElement);
                                             let sentCameraDisabled = false;
                                             let lastDeviceWarningPopupAt = 0;
                                             const shouldreportrealtime = Boolean(attemptid) && !mainimage;
