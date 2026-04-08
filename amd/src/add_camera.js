@@ -1112,7 +1112,7 @@ function($, str, ModalFactory) {
                     navigator.mozGetUserMedia ||
                     navigator.msGetUserMedia
                 );
-                navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
+                return navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
                     localMediaStream = stream;
                     if (verifyduringattempt) {
@@ -1186,7 +1186,6 @@ function($, str, ModalFactory) {
                         callback();
                     }
                 });
-                // Promise is handled with catch, no need to return
             } else {
                 localMediaStream = createDummyMediaStream();
                 if (callback) {
