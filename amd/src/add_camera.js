@@ -1112,7 +1112,7 @@ function($, str, ModalFactory) {
                     navigator.mozGetUserMedia ||
                     navigator.msGetUserMedia
                 );
-                return navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
+                void navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
                     localMediaStream = stream;
                     if (verifyduringattempt) {
