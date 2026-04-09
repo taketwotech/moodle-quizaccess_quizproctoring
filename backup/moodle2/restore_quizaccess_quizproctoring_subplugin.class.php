@@ -88,6 +88,9 @@ class restore_quizaccess_quizproctoring_subplugin extends restore_mod_quiz_acces
         if (!isset($data->enablerecordaudio)) {
             $data->enablerecordaudio = 0;
         }
+        if (!isset($data->enableobjectdetect)) {
+            $data->enableobjectdetect = 0;
+        }
         if (!isset($data->time_interval)) {
             $data->time_interval = null;
         }

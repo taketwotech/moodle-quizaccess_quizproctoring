@@ -62,6 +62,7 @@ class backup_quizaccess_quizproctoring_subplugin extends backup_mod_quiz_access_
             'enableuploadidentity',
             'enableeyecheckreal',
             'enablerecordaudio',
+            'enableobjectdetect',
         ]);
 
         $subplugin->add_child($subpluginwrapper);
