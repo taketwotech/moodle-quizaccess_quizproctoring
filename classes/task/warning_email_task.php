@@ -38,12 +38,14 @@ class warning_email_task extends adhoc_task {
         global $DB, $CFG;
 
         $data = $this->get_custom_data();
-        if (empty($data) ||
+        if (
+            empty($data) ||
             empty($data->courseid) ||
             empty($data->cmid) ||
             empty($data->quizid) ||
             empty($data->userid) ||
-            empty($data->attemptid)) {
+            empty($data->attemptid)
+        ) {
             // Nothing to do if required context is missing.
             return;
         }
@@ -114,4 +116,3 @@ class warning_email_task extends adhoc_task {
         }
     }
 }
-

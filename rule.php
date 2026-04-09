@@ -720,8 +720,10 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $rolechoices
         );
         $mform->addHelpButton('warning_email_trigger_role', 'warning_email_trigger_role', 'quizaccess_quizproctoring');
-        $mform->setDefault('warning_email_trigger_role',
-            ($savedroleid > 0 && isset($rolechoices[$savedroleid])) ? $savedroleid : $defaultroleid);
+        $mform->setDefault(
+            'warning_email_trigger_role',
+            ($savedroleid > 0 && isset($rolechoices[$savedroleid])) ? $savedroleid : $defaultroleid
+        );
         $mform->hideIf('warning_email_trigger_role', 'enableproctoring', 'eq', '0');
         $mform->hideIf('warning_email_trigger_role', 'warning_threshold', 'neq', 0);
 
