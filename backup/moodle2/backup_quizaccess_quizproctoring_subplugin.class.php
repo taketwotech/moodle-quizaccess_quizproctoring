@@ -34,7 +34,6 @@ require_once($CFG->dirroot . '/mod/quiz/backup/moodle2/backup_mod_quiz_access_su
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_quizaccess_quizproctoring_subplugin extends backup_mod_quiz_access_subplugin {
-
     /**
      * Stores the data related to the quiz proctoring settings for a particular quiz.
      *

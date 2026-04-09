@@ -45,8 +45,9 @@ $PAGE->set_context($context);
 
 // Only proceed when the configured warnings threshold is "unlimited".
 $settings = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
-if (!$settings ||
-    (int)$settings->warning_threshold !== 0 ||
+if (
+    !$settings ||
+    (int) $settings->warning_threshold !== 0 ||
     empty($settings->warning_email_threshold)
 ) {
     echo json_encode(['status' => 'ignored']);
@@ -70,4 +71,3 @@ if ((int)$warningemailcount === (int)$settings->warning_email_threshold) {
 
 echo json_encode(['status' => 'noaction']);
 die();
-
