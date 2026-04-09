@@ -82,8 +82,9 @@ $string['deleteallimagesquiz'] = '"{$a}" adlı teste ait tüm görselleri silmek
 $string['deleteallimagesuser'] = '"{$a}" adlı kullanıcıya ait tüm görselleri silmek istiyor musunuz? Bu işlem kalıcıdır ve geri alınamaz.<br/><br/>';
 $string['deletestoredimagestask'] = 'Kayıtlı Görselleri Silme Görevi';
 $string['delinformation'] = '<b>"{$a}" Test Raporu:</b> Bu testteki tüm görselleri kaldırabilirsiniz. Bu işlem tüm kullanıcılar için geçerli olacaktır.';
-$string['delinformationu'] = '<b>Kullanıcı Görsel Raporu:</b> Bir kullanıcının bu testteki tüm görsellerini kaldırın. Tüm ilgili görseller silinecektir.';
+$string['delinformationu'] = '<b>Kullanıcı Görsel Raporu:</b> Bu testteki her kullanıcı için denemeler, yakalanan görseller, uyarılar ve kimlik dahil tam gözetim bilgilerini görüntüleyin.';
 $string['demovideo'] = 'Tüm süreci izlemek için buraya tıklayın';
+$string['deviceinfo'] = 'Cihaz bilgisi';
 $string['disabled'] = 'Devre Dışı';
 $string['disableeyetrackingallquizzes'] = 'Bu kullanıcıyla ilişkili tüm testlerde göz takibini devre dışı bırak.';
 $string['disableeyetrackingmessage'] = '{$a} kullanıcısı için göz takibini devre dışı bırakmak ister misiniz';
@@ -96,6 +97,8 @@ $string['enableeyecheckreal'] = 'Göz takibini etkinleştir';
 $string['enableeyecheckreal_help'] = 'Etkinleştirildiğinde, kullanıcının gözleri kapandığında veya kamera odağı kaybolduğunda bir uyarı tetiklenir.';
 $string['enableeyetrackingmessage'] = '{$a} kullanıcısı için göz takibini etkinleştirmek ister misiniz';
 $string['enableeyetrackingmessage_global'] = 'Göz takibi {$a} kullanıcısı için zaten global olarak etkinleştirilmiş. Tüm testler için etkinleştirmeye devam etmek istiyor musunuz?';
+$string['enableobjectdetect'] = 'Nesne algılamayı etkinleştir';
+$string['enableobjectdetect_help'] = 'Etkinleştirildiğinde, sistem sınav sırasında öğrencinin bulunduğu ortamı nesne algılama ile izler. Kitaplar, cep telefonları veya olası kopya girişimini gösterebilecek diğer yasaklı nesnelerin varlığını tespit edebilir.';
 $string['enableproctoring'] = 'Bu testte gözetimi etkinleştir';
 $string['enableproctoring_help'] = 'Etkinleştirildiğinde, kullanıcılar teste başlamadan önce kimlik doğrulaması yapmak zorundadır.';
 $string['enableprofilematch'] = 'Profil resmi eşleşmesini etkinleştir';
@@ -151,9 +154,11 @@ $string['noactiveplan'] = 'Önceki planınızın süresi doldu !';
 $string['noaudio'] = 'Ses Yok';
 $string['nocameradetected'] = 'Kamera veya mikrofon devre dışı. Lütfen ikisini de etkinleştirin. {$a}';
 $string['nocameradetectedm'] = 'Kamera veya mikrofon devre dışı. Lütfen ikisini de etkinleştirin.';
+$string['nocameradisabled'] = 'Kamera devre dışı. Devam etmek için lütfen etkinleştirin. {$a}';
 $string['nofacedetected'] = 'Yüz algılanmadı. {$a}';
 $string['noimages'] = 'Görsel yok';
 $string['noimageswarning'] = 'Sınav sırasında herhangi bir uyarı görseli bulunamadı';
+$string['nomicrophonedisabled'] = 'Mikrofon devre dışı. Devam etmek için lütfen etkinleştirin. {$a}';
 $string['noplanresponse'] = 'Aktif plan yok';
 $string['norecordsfound'] = 'Kayıt bulunamadı.';
 $string['nostudentonline'] = 'Çevrimiçi kullanıcı yok';
@@ -161,6 +166,7 @@ $string['notcameradetected'] = 'Kamera algılanmadı.';
 $string['notice'] = 'Uyarı - Yüzünüzün açıkça göründüğü, iyi aydınlatılmış bir ortamda olduğunuzdan emin olun. Dikkat dağıtıcı hareket veya nesnelerin bulunmadığı sade bir arka plan kullanın. Kameranızı göz hizasına yerleştirerek yüzünüzü net bir şekilde çekin.';
 $string['notmatchedprofile'] = 'Profil resminiz mevcut görüntünüzle eşleşmiyor.';
 $string['novideo'] = 'Video yok';
+$string['objectdetected'] = 'Şüpheli nesneler tespit edildi. {$a}';
 $string['oneminute'] = '1 dakika';
 $string['pdf_analysis_title'] = 'TEST KİMLİĞİ İÇİN GÖZETİM ANALİZİ: {$a}';
 $string['pdf_assessment'] = 'Değerlendirme';
@@ -206,6 +212,8 @@ $string['quizproctoring:quizproctoringonlinestudent'] = 'Gözetim sırasında ç
 $string['quizproctoring:quizproctoringoverallreport'] = 'Gözetim Raporunu Görüntüle';
 $string['quizproctoring:quizproctoringreport'] = 'Gözetim Görselleri ve Gözetim Kimliği düğmelerini görüntüle';
 $string['renewplan'] = 'Planı Yenile';
+$string['reportingpagination'] = 'Rapor sayfası sayfalandırma';
+$string['reportingpagination_help'] = 'ProctorLink rapor sayfalarında (Kullanıcı Görüntüleri Raporu, Gözetim Raporu, Deneme İncelemeleri) varsayılan sayfa başına kayıt sayısı. Kullanıcılar açılır menü ile sayfa başına değeri değiştirebilir.';
 $string['reqproctormsg'] = 'Lütfen görüntünüzü çekin';
 $string['requiresafeexambrowser'] = 'Güvenli Sınav Tarayıcısı kullanımını zorunlu kıl';
 $string['retake'] = 'Yeniden Deneme';
@@ -258,6 +266,25 @@ $string['viewaudio'] = 'Sesi Görüntüle';
 $string['viewproctoringreport'] = 'Gözetim Raporunu Görüntüle';
 $string['viewstudentonline'] = 'Çevrimiçi Kullanıcıları Görüntüle';
 $string['warning'] = ' uyarı';
+$string['warning_email_body'] = 'Merhaba,
+
+Kursunuzdaki bir öğrenci için "{$a->coursename}" dersinde gözetim uyarı eşiğine ulaşıldı.
+
+Detaylar:
+- Test: {$a->quizname}
+- Öğrenci: {$a->studentname}
+- Deneme ID: {$a->attemptid}
+- Kaydedilen toplam uyarı sayısı: {$a->warningcount}
+
+İlgili denemeyi ve gözetim verilerini aşağıdaki bağlantıdan inceleyebilirsiniz:
+{$a->attempturl}
+
+Bu mesaj ProctorLink test erişim kuralı tarafından otomatik olarak oluşturulmuştur.';
+$string['warning_email_subject'] = '{$a->quizname} sınavı için gözetim uyarı eşiğine ulaşıldı';
+$string['warning_email_threshold'] = 'Uyarı eşiği aşıldığında öğretmene e-posta gönder';
+$string['warning_email_threshold_help'] = 'Uyarı eşiği Sınırsız olarak ayarlandığında, bir öğrencinin bu test için toplam uyarı sayısı bu değere ulaştığında veya geçtiğinde öğretmenlere e-posta gönderin. E-posta göndermemek için Devre Dışı olarak bırakın.';
+$string['warning_email_trigger_role'] = 'Eşik aşıldığında e-posta gönderilecek rol';
+$string['warning_email_trigger_role_help'] = 'Uyarı e-posta eşiği kullanıldığında, bildirim e-postasını hangi rolün alacağını seçin.';
 $string['warning_threshold'] = 'Gözetimli testte uyarı eşiği';
 $string['warning_threshold_help'] = 'Bir kullanıcının gözetimli testte diskalifiye edilmeden önce alabileceği maksimum uyarı sayısını ayarlayın.';
 $string['warningaws'] = 'Teste devam etmek için lütfen <a href="{$a}">AWS yapılandırmasını</a> tamamlayın.';

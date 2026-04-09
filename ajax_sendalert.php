@@ -79,7 +79,7 @@ if ($quizsubmit) {
     $record->userid = $userid;
     $record->quizid = $quizid;
     $record->attemptid = $attemptid;
-    $record->alert_message = $alertmessage;
+    $record->alertmessage = $alertmessage;
     $record->teacherid = $teacherid;
     $record->timecreated = time();
 

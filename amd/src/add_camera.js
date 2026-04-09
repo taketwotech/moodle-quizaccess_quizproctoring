@@ -60,9 +60,15 @@ function($, str, ModalFactory) {
     Camera.prototype.quizid = false;
 
     Camera.prototype.startcamera = function() {
+        if (quizTerminationInProgress) {
+            return Promise.resolve(null);
+        }
         const takePictureButton = $('#' + this.takepictureid);
         takePictureButton.prop('disabled', true);
-        return navigator.mediaDevices.getUserMedia({video: true, audio: true})
+        const cameraInstance = this;
+        let sentCameraDisabled = false;
+        let lastDeviceWarningPopupAt = 0;
+        return navigator.mediaDevices.getUserMedia({video: true, audio: USE_AUDIO})
             .then(function(stream) {
                 const videoElement = document.getElementById('video');
                 if (videoElement) {
@@ -77,19 +83,119 @@ function($, str, ModalFactory) {
                     });
 
                     stream.getVideoTracks()[0].onended = function() {
+                        if (quizTerminationInProgress) {
+                            return;
+                        }
                         takePictureButton.prop('disabled', true);
-                        $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
+                        const validatekey = USE_AUDIO ? 'nocameradetected' : 'nocameradisabled';
+                        const popupmessage = USE_AUDIO ?
+                            M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', '') :
+                            getNormalizedCameraDisabledMessage();
+                        const shouldreportrealtime = cameraInstance && cameraInstance.attemptid && !cameraInstance.mainimage;
+                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                            lastDeviceWarningPopupAt = Date.now();
+                            $(document).trigger('popup', popupmessage);
+                            if (shouldreportrealtime) {
+                                suppressRealtimePopupUntil = Date.now() + 1500;
+                            }
+                        }
+                        if (!sentCameraDisabled && shouldreportrealtime) {
+                            sentCameraDisabled = true;
+                            $.ajax({
+                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                method: 'POST',
+                                data: {
+                                    cmid: cameraInstance.cmid,
+                                    attemptid: cameraInstance.attemptid,
+                                    mainimage: cameraInstance.mainimage,
+                                    validate: validatekey,
+                                },
+                                success: function(response) {
+                                    if (response && response.redirect && response.url) {
+                                        quizTerminationInProgress = true;
+                                        window.onbeforeunload = null;
+                                        $(document).trigger('popup', response.msg);
+                                        setTimeout(function() {
+                                            window.location.href = encodeURI(response.url);
+                                        }, 3000);
+                                    } else if (response && response.errorcode) {
+                                        handleRealtimeWarningResponse(response, popupmessage,
+                                            cameraInstance.cmid, cameraInstance.attemptid);
+                                    } else {
+                                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                            lastDeviceWarningPopupAt = Date.now();
+                                            $(document).trigger('popup', popupmessage);
+                                        }
+                                    }
+                                },
+                                error: function(xhr) {
+                                    handleRealtimeWarningXhrError(xhr, popupmessage,
+                                        cameraInstance.cmid, cameraInstance.attemptid);
+                                }
+                            });
+                        } else {
+                            if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                lastDeviceWarningPopupAt = Date.now();
+                                $(document).trigger('popup', popupmessage);
+                            }
+                        }
                     };
 
-                    const audioTrack = stream.getAudioTracks()[0];
-                    if (audioTrack) {
-                        audioTrack.onended = function() {
-                            $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
-                        };
-                    } else {
-                        $(document).trigger('popup', M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring'));
+                    if (USE_AUDIO) {
+                        const audioTrack = stream.getAudioTracks()[0];
+                        if (audioTrack) {
+                            audioTrack.onended = function() {
+                                if (quizTerminationInProgress) {
+                                    return;
+                                }
+                                const shouldreportrealtime = cameraInstance &&
+                                    cameraInstance.attemptid && !cameraInstance.mainimage;
+                                if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                    lastDeviceWarningPopupAt = Date.now();
+                                    $(document).trigger('popup',
+                                        M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''));
+                                    if (shouldreportrealtime) {
+                                        suppressRealtimePopupUntil = Date.now() + 1500;
+                                    }
+                                }
+                                if (!sentCameraDisabled && shouldreportrealtime) {
+                                    sentCameraDisabled = true;
+                                    $.ajax({
+                                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                        method: 'POST',
+                                        data: {
+                                            cmid: cameraInstance.cmid,
+                                            attemptid: cameraInstance.attemptid,
+                                            mainimage: cameraInstance.mainimage,
+                                            validate: 'nocameradetected',
+                                        },
+                                        success: function(response) {
+                                            if (response && response.errorcode && response.error) {
+                                                handleRealtimeWarningResponse(
+                                                    response,
+                                                    M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''),
+                                                    cameraInstance.cmid,
+                                                    cameraInstance.attemptid
+                                                );
+                                            }
+                                        },
+                                        error: function(xhr) {
+                                            handleRealtimeWarningXhrError(
+                                                xhr,
+                                                M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''),
+                                                cameraInstance.cmid,
+                                                cameraInstance.attemptid
+                                            );
+                                        }
+                                    });
+                                }
+                            };
+                        } else {
+                            $(document).trigger('popup',
+                                M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''));
+                        }
                     }
-                    if (this.attemptid) {
+                    if (cameraInstance.attemptid) {
                         restoreVideoPosition(videoElement);
                         makeDraggable(videoElement);
                     }
@@ -173,6 +279,100 @@ function($, str, ModalFactory) {
     };
 
     Camera.prototype.proctoringimage = function() {
+        if (quizTerminationInProgress) {
+            return;
+        }
+        const hasLiveVideoTrack = localMediaStream &&
+            localMediaStream.getVideoTracks &&
+            localMediaStream.getVideoTracks().some((track) => track.readyState === 'live');
+        const hasLiveAudioTrack = localMediaStream &&
+            localMediaStream.getAudioTracks &&
+            localMediaStream.getAudioTracks().some((track) => track.readyState === 'live');
+        if (!USE_AUDIO) {
+            if (!hasLiveVideoTrack) {
+                const now = Date.now();
+                // Prevent repetitive warnings from the polling interval loop.
+                if ((now - lastCameraDisabledReportAt) > 5000) {
+                    lastCameraDisabledReportAt = now;
+                    $.ajax({
+                        url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                        method: 'POST',
+                        data: {
+                            cmid: this.cmid,
+                            attemptid: this.attemptid,
+                            mainimage: this.mainimage,
+                            validate: 'nocameradisabled',
+                        },
+                        success: (response) => {
+                            if (response && response.redirect && response.url) {
+                                window.onbeforeunload = null;
+                                $(document).trigger('popup', response.msg);
+                                setTimeout(function() {
+                                    window.location.href = encodeURI(response.url);
+                                }, 3000);
+                            } else if (response && response.errorcode) {
+                                handleRealtimeWarningResponse(
+                                    response,
+                                    getNormalizedCameraDisabledMessage(),
+                                    this.cmid,
+                                    this.attemptid
+                                );
+                            } else {
+                                $(document).trigger('popup', getNormalizedCameraDisabledMessage());
+                            }
+                        },
+                        error: (xhr) => {
+                            handleRealtimeWarningXhrError(
+                                xhr,
+                                getNormalizedCameraDisabledMessage(),
+                                this.cmid,
+                                this.attemptid
+                            );
+                        }
+                    });
+                }
+                return;
+            }
+        } else if (!hasLiveVideoTrack || !hasLiveAudioTrack) {
+            const now = Date.now();
+            const currentcmid = this.cmid;
+            const currentattemptid = this.attemptid;
+            if ((now - lastCameraDisabledReportAt) > 5000) {
+                lastCameraDisabledReportAt = now;
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                    method: 'POST',
+                    data: {
+                        cmid: currentcmid,
+                        attemptid: currentattemptid,
+                        mainimage: this.mainimage,
+                        validate: 'nocameradetected',
+                    },
+                    success: function(response) {
+                        if (response && response.errorcode && response.error) {
+                            handleRealtimeWarningResponse(
+                                response,
+                                M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''),
+                                currentcmid,
+                                currentattemptid
+                            );
+                        } else {
+                            $(document).trigger('popup',
+                                M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''));
+                        }
+                    },
+                    error: function(xhr) {
+                        handleRealtimeWarningXhrError(
+                            xhr,
+                            M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''),
+                            currentcmid,
+                            currentattemptid
+                        );
+                    }
+                });
+            }
+            return;
+        }
         var requestData = {
             cmid: this.cmid,
             attemptid: this.attemptid,
@@ -222,6 +422,7 @@ function($, str, ModalFactory) {
                     var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                     var leftwarnings = Math.max(warningsl - 1, 0);
                     localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                    trackWarningAndMaybeQueueEmail(requestData.cmid, requestData.attemptid);
                     $(document).trigger('popup', response.error);
                 } else {
                     if (response.redirect && response.url) {
@@ -251,6 +452,9 @@ function($, str, ModalFactory) {
     var localMediaStream = null;
     var USE_AUDIO = true;
     var USE_VIDEO = true;
+    var lastCameraDisabledReportAt = 0;
+    var quizTerminationInProgress = false;
+    var suppressRealtimePopupUntil = 0;
     let hiddenCloseButton = null;
 
     Camera.prototype.retake = function() {
@@ -289,9 +493,13 @@ function($, str, ModalFactory) {
     var init = function(cmid, mainimage, verifyduringattempt = true, attemptid = null,
         teacher, quizid, enableeyecheckreal, studenthexstring,
         onlinestudent = 0, securewindow = null, userfullname,
-        enablestudentvideo = 1, enablerecordaudio = 0, setinterval = 300,
-        warnings = 0, userid, usergroup = '', detectionval = null) {
+        enablestudentvideo = 1, enablerecordaudio = 0, enableobjectdetect = 1, setinterval = 300,
+        warnings = 0, userid, usergroup = '', detectionval = null, warningEmailThreshold = 0) {
         let camera;
+        // Require microphone when either teacher proctoring or
+        // audio recording is enabled.
+        const requireaudiopermission = Boolean(Number(onlinestudent)) || Boolean(Number(enablerecordaudio));
+        USE_AUDIO = requireaudiopermission;
         if (!verifyduringattempt) {
             localStorage.removeItem('eyecheckoff');
             if (document.readyState === 'complete') {
@@ -362,6 +570,11 @@ function($, str, ModalFactory) {
         } else {
             localStorage.setItem('quizid', JSON.stringify(quizid));
             localStorage.setItem('warningThreshold', JSON.stringify(warnings));
+            // Track original configured warnings threshold and a separate counter
+            // for how many warnings have occurred (used for email threshold logic).
+            localStorage.setItem('warningOriginalThreshold', JSON.stringify(warnings));
+            localStorage.setItem('warningEmailCount', JSON.stringify(0));
+            localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -450,13 +663,138 @@ function($, str, ModalFactory) {
                                     const vElement = document.getElementById('video');
                                     const cElement = document.getElementById('canvas');
                                     if (vElement && cElement) {
-                                        navigator.mediaDevices.getUserMedia({video: true, audio: true})
+                                        navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
                                         .then((stream) => {
+                                            localMediaStream = stream;
                                             vElement.srcObject = stream;
                                             vElement.play();
                                             vElement.muted = true;
                                             restoreVideoPosition(vElement);
                                             makeDraggable(vElement);
+                                            let sentCameraDisabled = false;
+                                            let lastDeviceWarningPopupAt = 0;
+                                            const shouldreportrealtime = Boolean(attemptid) && !mainimage;
+                                            const videoTrack = stream.getVideoTracks()[0];
+                                            if (videoTrack) {
+                                                videoTrack.onended = function() {
+                                                    if (quizTerminationInProgress) {
+                                                        return;
+                                                    }
+                                                    const validatekey = requireaudiopermission ?
+                                                        'nocameradetected' : 'nocameradisabled';
+                                                    const popupmessage = requireaudiopermission ?
+                                                        M.util.get_string('nocameradetectedm',
+                                                            'quizaccess_quizproctoring', '') :
+                                                        getNormalizedCameraDisabledMessage();
+                                                    if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                                        lastDeviceWarningPopupAt = Date.now();
+                                                        $(document).trigger('popup', popupmessage);
+                                                        if (shouldreportrealtime) {
+                                                            suppressRealtimePopupUntil = Date.now() + 1500;
+                                                        }
+                                                    }
+                                                    if (!sentCameraDisabled && shouldreportrealtime) {
+                                                        sentCameraDisabled = true;
+                                                        $.ajax({
+                                                            url: M.cfg.wwwroot +
+                                                                '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                                            method: 'POST',
+                                                            data: {
+                                                                cmid: cmid,
+                                                                attemptid: attemptid,
+                                                                mainimage: mainimage,
+                                                                validate: validatekey,
+                                                            },
+                                                            success: function(response) {
+                                                                if (response && response.redirect && response.url) {
+                                                                    quizTerminationInProgress = true;
+                                                                    window.onbeforeunload = null;
+                                                                    $(document).trigger('popup', response.msg);
+                                                                    setTimeout(function() {
+                                                                        window.location.href = encodeURI(response.url);
+                                                                    }, 3000);
+                                                                } else if (response && response.errorcode) {
+                                                                    handleRealtimeWarningResponse(response, popupmessage,
+                                                                        cmid, attemptid);
+                                                                } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                                                    lastDeviceWarningPopupAt = Date.now();
+                                                                    $(document).trigger('popup', popupmessage);
+                                                                }
+                                                            },
+                                                            error: function(xhr) {
+                                                                handleRealtimeWarningXhrError(xhr, popupmessage,
+                                                                    cmid, attemptid);
+                                                            }
+                                                        });
+                                                    } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                                        lastDeviceWarningPopupAt = Date.now();
+                                                        $(document).trigger('popup', popupmessage);
+                                                    }
+                                                };
+                                            }
+                                            if (requireaudiopermission) {
+                                                const audioTrack = stream.getAudioTracks()[0];
+                                                if (audioTrack) {
+                                                    audioTrack.onended = function() {
+                                                        if (quizTerminationInProgress) {
+                                                            return;
+                                                        }
+                                                        const genericmsg = M.util.get_string('nocameradetectedm',
+                                                            'quizaccess_quizproctoring', '');
+                                                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                                            lastDeviceWarningPopupAt = Date.now();
+                                                            $(document).trigger('popup', genericmsg);
+                                                            if (shouldreportrealtime) {
+                                                                suppressRealtimePopupUntil = Date.now() + 1500;
+                                                            }
+                                                        }
+                                                        if (!sentCameraDisabled && shouldreportrealtime) {
+                                                            sentCameraDisabled = true;
+                                                            $.ajax({
+                                                                url: M.cfg.wwwroot +
+                                                                    '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                                                method: 'POST',
+                                                                data: {
+                                                                    cmid: cmid,
+                                                                    attemptid: attemptid,
+                                                                    mainimage: mainimage,
+                                                                    validate: 'nocameradetected',
+                                                                },
+                                                                success: function(response) {
+                                                                    if (response && response.redirect && response.url) {
+                                                                        quizTerminationInProgress = true;
+                                                                        window.onbeforeunload = null;
+                                                                        $(document).trigger('popup', response.msg);
+                                                                        setTimeout(function() {
+                                                                            window.location.href =
+                                                                                encodeURI(response.url);
+                                                                        }, 3000);
+                                                                    } else if (response && response.errorcode) {
+                                                                        handleRealtimeWarningResponse(
+                                                                            response,
+                                                                            genericmsg,
+                                                                            cmid,
+                                                                            attemptid
+                                                                        );
+                                                                    }
+                                                                },
+                                                                error: function(xhr) {
+                                                                    handleRealtimeWarningXhrError(
+                                                                        xhr,
+                                                                        genericmsg,
+                                                                        cmid,
+                                                                        attemptid
+                                                                    );
+                                                                }
+                                                            });
+                                                        }
+                                                    };
+                                                } else {
+                                                    $(document).trigger('popup',
+                                                        M.util.get_string('nocameradetectedm',
+                                                            'quizaccess_quizproctoring', ''));
+                                                }
+                                            }
                                             if (enablerecordaudio) {
                                                 // eslint-disable-next-line no-undef
                                                 useraudiorecord(stream);
@@ -476,11 +814,12 @@ function($, str, ModalFactory) {
                                                     mainimage: mainimage,
                                                 },
                                                 success: function(response) {
-                                                    if (response && response.errorcode) {
-                                                        const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                                                        const leftwarnings = Math.max(warningsl - 1, 0);
-                                                        localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                                                        $(document).trigger('popup', response.error);
+                        if (response && response.errorcode) {
+                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                            const leftwarnings = Math.max(warningsl - 1, 0);
+                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
+                            $(document).trigger('popup', response.error);
                                                     } else if (response.redirect && response.url) {
                                                         window.onbeforeunload = null;
                                                         $(document).trigger('popup', response.msg);
@@ -494,7 +833,7 @@ function($, str, ModalFactory) {
                                             }
                                         });
                                         clearInterval(waitForElements);
-                                        if (enableeyecheckreal) {
+                                        if (enableeyecheckreal || enableobjectdetect === 1) {
                                             // eslint-disable-next-line no-undef
                                             const faceMesh = new FaceMesh({
                                                 locateFile: (file) => {
@@ -502,13 +841,19 @@ function($, str, ModalFactory) {
                                                 }
                                             });
                                             if (typeof setupFaceMesh !== 'undefined') {
+                                                if (enableobjectdetect === 1) {
+                                                    window.objectDetectionCallback = function(result) {
+                                                        realtimeDetection(cmid, attemptid, mainimage,
+                                                            result.status, result.data);
+                                                    };
+                                                }
                                                 // eslint-disable-next-line no-undef
                                                 setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
                                                     if (result.status) {
                                                         realtimeDetection(cmid, attemptid, mainimage,
                                                             result.status, result.data);
                                                     }
-                                                });
+                                                }, enableobjectdetect, enableeyecheckreal);
                                             }
                                         }
                                     }
@@ -566,6 +911,7 @@ function($, str, ModalFactory) {
                                                 var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                                                 var leftwarnings = Math.max(warningsl - 1, 0);
                                                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                                trackWarningAndMaybeQueueEmail(camera.cmid, camera.attemptid);
                                                 $(document).trigger('popup', response.error);
                                             } else if (response.redirect && response.url) {
                                                 window.onbeforeunload = null;
@@ -662,6 +1008,7 @@ function($, str, ModalFactory) {
                                             const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                                             const leftwarnings = Math.max(warningsl - 1, 0);
                                             localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
                                             $(document).trigger('popup', response.error);
                                         } else if (response.redirect && response.url) {
                                             window.onbeforeunload = null;
@@ -693,30 +1040,34 @@ function($, str, ModalFactory) {
                     }, setinterval * 1000);
                 }
             } else {
-                if (enableeyecheckreal) {
-                    const waitForElements = setInterval(() => {
-                        const vElement = document.getElementById('video');
-                        const cElement = document.getElementById('canvas');
-                        if (vElement && cElement) {
-                            // eslint-disable-next-line no-undef
-                            const faceMesh = new FaceMesh({
-                                locateFile: (file) => {
-                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                }
-                            });
-                            clearInterval(waitForElements);
-                            if (typeof setupFaceMesh !== 'undefined') {
-                                // eslint-disable-next-line no-undef
-                                setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                    if (result.status) {
-                                        realtimeDetection(cmid, attemptid, mainimage,
-                                                result.status, result.data);
-                                    }
-                                });
+                const waitForElements = setInterval(() => {
+                    const vElement = document.getElementById('video');
+                    const cElement = document.getElementById('canvas');
+                    if (vElement && cElement && (enableeyecheckreal || enableobjectdetect === 1)) {
+                        // eslint-disable-next-line no-undef
+                        const faceMesh = new FaceMesh({
+                            locateFile: (file) => {
+                                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
                             }
+                        });
+                        clearInterval(waitForElements);
+                        if (typeof setupFaceMesh !== 'undefined') {
+                            if (enableobjectdetect === 1) {
+                                window.objectDetectionCallback = function(result) {
+                                    realtimeDetection(cmid, attemptid, mainimage,
+                                        result.status, result.data);
+                                };
+                            }
+                            // eslint-disable-next-line no-undef
+                            setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
+                                if (result.status) {
+                                    realtimeDetection(cmid, attemptid, mainimage,
+                                            result.status, result.data);
+                                }
+                            }, enableobjectdetect, enableeyecheckreal);
                         }
-                    }, 500);
-                }
+                    }
+                }, 500);
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, enablerecordaudio, setinterval,
                     quizid);
@@ -761,7 +1112,7 @@ function($, str, ModalFactory) {
                     navigator.mozGetUserMedia ||
                     navigator.msGetUserMedia
                 );
-                navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
+                void navigator.mediaDevices.getUserMedia({"audio": USE_AUDIO, "video": USE_VIDEO})
                 .then(function(stream) {
                     localMediaStream = stream;
                     if (verifyduringattempt) {
@@ -835,7 +1186,6 @@ function($, str, ModalFactory) {
                         callback();
                     }
                 });
-                // Promise is handled with catch, no need to return
             } else {
                 localMediaStream = createDummyMediaStream();
                 if (callback) {
@@ -857,7 +1207,7 @@ function($, str, ModalFactory) {
     /**
      * Detect device information from user agent string.
      *
-     * @returns {string} Device type (Windows, Mac, Mobile, or Unknown)
+     * @returns {string} Device type (Windows, Mac, Tablet, Mobile, or Unknown)
      */
     function detectDeviceInfo() {
         const useragent = navigator.userAgent || '';
@@ -886,11 +1236,10 @@ function($, str, ModalFactory) {
         }
 
         // Android tablets - check for "tablet" keyword or Android without "mobile" keyword.
-        // Some Android tablets have "tablet" in user agent, or Android without "mobile".
-        // This check must come before the general mobile check to avoid misclassification.
+        // This check must come before the general mobile phone check.
         if ((/android/i.test(ua) && /tablet/i.test(ua)) ||
             (/android/i.test(ua) && !/mobile/i.test(ua))) {
-            return 'Mobile'; // Android tablets are classified as mobile devices.
+            return 'Tablet';
         }
 
         // Check for other mobile phones (Android phones, Blackberry, Windows Phone, etc.).
@@ -924,6 +1273,52 @@ function($, str, ModalFactory) {
         return 'Unknown';
     }
     /**
+     * Track warnings for email threshold and, when needed, schedule
+     * an adhoc email task via AJAX without affecting quiz flow.
+     *
+     * @param {int} cmid - course module id
+     * @param {int} attemptid - quiz attempt id
+     * @return {void}
+     */
+    function trackWarningAndMaybeQueueEmail(cmid, attemptid) {
+        var original = JSON.parse(localStorage.getItem('warningOriginalThreshold')) || 0;
+        // Only interested when original threshold is Unlimited (0).
+        if (original !== 0) {
+            return;
+        }
+
+        var warningEmailThreshold = JSON.parse(localStorage.getItem('warningEmailThreshold')) || 0;
+        if (warningEmailThreshold <= 0) {
+            return;
+        }
+
+        var emailCount = JSON.parse(localStorage.getItem('warningEmailCount')) || 0;
+        emailCount += 1;
+        localStorage.setItem('warningEmailCount', JSON.stringify(emailCount));
+
+        // Only trigger the email task when count equals the configured threshold.
+        if (emailCount !== warningEmailThreshold) {
+            return;
+        }
+
+        var quizid = JSON.parse(localStorage.getItem('quizid')) || null;
+        if (!quizid) {
+            return;
+        }
+
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_warningemail.php',
+            method: 'POST',
+            data: {
+                cmid: cmid,
+                quizid: quizid,
+                attemptid: attemptid,
+                warningemailcount: emailCount
+            }
+        });
+    }
+
+    /**
      * Setup visibility change
      *
      * @param {int} cmid - cmid
@@ -942,6 +1337,7 @@ function($, str, ModalFactory) {
             message = M.util.get_string('tabwarningmultiple', 'quizaccess_quizproctoring', leftwarnings);
         }
         $(document).trigger('popup', message);
+        trackWarningAndMaybeQueueEmail(cmid, attemptid);
         $.ajax({
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
         method: 'POST',
@@ -1124,6 +1520,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                     const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                     const leftwarnings = Math.max(warningsl - 1, 0);
                     localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                    trackWarningAndMaybeQueueEmail(cmid, attemptid);
                     $(document).trigger('popup', response.error);
                 }
                 return;
@@ -1132,6 +1529,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                 const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                 const leftwarnings = Math.max(warningsl - 1, 0);
                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                trackWarningAndMaybeQueueEmail(cmid, attemptid);
                 $(document).trigger('popup', response.error);
             } else {
                 if (response.redirect && response.url) {
@@ -1197,5 +1595,100 @@ function closeCustomModal() {
     });
     $(document).off('click');
     $(document).off('keydown');
+}
+
+/**
+ * Handle realtime warning JSON response and keep warning counter in sync.
+ *
+ * @param {Object} response - AJAX response object
+ * @param {string} fallbackmessage - fallback warning text
+ * @param {number} cmid - course module id
+ * @param {number} attemptid - attempt id
+ * @return {void}
+ */
+function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attemptid) {
+    if (response && response.redirect && response.url) {
+        quizTerminationInProgress = true;
+        window.onbeforeunload = null;
+        $(document).trigger('popup', response.msg);
+        setTimeout(function() {
+            window.location.href = encodeURI(response.url);
+        }, 3000);
+        return;
+    }
+    if (!response || !response.errorcode) {
+        if (quizTerminationInProgress) {
+            return;
+        }
+        if (fallbackmessage) {
+            $(document).trigger('popup', fallbackmessage);
+        }
+        return;
+    }
+    if (quizTerminationInProgress) {
+        return;
+    }
+    if (Date.now() < suppressRealtimePopupUntil) {
+        suppressRealtimePopupUntil = 0;
+    } else {
+        $(document).trigger('popup', response.error || fallbackmessage);
+    }
+    decrementWarningCounter();
+    trackWarningAndMaybeQueueEmail(cmid, attemptid);
+}
+
+/**
+ * Handle realtime warning XHR error responses (moodle_exception JSON payloads).
+ *
+ * @param {Object} xhr - jQuery XHR object
+ * @param {string} fallbackmessage - fallback warning text
+ * @param {number} cmid - course module id
+ * @param {number} attemptid - attempt id
+ * @return {void}
+ */
+function handleRealtimeWarningXhrError(xhr, fallbackmessage, cmid, attemptid) {
+    let payload = null;
+    if (xhr && xhr.responseJSON) {
+        payload = xhr.responseJSON;
+    } else if (xhr && xhr.responseText) {
+        try {
+            payload = JSON.parse(xhr.responseText);
+        } catch (e) {
+            payload = null;
+        }
+    }
+    if (payload && payload.errorcode) {
+        handleRealtimeWarningResponse(payload, fallbackmessage, cmid, attemptid);
+        return;
+    }
+    if (fallbackmessage) {
+        $(document).trigger('popup', fallbackmessage);
+    }
+}
+
+/**
+ * Decrease locally tracked warning threshold count by one.
+ *
+ * @return {void}
+ */
+function decrementWarningCounter() {
+    const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+    const leftwarnings = Math.max(warningsl - 1, 0);
+    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+}
+
+/**
+ * Normalize legacy cached camera disabled message formatting.
+ *
+ * @return {string} Camera disabled warning message.
+ */
+function getNormalizedCameraDisabledMessage() {
+    const key = 'nocameradisabled';
+    const component = 'quizaccess_quizproctoring';
+    const message = M.util.get_string(key, component, '');
+    if (message === 'Camera is disabled.Please enable to continue.') {
+        return 'Camera is disabled. Please enable to continue.';
+    }
+    return message;
 }
 });

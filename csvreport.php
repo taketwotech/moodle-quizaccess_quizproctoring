@@ -44,21 +44,21 @@ if (!empty($USER->lang)) {
 }
 
 $sql = "SELECT
-    mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username,
+    mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username, mp.deviceinfo,
     COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS noface_count,
     COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END) AS minimize_count,
     COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END) AS multifacesdetected,
-    COUNT(CASE WHEN p.status = 'nocameradetected' THEN 1 END) AS nocameradetected,
+    COUNT(CASE WHEN p.status IN ('nocameradetected', 'nocameradisabled') THEN 1 END) AS nocameradetected,
     COUNT(CASE WHEN p.status = 'eyesnotopened' THEN 1 END) AS eyesnotopened,
     COUNT(CASE WHEN p.status IN ('minimizedetected', 'multifacesdetected',
-    'nofacedetected', 'nocameradetected', 'eyesnotopened') THEN 1 END) AS totalwarnings
+    'nofacedetected', 'nocameradetected', 'nocameradisabled', 'eyesnotopened') THEN 1 END) AS totalwarnings
 FROM {user} u
 JOIN {quizaccess_main_proctor} mp
     ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
 LEFT JOIN {quizaccess_proctor_data} p
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0 AND mp.attemptid = p.attemptid
 WHERE mp.userimg IS NOT NULL AND mp.userimg != ''  AND p.image_status != 'M'
-GROUP BY mp.attemptid, u.id, u.firstname, u.lastname, u.username
+GROUP BY mp.attemptid, u.id, u.firstname, u.lastname, u.username, mp.deviceinfo
 ORDER BY totalwarnings DESC";
 
 $params = [
@@ -82,6 +82,7 @@ fputcsv($handle, [
     get_string('csvheader_noeye', 'quizaccess_quizproctoring'),
     get_string('csvheader_multiface', 'quizaccess_quizproctoring'),
     get_string('csvheader_totalwarnings', 'quizaccess_quizproctoring'),
+    get_string('deviceinfo', 'quizaccess_quizproctoring'),
     get_string('csvheader_starttime', 'quizaccess_quizproctoring'),
     get_string('csvheader_photoslink', 'quizaccess_quizproctoring'),
 ], ',', '"', '\\');
@@ -111,6 +112,7 @@ foreach ($records as $r) {
         $r->eyesnotopened,
         $r->multifacesdetected,
         $r->totalwarnings,
+        $r->deviceinfo,
         $timestart,
         $imagessurl->out(false),
     ], ',', '"', '\\');

@@ -25,6 +25,7 @@
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = optional_param('quizid', '', PARAM_INT);
@@ -69,11 +70,14 @@ $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.
 $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
 $enableaudio = !empty($storerecord->enablerecordaudio);
 $proctoringimageshow = 1;
+$reportingpagination = quizaccess_quizproctoring_get_reporting_pagination();
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
         const table = $('#proctoringreporttable').DataTable({
             serverSide: true,
             processing: true,
+            pageLength: {$reportingpagination},
+            lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
             ajax: {
                 url: M.cfg.wwwroot +
                     '/mod/quiz/accessrule/quizproctoring/proctoringreport_ajax.php',

@@ -150,8 +150,7 @@ class api {
         self::init();
         $curl = new \curl();
         $url = 'https://proctoring.taketwotechnologies.com/plan-details';
-        $domain = parse_url($CFG->wwwroot, PHP_URL_HOST);
-        $domain = preg_replace('/^www\./', '', $domain);
+        $domain = $CFG->wwwroot;
         $admin = get_admin();
         $email = $admin->email;
         $postdata = json_encode([

@@ -29,6 +29,7 @@ use mod_quiz\quiz_settings;
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
 $cmid = required_param('cmid', PARAM_INT);
 $deletequizid = optional_param('delete', '', PARAM_INT);
@@ -55,11 +56,31 @@ $PAGE->activityheader->disable();
 $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
 $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
+$reportingpagination = quizaccess_quizproctoring_get_reporting_pagination();
+$imagesreportajaxurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/imagesreport_ajax.php');
 $PAGE->requires->js_init_code("
     $(document).ready(function() {
         $('#imagesreporttable').DataTable({
-            pageLength: 10,
-            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, 'All'] ],
+            serverSide: true,
+            processing: true,
+            pageLength: {$reportingpagination},
+            lengthMenu: [ [10, 25, 50, 100], [10, 25, 50, 100] ],
+            ajax: {
+                url: " . json_encode($imagesreportajaxurl->out(false)) . ",
+                type: 'POST',
+                data: function(d) {
+                    d.cmid = {$cmid};
+                    d.courseid = {$course->id};
+                }
+            },
+            columns: [
+                { data: 0, orderable: true },
+                { data: 1, orderable: true },
+                { data: 2, orderable: true },
+                { data: 3, orderable: false },
+                { data: 4, orderable: false }
+            ],
+            order: [[0, 'asc']],
             language: {
                 search: 'Search:',
                 lengthMenu: 'Show _MENU_ per page',
@@ -248,8 +269,6 @@ if ($deleteaudioquiz || $deleteaudiocourse) {
     }
 }
 
-$table = new html_table();
-$table->id = 'imagesreporttable';
 $headers = [
     get_string("fullquizname", "quizaccess_quizproctoring"),
     get_string("users", "quizaccess_quizproctoring"),
@@ -257,7 +276,6 @@ $headers = [
     get_string("actions", "quizaccess_quizproctoring"),
     get_string("actionas", "quizaccess_quizproctoring"),
 ];
-$table->head = $headers;
 echo $OUTPUT->header();
 if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) {
     $btn = '<a class="btn btn-primary delcourse" href="#"
@@ -277,107 +295,18 @@ $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
              AND p.userimg !='' AND q.course = :courseid";
 $totalcount = $DB->count_records_sql($sqlcount, ['courseid' => $course->id]);
 if ($totalcount > 0) {
-    echo '<div class="headtitle">' .
-     '<p>' . get_string("delinformation", "quizaccess_quizproctoring", $course->fullname) . '</p>' .
-     '<div>' . $btn . ' ' . (isset($btnaudio) ? $btnaudio : '') . '</div>' .
+    echo '<div class="headtitle d-flex justify-content-between align-items-center flex-wrap gap-2">' .
+     '<p class="mb-0">' . get_string("delinformation", "quizaccess_quizproctoring", $course->fullname) . '</p>' .
+     '<div class="d-flex flex-wrap gap-2 ms-auto">' .
+     $btn .
+     (isset($btnaudio) ? $btnaudio : '') .
+     '</div>' .
      '</div><br/>';
 }
-$sql = "SELECT
-    q.id AS quizid,
-    q.name AS quizname,
-    (
-        SELECT COUNT(mp.userimg)
-        FROM {quizaccess_main_proctor} mp
-        WHERE mp.quizid = q.id
-          AND mp.deleted = 0
-          AND mp.userimg IS NOT NULL
-          AND mp.userimg != ''
-    ) AS main_proctor_images,
-    (
-        SELECT COUNT(pd.userimg)
-        FROM {quizaccess_proctor_data} pd
-        WHERE pd.quizid = q.id
-          AND pd.deleted = 0
-          AND pd.userimg IS NOT NULL
-          AND pd.userimg != ''
-          AND pd.image_status != 'M'
-    ) AS proctor_data_images,
-    (
-        (
-            SELECT COUNT(mp.userimg)
-            FROM {quizaccess_main_proctor} mp
-            WHERE mp.quizid = q.id
-              AND mp.deleted = 0
-              AND mp.userimg IS NOT NULL
-              AND mp.userimg != ''
-        ) +
-        (
-            SELECT COUNT(pd.userimg)
-            FROM {quizaccess_proctor_data} pd
-            WHERE pd.quizid = q.id
-              AND pd.deleted = 0
-              AND pd.userimg IS NOT NULL
-              AND pd.userimg != ''
-              AND pd.image_status != 'M'
-        )
-    ) AS total_images,
-    (
-        SELECT COUNT(DISTINCT userid)
-        FROM {quizaccess_main_proctor}
-            WHERE quizid = q.id AND deleted = 0
-    ) AS total_users,
-    (
-        SELECT COUNT(*)
-        FROM {quizaccess_proctor_audio}
-        WHERE quizid = q.id AND deleted = 0
-    ) AS total_audios
-FROM {quiz} q
-WHERE q.course = :courseid
-ORDER BY q.name ASC";
-$records = $DB->get_records_sql($sql, ['courseid' => $course->id]);
-if (empty($records)) {
-    $table->data[] = [
-        get_string('norecordsfound', 'quizaccess_quizproctoring'),
-        '',
-        '',
-        '',
-        '',
-    ];
-} else {
-    foreach ($records as $record) {
-        if ($record->total_images == 0) {
-            $deleteicon = '<span title="' . get_string('delete') . '" class="delete-quizs disabled"
-            style="opacity: 0.5; cursor: not-allowed;">
-                <i class="icon fa fa-trash"></i>
-            </span>';
-        } else {
-            $deleteicon = '<a href="#" title="' . get_string('delete') . '"
-                class="delete-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
-                data-quiz="' . $record->quizname . '">
-                <i class="icon fa fa-trash"></i></a>';
-        }
-        if ($record->total_audios == 0) {
-            $deleteaudioicon = '<span title="' . get_string('delete') . '" class="delete-audio-quizs disabled"
-            style="opacity: 0.5; cursor: not-allowed;">
-                <i class="icon fa fa-trash"></i>
-            </span>';
-        } else {
-            $deleteaudioicon = '<a href="#" title="' . get_string('delete') . '"
-                class="delete-audio-quiz" data-cmid="' . $cmid . '" data-quizid="' . $record->quizid . '"
-                data-quiz="' . $record->quizname . '">
-                <i class="icon fa fa-trash"></i></a>';
-        }
-        // Get the correct cmid for this specific quiz.
-        $quizcm = get_coursemodule_from_instance('quiz', $record->quizid, $course->id);
-        $backurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/proctoringreport.php', [
-            'cmid' => $quizcm->id,
-            'quizid' => $record->quizid,
-        ]);
-        $helptext = get_string('hoverhelptext', 'quizaccess_quizproctoring', $record->quizname);
-        $quizname = '<a href="' . $backurl . '" title="' . $helptext . '">' . $record->quizname . '</a>';
-        $table->data[] = [$quizname, $record->total_users, $record->total_images, $deleteicon, $deleteaudioicon];
-    }
+echo '<table id="imagesreporttable" class="display generaltable" style="width:100%">';
+echo '<thead><tr>';
+foreach ($headers as $h) {
+    echo '<th>' . $h . '</th>';
 }
-
-echo html_writer::table($table);
+echo '</tr></thead><tbody></tbody></table>';
 echo $OUTPUT->footer();

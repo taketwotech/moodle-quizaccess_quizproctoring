@@ -25,6 +25,7 @@
 
 define('AJAX_SCRIPT', true);
 require_once('../../../../config.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
@@ -41,7 +42,13 @@ global $DB, $CFG, $OUTPUT;
 
 $draw = optional_param('draw', 1, PARAM_INT);
 $start = optional_param('start', 0, PARAM_INT);
-$length = optional_param('length', 10, PARAM_INT);
+$defaultlength = quizaccess_quizproctoring_get_reporting_pagination();
+$length = optional_param('length', $defaultlength, PARAM_INT);
+if (!in_array($length, [10, 25, 50, 100], true)) {
+    $length = $defaultlength;
+} else {
+    quizaccess_quizproctoring_set_reporting_pagination($length);
+}
 
 $searchvalue = '';
 if (isset($_POST['search']['value'])) {

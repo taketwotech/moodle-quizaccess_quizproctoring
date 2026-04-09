@@ -116,7 +116,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 });
             });
 
-            $('.delete-quiz').on('click', function(event) {
+            $(document).on('click', '.delete-quiz', function(event) {
                 event.preventDefault();
                 var quizname = $(this).data('quiz');
                 var cmid = $(this).data('cmid');
@@ -169,7 +169,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 });
             });
 
-            $('.delete-audio-quiz').on('click', function(event) {
+            $(document).on('click', '.delete-audio-quiz', function(event) {
                 event.preventDefault();
                 var quizname = $(this).data('quiz');
                 var cmid = $(this).data('cmid');

@@ -209,10 +209,15 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 null,
                 $proctoringdata->enableteacherproctor,
                 $securewindow->browsersecurity,
+                null,
+                1,
+                $proctoringdata->enablerecordaudio,
             ]
         );
         $PAGE->requires->strings_for_js(
             [
+                'nomicrophonedisabled',
+                'nocameradisabled',
                 'nocameradetected',
                 'nocameradetectedm',
             ],
@@ -376,6 +381,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $record->userimg = $userimg;
         $attemptid = $attemptid ? $attemptid : 0;
         $record->attemptid = $attemptid;
+        $record->image_status = 'I';
         // We probably have an entry already in DB.
         $file = file_get_draft_area_info($useridentity);
         if (
@@ -621,6 +627,16 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('enablerecordaudio', 0);
         $mform->hideIf('enablerecordaudio', 'enableproctoring', 'eq', '0');
 
+        // Allow admin or teacher record object detection.
+        $mform->addElement(
+            'selectyesno',
+            'enableobjectdetect',
+            get_string('enableobjectdetect', 'quizaccess_quizproctoring')
+        );
+        $mform->addHelpButton('enableobjectdetect', 'enableobjectdetect', 'quizaccess_quizproctoring');
+        $mform->setDefault('enableobjectdetect', 0);
+        $mform->hideIf('enableobjectdetect', 'enableproctoring', 'eq', '0');
+
         // Allow admin or teacher to setup student video.
         $mform->addElement('hidden', 'enableeyecheck', 0);
         $mform->setType('enableeyecheck', PARAM_INT);
@@ -664,6 +680,53 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('warning_threshold', 0);
         $mform->hideIf('warning_threshold', 'enableproctoring', 'eq', '0');
 
+        // Optional email trigger threshold when warnings are unlimited.
+        $emailthresholds = [];
+        $emailthresholds[0] = get_string('disabled', 'quizaccess_quizproctoring');
+        for ($i = 5; $i <= 30; $i += 5) {
+            $emailthresholds[$i] = $i;
+        }
+        $mform->addElement(
+            'select',
+            'warning_email_threshold',
+            get_string('warning_email_threshold', 'quizaccess_quizproctoring'),
+            $emailthresholds
+        );
+        $mform->addHelpButton(
+            'warning_email_threshold',
+            'warning_email_threshold',
+            'quizaccess_quizproctoring'
+        );
+        $mform->setDefault('warning_email_threshold', 0);
+        $mform->hideIf('warning_email_threshold', 'enableproctoring', 'eq', '0');
+        $mform->hideIf('warning_email_threshold', 'warning_threshold', 'neq', 0);
+
+        $rolechoices = [];
+        $course = $quizform->get_course();
+        $context = \context_course::instance($course->id);
+        $roles = get_assignable_roles($context);
+        $defaultroleid = 0;
+        foreach ($roles as $roleid => $rolename) {
+            $rolechoices[$roleid] = $rolename;
+            if ($defaultroleid === 0) {
+                $defaultroleid = $roleid;
+            }
+        }
+        $savedroleid = (int) get_config('quizaccess_quizproctoring', 'warning_email_trigger_role');
+        $mform->addElement(
+            'select',
+            'warning_email_trigger_role',
+            get_string('warning_email_trigger_role', 'quizaccess_quizproctoring'),
+            $rolechoices
+        );
+        $mform->addHelpButton('warning_email_trigger_role', 'warning_email_trigger_role', 'quizaccess_quizproctoring');
+        $mform->setDefault(
+            'warning_email_trigger_role',
+            ($savedroleid > 0 && isset($rolechoices[$savedroleid])) ? $savedroleid : $defaultroleid
+        );
+        $mform->hideIf('warning_email_trigger_role', 'enableproctoring', 'eq', '0');
+        $mform->hideIf('warning_email_trigger_role', 'warning_threshold', 'neq', 0);
+
         $mform->addElement('text', 'proctoringvideo_link', get_string('proctoring_videolink', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('proctoringvideo_link', 'proctoringlink', 'quizaccess_quizproctoring');
         $mform->setType('proctoringvideo_link', PARAM_URL);
@@ -688,9 +751,14 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enableeyecheckreal = 1;
             $record->enableeyecheck = 0;
             $record->enablerecordaudio = 0;
+            $record->enableobjectdetect = 0;
             $record->storeallimages = 0;
             $record->time_interval = 0;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
+            $record->warning_email_threshold = isset($quiz->warning_email_threshold) ?
+                $quiz->warning_email_threshold : 0;
+            $roleid = isset($quiz->warning_email_trigger_role) ? (int)$quiz->warning_email_trigger_role : 0;
+            $record->warning_email_trigger_role = $roleid > 0 ? $roleid : self::get_first_trigger_role_id();
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         } else {
@@ -705,12 +773,35 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enableeyecheckreal = $quiz->enableeyecheckreal;
             $record->enableeyecheck = $quiz->enableeyecheck;
             $record->enablerecordaudio = isset($quiz->enablerecordaudio) ? $quiz->enablerecordaudio : 0;
+            $record->enableobjectdetect = isset($quiz->enableobjectdetect) ? $quiz->enableobjectdetect : 0;
             $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = $quiz->time_interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;
+            $record->warning_email_threshold = isset($quiz->warning_email_threshold) ?
+                $quiz->warning_email_threshold : 0;
+            $roleid = isset($quiz->warning_email_trigger_role) ? (int)$quiz->warning_email_trigger_role : 0;
+            $record->warning_email_trigger_role = $roleid > 0 ? $roleid : self::get_first_trigger_role_id();
             $record->proctoringvideo_link = $quiz->proctoringvideo_link;
             $DB->insert_record('quizaccess_quizproctoring', $record);
         }
+    }
+
+    /**
+     * Return the first role id (by sortorder) for the email trigger role dropdown.
+     * Used when no role is selected (e.g. default or legacy 0).
+     *
+     * @return int Role id
+     */
+    public static function get_first_trigger_role_id() {
+        global $DB;
+        $role = $DB->get_record_select(
+            'role',
+            "archetype != 'guest' OR archetype IS NULL",
+            null,
+            'sortorder ASC',
+            'id'
+        );
+        return $role ? (int)$role->id : 0;
     }
 
     /**
@@ -733,7 +824,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         return [
             'enableproctoring,enableteacherproctor,storeallimages,enableprofilematch,
             enablestudentvideo,time_interval,enableeyecheck,enableeyecheckreal,
-            enableuploadidentity,enablerecordaudio,warning_threshold,proctoringvideo_link',
+            enableuploadidentity,enablerecordaudio,enableobjectdetect,warning_threshold,
+            warning_email_threshold,warning_email_trigger_role,proctoringvideo_link',
             'LEFT JOIN {quizaccess_quizproctoring} proctorlink ON proctorlink.quizid = quiz.id',
             [],
         ];
