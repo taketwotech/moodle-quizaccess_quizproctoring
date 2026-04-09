@@ -703,5 +703,110 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025120605, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2026030101) {
+        // Define field warningemailtriggered to be added to quizaccess_main_proctor.
+        $table = new xmldb_table('quizaccess_main_proctor');
+        $field = new xmldb_field(
+            'warningemailtriggered',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'deviceinfo'
+        );
+
+        // Conditionally launch add field warningemailtriggered.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026030101, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026030102) {
+        // Define field warning_email_threshold to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field(
+            'warning_email_threshold',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            null,
+            null,
+            null,
+            'warning_threshold'
+        );
+
+        // Conditionally launch add field warning_email_threshold.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026030102, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026030103) {
+        // Rename legacy column alert_message to alertmessage in quizaccess_proctor_alert, if it exists.
+        $table = new xmldb_table('quizaccess_proctor_alert');
+        $field = new xmldb_field('alert_message', XMLDB_TYPE_TEXT, null, null, null, null, null, 'quizid');
+
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'alertmessage');
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026030103, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026030104) {
+        // Define field warning_email_trigger_role to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field(
+            'warning_email_trigger_role',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            null,
+            'warning_email_threshold'
+        );
+
+        // Conditionally launch add field warning_email_trigger_role.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026030104, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026031000) {
+        // Define field enableobjectdetect to be added to quizaccess_quizproctoring.
+        $table = new xmldb_table('quizaccess_quizproctoring');
+        $field = new xmldb_field(
+            'enableobjectdetect',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'enablerecordaudio'
+        );
+
+        // Conditionally launch add field enableobjectdetect.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Quizproctoring savepoint reached.
+        upgrade_plugin_savepoint(true, 2026031000, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }

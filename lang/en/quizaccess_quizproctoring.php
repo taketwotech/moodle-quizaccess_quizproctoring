@@ -82,8 +82,9 @@ $string['deleteallimagesquiz'] = 'Do you want to delete all images associated wi
 $string['deleteallimagesuser'] = 'Do you want to delete all images associated with "{$a}"? Please be aware that this action is permanent and cannot be undone.<br/><br/>';
 $string['deletestoredimagestask'] = 'Delete Stored Images Task';
 $string['delinformation'] = '<b>"{$a}" Quiz Report:</b> You can remove all images from this quiz. This will delete images for all users.';
-$string['delinformationu'] = '<b>User Images Report:</b> Remove a user\'s images from this quiz. All related images will be deleted.';
+$string['delinformationu'] = '<b>User Images Report:</b> View full proctoring information for each user in this quiz, including attempts, captured images, warnings and identity.';
 $string['demovideo'] = 'To watch full process, please click here';
+$string['deviceinfo'] = 'Device info';
 $string['disabled'] = 'Disabled';
 $string['disableeyetrackingallquizzes'] = 'Disable eye-tracking for all quizzes associated with this user.';
 $string['disableeyetrackingmessage'] = 'Would you like to disable eye-tracking for the user {$a}';
@@ -96,6 +97,8 @@ $string['enableeyecheckreal'] = 'Enable eye tracking';
 $string['enableeyecheckreal_help'] = ' When enabled, an alert triggers if the user\'s eyes are closed or if the camera loses focus.';
 $string['enableeyetrackingmessage'] = 'Would you like to enable eye-tracking for the user {$a}';
 $string['enableeyetrackingmessage_global'] = 'Eye tracking is already enabled globally for user {$a}. Do you want to keep it enabled for all quizzes?';
+$string['enableobjectdetect'] = 'Enable Object Detection';
+$string['enableobjectdetect_help'] = 'If enabled, the system will use object detection to monitor the student\'s environment during the quiz. It can detect the presence of books, mobile phones, or other restricted objects that may indicate possible misconduct.';
 $string['enableproctoring'] = 'Enable proctoring with this quiz';
 $string['enableproctoring_help'] = 'When enabled, users must verify their identity before starting the quiz.';
 $string['enableprofilematch'] = 'Enable profile picture match';
@@ -151,9 +154,11 @@ $string['noactiveplan'] = 'Your current plan has expired !';
 $string['noaudio'] = 'No Audios';
 $string['nocameradetected'] = 'Camera or microphone is disabled. Please enable both to continue. {$a}';
 $string['nocameradetectedm'] = 'Camera or microphone is disabled. Please enable both to continue.';
+$string['nocameradisabled'] = 'Camera is disabled. Please enable to continue. {$a}';
 $string['nofacedetected'] = 'No face detected. {$a}';
 $string['noimages'] = 'No images';
 $string['noimageswarning'] = 'No warning images were found during the exam';
+$string['nomicrophonedisabled'] = 'Microphone is disabled. Please enable to continue. {$a}';
 $string['noplanresponse'] = 'No active plan';
 $string['norecordsfound'] = 'No records found.';
 $string['nostudentonline'] = 'No users are online';
@@ -161,6 +166,7 @@ $string['notcameradetected'] = 'No camera detected.';
 $string['notice'] = 'Notice - Ensure you are in a well-lit environment with your face clearly visible and free from shadows. Sit in front of a plain or uncluttered background without any movement or distractions. Position your camera at eye level to capture your full face clearly, avoiding any obstructions.';
 $string['notmatchedprofile'] = 'Your profile image does not match your current image.';
 $string['novideo'] = 'No Videos';
+$string['objectdetected'] = 'Suspicious objects detected. {$a}';
 $string['oneminute'] = '1 minute';
 $string['pdf_analysis_title'] = 'PROCTORING ANALYSIS For QUIZ ID: {$a}';
 $string['pdf_assessment'] = 'Assessment';
@@ -206,6 +212,8 @@ $string['quizproctoring:quizproctoringonlinestudent'] = 'View Online Students du
 $string['quizproctoring:quizproctoringoverallreport'] = 'View Proctoring Report';
 $string['quizproctoring:quizproctoringreport'] = 'View Proctoring Images and Proctoring Identity buttons';
 $string['renewplan'] = 'Renew Plan';
+$string['reportingpagination'] = 'Reporting page pagination';
+$string['reportingpagination_help'] = 'Default number of records per page on ProctorLink reporting pages (User Images Report, Proctoring Report, Review Attempts). Users can still change the value per page using the dropdown.';
 $string['reqproctormsg'] = 'Please capture your image';
 $string['requiresafeexambrowser'] = 'Require the use of Safe Exam Browser';
 $string['retake'] = 'Retake';
@@ -258,6 +266,25 @@ $string['viewaudio'] = 'View Audio';
 $string['viewproctoringreport'] = 'View Proctoring Report';
 $string['viewstudentonline'] = 'View Online Users';
 $string['warning'] = ' warning';
+$string['warning_email_body'] = 'Hi,
+
+The proctoring warnings threshold has been reached for a student in your course "{$a->coursename}".
+
+Details:
+- Quiz: {$a->quizname}
+- Student: {$a->studentname}
+- Attempt ID: {$a->attemptid}
+- Total warnings recorded: {$a->warningcount}
+
+You can review the attempt and associated proctoring data using the link below:
+{$a->attempturl}
+
+This message was generated automatically by the ProctorLink quiz access rule.';
+$string['warning_email_subject'] = 'Proctoring warnings threshold reached for {$a->quizname}';
+$string['warning_email_threshold'] = 'Trigger email to teacher when warnings exceed';
+$string['warning_email_threshold_help'] = 'When the warnings threshold is set to Unlimited, send an email to teachers when a student\'s total warnings for this quiz reaches or exceeds this value. Set this to Disabled to avoid sending emails.';
+$string['warning_email_trigger_role'] = 'Email trigger role when threshold exceeds';
+$string['warning_email_trigger_role_help'] = 'When the warning email threshold is used, choose which role should receive the notification email.';
 $string['warning_threshold'] = 'Warnings threshold during proctored quiz';
 $string['warning_threshold_help'] = 'Set the maximum number of warnings a user may recieve before being disqualified from the proctored quiz.';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';

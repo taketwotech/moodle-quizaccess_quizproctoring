@@ -82,8 +82,9 @@ $string['deleteallimagesquiz'] = 'Voulez-vous supprimer toutes les images associ
 $string['deleteallimagesuser'] = 'Voulez-vous supprimer toutes les images associées à "{$a}" ? Veuillez noter que cette action est permanente et irréversible.<br/><br/>';
 $string['deletestoredimagestask'] = 'Tâche de suppression des images stockées';
 $string['delinformation'] = '<b>Rapport du quiz "{$a}" :</b> Vous pouvez supprimer toutes les images de ce quiz. Cela supprimera les images de tous les utilisateurs.';
-$string['delinformationu'] = '<b>Rapport des images utilisateur :</b> Supprimer les images d\'un utilisateur de ce quiz. Toutes les images associées seront supprimées.';
+$string['delinformationu'] = '<b>Rapport des images utilisateur :</b> Consultez les informations complètes de surveillance pour chaque utilisateur dans ce quiz (tentatives, images capturées, avertissements, identité).';
 $string['demovideo'] = 'Pour voir le processus complet, cliquez ici';
+$string['deviceinfo'] = 'Informations appareil';
 $string['disabled'] = 'Désactivé';
 $string['disableeyetrackingallquizzes'] = 'Désactiver le suivi oculaire pour tous les quiz associés à cet utilisateur.';
 $string['disableeyetrackingmessage'] = 'Souhaitez-vous désactiver le suivi oculaire pour l\'utilisateur {$a}';
@@ -96,6 +97,8 @@ $string['enableeyecheckreal'] = 'Activer le suivi oculaire';
 $string['enableeyecheckreal_help'] = 'Lorsqu\'il est activé, une alerte se déclenche si les yeux de l\'utilisateur sont fermés ou si la caméra perd le focus.';
 $string['enableeyetrackingmessage'] = 'Souhaitez-vous activer le suivi oculaire pour l\'utilisateur {$a}';
 $string['enableeyetrackingmessage_global'] = 'Le suivi oculaire est déjà activé globalement pour l\'utilisateur {$a}. Voulez-vous le garder activé pour tous les quiz?';
+$string['enableobjectdetect'] = 'Activer la détection d\'objets';
+$string['enableobjectdetect_help'] = 'Si cette option est activée, le système utilisera la détection d\'objets pour surveiller l\'environnement de l\'étudiant pendant le quiz. Il peut détecter la présence de livres, téléphones portables ou autres objets interdits pouvant indiquer une éventuelle fraude.';
 $string['enableproctoring'] = 'Activer la surveillance pour ce quiz';
 $string['enableproctoring_help'] = 'Lorsqu\'elle est activée, les utilisateurs doivent vérifier leur identité avant de commencer le quiz.';
 $string['enableprofilematch'] = 'Activer la correspondance de la photo de profil';
@@ -151,9 +154,11 @@ $string['noactiveplan'] = 'Votre plan précédent a expiré !';
 $string['noaudio'] = 'Aucun audio';
 $string['nocameradetected'] = 'Caméra ou microphone désactivé. Veuillez activer les deux pour continuer. {$a}';
 $string['nocameradetectedm'] = 'Caméra ou microphone désactivé. Veuillez activer les deux pour continuer.';
+$string['nocameradisabled'] = 'La caméra est désactivée. Veuillez l\'activer pour continuer. {$a}';
 $string['nofacedetected'] = 'Aucun visage détecté. {$a}';
 $string['noimages'] = 'Aucune image';
 $string['noimageswarning'] = 'Aucune image d\'avertissement n\'a été trouvée pendant l\'examen';
+$string['nomicrophonedisabled'] = 'Le microphone est désactivé. Veuillez l\'activer pour continuer. {$a}';
 $string['noplanresponse'] = 'Aucun plan actif';
 $string['norecordsfound'] = 'Aucun enregistrement trouvé.';
 $string['nostudentonline'] = 'Aucun utilisateur en ligne';
@@ -161,6 +166,7 @@ $string['notcameradetected'] = 'Aucune caméra détectée.';
 $string['notice'] = 'Remarque - Assurez-vous d\'être dans un environnement bien éclairé, avec votre visage clairement visible et sans ombres. Asseyez-vous devant un fond neutre ou dégagé sans mouvement ni distraction. Positionnez votre caméra au niveau des yeux pour capturer clairement l\'ensemble de votre visage sans obstruction.';
 $string['notmatchedprofile'] = 'Votre image de profil ne correspond pas à votre image actuelle.';
 $string['novideo'] = 'Aucune vidéo';
+$string['objectdetected'] = 'Objets suspects détectés. {$a}';
 $string['oneminute'] = '1 minute';
 $string['pdf_analysis_title'] = 'ANALYSE DE SURVEILLANCE POUR LE QUIZ ID : {$a}';
 $string['pdf_assessment'] = 'Évaluation';
@@ -206,6 +212,8 @@ $string['quizproctoring:quizproctoringonlinestudent'] = 'Voir les utilisateurs e
 $string['quizproctoring:quizproctoringoverallreport'] = 'Voir le rapport de surveillance';
 $string['quizproctoring:quizproctoringreport'] = 'Voir les boutons d\'images de surveillance et d\'identité';
 $string['renewplan'] = 'Renouveler le plan';
+$string['reportingpagination'] = 'Pagination des pages de rapport';
+$string['reportingpagination_help'] = 'Nombre par défaut d\'enregistrements par page sur les pages de rapport ProctorLink (Rapport des images utilisateur, Rapport de surveillance, Tentatives d\'examen). Les utilisateurs peuvent modifier la valeur par page via le menu déroulant.';
 $string['reqproctormsg'] = 'Veuillez capturer votre image';
 $string['requiresafeexambrowser'] = 'Requiert l\'utilisation de Safe Exam Browser';
 $string['retake'] = 'Repasser';
@@ -258,6 +266,25 @@ $string['viewaudio'] = 'Voir l\'audio';
 $string['viewproctoringreport'] = 'Voir le rapport de surveillance';
 $string['viewstudentonline'] = 'Voir les utilisateurs en ligne';
 $string['warning'] = ' avertissement';
+$string['warning_email_body'] = 'Bonjour,
+
+Le seuil d\'avertissements de surveillance a été atteint pour un étudiant dans votre cours "{$a->coursename}".
+
+Détails :
+- Quiz : {$a->quizname}
+- Étudiant : {$a->studentname}
+- ID de la tentative : {$a->attemptid}
+- Nombre total d\'avertissements enregistrés : {$a->warningcount}
+
+Vous pouvez consulter la tentative et les données de surveillance associées en utilisant le lien ci-dessous :
+{$a->attempturl}
+
+Ce message a été généré automatiquement par la règle d\'accès au quiz ProctorLink.';
+$string['warning_email_subject'] = 'Seuil d\'avertissements de surveillance atteint pour {$a->quizname}';
+$string['warning_email_threshold'] = 'Envoyer un e-mail au professeur lorsque le seuil d\'avertissements est dépassé';
+$string['warning_email_threshold_help'] = 'Lorsque le seuil d\'avertissements est défini sur Illimité, envoyer un e-mail aux enseignants lorsque le nombre total d\'avertissements d\'un étudiant pour ce quiz atteint ou dépasse cette valeur. Définissez sur Désactivé pour ne pas envoyer d\'e-mails.';
+$string['warning_email_trigger_role'] = 'Rôle destinataire de l\'e-mail lorsque le seuil est dépassé';
+$string['warning_email_trigger_role_help'] = 'Lorsque le seuil d\'e-mail d\'avertissement est utilisé, choisissez quel rôle doit recevoir l\'e-mail de notification.';
 $string['warning_threshold'] = 'Seuil d\'avertissements pendant le quiz surveillé';
 $string['warning_threshold_help'] = 'Définir le nombre maximum d\'avertissements autorisés avant disqualification.';
 $string['warningaws'] = 'Veuillez compléter la <a href="{$a}">configuration AWS</a> pour continuer le quiz.';

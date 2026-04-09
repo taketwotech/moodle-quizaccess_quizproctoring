@@ -29,6 +29,8 @@ use mod_quiz\quiz_attempt;
 
 define('QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED', 'nofacedetected');
 define('QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED', 'nocameradetected');
+define('QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED', 'nocameradisabled');
+define('QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED', 'nomicrophonedisabled');
 define('QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED', 'multifacesdetected');
 define('QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED', 'facesnotmatched');
 define('QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED', 'eyesnotopened');
@@ -41,6 +43,45 @@ define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
+define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
+
+/** User preference key for reporting page pagination (records per page). */
+define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
+
+/** Allowed values for reporting pagination. */
+define('QUIZACCESS_QUIZPROCTORING_PAGINATION_OPTIONS', [10, 25, 50, 100]);
+
+/**
+ * Get effective reporting pagination: user preference if set, otherwise global setting.
+ *
+ * @return int Records per page (10, 25, 50, or 100).
+ */
+function quizaccess_quizproctoring_get_reporting_pagination() {
+    global $USER;
+    $allowed = QUIZACCESS_QUIZPROCTORING_PAGINATION_OPTIONS;
+    $userpref = get_user_preferences(QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION, null);
+    if ($userpref !== null && in_array((int) $userpref, $allowed, true)) {
+        return (int) $userpref;
+    }
+    $global = (int) get_config('quizaccess_quizproctoring', 'reporting_pagination');
+    return in_array($global, $allowed, true) ? $global : 10;
+}
+
+/**
+ * Save reporting pagination to user preference (used when user changes the dropdown).
+ *
+ * @param int $length Value to save (10, 25, 50, or 100).
+ * @return bool True if value was valid and saved.
+ */
+function quizaccess_quizproctoring_set_reporting_pagination($length) {
+    $allowed = QUIZACCESS_QUIZPROCTORING_PAGINATION_OPTIONS;
+    $length = (int) $length;
+    if (!in_array($length, $allowed, true)) {
+        return false;
+    }
+    set_user_preference(QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION, $length);
+    return true;
+}
 
 /**
  * Serves the quizaccess proctoring files.
@@ -136,6 +177,9 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
                 'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
+                'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
                 'userid' => $user->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -143,7 +187,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
             $warningsleft = $quizaproctoring->warning_threshold - count($errorrecords);
         }
@@ -180,6 +224,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
     $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js'), true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.min.js', true);
+    $warningemailthreshold = isset($quizaproctoring->warning_email_threshold) ? (int)$quizaproctoring->warning_email_threshold : 0;
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
     $PAGE->requires->js_init_code("
     require(['quizaccess_quizproctoring/add_camera'], function(add_camera) {
@@ -192,17 +237,21 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         '$fullname',
         $quizaproctoring->enablestudentvideo,
         $quizaproctoring->enablerecordaudio,
+        $quizaproctoring->enableobjectdetect,
         $quizaproctoring->time_interval,
         $warningsleft,
         $USER->id,
         '$usergroup',
-        $detectionval);
+        $detectionval,
+        $warningemailthreshold);
     });
     M.util.js_complete();", true);
     $PAGE->requires->strings_for_js([
         'tabwarning',
         'tabwarningoneleft',
         'tabwarningmultiple',
+        'nomicrophonedisabled',
+        'nocameradisabled',
         'nocameradetected',
         'nocameradetectedm',
     ], 'quizaccess_quizproctoring');
@@ -218,9 +267,11 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @param string $imagedata Binary image data
  * @param int $targetsize Target size in bytes (default 17500 = ~17.5KB)
+ * @param int $maxwidth Maximum stored image width in pixels
+ * @param int $maxheight Maximum stored image height in pixels
  * @return string|false Compressed JPEG image data or false on failure
  */
-function quizproctoring_compress_image($imagedata, $targetsize = 17500) {
+function quizproctoring_compress_image($imagedata, $targetsize = 17500, $maxwidth = 320, $maxheight = 240) {
     // Check if GD extension is available.
     if (!function_exists('imagecreatefromstring') || !function_exists('imagejpeg')) {
         return false;
@@ -236,9 +287,7 @@ function quizproctoring_compress_image($imagedata, $targetsize = 17500) {
     $width = imagesx($sourceimage);
     $height = imagesy($sourceimage);
 
-    // Calculate optimal dimensions (max 1280px width to reduce size while maintaining quality).
-    $maxwidth = 1280;
-    $maxheight = 960;
+    // Calculate optimal dimensions for stored proctoring images.
     if ($width > $maxwidth || $height > $maxheight) {
         $ratio = min($maxwidth / $width, $maxheight / $height);
         $newwidth = (int)($width * $ratio);
@@ -330,6 +379,26 @@ function quizproctoring_storeimage(
 ) {
     global $CFG, $USER, $DB, $COURSE;
     $quizaccessquizproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+
+    // When the client signals camera/microphone being manually disabled
+    // (and no image was sent), store configured fallback icon as evidence.
+    if (empty($data) && $status === QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED) {
+        $pixfile = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/cameradisabled.png';
+        if (file_exists($pixfile)) {
+            $pixbytes = file_get_contents($pixfile);
+            if ($pixbytes !== false) {
+                $data = 'data:image/png;base64,' . base64_encode($pixbytes);
+            }
+        }
+    } else if (empty($data) && $status === QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED) {
+        $pixfile = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/microphonedisabled.png';
+        if (file_exists($pixfile)) {
+            $pixbytes = file_get_contents($pixfile);
+            if ($pixbytes !== false) {
+                $data = 'data:image/png;base64,' . base64_encode($pixbytes);
+            }
+        }
+    }
     // We are all good, store the image.
     if ($data) {
         $imagename = $USER->id . "_" . $attemptid . "_" . $quizid . "_" . time() . '_image.jpg';
@@ -380,6 +449,9 @@ function quizproctoring_storeimage(
                 'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
                 'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
                 'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
+                'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
                 'userid' => $USER->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -387,7 +459,7 @@ function quizproctoring_storeimage(
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
@@ -438,6 +510,59 @@ function quizproctoring_storeimage(
             die();
         }
     }
+}
+
+/**
+ * Schedule an adhoc task to send a warning email to course teachers.
+ *
+ * This helper creates a task with all required context. It does not send
+ * any email itself and returns immediately after queuing the task.
+ *
+ * @param int $courseid Course id
+ * @param int $cmid Course module id
+ * @param int $quizid Quiz id
+ * @param int $userid User id (student)
+ * @param int $attemptid Attempt id
+ * @param int $warningcount Total warnings recorded
+ */
+function quizaccess_quizproctoring_schedule_warning_email(
+    $courseid,
+    $cmid,
+    $quizid,
+    $userid,
+    $attemptid,
+    $warningcount
+) {
+    global $DB;
+
+    // Only one warning email per user/quiz/attempt. Check and claim before queueing
+    // so duplicate AJAX calls (e.g. double visibility events) do not queue multiple tasks.
+    $mainproctor = $DB->get_record('quizaccess_main_proctor', [
+        'userid' => (int)$userid,
+        'quizid' => (int)$quizid,
+        'attemptid' => (int)$attemptid,
+        'image_status' => 'M',
+    ]);
+    if ($mainproctor && !empty($mainproctor->warningemailtriggered)) {
+        return; // Already triggered for this attempt; do not queue again.
+    }
+
+    // Claim this attempt so a concurrent request will not queue a second task.
+    if ($mainproctor) {
+        $mainproctor->warningemailtriggered = 1;
+        $DB->update_record('quizaccess_main_proctor', $mainproctor);
+    }
+
+    $task = new \quizaccess_quizproctoring\task\warning_email_task();
+    $data = new stdClass();
+    $data->courseid = (int)$courseid;
+    $data->cmid = (int)$cmid;
+    $data->quizid = (int)$quizid;
+    $data->userid = (int)$userid;
+    $data->attemptid = (int)$attemptid;
+    $data->warningcount = (int)$warningcount;
+    $task->set_custom_data($data);
+    \core\task\manager::queue_adhoc_task($task);
 }
 
 /**

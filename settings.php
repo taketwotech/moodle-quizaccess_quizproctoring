@@ -70,4 +70,43 @@ if ($hassiteconfig && !empty($USER->id)) {
             300 => get_string('fiveminutes', 'quizaccess_quizproctoring'),
         ]
     ));
+
+    // Reporting page pagination (default records per page).
+    $settings->add(new admin_setting_configselect(
+        'quizaccess_quizproctoring/reporting_pagination',
+        get_string('reportingpagination', 'quizaccess_quizproctoring'),
+        get_string('reportingpagination_help', 'quizaccess_quizproctoring'),
+        10,
+        [
+            10 => '10',
+            25 => '25',
+            50 => '50',
+            100 => '100',
+        ]
+    ));
+
+    global $DB;
+    $rolechoices = [];
+    $roles = $DB->get_records_sql(
+        "SELECT r.id, r.name, r.shortname
+           FROM {role} r
+           JOIN {role_context_levels} rcl ON rcl.roleid = r.id
+          WHERE rcl.contextlevel = ?
+          ORDER BY r.sortorder",
+        [CONTEXT_COURSE]
+    );
+    $defaultroleid = 0;
+    foreach ($roles as $role) {
+        $rolechoices[$role->id] = role_get_name($role);
+        if ($defaultroleid === 0) {
+            $defaultroleid = $role->id;
+        }
+    }
+    $settings->add(new admin_setting_configselect(
+        'quizaccess_quizproctoring/warning_email_trigger_role',
+        get_string('warning_email_trigger_role', 'quizaccess_quizproctoring'),
+        get_string('warning_email_trigger_role_help', 'quizaccess_quizproctoring'),
+        $defaultroleid,
+        $rolechoices
+    ));
 }

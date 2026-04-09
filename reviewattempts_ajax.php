@@ -26,6 +26,7 @@
 define('AJAX_SCRIPT', true);
 
 require_once(__DIR__ . '/../../../../config.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 require_login();
 
 global $DB, $OUTPUT, $PAGE;
@@ -40,7 +41,13 @@ $enableaudio = optional_param('enableaudio', 0, PARAM_INT);
 $PAGE->set_context(context_module::instance($cmid));
 
 $start = optional_param('start', 0, PARAM_INT);
-$length = optional_param('length', 10, PARAM_INT);
+$defaultlength = quizaccess_quizproctoring_get_reporting_pagination();
+$length = optional_param('length', $defaultlength, PARAM_INT);
+if (!in_array($length, [10, 25, 50, 100], true)) {
+    $length = $defaultlength;
+} else {
+    quizaccess_quizproctoring_set_reporting_pagination($length);
+}
 $search = optional_param_array('search', [], PARAM_RAW);
 $searchval = $search['value'] ?? '';
 
@@ -119,8 +126,8 @@ $sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
         q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username,
         (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa
          WHERE qpa.attemptid = qa.id
-         AND qpa.alert_message IS NOT NULL
-         AND qpa.alert_message != '') AS alertcount
+         AND qpa.alertmessage IS NOT NULL
+         AND qpa.alertmessage != '') AS alertcount
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
         JOIN {quiz} q ON q.id = qa.quiz
@@ -154,6 +161,8 @@ foreach ($records as $record) {
 
         if ($deviceinfolower === 'mobile') {
             $deviceiconclass = 'fa-mobile-alt';
+        } else if ($deviceinfolower === 'tablet') {
+            $deviceiconclass = 'fa-tablet-alt';
         } else if ($deviceinfolower === 'mac ipad') {
             $deviceiconclass = 'fa-tablet-alt';
         } else if ($deviceinfolower === 'mac desktop') {
@@ -326,12 +335,12 @@ foreach ($records as $record) {
         }
 
         foreach ($alerts as $alert) {
-            // Skip alerts with null or empty alert_message.
-            if (empty($alert->alert_message)) {
+            // Skip alerts with null or empty alertmessage.
+            if (empty($alert->alertmessage)) {
                 continue;
             }
             $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
-            $alerttext = s($alert->alert_message);
+            $alerttext = s($alert->alertmessage);
             $teachername = '';
             if (!empty($alert->teacherid) && isset($teachers[$alert->teacherid])) {
                 $teachername = $teachers[$alert->teacherid];
