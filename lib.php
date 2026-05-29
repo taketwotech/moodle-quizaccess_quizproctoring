@@ -217,12 +217,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             $detectionval = $globaldetectionval;
         }
     }
-    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js'), true);
+    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');    
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.min.js', true);
     $warningemailthreshold = isset($quizaproctoring->warning_email_threshold) ? (int)$quizaproctoring->warning_email_threshold : 0;
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
@@ -255,7 +250,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'nocameradetected',
         'nocameradetectedm',
     ], 'quizaccess_quizproctoring');
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
 /**

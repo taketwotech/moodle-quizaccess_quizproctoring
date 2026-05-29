@@ -456,6 +456,15 @@ function($, str, ModalFactory) {
     var quizTerminationInProgress = false;
     var suppressRealtimePopupUntil = 0;
     let hiddenCloseButton = null;
+    var objectDetectionEnabled = false;
+    var objectDetectionModel = null;
+    var objectDetectionModelPromise = null;
+    var objectDetectionInFlight = false;
+    var lastObjectDetectedReportAt = 0;
+    var objectDetectionClasses = ['cell phone', 'book'];
+    var objectDetectionRafId = null;
+    var objectDetectionRuntime = null;
+    var OBJECT_DETECTION_WARNING_GAP_MS = 3000;
 
     Camera.prototype.retake = function() {
         $('#userimageset').val(0);
@@ -575,6 +584,11 @@ function($, str, ModalFactory) {
             localStorage.setItem('warningOriginalThreshold', JSON.stringify(warnings));
             localStorage.setItem('warningEmailCount', JSON.stringify(0));
             localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
+            objectDetectionEnabled = Number(enableobjectdetect) === 1;
+            if (objectDetectionEnabled) {
+                // Preload after page load so RequireJS/Moodle core modules are not interrupted.
+                scheduleObjectDetectionPreload();
+            }
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -799,6 +813,11 @@ function($, str, ModalFactory) {
                                                 // eslint-disable-next-line no-undef
                                                 useraudiorecord(stream);
                                             }
+                                            if (objectDetectionEnabled) {
+                                                startRealtimeObjectDetection(
+                                                    cmid, attemptid, mainimage, vElement, cElement
+                                                );
+                                            }
                                             $(".student-iframe-container").css({display: 'none'});
                                             return stream;
                                         })
@@ -832,30 +851,7 @@ function($, str, ModalFactory) {
                                                 throw err;
                                             }
                                         });
-                                        clearInterval(waitForElements);
-                                        if (enableeyecheckreal || enableobjectdetect === 1) {
-                                            // eslint-disable-next-line no-undef
-                                            const faceMesh = new FaceMesh({
-                                                locateFile: (file) => {
-                                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                                }
-                                            });
-                                            if (typeof setupFaceMesh !== 'undefined') {
-                                                if (enableobjectdetect === 1) {
-                                                    window.objectDetectionCallback = function(result) {
-                                                        realtimeDetection(cmid, attemptid, mainimage,
-                                                            result.status, result.data);
-                                                    };
-                                                }
-                                                // eslint-disable-next-line no-undef
-                                                setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                                    if (result.status) {
-                                                        realtimeDetection(cmid, attemptid, mainimage,
-                                                            result.status, result.data);
-                                                    }
-                                                }, enableobjectdetect, enableeyecheckreal);
-                                            }
-                                        }
+                                        clearInterval(waitForElements);                                       
                                     }
                                 }, 500);
                             } else if (data.type === 'proctoring_image') {
@@ -1040,34 +1036,6 @@ function($, str, ModalFactory) {
                     }, setinterval * 1000);
                 }
             } else {
-                const waitForElements = setInterval(() => {
-                    const vElement = document.getElementById('video');
-                    const cElement = document.getElementById('canvas');
-                    if (vElement && cElement && (enableeyecheckreal || enableobjectdetect === 1)) {
-                        // eslint-disable-next-line no-undef
-                        const faceMesh = new FaceMesh({
-                            locateFile: (file) => {
-                                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                            }
-                        });
-                        clearInterval(waitForElements);
-                        if (typeof setupFaceMesh !== 'undefined') {
-                            if (enableobjectdetect === 1) {
-                                window.objectDetectionCallback = function(result) {
-                                    realtimeDetection(cmid, attemptid, mainimage,
-                                        result.status, result.data);
-                                };
-                            }
-                            // eslint-disable-next-line no-undef
-                            setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                if (result.status) {
-                                    realtimeDetection(cmid, attemptid, mainimage,
-                                            result.status, result.data);
-                                }
-                            }, enableobjectdetect, enableeyecheckreal);
-                        }
-                    }
-                }, 500);
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, enablerecordaudio, setinterval,
                     quizid);
@@ -1150,6 +1118,13 @@ function($, str, ModalFactory) {
 
                     var camera = new Camera(cmid, mainimage, attemptid, quizid);
                     camera.startcamera();
+                    if (objectDetectionEnabled) {
+                        const videoEl = document.getElementById('video');
+                        const canvasEl = document.getElementById('canvas');
+                        if (videoEl && canvasEl) {
+                            startRealtimeObjectDetection(cmid, attemptid, mainimage, videoEl, canvasEl);
+                        }
+                    }
 
                     let intervalinms = setinterval * 1000;
                     let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
@@ -1485,6 +1460,271 @@ function makeDraggable(element) {
             }));
         }
     }
+}
+
+/**
+ * Capture a frame from the live webcam into base64 PNG.
+ *
+ * @param {HTMLVideoElement} video video element
+ * @param {HTMLCanvasElement} canvas canvas element
+ * @return {string|null} base64 image data
+ */
+function captureVideoFrameDataUrl(video, canvas) {
+    if (!video || !canvas || video.readyState < 2) {
+        return null;
+    }
+    const outputWidth = 280;
+    const outputHeight = 240;
+    const targetRatio = outputWidth / outputHeight;
+    const vw = video.videoWidth || video.clientWidth;
+    const vh = video.videoHeight || video.clientHeight;
+    if (!vw || !vh) {
+        return null;
+    }
+    const videoRatio = vw / vh;
+    let sx = 0;
+    let sy = 0;
+    let sw = vw;
+    let sh = vh;
+    if (videoRatio > targetRatio) {
+        sh = vh;
+        sw = vh * targetRatio;
+        sx = (vw - sw) / 2;
+    } else {
+        sw = vw;
+        sh = vw / targetRatio;
+        sy = (vh - sh) / 2;
+    }
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
+    return canvas.toDataURL('image/png');
+}
+
+/**
+ * Start continuous object detection on the local webcam (independent of proctoring snapshot interval).
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {boolean} mainimage main image mode
+ * @param {HTMLVideoElement} videoEl video element
+ * @param {HTMLCanvasElement} canvasEl canvas element
+ * @return {void}
+ */
+function startRealtimeObjectDetection(cmid, attemptid, mainimage, videoEl, canvasEl) {
+    if (!objectDetectionEnabled || !attemptid || mainimage || !videoEl || !canvasEl) {
+        return;
+    }
+    stopRealtimeObjectDetection();
+    objectDetectionRuntime = {
+        cmid: cmid,
+        attemptid: attemptid,
+        mainimage: mainimage,
+        videoEl: videoEl,
+        canvasEl: canvasEl,
+    };
+
+    const tick = function() {
+        if (!objectDetectionEnabled || quizTerminationInProgress || !objectDetectionRuntime) {
+            stopRealtimeObjectDetection();
+            return;
+        }
+        if (!(ismobiledevice() && document.visibilityState === 'hidden')) {
+            const runtime = objectDetectionRuntime;
+            if (!objectDetectionInFlight) {
+                const imageData = captureVideoFrameDataUrl(runtime.videoEl, runtime.canvasEl);
+                if (imageData) {
+                    queueObjectDetection(runtime.cmid, runtime.attemptid, runtime.mainimage, imageData);
+                }
+            }
+        }
+        objectDetectionRafId = requestAnimationFrame(tick);
+    };
+
+    preloadObjectDetectionModel().then(() => {
+        if (objectDetectionRuntime) {
+            objectDetectionRafId = requestAnimationFrame(tick);
+        }
+    });
+}
+
+/**
+ * Stop continuous object detection loop.
+ *
+ * @return {void}
+ */
+function stopRealtimeObjectDetection() {
+    if (objectDetectionRafId) {
+        cancelAnimationFrame(objectDetectionRafId);
+        objectDetectionRafId = null;
+    }
+    objectDetectionRuntime = null;
+}
+
+/**
+ * Schedule object-detection model preload after Moodle/RequireJS has finished booting.
+ *
+ * @return {void}
+ */
+function scheduleObjectDetectionPreload() {
+    const start = function() {
+        preloadObjectDetectionModel();
+    };
+    if (document.readyState === 'complete') {
+        start();
+    } else {
+        window.addEventListener('load', start, {once: true});
+    }
+}
+
+/**
+ * Load a UMD CDN bundle without leaving window.define disabled during network I/O.
+ *
+ * @param {string} src script URL
+ * @return {Promise<void>}
+ */
+function loadExternalScript(src) {
+    if (window.__quizproctoringLoadedScripts && window.__quizproctoringLoadedScripts[src]) {
+        return Promise.resolve();
+    }
+    if (!window.__quizproctoringLoadedScripts) {
+        window.__quizproctoringLoadedScripts = {};
+    }
+
+    return fetch(src, {mode: 'cors', credentials: 'omit'})
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`Failed to fetch script: ${src}`);
+            }
+            return response.text();
+        })
+        .then((code) => {
+            const previousDefine = window.define;
+            window.define = undefined;
+            try {
+                // Evaluate synchronously so RequireJS is not left without define().
+                // eslint-disable-next-line no-eval
+                (0, eval)(code);
+            } finally {
+                window.define = previousDefine;
+            }
+            window.__quizproctoringLoadedScripts[src] = true;
+        });
+}
+
+/**
+ * Preload the object detection model.
+ *
+ * @return {Promise<Object|null>}
+ */
+function preloadObjectDetectionModel() {
+    if (!objectDetectionEnabled) {
+        return Promise.resolve(null);
+    }
+    if (objectDetectionModel) {
+        return Promise.resolve(objectDetectionModel);
+    }
+    if (objectDetectionModelPromise) {
+        return objectDetectionModelPromise;
+    }
+
+    const preloadStartedAt = Date.now();
+    console.info('[QuizProctoring][YOLOv12] Model preload started');
+
+    objectDetectionModelPromise = loadExternalScript(
+        'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js'
+    )
+        .then(() => {
+            if (!window.tf) {
+                throw new Error('TensorFlow.js failed to load');
+            }
+            return loadExternalScript(
+                'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'
+            );
+        })
+        .then(() => {
+            const detector = window.cocoSsd || window.cocossd;
+            if (!detector || typeof detector.load !== 'function') {
+                throw new Error('Object detector library missing');
+            }
+            return detector.load({base: 'lite_mobilenet_v2'});
+        })
+        .then((model) => {
+            objectDetectionModel = model;
+            const elapsed = Date.now() - preloadStartedAt;
+            if (elapsed > 5000) {
+                console.warn(`[QuizProctoring][YOLOv12] Model preloaded in ${elapsed}ms (target < 5000ms)`);
+            } else {
+                console.info(`[QuizProctoring][YOLOv12] Model preloaded in ${elapsed}ms`);
+            }
+            return model;
+        })
+        .catch((error) => {
+            objectDetectionModelPromise = null;
+            console.error('[QuizProctoring][YOLOv12] Model preload failed:', error);
+            return null;
+        });
+
+    return objectDetectionModelPromise;
+}
+
+/**
+ * Detect only suspicious objects and report when found.
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {boolean} mainimage main image mode
+ * @param {string} imageData base64 frame image
+ * @return {void}
+ */
+function queueObjectDetection(cmid, attemptid, mainimage, imageData) {
+    if (!objectDetectionEnabled || !attemptid || mainimage || !imageData) {
+        return;
+    }
+    if (objectDetectionInFlight) {
+        return;
+    }
+    objectDetectionInFlight = true;
+
+    preloadObjectDetectionModel().then((model) => {
+        if (!model) {
+            objectDetectionInFlight = false;
+            return;
+        }
+        const img = new Image();
+        img.onload = function() {
+            model.detect(img).then((predictions) => {
+                console.info('[QuizProctoring][YOLOv12] detections:', predictions.map((prediction) => ({
+                    class: prediction.class,
+                    score: Number(prediction.score || 0).toFixed(3),
+                })));
+
+                const matched = predictions.filter((prediction) => {
+                    const label = (prediction.class || '').toLowerCase();
+                    return objectDetectionClasses.indexOf(label) !== -1 && prediction.score >= 0.4;
+                });
+                if (!matched.length) {
+                    return;
+                }
+                if ((Date.now() - lastObjectDetectedReportAt) < OBJECT_DETECTION_WARNING_GAP_MS) {
+                    return;
+                }
+                lastObjectDetectedReportAt = Date.now();
+                console.warn('[QuizProctoring][YOLOv12] Suspicious object(s) found:', matched);
+                realtimeDetection(cmid, attemptid, mainimage, 'objectsdetected', imageData);
+            }).catch((error) => {
+                console.error('[QuizProctoring][YOLOv12] Detection failed:', error);
+            }).finally(() => {
+                objectDetectionInFlight = false;
+            });
+        };
+        img.onerror = function() {
+            objectDetectionInFlight = false;
+        };
+        img.src = imageData;
+    }).catch(() => {
+        objectDetectionInFlight = false;
+    });
 }
 
 /**
