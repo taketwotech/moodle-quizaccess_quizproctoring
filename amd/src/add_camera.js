@@ -465,6 +465,7 @@ function($, str, ModalFactory) {
     var objectDetectionRafId = null;
     var objectDetectionRuntime = null;
     var OBJECT_DETECTION_WARNING_GAP_MS = 3000;
+    var onlineWebcamSetupPromise = null;
 
     Camera.prototype.retake = function() {
         $('#userimageset').val(0);
@@ -659,6 +660,10 @@ function($, str, ModalFactory) {
                 }).appendTo('body');
 
                 if (verifyduringattempt) {
+                    startOnlineProctoringWebcam(
+                        cmid, attemptid, mainimage, requireaudiopermission, enablerecordaudio
+                    );
+
                     document.addEventListener('visibilitychange', function() {
                         if (document.visibilityState === 'visible') {
                             visibilitychange(cmid, attemptid, mainimage);
@@ -673,187 +678,6 @@ function($, str, ModalFactory) {
                             const data = event.data;
                             if (data.type === 'ready') {
                                 iframeReady = true;
-                                const waitForElements = setInterval(() => {
-                                    const vElement = document.getElementById('video');
-                                    const cElement = document.getElementById('canvas');
-                                    if (vElement && cElement) {
-                                        navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
-                                        .then((stream) => {
-                                            localMediaStream = stream;
-                                            vElement.srcObject = stream;
-                                            vElement.play();
-                                            vElement.muted = true;
-                                            restoreVideoPosition(vElement);
-                                            makeDraggable(vElement);
-                                            let sentCameraDisabled = false;
-                                            let lastDeviceWarningPopupAt = 0;
-                                            const shouldreportrealtime = Boolean(attemptid) && !mainimage;
-                                            const videoTrack = stream.getVideoTracks()[0];
-                                            if (videoTrack) {
-                                                videoTrack.onended = function() {
-                                                    if (quizTerminationInProgress) {
-                                                        return;
-                                                    }
-                                                    const validatekey = requireaudiopermission ?
-                                                        'nocameradetected' : 'nocameradisabled';
-                                                    const popupmessage = requireaudiopermission ?
-                                                        M.util.get_string('nocameradetectedm',
-                                                            'quizaccess_quizproctoring', '') :
-                                                        getNormalizedCameraDisabledMessage();
-                                                    if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                        lastDeviceWarningPopupAt = Date.now();
-                                                        $(document).trigger('popup', popupmessage);
-                                                        if (shouldreportrealtime) {
-                                                            suppressRealtimePopupUntil = Date.now() + 1500;
-                                                        }
-                                                    }
-                                                    if (!sentCameraDisabled && shouldreportrealtime) {
-                                                        sentCameraDisabled = true;
-                                                        $.ajax({
-                                                            url: M.cfg.wwwroot +
-                                                                '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
-                                                            method: 'POST',
-                                                            data: {
-                                                                cmid: cmid,
-                                                                attemptid: attemptid,
-                                                                mainimage: mainimage,
-                                                                validate: validatekey,
-                                                            },
-                                                            success: function(response) {
-                                                                if (response && response.redirect && response.url) {
-                                                                    quizTerminationInProgress = true;
-                                                                    window.onbeforeunload = null;
-                                                                    $(document).trigger('popup', response.msg);
-                                                                    setTimeout(function() {
-                                                                        window.location.href = encodeURI(response.url);
-                                                                    }, 3000);
-                                                                } else if (response && response.errorcode) {
-                                                                    handleRealtimeWarningResponse(response, popupmessage,
-                                                                        cmid, attemptid);
-                                                                } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                                    lastDeviceWarningPopupAt = Date.now();
-                                                                    $(document).trigger('popup', popupmessage);
-                                                                }
-                                                            },
-                                                            error: function(xhr) {
-                                                                handleRealtimeWarningXhrError(xhr, popupmessage,
-                                                                    cmid, attemptid);
-                                                            }
-                                                        });
-                                                    } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                        lastDeviceWarningPopupAt = Date.now();
-                                                        $(document).trigger('popup', popupmessage);
-                                                    }
-                                                };
-                                            }
-                                            if (requireaudiopermission) {
-                                                const audioTrack = stream.getAudioTracks()[0];
-                                                if (audioTrack) {
-                                                    audioTrack.onended = function() {
-                                                        if (quizTerminationInProgress) {
-                                                            return;
-                                                        }
-                                                        const genericmsg = M.util.get_string('nocameradetectedm',
-                                                            'quizaccess_quizproctoring', '');
-                                                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                            lastDeviceWarningPopupAt = Date.now();
-                                                            $(document).trigger('popup', genericmsg);
-                                                            if (shouldreportrealtime) {
-                                                                suppressRealtimePopupUntil = Date.now() + 1500;
-                                                            }
-                                                        }
-                                                        if (!sentCameraDisabled && shouldreportrealtime) {
-                                                            sentCameraDisabled = true;
-                                                            $.ajax({
-                                                                url: M.cfg.wwwroot +
-                                                                    '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
-                                                                method: 'POST',
-                                                                data: {
-                                                                    cmid: cmid,
-                                                                    attemptid: attemptid,
-                                                                    mainimage: mainimage,
-                                                                    validate: 'nocameradetected',
-                                                                },
-                                                                success: function(response) {
-                                                                    if (response && response.redirect && response.url) {
-                                                                        quizTerminationInProgress = true;
-                                                                        window.onbeforeunload = null;
-                                                                        $(document).trigger('popup', response.msg);
-                                                                        setTimeout(function() {
-                                                                            window.location.href =
-                                                                                encodeURI(response.url);
-                                                                        }, 3000);
-                                                                    } else if (response && response.errorcode) {
-                                                                        handleRealtimeWarningResponse(
-                                                                            response,
-                                                                            genericmsg,
-                                                                            cmid,
-                                                                            attemptid
-                                                                        );
-                                                                    }
-                                                                },
-                                                                error: function(xhr) {
-                                                                    handleRealtimeWarningXhrError(
-                                                                        xhr,
-                                                                        genericmsg,
-                                                                        cmid,
-                                                                        attemptid
-                                                                    );
-                                                                }
-                                                            });
-                                                        }
-                                                    };
-                                                } else {
-                                                    $(document).trigger('popup',
-                                                        M.util.get_string('nocameradetectedm',
-                                                            'quizaccess_quizproctoring', ''));
-                                                }
-                                            }
-                                            if (enablerecordaudio) {
-                                                // eslint-disable-next-line no-undef
-                                                useraudiorecord(stream);
-                                            }
-                                            if (objectDetectionEnabled) {
-                                                startRealtimeObjectDetection(
-                                                    cmid, attemptid, mainimage, vElement, cElement
-                                                );
-                                            }
-                                            $(".student-iframe-container").css({display: 'none'});
-                                            return stream;
-                                        })
-                                        .catch((err) => {
-                                            if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                                                $(".student-iframe-container").css({display: 'none'});
-                                                $.ajax({
-                                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-                                                method: 'POST',
-                                                data: {
-                                                    cmid: cmid,
-                                                    attemptid: attemptid,
-                                                    mainimage: mainimage,
-                                                },
-                                                success: function(response) {
-                        if (response && response.errorcode) {
-                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                            const leftwarnings = Math.max(warningsl - 1, 0);
-                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
-                            $(document).trigger('popup', response.error);
-                                                    } else if (response.redirect && response.url) {
-                                                        window.onbeforeunload = null;
-                                                        $(document).trigger('popup', response.msg);
-                                                        setTimeout(function() {
-                                                            window.location.href = encodeURI(response.url);
-                                                        }, 3000);
-                                                    }
-                                                }
-                                            });
-                                                throw err;
-                                            }
-                                        });
-                                        clearInterval(waitForElements);                                       
-                                    }
-                                }, 500);
                             } else if (data.type === 'proctoring_image') {
                                 responseReceived = true;
                                 if (ismobiledevice() && document.visibilityState === 'hidden') {
@@ -1460,6 +1284,189 @@ function makeDraggable(element) {
             }));
         }
     }
+}
+
+/**
+ * Start webcam + realtime object detection for online proctoring (no iframe ready wait).
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {boolean} mainimage main image mode
+ * @param {boolean} requireaudiopermission require microphone permission
+ * @param {boolean} enablerecordaudio enable audio recording
+ * @return {Promise<MediaStream|null>}
+ */
+function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudiopermission, enablerecordaudio) {
+    if (onlineWebcamSetupPromise) {
+        return onlineWebcamSetupPromise;
+    }
+
+    const vElement = document.getElementById('video');
+    const cElement = document.getElementById('canvas');
+    if (!vElement || !cElement) {
+        return Promise.resolve(null);
+    }
+
+    onlineWebcamSetupPromise = navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
+        .then((stream) => {
+            localMediaStream = stream;
+            vElement.srcObject = stream;
+            vElement.play();
+            vElement.muted = true;
+            restoreVideoPosition(vElement);
+            makeDraggable(vElement);
+
+            let sentCameraDisabled = false;
+            let lastDeviceWarningPopupAt = 0;
+            const shouldreportrealtime = Boolean(attemptid) && !mainimage;
+            const videoTrack = stream.getVideoTracks()[0];
+
+            if (videoTrack) {
+                videoTrack.onended = function() {
+                    if (quizTerminationInProgress) {
+                        return;
+                    }
+                    const validatekey = requireaudiopermission ? 'nocameradetected' : 'nocameradisabled';
+                    const popupmessage = requireaudiopermission ?
+                        M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', '') :
+                        getNormalizedCameraDisabledMessage();
+                    if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                        lastDeviceWarningPopupAt = Date.now();
+                        $(document).trigger('popup', popupmessage);
+                        if (shouldreportrealtime) {
+                            suppressRealtimePopupUntil = Date.now() + 1500;
+                        }
+                    }
+                    if (!sentCameraDisabled && shouldreportrealtime) {
+                        sentCameraDisabled = true;
+                        $.ajax({
+                            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                            method: 'POST',
+                            data: {
+                                cmid: cmid,
+                                attemptid: attemptid,
+                                mainimage: mainimage,
+                                validate: validatekey,
+                            },
+                            success: function(response) {
+                                if (response && response.redirect && response.url) {
+                                    quizTerminationInProgress = true;
+                                    window.onbeforeunload = null;
+                                    $(document).trigger('popup', response.msg);
+                                    setTimeout(function() {
+                                        window.location.href = encodeURI(response.url);
+                                    }, 3000);
+                                } else if (response && response.errorcode) {
+                                    handleRealtimeWarningResponse(response, popupmessage, cmid, attemptid);
+                                } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                    lastDeviceWarningPopupAt = Date.now();
+                                    $(document).trigger('popup', popupmessage);
+                                }
+                            },
+                            error: function(xhr) {
+                                handleRealtimeWarningXhrError(xhr, popupmessage, cmid, attemptid);
+                            }
+                        });
+                    } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                        lastDeviceWarningPopupAt = Date.now();
+                        $(document).trigger('popup', popupmessage);
+                    }
+                };
+            }
+
+            if (requireaudiopermission) {
+                const audioTrack = stream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.onended = function() {
+                        if (quizTerminationInProgress) {
+                            return;
+                        }
+                        const genericmsg = M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', '');
+                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                            lastDeviceWarningPopupAt = Date.now();
+                            $(document).trigger('popup', genericmsg);
+                            if (shouldreportrealtime) {
+                                suppressRealtimePopupUntil = Date.now() + 1500;
+                            }
+                        }
+                        if (!sentCameraDisabled && shouldreportrealtime) {
+                            sentCameraDisabled = true;
+                            $.ajax({
+                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                method: 'POST',
+                                data: {
+                                    cmid: cmid,
+                                    attemptid: attemptid,
+                                    mainimage: mainimage,
+                                    validate: 'nocameradetected',
+                                },
+                                success: function(response) {
+                                    if (response && response.redirect && response.url) {
+                                        quizTerminationInProgress = true;
+                                        window.onbeforeunload = null;
+                                        $(document).trigger('popup', response.msg);
+                                        setTimeout(function() {
+                                            window.location.href = encodeURI(response.url);
+                                        }, 3000);
+                                    } else if (response && response.errorcode) {
+                                        handleRealtimeWarningResponse(response, genericmsg, cmid, attemptid);
+                                    }
+                                },
+                                error: function(xhr) {
+                                    handleRealtimeWarningXhrError(xhr, genericmsg, cmid, attemptid);
+                                }
+                            });
+                        }
+                    };
+                } else {
+                    $(document).trigger('popup',
+                        M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''));
+                }
+            }
+
+            if (enablerecordaudio) {
+                // eslint-disable-next-line no-undef
+                useraudiorecord(stream);
+            }
+            if (objectDetectionEnabled) {
+                startRealtimeObjectDetection(cmid, attemptid, mainimage, vElement, cElement);
+            }
+            $('.student-iframe-container').css({display: 'none'});
+            return stream;
+        })
+        .catch((err) => {
+            onlineWebcamSetupPromise = null;
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                $('.student-iframe-container').css({display: 'none'});
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                    method: 'POST',
+                    data: {
+                        cmid: cmid,
+                        attemptid: attemptid,
+                        mainimage: mainimage,
+                    },
+                    success: function(response) {
+                        if (response && response.errorcode) {
+                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                            const leftwarnings = Math.max(warningsl - 1, 0);
+                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
+                            $(document).trigger('popup', response.error);
+                        } else if (response.redirect && response.url) {
+                            window.onbeforeunload = null;
+                            $(document).trigger('popup', response.msg);
+                            setTimeout(function() {
+                                window.location.href = encodeURI(response.url);
+                            }, 3000);
+                        }
+                    }
+                });
+            }
+            throw err;
+        });
+
+    return onlineWebcamSetupPromise;
 }
 
 /**
