@@ -1636,7 +1636,7 @@ function preloadObjectDetectionModel() {
     }
 
     const preloadStartedAt = Date.now();
-    console.info('[QuizProctoring][YOLOv12] Model preload started');
+    console.info('[QuizProctoring][coco] Model preload started');
 
     objectDetectionModelPromise = loadExternalScript(
         'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js'
@@ -1660,15 +1660,15 @@ function preloadObjectDetectionModel() {
             objectDetectionModel = model;
             const elapsed = Date.now() - preloadStartedAt;
             if (elapsed > 5000) {
-                console.warn(`[QuizProctoring][YOLOv12] Model preloaded in ${elapsed}ms (target < 5000ms)`);
+                console.warn(`[QuizProctoring][coco] Model preloaded in ${elapsed}ms (target < 5000ms)`);
             } else {
-                console.info(`[QuizProctoring][YOLOv12] Model preloaded in ${elapsed}ms`);
+                console.info(`[QuizProctoring][coco] Model preloaded in ${elapsed}ms`);
             }
             return model;
         })
         .catch((error) => {
             objectDetectionModelPromise = null;
-            console.error('[QuizProctoring][YOLOv12] Model preload failed:', error);
+            console.error('[QuizProctoring][coco] Model preload failed:', error);
             return null;
         });
 
@@ -1701,7 +1701,7 @@ function queueObjectDetection(cmid, attemptid, mainimage, imageData) {
         const img = new Image();
         img.onload = function() {
             model.detect(img).then((predictions) => {
-                console.info('[QuizProctoring][YOLOv12] detections:', predictions.map((prediction) => ({
+                console.info('[QuizProctoring][coco] detections:', predictions.map((prediction) => ({
                     class: prediction.class,
                     score: Number(prediction.score || 0).toFixed(3),
                 })));
@@ -1717,10 +1717,10 @@ function queueObjectDetection(cmid, attemptid, mainimage, imageData) {
                     return;
                 }
                 lastObjectDetectedReportAt = Date.now();
-                console.warn('[QuizProctoring][YOLOv12] Suspicious object(s) found:', matched);
+                console.warn('[QuizProctoring][coco] Suspicious object(s) found:', matched);
                 realtimeDetection(cmid, attemptid, mainimage, 'objectsdetected', imageData);
             }).catch((error) => {
-                console.error('[QuizProctoring][YOLOv12] Detection failed:', error);
+                console.error('[QuizProctoring][coco] Detection failed:', error);
             }).finally(() => {
                 objectDetectionInFlight = false;
             });
