@@ -72,6 +72,15 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
 
+if ($validate === 'eyecheckstatus') {
+    $iseyecheck = ($mainentry && $mainentry->iseyecheck) ? 1 : 0;
+    echo json_encode([
+        'status' => $iseyecheck ? 'eyecheckon' : 'eyecheckoff',
+        'iseyecheck' => $iseyecheck,
+    ]);
+    exit;
+}
+
 if ($mainentry && !$mainentry->iseyecheck && ($validate === 'eyesnotopen')) {
     echo json_encode(['status' => 'eyecheckoff']);
     exit;

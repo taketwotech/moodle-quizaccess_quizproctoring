@@ -9,8 +9,8 @@ window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
-define(['jquery', 'core/str', 'core/modal_factory'],
-function($, str, ModalFactory) {
+define(['jquery', 'core/str', 'core/modal_factory', 'quizaccess_quizproctoring/eye_tracking'],
+function($, str, ModalFactory, EyeTracking) {
     $('.quizstartbuttondiv [type=submit]').prop("disabled", true);
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
@@ -492,6 +492,7 @@ function($, str, ModalFactory) {
     };
 
     Camera.prototype.stopcamera = function() {
+        EyeTracking.stop(false);
         if (localMediaStream) {
             localMediaStream.getTracks().forEach(function(track) {
                 track.stop();
@@ -589,6 +590,23 @@ function($, str, ModalFactory) {
             if (objectDetectionEnabled) {
                 // Preload after page load so RequireJS/Moodle core modules are not interrupted.
                 scheduleObjectDetectionPreload();
+            }
+            EyeTracking.configure({
+                onTiltAlert: function(cmid, attemptid, mainimage, imageData) {
+                    realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', imageData);
+                },
+                captureFrame: captureVideoFrameDataUrl,
+                isTerminationInProgress: function() {
+                    return quizTerminationInProgress;
+                },
+                shouldSkipFrame: function() {
+                    return ismobiledevice() && document.visibilityState === 'hidden';
+                },
+            });
+            EyeTracking.initFromQuizSettings(enableeyecheckreal, detectionval);
+            EyeTracking.bindDocumentEvents();
+            if (EyeTracking.isEnabled()) {
+                EyeTracking.schedulePreload();
             }
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
@@ -766,6 +784,7 @@ function($, str, ModalFactory) {
                                     },
                                 });
                             } else if (data.type === 'disable-eye-tracking') {
+                                EyeTracking.applyRemoteDisable(true);
                                 $.ajax({
                                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
                                     method: 'POST',
@@ -775,9 +794,20 @@ function($, str, ModalFactory) {
                                         teachersub: 1,
                                         validate: 'eyecheckoff'
                                     },
+                                });
+                            } else if (data.type === 'enable-eye-tracking') {
+                                $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
+                                    method: 'POST',
+                                    data: {
+                                        cmid: camera.cmid,
+                                        attemptid: attemptid,
+                                        userid: userid,
+                                        action: 'enable',
+                                    },
                                     success: function(response) {
-                                        if (response.status === 'eyecheckoff') {
-                                            $(document).trigger('eye-tracking-disabled');
+                                        if (response && response.success && response.iseyecheck) {
+                                            $(document).trigger('eye-tracking-enabled');
                                         }
                                     },
                                 });
@@ -947,6 +977,13 @@ function($, str, ModalFactory) {
                         const canvasEl = document.getElementById('canvas');
                         if (videoEl && canvasEl) {
                             startRealtimeObjectDetection(cmid, attemptid, mainimage, videoEl, canvasEl);
+                        }
+                    }
+                    if (EyeTracking.isActive()) {
+                        const videoEl = document.getElementById('video');
+                        const canvasEl = document.getElementById('canvas');
+                        if (videoEl && canvasEl) {
+                            EyeTracking.start(cmid, attemptid, mainimage, videoEl, canvasEl);
                         }
                     }
 
@@ -1431,6 +1468,9 @@ function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudioper
             if (objectDetectionEnabled) {
                 startRealtimeObjectDetection(cmid, attemptid, mainimage, vElement, cElement);
             }
+            if (EyeTracking.isActive()) {
+                EyeTracking.start(cmid, attemptid, mainimage, vElement, cElement);
+            }
             $('.student-iframe-container').css({display: 'none'});
             return stream;
         })
@@ -1744,6 +1784,27 @@ function queueObjectDetection(cmid, attemptid, mainimage, imageData) {
  * @param {Longtext} data video
  * @return {void}
  */
+/**
+ * Track eye-focus warnings for auto-disable (5 warnings within 30 seconds).
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {string} face validation type
+ * @param {Object} response AJAX response
+ * @return {void}
+ */
+function maybeRecordEyeFocusWarning(cmid, attemptid, face, response) {
+    if (face !== 'eyesnotopen' || !EyeTracking.isEnabled()) {
+        return;
+    }
+    if (!response || response.status === 'eyecheckoff') {
+        return;
+    }
+    if (response.errorcode || response.status === 'eyecheckon') {
+        EyeTracking.recordFocusWarning(cmid, attemptid);
+    }
+}
+
 function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     var requestData = {
         cmid: cmid,
@@ -1768,6 +1829,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                     const leftwarnings = Math.max(warningsl - 1, 0);
                     localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                     trackWarningAndMaybeQueueEmail(cmid, attemptid);
+                    maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
                     $(document).trigger('popup', response.error);
                 }
                 return;
@@ -1777,6 +1839,7 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
                 const leftwarnings = Math.max(warningsl - 1, 0);
                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
                 trackWarningAndMaybeQueueEmail(cmid, attemptid);
+                maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
                 $(document).trigger('popup', response.error);
             } else {
                 if (response.redirect && response.url) {
