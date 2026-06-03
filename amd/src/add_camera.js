@@ -460,6 +460,47 @@ function($, str, ModalFactory, EyeTracking) {
     var objectDetectionController = null;
     var objectDetectionControllerPromise = null;
     var onlineWebcamSetupPromise = null;
+    const DETECTION_FRAME_WIDTH = 640;
+    const DETECTION_FRAME_HEIGHT = 480;
+
+    /**
+     * Capture a cropped video frame as a PNG data URL for realtime alerts.
+     *
+     * @param {HTMLVideoElement} video
+     * @param {HTMLCanvasElement} canvas
+     * @return {string|null}
+     */
+    function captureVideoFrameDataUrl(video, canvas) {
+        if (!video || !canvas || video.readyState < 2) {
+            return null;
+        }
+        const outputWidth = DETECTION_FRAME_WIDTH;
+        const outputHeight = DETECTION_FRAME_HEIGHT;
+        const targetRatio = outputWidth / outputHeight;
+        const vw = video.videoWidth || video.clientWidth;
+        const vh = video.videoHeight || video.clientHeight;
+        if (!vw || !vh) {
+            return null;
+        }
+        const videoRatio = vw / vh;
+        let sx = 0;
+        let sy = 0;
+        let sw = vw;
+        let sh = vh;
+        if (videoRatio > targetRatio) {
+            sh = vh;
+            sw = vh * targetRatio;
+            sx = (vw - sw) / 2;
+        } else {
+            sw = vw;
+            sh = vw / targetRatio;
+            sy = (vh - sh) / 2;
+        }
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+        canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
+        return canvas.toDataURL('image/png');
+    }
 
     Camera.prototype.retake = function() {
         $('#userimageset').val(0);
