@@ -6,8 +6,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 (function(window) {
-    const DEFAULT_CLASSES = ['cell phone', 'book'];
+    const DEFAULT_CLASS_THRESHOLDS = {
+        'cell phone': 0.4,
+        'book': 0.25,
+    };
+    const DEFAULT_DETECT_MIN_SCORE = 0.2;
     const DEFAULT_WARNING_GAP_MS = 3000;
+    const DETECTION_FRAME_WIDTH = 640;
+    const DETECTION_FRAME_HEIGHT = 480;
 
     function loadExternalScript(src) {
         if (window.__quizproctoringLoadedScripts && window.__quizproctoringLoadedScripts[src]) {
@@ -41,8 +47,8 @@
         if (!video || !canvas || video.readyState < 2) {
             return null;
         }
-        const outputWidth = 280;
-        const outputHeight = 240;
+        const outputWidth = DETECTION_FRAME_WIDTH;
+        const outputHeight = DETECTION_FRAME_HEIGHT;
         const targetRatio = outputWidth / outputHeight;
         const vw = video.videoWidth || video.clientWidth;
         const vh = video.videoHeight || video.clientHeight;
@@ -77,8 +83,18 @@
         let lastObjectDetectedReportAt = 0;
         let rafId = null;
         let runtime = null;
-        const classes = (config && config.classes) || DEFAULT_CLASSES;
+        const classThresholds = (config && config.classThresholds) || DEFAULT_CLASS_THRESHOLDS;
+        const detectMinScore = (config && config.detectMinScore) || DEFAULT_DETECT_MIN_SCORE;
         const warningGapMs = (config && config.warningGapMs) || DEFAULT_WARNING_GAP_MS;
+
+        function matchesSuspiciousClass(prediction) {
+            const label = (prediction.class || '').toLowerCase();
+            const threshold = classThresholds[label];
+            if (threshold === undefined) {
+                return false;
+            }
+            return prediction.score >= threshold;
+        }
 
         function preloadModel() {
             if (!enabled) {
@@ -144,16 +160,13 @@
                 }
                 const img = new Image();
                 img.onload = function() {
-                    loadedModel.detect(img).then((predictions) => {
+                    loadedModel.detect(img, 20, detectMinScore).then((predictions) => {
                         console.info('[QuizProctoring][coco] detections:', predictions.map((prediction) => ({
                             class: prediction.class,
                             score: Number(prediction.score || 0).toFixed(3),
                         })));
 
-                        const matched = predictions.filter((prediction) => {
-                            const label = (prediction.class || '').toLowerCase();
-                            return classes.indexOf(label) !== -1 && prediction.score >= 0.4;
-                        });
+                        const matched = predictions.filter(matchesSuspiciousClass);
                         if (!matched.length) {
                             return;
                         }
