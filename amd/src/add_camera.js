@@ -457,14 +457,8 @@ function($, str, ModalFactory, EyeTracking) {
     var suppressRealtimePopupUntil = 0;
     let hiddenCloseButton = null;
     var objectDetectionEnabled = false;
-    var objectDetectionModel = null;
-    var objectDetectionModelPromise = null;
-    var objectDetectionInFlight = false;
-    var lastObjectDetectedReportAt = 0;
-    var objectDetectionClasses = ['cell phone', 'book'];
-    var objectDetectionRafId = null;
-    var objectDetectionRuntime = null;
-    var OBJECT_DETECTION_WARNING_GAP_MS = 3000;
+    var objectDetectionController = null;
+    var objectDetectionControllerPromise = null;
     var onlineWebcamSetupPromise = null;
 
     Camera.prototype.retake = function() {
@@ -588,8 +582,11 @@ function($, str, ModalFactory, EyeTracking) {
             localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
             objectDetectionEnabled = Number(enableobjectdetect) === 1;
             if (objectDetectionEnabled) {
-                // Preload after page load so RequireJS/Moodle core modules are not interrupted.
-                scheduleObjectDetectionPreload();
+                getObjectDetectionController().then((controller) => {
+                    if (controller) {
+                        controller.schedulePreload();
+                    }
+                });
             }
             EyeTracking.configure({
                 onTiltAlert: function(cmid, attemptid, mainimage, imageData) {
@@ -976,7 +973,11 @@ function($, str, ModalFactory, EyeTracking) {
                         const videoEl = document.getElementById('video');
                         const canvasEl = document.getElementById('canvas');
                         if (videoEl && canvasEl) {
-                            startRealtimeObjectDetection(cmid, attemptid, mainimage, videoEl, canvasEl);
+                            getObjectDetectionController().then((controller) => {
+                                if (controller) {
+                                    controller.start(cmid, attemptid, mainimage, videoEl, canvasEl);
+                                }
+                            });
                         }
                     }
                     if (EyeTracking.isActive()) {
@@ -1466,7 +1467,11 @@ function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudioper
                 useraudiorecord(stream);
             }
             if (objectDetectionEnabled) {
-                startRealtimeObjectDetection(cmid, attemptid, mainimage, vElement, cElement);
+                getObjectDetectionController().then((controller) => {
+                    if (controller) {
+                        controller.start(cmid, attemptid, mainimage, vElement, cElement);
+                    }
+                });
             }
             if (EyeTracking.isActive()) {
                 EyeTracking.start(cmid, attemptid, mainimage, vElement, cElement);
@@ -1509,139 +1514,20 @@ function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudioper
     return onlineWebcamSetupPromise;
 }
 
-/**
- * Capture a frame from the live webcam into base64 PNG.
- *
- * @param {HTMLVideoElement} video video element
- * @param {HTMLCanvasElement} canvas canvas element
- * @return {string|null} base64 image data
- */
-function captureVideoFrameDataUrl(video, canvas) {
-    if (!video || !canvas || video.readyState < 2) {
-        return null;
+function loadObjectDetectionLibrary() {
+    if (window.quizproctoringObjectDetection &&
+        typeof window.quizproctoringObjectDetection.create === 'function') {
+        return Promise.resolve(window.quizproctoringObjectDetection);
     }
-    const outputWidth = 280;
-    const outputHeight = 240;
-    const targetRatio = outputWidth / outputHeight;
-    const vw = video.videoWidth || video.clientWidth;
-    const vh = video.videoHeight || video.clientHeight;
-    if (!vw || !vh) {
-        return null;
-    }
-    const videoRatio = vw / vh;
-    let sx = 0;
-    let sy = 0;
-    let sw = vw;
-    let sh = vh;
-    if (videoRatio > targetRatio) {
-        sh = vh;
-        sw = vh * targetRatio;
-        sx = (vw - sw) / 2;
-    } else {
-        sw = vw;
-        sh = vw / targetRatio;
-        sy = (vh - sh) / 2;
-    }
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
-    canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
-    return canvas.toDataURL('image/png');
-}
-
-/**
- * Start continuous object detection on the local webcam (independent of proctoring snapshot interval).
- *
- * @param {number} cmid course module id
- * @param {number} attemptid attempt id
- * @param {boolean} mainimage main image mode
- * @param {HTMLVideoElement} videoEl video element
- * @param {HTMLCanvasElement} canvasEl canvas element
- * @return {void}
- */
-function startRealtimeObjectDetection(cmid, attemptid, mainimage, videoEl, canvasEl) {
-    if (!objectDetectionEnabled || !attemptid || mainimage || !videoEl || !canvasEl) {
-        return;
-    }
-    stopRealtimeObjectDetection();
-    objectDetectionRuntime = {
-        cmid: cmid,
-        attemptid: attemptid,
-        mainimage: mainimage,
-        videoEl: videoEl,
-        canvasEl: canvasEl,
-    };
-
-    const tick = function() {
-        if (!objectDetectionEnabled || quizTerminationInProgress || !objectDetectionRuntime) {
-            stopRealtimeObjectDetection();
-            return;
-        }
-        if (!(ismobiledevice() && document.visibilityState === 'hidden')) {
-            const runtime = objectDetectionRuntime;
-            if (!objectDetectionInFlight) {
-                const imageData = captureVideoFrameDataUrl(runtime.videoEl, runtime.canvasEl);
-                if (imageData) {
-                    queueObjectDetection(runtime.cmid, runtime.attemptid, runtime.mainimage, imageData);
-                }
-            }
-        }
-        objectDetectionRafId = requestAnimationFrame(tick);
-    };
-
-    preloadObjectDetectionModel().then(() => {
-        if (objectDetectionRuntime) {
-            objectDetectionRafId = requestAnimationFrame(tick);
-        }
-    });
-}
-
-/**
- * Stop continuous object detection loop.
- *
- * @return {void}
- */
-function stopRealtimeObjectDetection() {
-    if (objectDetectionRafId) {
-        cancelAnimationFrame(objectDetectionRafId);
-        objectDetectionRafId = null;
-    }
-    objectDetectionRuntime = null;
-}
-
-/**
- * Schedule object-detection model preload after Moodle/RequireJS has finished booting.
- *
- * @return {void}
- */
-function scheduleObjectDetectionPreload() {
-    const start = function() {
-        preloadObjectDetectionModel();
-    };
-    if (document.readyState === 'complete') {
-        start();
-    } else {
-        window.addEventListener('load', start, {once: true});
-    }
-}
-
-/**
- * Load a UMD CDN bundle without leaving window.define disabled during network I/O.
- *
- * @param {string} src script URL
- * @return {Promise<void>}
- */
-function loadExternalScript(src) {
-    if (window.__quizproctoringLoadedScripts && window.__quizproctoringLoadedScripts[src]) {
-        return Promise.resolve();
-    }
-    if (!window.__quizproctoringLoadedScripts) {
-        window.__quizproctoringLoadedScripts = {};
+    if (window.__quizproctoringObjectDetectionLoadPromise) {
+        return window.__quizproctoringObjectDetectionLoadPromise;
     }
 
-    return fetch(src, {mode: 'cors', credentials: 'omit'})
+    const scriptpath = M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/libraries/js/object_detection.js';
+    window.__quizproctoringObjectDetectionLoadPromise = fetch(scriptpath, {mode: 'same-origin', credentials: 'same-origin'})
         .then((response) => {
             if (!response.ok) {
-                throw new Error(`Failed to fetch script: ${src}`);
+                throw new Error(`Failed to fetch script: ${scriptpath}`);
             }
             return response.text();
         })
@@ -1649,129 +1535,53 @@ function loadExternalScript(src) {
             const previousDefine = window.define;
             window.define = undefined;
             try {
-                // Evaluate synchronously so RequireJS is not left without define().
                 // eslint-disable-next-line no-eval
                 (0, eval)(code);
             } finally {
                 window.define = previousDefine;
             }
-            window.__quizproctoringLoadedScripts[src] = true;
-        });
-}
-
-/**
- * Preload the object detection model.
- *
- * @return {Promise<Object|null>}
- */
-function preloadObjectDetectionModel() {
-    if (!objectDetectionEnabled) {
-        return Promise.resolve(null);
-    }
-    if (objectDetectionModel) {
-        return Promise.resolve(objectDetectionModel);
-    }
-    if (objectDetectionModelPromise) {
-        return objectDetectionModelPromise;
-    }
-
-    const preloadStartedAt = Date.now();
-    console.info('[QuizProctoring][YOLOv12] Model preload started');
-
-    objectDetectionModelPromise = loadExternalScript(
-        'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js'
-    )
-        .then(() => {
-            if (!window.tf) {
-                throw new Error('TensorFlow.js failed to load');
+            if (!window.quizproctoringObjectDetection ||
+                typeof window.quizproctoringObjectDetection.create !== 'function') {
+                throw new Error('Object detection library did not initialize correctly');
             }
-            return loadExternalScript(
-                'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'
-            );
-        })
-        .then(() => {
-            const detector = window.cocoSsd || window.cocossd;
-            if (!detector || typeof detector.load !== 'function') {
-                throw new Error('Object detector library missing');
-            }
-            return detector.load({base: 'lite_mobilenet_v2'});
-        })
-        .then((model) => {
-            objectDetectionModel = model;
-            const elapsed = Date.now() - preloadStartedAt;
-            if (elapsed > 5000) {
-                console.warn(`[QuizProctoring][YOLOv12] Model preloaded in ${elapsed}ms (target < 5000ms)`);
-            } else {
-                console.info(`[QuizProctoring][YOLOv12] Model preloaded in ${elapsed}ms`);
-            }
-            return model;
+            return window.quizproctoringObjectDetection;
         })
         .catch((error) => {
-            objectDetectionModelPromise = null;
-            console.error('[QuizProctoring][YOLOv12] Model preload failed:', error);
+            window.__quizproctoringObjectDetectionLoadPromise = null;
+            throw error;
+        });
+
+    return window.__quizproctoringObjectDetectionLoadPromise;
+}
+
+function getObjectDetectionController() {
+    if (objectDetectionController) {
+        objectDetectionController.setEnabled(objectDetectionEnabled);
+        return Promise.resolve(objectDetectionController);
+    }
+    if (objectDetectionControllerPromise) {
+        return objectDetectionControllerPromise;
+    }
+
+    objectDetectionControllerPromise = loadObjectDetectionLibrary()
+        .then((library) => {
+            objectDetectionController = library.create({
+                realtimeDetection: realtimeDetection,
+                isMobileDevice: ismobiledevice,
+                isQuizTerminating: function() {
+                    return quizTerminationInProgress;
+                }
+            });
+            objectDetectionController.setEnabled(objectDetectionEnabled);
+            return objectDetectionController;
+        })
+        .catch((error) => {
+            objectDetectionControllerPromise = null;
+            console.error('[QuizProctoring][coco] Failed to initialize object detection helper:', error);
             return null;
         });
 
-    return objectDetectionModelPromise;
-}
-
-/**
- * Detect only suspicious objects and report when found.
- *
- * @param {number} cmid course module id
- * @param {number} attemptid attempt id
- * @param {boolean} mainimage main image mode
- * @param {string} imageData base64 frame image
- * @return {void}
- */
-function queueObjectDetection(cmid, attemptid, mainimage, imageData) {
-    if (!objectDetectionEnabled || !attemptid || mainimage || !imageData) {
-        return;
-    }
-    if (objectDetectionInFlight) {
-        return;
-    }
-    objectDetectionInFlight = true;
-
-    preloadObjectDetectionModel().then((model) => {
-        if (!model) {
-            objectDetectionInFlight = false;
-            return;
-        }
-        const img = new Image();
-        img.onload = function() {
-            model.detect(img).then((predictions) => {
-                console.info('[QuizProctoring][YOLOv12] detections:', predictions.map((prediction) => ({
-                    class: prediction.class,
-                    score: Number(prediction.score || 0).toFixed(3),
-                })));
-
-                const matched = predictions.filter((prediction) => {
-                    const label = (prediction.class || '').toLowerCase();
-                    return objectDetectionClasses.indexOf(label) !== -1 && prediction.score >= 0.4;
-                });
-                if (!matched.length) {
-                    return;
-                }
-                if ((Date.now() - lastObjectDetectedReportAt) < OBJECT_DETECTION_WARNING_GAP_MS) {
-                    return;
-                }
-                lastObjectDetectedReportAt = Date.now();
-                console.warn('[QuizProctoring][YOLOv12] Suspicious object(s) found:', matched);
-                realtimeDetection(cmid, attemptid, mainimage, 'objectsdetected', imageData);
-            }).catch((error) => {
-                console.error('[QuizProctoring][YOLOv12] Detection failed:', error);
-            }).finally(() => {
-                objectDetectionInFlight = false;
-            });
-        };
-        img.onerror = function() {
-            objectDetectionInFlight = false;
-        };
-        img.src = imageData;
-    }).catch(() => {
-        objectDetectionInFlight = false;
-    });
+    return objectDetectionControllerPromise;
 }
 
 /**
