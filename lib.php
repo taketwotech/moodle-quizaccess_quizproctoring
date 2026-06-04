@@ -507,6 +507,47 @@ function quizproctoring_storeimage(
 }
 
 /**
+ * Store a realtime violation and return a JSON payload instead of throwing to the client.
+ *
+ * quizproctoring_storeimage() throws moodle_exception for warnings; realtime AJAX must
+ * receive errorcode/error JSON so the attempt page can show alert popups.
+ *
+ * @param string $data image data URL or empty
+ * @param int $cmid course module id
+ * @param int $attemptid attempt id
+ * @param int $quizid quiz id
+ * @param bool $mainimage main image flag
+ * @param string $status violation status constant
+ * @param string $response API response text
+ * @param bool $eyecheckon whether eye check is active (eyesnotopen only)
+ * @return array|null response array to json_encode, or null if store finished without alert
+ */
+function quizproctoring_storeimage_realtime_response(
+    $data,
+    $cmid,
+    $attemptid,
+    $quizid,
+    $mainimage,
+    $status,
+    $response = '',
+    $eyecheckon = false
+) {
+    try {
+        quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status, $response);
+    } catch (moodle_exception $e) {
+        $payload = [
+            'errorcode' => 1,
+            'error' => $e->getMessage(),
+        ];
+        if ($eyecheckon && $status === QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+            $payload['status'] = 'eyecheckon';
+        }
+        return $payload;
+    }
+    return null;
+}
+
+/**
  * Schedule an adhoc task to send a warning email to course teachers.
  *
  * This helper creates a task with all required context. It does not send

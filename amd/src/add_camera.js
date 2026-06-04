@@ -416,23 +416,23 @@ function($, str, ModalFactory, EyeTracking) {
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
+            dataType: 'json',
             data: requestData,
             success: function(response) {
+                response = parseProctoringAjaxResponse(response);
                 if (response && response.errorcode) {
-                    var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                    var leftwarnings = Math.max(warningsl - 1, 0);
-                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                    trackWarningAndMaybeQueueEmail(requestData.cmid, requestData.attemptid);
-                    $(document).trigger('popup', response.error);
-                } else {
-                    if (response.redirect && response.url) {
-                        window.onbeforeunload = null;
-                        $(document).trigger('popup', response.msg);
-                        setTimeout(function() {
-                            window.location.href = encodeURI(response.url);
-                        }, 3000);
-                    }
+                    handleRealtimeWarningResponse(response, response.error || '', requestData.cmid, requestData.attemptid);
+                } else if (response && response.redirect && response.url) {
+                    quizTerminationInProgress = true;
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
                 }
+            },
+            error: function(xhr) {
+                handleRealtimeWarningXhrError(xhr, '', requestData.cmid, requestData.attemptid);
             }
         });
     };
@@ -1656,6 +1656,70 @@ function maybeRecordEyeFocusWarning(cmid, attemptid, face, response) {
     }
 }
 
+/**
+ * Parse AJAX JSON (jQuery may leave string responses unparsed).
+ *
+ * @param {*} response raw AJAX response
+ * @return {Object|null}
+ */
+function parseProctoringAjaxResponse(response) {
+    if (!response) {
+        return null;
+    }
+    if (typeof response === 'object') {
+        return response;
+    }
+    if (typeof response === 'string' && response.length) {
+        try {
+            return JSON.parse(response);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
+
+/**
+ * Handle JSON from ajax_realtime.php (violations, redirects, eye state).
+ *
+ * @param {Object|null} response parsed response
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {string} face validate key
+ * @return {void}
+ */
+function handleRealtimeDetectionResponse(response, cmid, attemptid, face) {
+    if (!response) {
+        return;
+    }
+    if (response.status === 'eyecheckoff') {
+        $(document).trigger('eye-tracking-disabled');
+        return;
+    }
+    if (response.status === 'eyecheckon') {
+        if (response.errorcode) {
+            handleRealtimeWarningResponse(response, response.error || '', cmid, attemptid);
+            maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
+        } else {
+            $(document).trigger('eye-tracking-enabled');
+        }
+        return;
+    }
+    if (response.errorcode) {
+        handleRealtimeWarningResponse(response, response.error || '', cmid, attemptid);
+        maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
+        return;
+    }
+    if (response.redirect && response.url) {
+        quizTerminationInProgress = true;
+        window.onbeforeunload = null;
+        $(document).trigger('popup', response.msg);
+        setTimeout(function() {
+            window.location.href = encodeURI(response.url);
+        }, 3000);
+    }
+}
+
 function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     var requestData = {
         cmid: cmid,
@@ -1667,40 +1731,18 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     $.ajax({
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
         method: 'POST',
+        dataType: 'json',
         data: requestData,
         success: function(response) {
-            if (response && response.status === 'eyecheckoff') {
-                $(document).trigger('eye-tracking-disabled');
-                return;
-            }
-            if (response && response.status === 'eyecheckon') {
-                $(document).trigger('eye-tracking-enabled');
-                if (response.errorcode) {
-                    const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                    const leftwarnings = Math.max(warningsl - 1, 0);
-                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                    trackWarningAndMaybeQueueEmail(cmid, attemptid);
-                    maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
-                    $(document).trigger('popup', response.error);
-                }
-                return;
-            }
-            if (response && response.errorcode) {
-                const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                const leftwarnings = Math.max(warningsl - 1, 0);
-                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                trackWarningAndMaybeQueueEmail(cmid, attemptid);
-                maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
-                $(document).trigger('popup', response.error);
-            } else {
-                if (response.redirect && response.url) {
-                    window.onbeforeunload = null;
-                    $(document).trigger('popup', response.msg);
-                    setTimeout(function() {
-                        window.location.href = encodeURI(response.url);
-                    }, 3000);
-                }
-            }
+            handleRealtimeDetectionResponse(
+                parseProctoringAjaxResponse(response),
+                cmid,
+                attemptid,
+                face
+            );
+        },
+        error: function(xhr) {
+            handleRealtimeWarningXhrError(xhr, '', cmid, attemptid);
         }
     });
 }
@@ -1777,7 +1819,7 @@ function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attempti
         }, 3000);
         return;
     }
-    if (!response || !response.errorcode) {
+    if (!response || (!response.errorcode && !response.error)) {
         if (quizTerminationInProgress) {
             return;
         }
@@ -1791,9 +1833,9 @@ function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attempti
     }
     if (Date.now() < suppressRealtimePopupUntil) {
         suppressRealtimePopupUntil = 0;
-    } else {
-        $(document).trigger('popup', response.error || fallbackmessage);
+        return;
     }
+    $(document).trigger('popup', response.error || fallbackmessage);
     decrementWarningCounter();
     trackWarningAndMaybeQueueEmail(cmid, attemptid);
 }
@@ -1818,7 +1860,7 @@ function handleRealtimeWarningXhrError(xhr, fallbackmessage, cmid, attemptid) {
             payload = null;
         }
     }
-    if (payload && payload.errorcode) {
+    if (payload && (payload.errorcode || payload.error)) {
         handleRealtimeWarningResponse(payload, fallbackmessage, cmid, attemptid);
         return;
     }

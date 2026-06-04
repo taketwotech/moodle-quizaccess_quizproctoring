@@ -32,7 +32,7 @@ define(['jquery'], function($) {
     let focusWarningTimestamps = [];
     let autoDisableRequested = false;
     let teacherPollId = null;
-    const TEACHER_STATE_POLL_MS = 2000;
+    const TEACHER_STATE_POLL_MS = 5000;
 
     let config = {
         onTiltAlert: null,
@@ -64,7 +64,7 @@ define(['jquery'], function($) {
     }
 
     /**
-     * Poll attempt eye state so live-proctor teacher toggles apply without delay.
+     * Poll attempt eye state so review-page teacher toggles reach the student (every 5s).
      */
     function startTeacherStatePoll() {
         stopTeacherStatePoll();
