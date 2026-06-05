@@ -7,11 +7,16 @@
  */
 (function(window) {
     const DEFAULT_CLASS_THRESHOLDS = {
-        'cell phone': 0.4,
-        'book': 0.25,
+        'cell phone': 0.62,
+        'book': 0.30,
     };
-    const DEFAULT_DETECT_MIN_SCORE = 0.2;
+    const DEFAULT_DETECT_MIN_SCORE = 0.25;
     const DEFAULT_WARNING_GAP_MS = 3000;
+    /** Consecutive frames required before a phone alert (reduces remote/tablet false positives). */
+    const PHONE_CONFIRM_FRAMES = 3;
+    /** Reject phone labels when the box is very wide (typical AC/TV remote shape). */
+    const PHONE_MIN_ASPECT = 0.35;
+    const PHONE_MAX_ASPECT = 1.05;
     const DETECTION_FRAME_WIDTH = 640;
     const DETECTION_FRAME_HEIGHT = 480;
 
@@ -81,19 +86,85 @@
         let modelPromise = null;
         let inFlight = false;
         let lastObjectDetectedReportAt = 0;
+        let phoneConfirmStreak = 0;
         let rafId = null;
         let runtime = null;
         const classThresholds = (config && config.classThresholds) || DEFAULT_CLASS_THRESHOLDS;
         const detectMinScore = (config && config.detectMinScore) || DEFAULT_DETECT_MIN_SCORE;
         const warningGapMs = (config && config.warningGapMs) || DEFAULT_WARNING_GAP_MS;
+        const phoneConfirmFrames = (config && config.phoneConfirmFrames) || PHONE_CONFIRM_FRAMES;
 
-        function matchesSuspiciousClass(prediction) {
+        /**
+         * @param {Object} prediction COCO-SSD prediction
+         * @return {number|null} width/height or null
+         */
+        function getBboxAspect(prediction) {
+            const bbox = prediction.bbox;
+            if (!bbox || bbox.length < 4) {
+                return null;
+            }
+            const width = bbox[2];
+            const height = bbox[3];
+            if (!width || !height) {
+                return null;
+            }
+            return width / height;
+        }
+
+        /**
+         * @param {Object} prediction COCO-SSD prediction
+         * @return {boolean}
+         */
+        function isBookMatch(prediction) {
             const label = (prediction.class || '').toLowerCase();
-            const threshold = classThresholds[label];
-            if (threshold === undefined) {
+            if (label !== 'book') {
                 return false;
             }
-            return prediction.score >= threshold;
+            const threshold = classThresholds.book;
+            return threshold !== undefined && prediction.score >= threshold;
+        }
+
+        /**
+         * Stricter phone matching: higher score, portrait-ish aspect (filters many remotes).
+         *
+         * @param {Object} prediction COCO-SSD prediction
+         * @return {boolean}
+         */
+        function isPhoneMatch(prediction) {
+            const label = (prediction.class || '').toLowerCase();
+            if (label !== 'cell phone' && label !== 'mobile phone') {
+                return false;
+            }
+            const threshold = classThresholds['cell phone'];
+            if (threshold === undefined || prediction.score < threshold) {
+                return false;
+            }
+            const aspect = getBboxAspect(prediction);
+            if (aspect !== null && (aspect < PHONE_MIN_ASPECT || aspect > PHONE_MAX_ASPECT)) {
+                return false;
+            }
+            return true;
+        }
+
+        /**
+         * @param {Array<Object>} predictions COCO-SSD predictions
+         * @return {{books: Array<Object>, phones: Array<Object>}}
+         */
+        function classifyMatches(predictions) {
+            const books = [];
+            const phones = [];
+            predictions.forEach((prediction) => {
+                if (isBookMatch(prediction)) {
+                    books.push(prediction);
+                } else if (isPhoneMatch(prediction)) {
+                    phones.push(prediction);
+                }
+            });
+            return {books: books, phones: phones};
+        }
+
+        function resetPhoneConfirmStreak() {
+            phoneConfirmStreak = 0;
         }
 
         function preloadModel() {
@@ -166,8 +237,26 @@
                             score: Number(prediction.score || 0).toFixed(3),
                         })));
 
-                        const matched = predictions.filter(matchesSuspiciousClass);
-                        if (!matched.length) {
+                        const {books, phones} = classifyMatches(predictions);
+                        let shouldAlert = false;
+                        let matched = [];
+
+                        if (books.length) {
+                            shouldAlert = true;
+                            matched = matched.concat(books);
+                            resetPhoneConfirmStreak();
+                        } else if (phones.length) {
+                            phoneConfirmStreak += 1;
+                            if (phoneConfirmStreak >= phoneConfirmFrames) {
+                                shouldAlert = true;
+                                matched = phones;
+                                resetPhoneConfirmStreak();
+                            }
+                        } else {
+                            resetPhoneConfirmStreak();
+                        }
+
+                        if (!shouldAlert || !matched.length) {
                             return;
                         }
                         if ((Date.now() - lastObjectDetectedReportAt) < warningGapMs) {
@@ -197,6 +286,7 @@
                 rafId = null;
             }
             runtime = null;
+            resetPhoneConfirmStreak();
         }
 
         function start(cmid, attemptid, mainimage, videoEl, canvasEl) {
