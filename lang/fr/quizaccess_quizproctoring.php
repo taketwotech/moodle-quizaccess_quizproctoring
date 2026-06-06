@@ -281,11 +281,11 @@ Vous pouvez consulter la tentative et les données de surveillance associées en
 
 Ce message a été généré automatiquement par la règle d\'accès au quiz ProctorLink.';
 $string['warning_email_subject'] = 'Seuil d\'avertissements de surveillance atteint pour {$a->quizname}';
-$string['warning_email_threshold'] = 'Envoyer un e-mail au professeur lorsque le seuil d\'avertissements est dépassé';
-$string['warning_email_threshold_help'] = 'Lorsque le seuil d\'avertissements est défini sur Illimité, envoyer un e-mail aux enseignants lorsque le nombre total d\'avertissements d\'un étudiant pour ce quiz atteint ou dépasse cette valeur. Définissez sur Désactivé pour ne pas envoyer d\'e-mails.';
-$string['warning_email_trigger_role'] = 'Rôle destinataire de l\'e-mail lorsque le seuil est dépassé';
-$string['warning_email_trigger_role_help'] = 'Lorsque le seuil d\'e-mail d\'avertissement est utilisé, choisissez quel rôle doit recevoir l\'e-mail de notification.';
-$string['warning_threshold'] = 'Seuil d\'avertissements pendant le quiz surveillé';
+$string['warning_email_threshold'] = 'Seuil de déclenchement des notifications par e-mail';
+$string['warning_email_threshold_help'] = 'S\'applique uniquement lorsque le seuil d\'avertissements est défini sur Illimité. Envoie un e-mail de notification lorsque les avertissements d\'un étudiant atteignent ce nombre. Définissez sur Désactivé pour désactiver les notifications par e-mail.';
+$string['warning_email_trigger_role'] = 'Rôle destinataire de la notification';
+$string['warning_email_trigger_role_help'] = 'Sélectionnez le rôle du cours qui reçoit l\'e-mail de notification lorsque le seuil d\'e-mail d\'avertissement est atteint.';
+$string['warning_threshold'] = 'Seuil d\'avertissement pendant le quiz surveillé';
 $string['warning_threshold_help'] = 'Définir le nombre maximum d\'avertissements autorisés avant disqualification.';
 $string['warningaws'] = 'Veuillez compléter la <a href="{$a}">configuration AWS</a> pour continuer le quiz.';
 $string['warningexpire'] = 'Le jeton pour votre service de surveillance Take2 a expiré. Veuillez nous contacter à <a href="mailto:ms@taketwotechnologies.com">ms@taketwotechnologies.com</a> pour le renouveler ou en générer un nouveau.';

@@ -281,10 +281,10 @@ Detaylar:
 
 Bu mesaj ProctorLink test erişim kuralı tarafından otomatik olarak oluşturulmuştur.';
 $string['warning_email_subject'] = '{$a->quizname} sınavı için gözetim uyarı eşiğine ulaşıldı';
-$string['warning_email_threshold'] = 'Uyarı eşiği aşıldığında öğretmene e-posta gönder';
-$string['warning_email_threshold_help'] = 'Uyarı eşiği Sınırsız olarak ayarlandığında, bir öğrencinin bu test için toplam uyarı sayısı bu değere ulaştığında veya geçtiğinde öğretmenlere e-posta gönderin. E-posta göndermemek için Devre Dışı olarak bırakın.';
-$string['warning_email_trigger_role'] = 'Eşik aşıldığında e-posta gönderilecek rol';
-$string['warning_email_trigger_role_help'] = 'Uyarı e-posta eşiği kullanıldığında, bildirim e-postasını hangi rolün alacağını seçin.';
+$string['warning_email_threshold'] = 'E-posta bildirimi tetikleme eşiği';
+$string['warning_email_threshold_help'] = 'Yalnızca uyarı eşiği Sınırsız olarak ayarlandığında geçerlidir. Bir öğrencinin uyarıları bu sayıya ulaştığında bildirim e-postası gönderir. E-posta bildirimlerini kapatmak için Devre Dışı olarak ayarlayın.';
+$string['warning_email_trigger_role'] = 'Bildirim alıcı rolü';
+$string['warning_email_trigger_role_help'] = 'Uyarı e-posta eşiğine ulaşıldığında bildirim e-postasını alacak ders rolünü seçin.';
 $string['warning_threshold'] = 'Gözetimli testte uyarı eşiği';
 $string['warning_threshold_help'] = 'Bir kullanıcının gözetimli testte diskalifiye edilmeden önce alabileceği maksimum uyarı sayısını ayarlayın.';
 $string['warningaws'] = 'Teste devam etmek için lütfen <a href="{$a}">AWS yapılandırmasını</a> tamamlayın.';

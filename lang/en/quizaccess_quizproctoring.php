@@ -281,12 +281,12 @@ You can review the attempt and associated proctoring data using the link below:
 
 This message was generated automatically by the ProctorLink quiz access rule.';
 $string['warning_email_subject'] = 'Proctoring warnings threshold reached for {$a->quizname}';
-$string['warning_email_threshold'] = 'Trigger email to teacher when warnings exceed';
-$string['warning_email_threshold_help'] = 'When the warnings threshold is set to Unlimited, send an email to teachers when a student\'s total warnings for this quiz reaches or exceeds this value. Set this to Disabled to avoid sending emails.';
-$string['warning_email_trigger_role'] = 'Email trigger role when threshold exceeds';
-$string['warning_email_trigger_role_help'] = 'When the warning email threshold is used, choose which role should receive the notification email.';
-$string['warning_threshold'] = 'Warnings threshold during proctored quiz';
-$string['warning_threshold_help'] = 'Set the maximum number of warnings a user may recieve before being disqualified from the proctored quiz.';
+$string['warning_email_threshold'] = 'Email notification trigger threshold';
+$string['warning_email_threshold_help'] = 'Applies only when warning threshold is set to Unlimited. Sends a notification email when a student\'s warnings reach this number. Set to Disabled to turn off email notifications.';
+$string['warning_email_trigger_role'] = 'Notification recipient role';
+$string['warning_email_trigger_role_help'] = 'Select the course role that receives the notification email when the warning email threshold is reached.';
+$string['warning_threshold'] = 'Warning threshold during proctored quiz';
+$string['warning_threshold_help'] = 'Set the maximum number of warnings a user may receive before being disqualified from the proctored quiz.';
 $string['warningaws'] = 'Please complete <a href="{$a}">AWS configuration</a> to continue with quiz.';
 $string['warningexpire'] = 'The token for your Take2 proctoring service has expired. Please reach out to us at <a href="mailto:ms@taketwotechnologies.com">ms@taketwotechnologies.com</a> to renew or generate a new token to ensure uninterrupted access.';
 $string['warningopensourse'] = 'Please complete <a href="{$a}">configuration</a> to continue with quiz.';
