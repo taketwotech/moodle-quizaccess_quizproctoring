@@ -95,7 +95,7 @@ class api {
         global $SESSION;
         self::init();
         $curl = new \curl();
-        $url = 'http://127.0.0.1:59999/validate';
+        $url = 'https://proctoring.taketwotechnologies.com/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::domain();
