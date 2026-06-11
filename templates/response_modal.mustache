@@ -39,7 +39,6 @@
     {{^images}}
         <p>{{#str}} noimageswarning, quizaccess_quizproctoring {{/str}}</p>
     {{/images}}
-    {{#haspending}}
     <div class="image-list-container">
         <ul class="imagelist">
             <li class="legend-item">
@@ -54,11 +53,12 @@
                 <span class="legend-swatch legend-approved" aria-hidden="true"></span>
                 {{#str}} yesapproveimage_label, quizaccess_quizproctoring {{/str}}
             </li>
+            {{#haspending}}
             <li class="legend-item">
                 <span class="legend-swatch legend-pending" aria-hidden="true"></span>
                 {{#str}} yespendingimage_label, quizaccess_quizproctoring {{/str}}
             </li>
+            {{/haspending}}
         </ul>
     </div>
-    {{/haspending}}
 </div>
