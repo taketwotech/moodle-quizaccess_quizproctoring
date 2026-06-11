@@ -673,13 +673,11 @@ label[for="id_consentcheckbox"] {
     color: #000;
 }
 
-#exportpdf {
+.report-export-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 15px;
-}
-
-#exportcsv {
-    margin-bottom: 15px;
-    margin-left: 10px;
 }
 
 /* stylelint-disable declaration-no-important */

@@ -354,12 +354,14 @@ echo '<div class="headtitle">' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 
+echo '<div class="report-export-buttons">';
 echo '<button id="exportpdf" class="btn btn-secondary">' . get_string('exportpdf', 'quizaccess_quizproctoring') . '</button>';
 echo '<button id="exportcsv" class="btn btn-secondary">' . get_string('exportcsv', 'quizaccess_quizproctoring') . '</button>';
 if ($pendingcount > 0) {
-    echo '<button id="reprocessimages" class="btn btn-warning ms-2">' .
+    echo '<button id="reprocessimages" class="btn btn-warning">' .
         get_string('reprocessimages', 'quizaccess_quizproctoring') . ' (' . $pendingcount . ')</button>';
 }
+echo '</div>';
 
 echo '<table id="proctoringreporttable" class="generaltable display" style="width:100%">
         <thead>
