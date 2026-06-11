@@ -83,7 +83,8 @@ if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
                 break;
             case 'warnings':
                 $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
-                WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0 AND pd.status != \'\')';
+                WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
+                AND pd.status != \'\' AND pd.status != \'pendingprocessing\')';
                 break;
             default:
                 $ordercolumn = 'u.firstname';
@@ -134,7 +135,8 @@ $sql = "
         ) AS totalmimages,
         (
             SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
-            WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0 AND pd.status != ''
+            WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
+            AND pd.status != '' AND pd.status != 'pendingprocessing'
         ) AS warnings
     FROM {user} u
     JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id

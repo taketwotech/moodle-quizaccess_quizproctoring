@@ -9,8 +9,8 @@ window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
-define(['jquery', 'core/str', 'core/modal_factory'],
-function($, str, ModalFactory) {
+define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events'],
+function($, str, ModalFactory, ModalEvents) {
     $('.quizstartbuttondiv [type=submit]').prop("disabled", true);
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
@@ -209,6 +209,7 @@ function($, str, ModalFactory) {
     };
 
     Camera.prototype.takepicture = function() {
+        const cameraInstance = this;
         const video = this.video;
         const canvas = this.canvas;
 
@@ -268,11 +269,24 @@ function($, str, ModalFactory) {
                 if (response && response.errorcode) {
                     $('#userimageset').val(0);
                     $(document).trigger('popup', response.error);
-                } else {
+                    revertPreflightCapture(cameraInstance);
+                } else if (response && (response.status === true || response.status === 'true')) {
                     $('#userimageset').val(1);
                     if ($('#id_consentcheckbox').is(':checked')) {
                         $("#id_submitbutton").prop("disabled", false);
                     }
+                } else if (requestData.mainimage) {
+                    const unavailablemsg = (response && response.message) ? response.message :
+                        M.util.get_string('verificationunavailable', 'quizaccess_quizproctoring');
+                    $(document).trigger('popup', unavailablemsg);
+                    revertPreflightCapture(cameraInstance);
+                }
+            },
+            error: function() {
+                if (requestData.mainimage) {
+                    $(document).trigger('popup',
+                        M.util.get_string('verificationunavailable', 'quizaccess_quizproctoring'));
+                    revertPreflightCapture(cameraInstance);
                 }
             }
         });
@@ -448,6 +462,30 @@ function($, str, ModalFactory) {
         $("#id_submitbutton").prop("disabled", true);
     };
 
+    /**
+     * Revert all preflight capture state when main image server validation fails.
+     *
+     * @param {Camera} cameraInstance Camera instance
+     * @return {void}
+     */
+    function enableQuizStartButton() {
+        $('.quizstartbuttondiv [type=submit]').prop('disabled', false);
+    }
+
+    function revertPreflightCapture(cameraInstance) {
+        if (cameraInstance && typeof cameraInstance.resetcamera === 'function') {
+            cameraInstance.resetcamera();
+        }
+        $('#id_consentcheckbox').prop('checked', false);
+        $('#userimageset').val(0);
+        $('#id_submitbutton').prop('disabled', true);
+    }
+
+    function cleanupModalBackdrop() {
+        $('body').removeClass('modal-open');
+        $('.modal-backdrop').remove();
+    }
+
     var externalserver = 'https://stream.proctorlink.com';
     var localMediaStream = null;
     var USE_AUDIO = true;
@@ -466,14 +504,21 @@ function($, str, ModalFactory) {
         $("#id_submitbutton").prop("disabled", true);
     };
     Camera.prototype.showpopup = function(event, message) {
+        const cameraInstance = this;
         if (this.activeModal) {
-            this.activeModal.hide();
             this.activeModal.destroy();
+            this.activeModal = null;
+            cleanupModalBackdrop();
         }
         return ModalFactory.create({
             body: message,
         }).then((modal) => {
             this.activeModal = modal;
+            modal.getRoot().on(ModalEvents.hidden, function() {
+                modal.destroy();
+                cameraInstance.activeModal = null;
+                cleanupModalBackdrop();
+            });
             modal.show();
             return null;
         }).catch(() => {
@@ -528,6 +573,8 @@ function($, str, ModalFactory) {
                 camera.stopcamera();
                 camera.resetcamera();
                 $("#id_submitbutton").prop("disabled", true);
+                enableQuizStartButton();
+                cleanupModalBackdrop();
                 localStorage.removeItem('videoPosition');
             });
 
@@ -542,6 +589,8 @@ function($, str, ModalFactory) {
                     camera.stopcamera();
                     camera.resetcamera();
                     $("#id_submitbutton").prop("disabled", true);
+                    enableQuizStartButton();
+                    cleanupModalBackdrop();
                     localStorage.removeItem('videoPosition');
                 }
             });
@@ -558,6 +607,8 @@ function($, str, ModalFactory) {
                     camera.stopcamera();
                     camera.resetcamera();
                     $("#id_submitbutton").prop("disabled", true);
+                    enableQuizStartButton();
+                    cleanupModalBackdrop();
                     localStorage.removeItem('videoPosition');
                 }
             });
@@ -1571,13 +1622,13 @@ function showCustomModal(message) {
     $('.custom-close-btn').click(function() {
         closeCustomModal();
     });
-    $(document).on('click', function(e) {
+    $(document).on('click.custommodal', function(e) {
         const $modalContent = $('.custom-modal-content');
         if (!$modalContent.is(e.target) && $modalContent.has(e.target).length === 0) {
             closeCustomModal();
         }
     });
-    $(document).on('keydown', function(e) {
+    $(document).on('keydown.custommodal', function(e) {
         if (e.key === 'Escape') {
             closeCustomModal();
         }
@@ -1593,8 +1644,8 @@ function closeCustomModal() {
     $('.custom-modal').fadeOut(function() {
         $(this).remove();
     });
-    $(document).off('click');
-    $(document).off('keydown');
+    $(document).off('click.custommodal');
+    $(document).off('keydown.custommodal');
 }
 
 /**

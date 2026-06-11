@@ -185,7 +185,9 @@ if (!$mainentry->isautosubmit) {
                     );
                     $response = $matchprofile;
                     $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, false);
-                    if (
+                    if ($profileresp == QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
+                        $validate = QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING;
+                    } else if (
                         $profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
@@ -202,7 +204,24 @@ if (!$mainentry->isautosubmit) {
         }
     }
 
+    $mainimagefailed = false;
     switch ($validate) {
+        case QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING:
+            if ($mainimage) {
+                // Preflight main image requires a successful server response.
+                $mainimagefailed = true;
+            } else {
+                quizproctoring_storeimage(
+                    $img,
+                    $cmid,
+                    $attemptid,
+                    $cm->instance,
+                    $mainimage,
+                    QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+                    $response
+                );
+            }
+            break;
         case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
             if (!$mainimage) {
                 quizproctoring_storeimage(
@@ -327,7 +346,7 @@ if (!$mainentry->isautosubmit) {
                 'quizid' => $cm->instance,
                 'storeallimages' => 1,
             ]
-        )) && !$mainimage
+        )) && !$mainimage && $validate === ''
     ) {
         quizproctoring_storeimage(
             $img,
@@ -340,6 +359,13 @@ if (!$mainentry->isautosubmit) {
             true
         );
     }
-    echo json_encode(['status' => 'true']);
+    if ($mainimagefailed) {
+        echo json_encode([
+            'status' => false,
+            'message' => get_string('verificationunavailable', 'quizaccess_quizproctoring'),
+        ]);
+    } else {
+        echo json_encode(['status' => 'true']);
+    }
     die();
 }

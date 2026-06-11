@@ -26,6 +26,7 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 require_login();
 
 $userid = required_param('userid', PARAM_INT);
@@ -142,6 +143,8 @@ foreach ($getimages as $img) {
     $formattedtime = userdate($img->timecreated, '%H:%M');
     if ($img->image_status == 'M') {
         $imagestatusstr = 'main image';
+    } else if ($img->status === QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
+        $imagestatusstr = 'pending';
     } else if ($img->status != '') {
         $imagestatusstr = 'warning';
     } else {
@@ -157,8 +160,23 @@ foreach ($getimages as $img) {
         'total' => $totalrecord,
     ]);
 }
+$haspending = $DB->record_exists('quizaccess_proctor_data', [
+    'userid' => $userid,
+    'quizid' => $quizid,
+    'attemptid' => $attemptid,
+    'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+    'deleted' => 0,
+]) || $DB->record_exists('quizaccess_main_proctor', [
+    'userid' => $userid,
+    'quizid' => $quizid,
+    'attemptid' => $attemptid,
+    'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+    'deleted' => 0,
+]);
+
 $response = [
     'images' => $imgarray,
+    'haspending' => $haspending,
     'totalRecords' => $totalrecord,
     'totalPages' => $totalpages,
     'currentPage' => $page,

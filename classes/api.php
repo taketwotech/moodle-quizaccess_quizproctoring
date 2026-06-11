@@ -95,7 +95,7 @@ class api {
         global $SESSION;
         self::init();
         $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/validate';
+        $url = 'http://127.0.0.1:59999/validate';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $domain = self::domain();
@@ -109,9 +109,39 @@ class api {
             'attempt_id: ' . $attemptid,
         ];
 
+        $curl->setopt([
+            'CURLOPT_TIMEOUT' => 30,
+            'CURLOPT_CONNECTTIMEOUT' => 10,
+        ]);
         $curl->setHeader($header);
         $result = $curl->post($url, json_encode($imagedata));
+        if ($result === false) {
+            return false;
+        }
         return $result;
+    }
+
+    /**
+     * Determine whether an API response indicates a transport or server failure.
+     *
+     * @param mixed $response Raw API response
+     * @return bool True when the response should be treated as an API failure
+     */
+    public static function is_api_failure($response) {
+        if ($response === false || $response === '' || $response === null) {
+            return true;
+        }
+        if (!is_string($response)) {
+            return true;
+        }
+        $result = json_decode($response, true);
+        if ($result === null && json_last_error() !== JSON_ERROR_NONE) {
+            return true;
+        }
+        if (is_array($result) && (isset($result['error']) || isset($result['Error']))) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -192,12 +222,15 @@ class api {
     public static function validate($response, $source, $target = '', $eyecheck = false) {
         global $CFG;
         self::init();
+        if (self::is_api_failure($response)) {
+            return QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING;
+        }
         $result = json_decode($response, true);
-        if (isset($result["FaceDetails"]) && count($result["FaceDetails"]) > 0) {
-            $count = count($result["FaceDetails"]);
+        if (isset($result['FaceDetails'])) {
+            $count = count($result['FaceDetails']);
             if ($count > 1) {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
-            } else if ($count == 1) {
+            } else if ($count === 1) {
                 $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
                 if ($eyesopen === false && $eyecheck === true) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
@@ -208,11 +241,17 @@ class api {
                     }
                 }
             } else {
-                return null;
+                return QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED;
+            }
+        } else if ($target !== '' && isset($result['FaceMatches'])) {
+            $compareresult = self::compare_faces($response);
+            if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
+                return QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED;
             }
         } else {
-            return QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED;
+            return QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING;
         }
+        return '';
     }
 
     /**

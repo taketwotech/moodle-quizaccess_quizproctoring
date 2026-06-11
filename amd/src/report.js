@@ -388,6 +388,10 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             },
                             dataType: 'json',
                             success: function(response) {
+                                var haspending = !!response.haspending || response.images.some(function(image) {
+                                    return image.imagestatus &&
+                                        image.imagestatus.toLowerCase() === 'pending';
+                                });
                                 var images = response.images.map(function(image) {
                                     return {
                                         url: image.img,
@@ -401,6 +405,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 var data = {
                                     attemptdate: startdate,
                                     images: images,
+                                    haspending: haspending,
                                     currentPage: response.currentPage,
                                     totalPages: response.totalPages,
                                     isFirstPage: response.currentPage === 1,
@@ -478,6 +483,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 return 'main-image';
                             case 'warning':
                                 return 'warning-image';
+                            case 'pending':
+                                return 'pending-image';
                             default:
                                 return 'green-image';
                         }

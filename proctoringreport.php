@@ -71,9 +71,12 @@ $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid
 $enableaudio = !empty($storerecord->enablerecordaudio);
 $proctoringimageshow = 1;
 $reportingpagination = quizaccess_quizproctoring_get_reporting_pagination();
+$pendingcount = quizaccess_quizproctoring_count_pending_images($quizid);
+$reprocessurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/ajax_reprocess.php');
 $PAGE->requires->js_init_code("
+    var proctoringReportTable = null;
     $(document).ready(function() {
-        const table = $('#proctoringreporttable').DataTable({
+        proctoringReportTable = $('#proctoringreporttable').DataTable({
             serverSide: true,
             processing: true,
             pageLength: {$reportingpagination},
@@ -138,6 +141,46 @@ $PAGE->requires->js_init_code("
             },
             complete: function() {
                 button.prop('disabled', false).text('" . get_string('exportpdf', 'quizaccess_quizproctoring') . "');
+            }
+        });
+    });
+
+    $('#reprocessimages').on('click', function() {
+        const button = $(this);
+        const originalText = button.text();
+        button.prop('disabled', true).text('" . get_string('reprocessimages_processing', 'quizaccess_quizproctoring') . "');
+        $.ajax({
+            url: " . json_encode($reprocessurl->out(false)) . ",
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                cmid: {$cmid},
+                quizid: {$quizid},
+                sesskey: M.cfg.sesskey
+            },
+            success: function(data) {
+                if (!data || data.success !== true) {
+                    alert('" . get_string('reprocessimages_error', 'quizaccess_quizproctoring') . "');
+                    return;
+                }
+                alert(data.message);
+                if (data.remaining > 0) {
+                    $('#reprocessimages').text('" . get_string('reprocessimages', 'quizaccess_quizproctoring') .
+                        " (' + data.remaining + ')');
+                } else {
+                    $('#reprocessimages').hide();
+                }
+                if (proctoringReportTable) {
+                    proctoringReportTable.ajax.reload(null, false);
+                }
+            },
+            error: function() {
+                alert('" . get_string('reprocessimages_error', 'quizaccess_quizproctoring') . "');
+            },
+            complete: function() {
+                if ($('#reprocessimages').is(':visible')) {
+                    button.prop('disabled', false).text(originalText);
+                }
             }
         });
     });
@@ -313,6 +356,10 @@ echo '<div class="headtitle">' .
 
 echo '<button id="exportpdf" class="btn btn-secondary">' . get_string('exportpdf', 'quizaccess_quizproctoring') . '</button>';
 echo '<button id="exportcsv" class="btn btn-secondary">' . get_string('exportcsv', 'quizaccess_quizproctoring') . '</button>';
+if ($pendingcount > 0) {
+    echo '<button id="reprocessimages" class="btn btn-warning ms-2">' .
+        get_string('reprocessimages', 'quizaccess_quizproctoring') . ' (' . $pendingcount . ')</button>';
+}
 
 echo '<table id="proctoringreporttable" class="generaltable display" style="width:100%">
         <thead>

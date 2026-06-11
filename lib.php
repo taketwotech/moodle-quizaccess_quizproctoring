@@ -44,6 +44,7 @@ define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
+define('QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING', 'pendingprocessing');
 
 /** User preference key for reporting page pagination (records per page). */
 define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
@@ -436,7 +437,7 @@ function quizproctoring_storeimage(
         file_put_contents($tmpdir . $imagename, $compresseddata);
     }
 
-    if (!$mainimage && $status != '') {
+    if (!$mainimage && $status != '' && $status !== QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
             $inparams = [
@@ -670,6 +671,143 @@ function quizproctoring_storemainimage(
             file_put_contents($tmpdir . '/' . $imagename, $compresseddata);
         }
     }
+}
+
+/**
+ * Count images awaiting API reprocessing for a quiz.
+ *
+ * @param int $quizid Quiz id
+ * @return int Number of pending images
+ */
+function quizaccess_quizproctoring_count_pending_images($quizid) {
+    global $DB;
+    $count = $DB->count_records('quizaccess_proctor_data', [
+        'quizid' => $quizid,
+        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+        'deleted' => 0,
+    ]);
+    $count += $DB->count_records('quizaccess_main_proctor', [
+        'quizid' => $quizid,
+        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+        'deleted' => 0,
+    ]);
+    return $count;
+}
+
+/**
+ * Reprocess a single pending image record through the face detection API.
+ *
+ * @param stdClass $record Image record from quizaccess_proctor_data or quizaccess_main_proctor
+ * @param string $tablename Database table name for the record
+ * @return array Result with keys status (processed|pending|failed) and recordid
+ */
+function quizaccess_quizproctoring_reprocess_image($record, $tablename = 'quizaccess_proctor_data') {
+    global $DB, $CFG;
+
+    if (empty($record->userimg)) {
+        return ['status' => 'failed', 'recordid' => $record->id];
+    }
+
+    $tmpdir = $CFG->dataroot . '/proctorlink/';
+    $imagepath = $tmpdir . $record->userimg;
+    if (!file_exists($imagepath)) {
+        return ['status' => 'failed', 'recordid' => $record->id];
+    }
+
+    $imagedata = file_get_contents($imagepath);
+    if ($imagedata === false) {
+        return ['status' => 'failed', 'recordid' => $record->id];
+    }
+
+    $data1 = base64_encode($imagedata);
+    $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $record->quizid]);
+    $target = '';
+    $mainentry = $DB->get_record('quizaccess_main_proctor', [
+        'userid' => $record->userid,
+        'quizid' => $record->quizid,
+        'image_status' => 'M',
+        'attemptid' => $record->attemptid,
+        'deleted' => 0,
+    ]);
+    if ($mainentry && !empty($mainentry->userimg) && $mainentry->id != $record->id) {
+        $mainpath = $tmpdir . $mainentry->userimg;
+        if (file_exists($mainpath)) {
+            $target = base64_encode(file_get_contents($mainpath));
+        }
+    }
+
+    if ($target !== '') {
+        $apidata = ['primary' => $target, 'target' => $data1, 'type' => 'eyes_detection'];
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(
+            $apidata,
+            $record->userid,
+            $record->quizid,
+            $record->attemptid
+        );
+        if ($proctoringdata && $proctoringdata->enableeyecheck == 1) {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data1, $target, true);
+        } else {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data1, $target);
+        }
+    } else {
+        $apidata = ['primary' => $data1];
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(
+            $apidata,
+            $record->userid,
+            $record->quizid,
+            $record->attemptid
+        );
+        $validate = \quizaccess_quizproctoring\api::validate($response, $data1, '', true);
+    }
+
+    if ($response === 'Unauthorized') {
+        return ['status' => 'failed', 'recordid' => $record->id, 'reason' => 'unauthorized'];
+    }
+
+    if ($validate === QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
+        return ['status' => 'pending', 'recordid' => $record->id];
+    }
+
+    $record->status = $validate;
+    $record->response = $response;
+    $record->timemodified = time();
+    $DB->update_record($tablename, $record);
+
+    return ['status' => 'processed', 'recordid' => $record->id, 'result' => $validate];
+}
+
+/**
+ * Reprocess all pending images for a quiz.
+ *
+ * @param int $quizid Quiz id
+ * @return array Summary with processed, pending and failed counts
+ */
+function quizaccess_quizproctoring_reprocess_pending_images($quizid) {
+    global $DB;
+
+    $results = ['processed' => 0, 'pending' => 0, 'failed' => 0];
+
+    $records = $DB->get_records('quizaccess_proctor_data', [
+        'quizid' => $quizid,
+        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+        'deleted' => 0,
+    ]);
+    foreach ($records as $record) {
+        $result = quizaccess_quizproctoring_reprocess_image($record);
+        $results[$result['status']]++;
+    }
+
+    $mainrecords = $DB->get_records('quizaccess_main_proctor', [
+        'quizid' => $quizid,
+        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+        'deleted' => 0,
+    ]);
+    foreach ($mainrecords as $record) {
+        $result = quizaccess_quizproctoring_reprocess_image($record, 'quizaccess_main_proctor');
+        $results[$result['status']]++;
+    }
+
+    return $results;
 }
 
 /**
