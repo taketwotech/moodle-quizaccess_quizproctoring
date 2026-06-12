@@ -25,6 +25,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+global $CFG;
+
 if ($hassiteconfig && !empty($USER->id)) {
     // Mangeto Mapping Settings.
     $settings = new admin_settingpage(
@@ -108,5 +110,23 @@ if ($hassiteconfig && !empty($USER->id)) {
         get_string('warning_email_trigger_role_help', 'quizaccess_quizproctoring'),
         $defaultroleid,
         $rolechoices
+    ));
+
+    $settings->add(new admin_setting_configselect(
+        'quizaccess_quizproctoring/plansync_interval',
+        get_string('plansyncinterval', 'quizaccess_quizproctoring'),
+        get_string('plansyncinterval_help', 'quizaccess_quizproctoring'),
+        \quizaccess_quizproctoring\plan_sync::DEFAULT_INTERVAL_MINUTES,
+        [
+            360 => get_string('sixhours', 'quizaccess_quizproctoring'),
+            720 => get_string('twelvehours', 'quizaccess_quizproctoring'),
+            1440 => get_string('twentyfourhours', 'quizaccess_quizproctoring'),
+        ]
+    ));
+
+    require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/classes/admin_setting_planstatus.php');
+    $settings->add(new \quizaccess_quizproctoring\admin_setting_planstatus(
+        'quizaccess_quizproctoring/planstatusdisplay',
+        get_string('planstatusheading', 'quizaccess_quizproctoring')
     ));
 }
