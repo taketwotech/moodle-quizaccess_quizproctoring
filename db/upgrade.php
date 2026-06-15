@@ -366,7 +366,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctor-dev.taketwotechnologies.com/create';
+        $url = 'https://proctoring.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];
@@ -498,7 +498,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctor-dev.taketwotechnologies.com/create';
+        $url = 'https://proctoring.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];
@@ -806,32 +806,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2026031000, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2026041000) {
-        // Default plan sync interval: 12 hours (720 minutes).
-        set_config('plansync_interval', 720, 'quizaccess_quizproctoring');
-
-        upgrade_plugin_savepoint(true, 2026041000, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2026041001) {
-        $interval = (int) get_config('quizaccess_quizproctoring', 'plansync_interval');
-        $allowedintervals = [360, 720, 1440];
-        if (!in_array($interval, $allowedintervals, true)) {
-            // Reset invalid or legacy short intervals to the 12-hour default.
-            set_config('plansync_interval', 720, 'quizaccess_quizproctoring');
-        }
-
-        upgrade_plugin_savepoint(true, 2026041001, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2026041002) {
-        if ((int) get_config('quizaccess_quizproctoring', 'plansync_interval') === 60) {
-            set_config('plansync_interval', 720, 'quizaccess_quizproctoring');
-        }
-
-        upgrade_plugin_savepoint(true, 2026041002, 'quizaccess', 'quizproctoring');
     }
 
     return true;
