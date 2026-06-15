@@ -433,14 +433,48 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
     }
 
     /**
+     * Build a refresh-plan link for the quiz settings form.
+     *
+     * @param mod_quiz_mod_form $quizform Quiz settings form.
+     * @return string HTML link.
+     */
+    private static function refresh_plan_link(mod_quiz_mod_form $quizform) {
+        global $PAGE;
+
+        $course = $quizform->get_course();
+        if ($PAGE->url->compare(new moodle_url('/course/modedit.php'), URL_MATCH_BASE)) {
+            $returnurl = $PAGE->url;
+        } else {
+            $section = optional_param('section', 0, PARAM_INT);
+            $returnurl = new moodle_url('/course/modedit.php', [
+                'course' => $course->id,
+                'add' => 'quiz',
+                'section' => $section,
+            ]);
+            $instance = $quizform->get_instance();
+            if (!empty($instance->id)) {
+                $cm = get_coursemodule_from_instance('quiz', $instance->id, $course->id, false, IGNORE_MISSING);
+                if ($cm) {
+                    $returnurl = new moodle_url('/course/modedit.php', ['update' => $cm->id]);
+                }
+            }
+        }
+
+        $refreshurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/refreshplan.php', [
+            'sesskey' => sesskey(),
+            'courseid' => $course->id,
+            'returnurl' => $returnurl->out_as_local_url(false),
+        ]);
+        return html_writer::link($refreshurl, get_string('refreshplan', 'quizaccess_quizproctoring'));
+    }
+
+    /**
      * Add settings form fields
      *
      * @param mod_quiz_mod_form $quizform quizform
      * @param MoodleQuickForm $mform moodle quicl form
      */
     public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
-        global $CFG;
-
         // Allow to enable the access rule only if the Mobile services are enabled.
         $mform->addElement('selectyesno', 'enableproctoring', get_string('enableproctoring', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('enableproctoring', 'enableproctoring', 'quizaccess_quizproctoring');
@@ -452,6 +486,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $planname = get_config('quizaccess_quizproctoring', 'getplanname');
         $plancredits = get_config('quizaccess_quizproctoring', 'getplancredits');
         $plantotalcredits = get_config('quizaccess_quizproctoring', 'getplantotalcredits');
+        $refreshlink = self::refresh_plan_link($quizform);
 
         // Check if plan response is empty.
         if ($planresponseempty == 1) {
@@ -462,7 +497,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             <a href="https://proctorlink.com/#pricing"target="_blank" rel="noopener noreferrer">' .
                     $linktext . '</a></div>';
             $planstatus .= '<div class="plan-info-note">' .
-            get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
+            get_string('updatenote', 'quizaccess_quizproctoring') .
+            ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' .
+            $refreshlink . '</span></div>';
         } else if ($planinfo == 1) {
             // Check if it's a credit-based plan.
             if ($planname === 'Credit Base Plan') {
@@ -481,7 +518,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 . '</a>';
                 $planstatus .= '</div>';
                 $planstatus .= '<div class="plan-info-note">' .
-                    get_string('creditbalanceupdatenote', 'quizaccess_quizproctoring') . '</div>';
+                    get_string('creditbalanceupdatenote', 'quizaccess_quizproctoring') .
+                    ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' .
+                    $refreshlink . '</span></div>';
             } else {
                 // Remove -india or -global suffix to show only base plan name.
                 $displayplanname = preg_replace('/-(india|global)$/i', '', $planname);
@@ -531,7 +570,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 }
                 $planstatus .= '</div>';
                 $planstatus .= '<div class="plan-info-note">' .
-                    get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
+                    get_string('updatenote', 'quizaccess_quizproctoring') .
+                    ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' .
+                    $refreshlink . '</span></div>';
             }
         } else {
             $displayplanname = preg_replace('/-(india|global)$/i', '', $planname);
@@ -547,7 +588,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             . $planlinktext
             . '</a></div>';
             $planstatus .= '<div class="plan-info-note">' .
-                get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
+                get_string('updatenote', 'quizaccess_quizproctoring') .
+                ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' .
+                $refreshlink . '</span></div>';
         }
         $element = $mform->addElement('static', 'planstatus', '', $planstatus);
         $element->setAttributes(['class' => 'planstatus']);

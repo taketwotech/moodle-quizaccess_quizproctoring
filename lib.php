@@ -861,3 +861,87 @@ function clean_images_task() {
         }
     }
 }
+
+/**
+ * Sync ProctorLink plan details from the remote API into plugin config.
+ *
+ * @return bool True when plan data was fetched and stored successfully.
+ */
+function quizaccess_quizproctoring_sync_plan_from_api() {
+    try {
+        $planresponse = \quizaccess_quizproctoring\api::getplaninfo();
+        if (empty($planresponse)) {
+            set_config('getplanresponseempty', 1, 'quizaccess_quizproctoring');
+            set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+            set_config('getplanname', '', 'quizaccess_quizproctoring');
+            return false;
+        }
+
+        $data = json_decode($planresponse, true);
+        if (!is_array($data)) {
+            return false;
+        }
+
+        $plantype = isset($data['plan']['planType']) ? $data['plan']['planType'] : '';
+        if (!empty($plantype)) {
+            set_config('getplanresponseempty', 0, 'quizaccess_quizproctoring');
+        } else {
+            set_config('getplanresponseempty', 1, 'quizaccess_quizproctoring');
+        }
+
+        if ($plantype === 'credit') {
+            $credits = isset($data['plan']['details']['credits']) ? (int)$data['plan']['details']['credits'] : 0;
+            $totalcreditsbought = 0;
+            if (isset($data['plan']['details']['creditHistory']) && is_array($data['plan']['details']['creditHistory'])) {
+                foreach ($data['plan']['details']['creditHistory'] as $history) {
+                    if (isset($history['creditsBought'])) {
+                        $totalcreditsbought += (int)$history['creditsBought'];
+                    }
+                }
+            }
+            set_config('getplancredits', $credits, 'quizaccess_quizproctoring');
+            set_config('getplantotalcredits', $totalcreditsbought, 'quizaccess_quizproctoring');
+            set_config('getplanexpiry', 0, 'quizaccess_quizproctoring');
+            if ($credits >= 0) {
+                set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
+                set_config('getplanname', 'Credit Base Plan', 'quizaccess_quizproctoring');
+            } else {
+                set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+                set_config('getplanname', '', 'quizaccess_quizproctoring');
+            }
+            return true;
+        }
+
+        $expiretimestamp = null;
+        if (isset($data['plan']['details']['expiryDate'])) {
+            $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
+        } else if (isset($data['plan']['details']['expireDate'])) {
+            $expiretimestamp = (int)$data['plan']['details']['current_end'];
+        }
+
+        set_config('getplancredits', 0, 'quizaccess_quizproctoring');
+        set_config('getplantotalcredits', 0, 'quizaccess_quizproctoring');
+
+        if ($expiretimestamp !== null) {
+            $currenttimestamp = time();
+            set_config('getplanexpiry', $expiretimestamp, 'quizaccess_quizproctoring');
+            if ($expiretimestamp < $currenttimestamp) {
+                set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+                set_config('getplanname', $data['plan']['planName'] ?? '', 'quizaccess_quizproctoring');
+            } else {
+                set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
+                if (!empty($data['plan']['planName'])) {
+                    set_config('getplanname', $data['plan']['planName'], 'quizaccess_quizproctoring');
+                }
+            }
+            return true;
+        }
+
+        set_config('getplanexpiry', 0, 'quizaccess_quizproctoring');
+        set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+        set_config('getplanname', '', 'quizaccess_quizproctoring');
+        return false;
+    } catch (Exception $e) {
+        return false;
+    }
+}

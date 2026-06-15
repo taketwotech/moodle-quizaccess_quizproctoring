@@ -747,6 +747,16 @@ label[for="id_consentcheckbox"] {
     box-sizing: border-box;
 }
 
+.planstatus .plan-info-note .plan-refresh-link {
+    font-style: normal;
+    white-space: nowrap;
+    font-size: inherit;
+}
+
+.planstatus .plan-info-note .plan-refresh-link a {
+    font-size: inherit;
+}
+
 /* Upgrade plan button styles. */
 .upgradeplan {
     margin-top: 0;
