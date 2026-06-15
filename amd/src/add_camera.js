@@ -491,6 +491,8 @@ function($, str, ModalFactory, ModalEvents) {
     var USE_AUDIO = true;
     var USE_VIDEO = true;
     var lastCameraDisabledReportAt = 0;
+    var lastWindowFocusReportAt = 0;
+    var windowFocusBlurTimer = null;
     var quizTerminationInProgress = false;
     var suppressRealtimePopupUntil = 0;
     let hiddenCloseButton = null;
@@ -626,6 +628,7 @@ function($, str, ModalFactory, ModalEvents) {
             localStorage.setItem('warningOriginalThreshold', JSON.stringify(warnings));
             localStorage.setItem('warningEmailCount', JSON.stringify(0));
             localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
+            setupWindowFocusMonitoring(cmid, attemptid, mainimage);
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -1365,6 +1368,68 @@ function($, str, ModalFactory, ModalEvents) {
                 quizid: quizid,
                 attemptid: attemptid,
                 warningemailcount: emailCount
+            }
+        });
+    }
+
+    /**
+     * Report when focus leaves the quiz window (e.g. click on another browser).
+     * Reuses the same tab-switch warning flow as visibilitychange.
+     *
+     * @param {int} cmid Course module id
+     * @param {int} attemptid Attempt id
+     * @param {boolean} mainimage Main image flag
+     * @return {void}
+     */
+    function reportWindowFocusLoss(cmid, attemptid, mainimage) {
+        if (quizTerminationInProgress) {
+            return;
+        }
+        if (document.visibilityState !== 'visible' || document.hasFocus()) {
+            return;
+        }
+        const now = Date.now();
+        if (lastWindowFocusReportAt && (now - lastWindowFocusReportAt) < 5000) {
+            return;
+        }
+        lastWindowFocusReportAt = now;
+        visibilitychange(cmid, attemptid, mainimage);
+    }
+
+    /**
+     * Monitor window blur and focus during a quiz attempt.
+     *
+     * @param {int} cmid Course module id
+     * @param {int} attemptid Attempt id
+     * @param {boolean} mainimage Main image flag
+     * @return {void}
+     */
+    function setupWindowFocusMonitoring(cmid, attemptid, mainimage) {
+        if (!attemptid) {
+            return;
+        }
+
+        setInterval(function() {
+            reportWindowFocusLoss(cmid, attemptid, mainimage);
+        }, 5000);
+
+        window.addEventListener('blur', function() {
+            if (quizTerminationInProgress || document.visibilityState === 'hidden') {
+                return;
+            }
+            if (windowFocusBlurTimer) {
+                clearTimeout(windowFocusBlurTimer);
+            }
+            windowFocusBlurTimer = setTimeout(function() {
+                windowFocusBlurTimer = null;
+                reportWindowFocusLoss(cmid, attemptid, mainimage);
+            }, 800);
+        });
+
+        window.addEventListener('focus', function() {
+            if (windowFocusBlurTimer) {
+                clearTimeout(windowFocusBlurTimer);
+                windowFocusBlurTimer = null;
             }
         });
     }
