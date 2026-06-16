@@ -18,7 +18,7 @@
  * Refresh ProctorLink plan details from the quiz settings page.
  *
  * @package    quizaccess_quizproctoring
- * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2026 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

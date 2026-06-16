@@ -626,6 +626,7 @@ function($, str, ModalFactory, ModalEvents) {
             localStorage.setItem('warningOriginalThreshold', JSON.stringify(warnings));
             localStorage.setItem('warningEmailCount', JSON.stringify(0));
             localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
+            setupSplitScreenDetection(cmid, attemptid, mainimage);
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -1366,6 +1367,120 @@ function($, str, ModalFactory, ModalEvents) {
                 attemptid: attemptid,
                 warningemailcount: emailCount
             }
+        });
+    }
+
+    /**
+     * True when the browser window is not maximized to 100% of the available screen.
+     *
+     * @return {boolean}
+     */
+    function isWindowNotFullScreen() {
+        const screenwidth = window.screen.availWidth || window.screen.width;
+        const screenheight = window.screen.availHeight || window.screen.height;
+        if (!screenwidth || !screenheight) {
+            return false;
+        }
+        const screenx = window.screenX ?? window.screenLeft ?? 0;
+        const screeny = window.screenY ?? window.screenTop ?? 0;
+        const tolerance = 1;
+        const leftgap = Math.max(screenx, 0);
+        const topgap = Math.max(screeny, 0);
+        const rightgap = Math.max(screenwidth - (screenx + window.outerWidth), 0);
+        const bottomgap = Math.max(screenheight - (screeny + window.outerHeight), 0);
+
+        if (leftgap > tolerance || rightgap > tolerance || topgap > tolerance || bottomgap > tolerance) {
+            return true;
+        }
+        if (window.outerWidth < screenwidth || window.outerHeight < screenheight) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Build split-screen warning message using the same string as server reports.
+     *
+     * @param {number} leftwarnings Warnings remaining after this violation
+     * @return {string} Localized warning message
+     */
+    function buildSplitScreenMessage(leftwarnings) {
+        let extra = '';
+        if (leftwarnings === 1) {
+            extra = '1' + M.util.get_string('warning', 'quizaccess_quizproctoring');
+        } else if (leftwarnings > 1) {
+            extra = leftwarnings + M.util.get_string('warnings', 'quizaccess_quizproctoring');
+        }
+        const suffix = extra ? M.util.get_string('warningsleft', 'quizaccess_quizproctoring', extra) : '';
+        return M.util.get_string('splitscreendetected', 'quizaccess_quizproctoring', suffix);
+    }
+
+    /**
+     * Report split-screen violations to the server.
+     *
+     * @param {int} cmid Course module id
+     * @param {int} attemptid Attempt id
+     * @param {boolean} mainimage Main image flag
+     * @return {void}
+     */
+    function reportSplitScreenViolation(cmid, attemptid, mainimage) {
+        if (quizTerminationInProgress) {
+            return;
+        }
+        const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+        const leftwarnings = Math.max(warningsl - 1, 0);
+        localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+        const message = buildSplitScreenMessage(leftwarnings);
+        $(document).trigger('popup', message);
+        trackWarningAndMaybeQueueEmail(cmid, attemptid);
+        $.ajax({
+            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+            method: 'POST',
+            data: {
+                cmid: cmid,
+                attemptid: attemptid,
+                mainimage: mainimage,
+                cheattype: 'splitscreen',
+            },
+            success: function(response) {
+                if (response && response.redirect && response.url) {
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
+                }
+            }
+        });
+    }
+
+    /**
+     * Alert when the browser window is not full screen during a quiz attempt.
+     *
+     * @param {int} cmid Course module id
+     * @param {int} attemptid Attempt id
+     * @param {boolean} mainimage Main image flag
+     * @return {void}
+     */
+    function setupSplitScreenDetection(cmid, attemptid, mainimage) {
+        if (!attemptid) {
+            return;
+        }
+
+        let resizeTimer = null;
+        const checkWindowSize = function() {
+            if (isWindowNotFullScreen()) {
+                reportSplitScreenViolation(cmid, attemptid, mainimage);
+            }
+        };
+
+        checkWindowSize();
+        setInterval(checkWindowSize, 5000);
+        window.addEventListener('resize', function() {
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+            }
+            resizeTimer = setTimeout(checkWindowSize, 300);
         });
     }
 

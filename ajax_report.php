@@ -102,7 +102,9 @@ if ($sqlm && !empty($sqlm->userimg)) {
 foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
-        if ($img->status === 'minimizedetected') {
+        if ($img->status === 'splitscreendetected') {
+            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/splitscreen.png';
+        } else if ($img->status === 'minimizedetected') {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
         } else {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';

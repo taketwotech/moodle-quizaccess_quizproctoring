@@ -33,7 +33,12 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $tab = optional_param('tab', false, PARAM_BOOL);
+$cheattype = optional_param('cheattype', '', PARAM_ALPHA);
 $deviceinfo = optional_param('deviceinfo', '', PARAM_TEXT);
+
+$cheatstatusmap = [
+    'splitscreen' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
+];
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
@@ -48,7 +53,7 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
     'image_status' => 'M',
     'attemptid' => $attemptid]);
 if (!$mainentry->isautosubmit) {
-    if (!$img && !$tab) {
+    if (!$img && !$tab && $cheattype === '') {
         quizproctoring_storeimage(
             $img,
             $cmid,
@@ -68,6 +73,18 @@ if (!$mainentry->isautosubmit) {
             $cm->instance,
             $mainimage,
             QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
+            ''
+        );
+    }
+
+    if (!$img && $cheattype !== '' && isset($cheatstatusmap[$cheattype])) {
+        quizproctoring_storeimage(
+            $img,
+            $cmid,
+            $attemptid,
+            $cm->instance,
+            $mainimage,
+            $cheatstatusmap[$cheattype],
             ''
         );
     }
