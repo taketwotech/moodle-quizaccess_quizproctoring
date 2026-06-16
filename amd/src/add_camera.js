@@ -1399,6 +1399,16 @@ function($, str, ModalFactory, ModalEvents) {
     }
 
     /**
+     * Detect Safe Exam Browser runtime.
+     *
+     * @return {boolean}
+     */
+    function isSafeExamBrowser() {
+        const useragent = navigator.userAgent || '';
+        return /SafeExamBrowser|SEB/i.test(useragent);
+    }
+
+    /**
      * Build split-screen warning message using the same string as server reports.
      *
      * @param {number} leftwarnings Warnings remaining after this violation
@@ -1469,6 +1479,9 @@ function($, str, ModalFactory, ModalEvents) {
 
         let resizeTimer = null;
         const checkWindowSize = function() {
+            if (isSafeExamBrowser()) {
+                return;
+            }
             if (isWindowNotFullScreen()) {
                 reportSplitScreenViolation(cmid, attemptid, mainimage);
             }
