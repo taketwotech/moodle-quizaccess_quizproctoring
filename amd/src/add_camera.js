@@ -631,6 +631,11 @@ function($, str, ModalFactory, ModalEvents) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
                 }
+                // Best-effort: block OS window menu shortcut during quiz.
+                if (event.altKey && (event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar')) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             });
             document.addEventListener('dragstart', function(event) {
                 event.preventDefault();
