@@ -221,12 +221,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             $detectionval = $globaldetectionval;
         }
     }
-    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js'), true);
+    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');    
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.min.js', true);
     $warningemailthreshold = isset($quizaproctoring->warning_email_threshold) ? (int)$quizaproctoring->warning_email_threshold : 0;
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
@@ -263,7 +258,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'nocameradetected',
         'nocameradetectedm',
     ], 'quizaccess_quizproctoring');
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
 /**
@@ -520,6 +514,47 @@ function quizproctoring_storeimage(
             die();
         }
     }
+}
+
+/**
+ * Store a realtime violation and return a JSON payload instead of throwing to the client.
+ *
+ * quizproctoring_storeimage() throws moodle_exception for warnings; realtime AJAX must
+ * receive errorcode/error JSON so the attempt page can show alert popups.
+ *
+ * @param string $data image data URL or empty
+ * @param int $cmid course module id
+ * @param int $attemptid attempt id
+ * @param int $quizid quiz id
+ * @param bool $mainimage main image flag
+ * @param string $status violation status constant
+ * @param string $response API response text
+ * @param bool $eyecheckon whether eye check is active (eyesnotopen only)
+ * @return array|null response array to json_encode, or null if store finished without alert
+ */
+function quizproctoring_storeimage_realtime_response(
+    $data,
+    $cmid,
+    $attemptid,
+    $quizid,
+    $mainimage,
+    $status,
+    $response = '',
+    $eyecheckon = false
+) {
+    try {
+        quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status, $response);
+    } catch (moodle_exception $e) {
+        $payload = [
+            'errorcode' => 1,
+            'error' => $e->getMessage(),
+        ];
+        if ($eyecheckon && $status === QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+            $payload['status'] = 'eyecheckon';
+        }
+        return $payload;
+    }
+    return null;
 }
 
 /**

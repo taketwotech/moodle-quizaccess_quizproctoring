@@ -9,8 +9,8 @@ window.addEventListener('beforeunload', function(event) {
     event.stopImmediatePropagation();
     event.returnValue = '';
 });
-define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events'],
-function($, str, ModalFactory, ModalEvents) {
+define(['jquery', 'core/str', 'core/modal_factory', 'quizaccess_quizproctoring/eye_tracking', 'core/modal_events'],
+function($, str, ModalFactory, EyeTracking, ModalEvents) {
     $('.quizstartbuttondiv [type=submit]').prop("disabled", true);
     var Camera = function(cmid, mainimage = false, attemptid = null, quizid) {
         var docElement = $(document);
@@ -430,23 +430,23 @@ function($, str, ModalFactory, ModalEvents) {
         $.ajax({
             url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
             method: 'POST',
+            dataType: 'json',
             data: requestData,
             success: function(response) {
+                response = parseProctoringAjaxResponse(response);
                 if (response && response.errorcode) {
-                    var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                    var leftwarnings = Math.max(warningsl - 1, 0);
-                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                    trackWarningAndMaybeQueueEmail(requestData.cmid, requestData.attemptid);
-                    $(document).trigger('popup', response.error);
-                } else {
-                    if (response.redirect && response.url) {
-                        window.onbeforeunload = null;
-                        $(document).trigger('popup', response.msg);
-                        setTimeout(function() {
-                            window.location.href = encodeURI(response.url);
-                        }, 3000);
-                    }
+                    handleRealtimeWarningResponse(response, response.error || '', requestData.cmid, requestData.attemptid);
+                } else if (response && response.redirect && response.url) {
+                    quizTerminationInProgress = true;
+                    window.onbeforeunload = null;
+                    $(document).trigger('popup', response.msg);
+                    setTimeout(function() {
+                        window.location.href = encodeURI(response.url);
+                    }, 3000);
                 }
+            },
+            error: function(xhr) {
+                handleRealtimeWarningXhrError(xhr, '', requestData.cmid, requestData.attemptid);
             }
         });
     };
@@ -494,6 +494,51 @@ function($, str, ModalFactory, ModalEvents) {
     var quizTerminationInProgress = false;
     var suppressRealtimePopupUntil = 0;
     let hiddenCloseButton = null;
+    var objectDetectionEnabled = false;
+    var objectDetectionController = null;
+    var objectDetectionControllerPromise = null;
+    var onlineWebcamSetupPromise = null;
+    const DETECTION_FRAME_WIDTH = 640;
+    const DETECTION_FRAME_HEIGHT = 480;
+
+    /**
+     * Capture a cropped video frame as a PNG data URL for realtime alerts.
+     *
+     * @param {HTMLVideoElement} video
+     * @param {HTMLCanvasElement} canvas
+     * @return {string|null}
+     */
+    function captureVideoFrameDataUrl(video, canvas) {
+        if (!video || !canvas || video.readyState < 2) {
+            return null;
+        }
+        const outputWidth = DETECTION_FRAME_WIDTH;
+        const outputHeight = DETECTION_FRAME_HEIGHT;
+        const targetRatio = outputWidth / outputHeight;
+        const vw = video.videoWidth || video.clientWidth;
+        const vh = video.videoHeight || video.clientHeight;
+        if (!vw || !vh) {
+            return null;
+        }
+        const videoRatio = vw / vh;
+        let sx = 0;
+        let sy = 0;
+        let sw = vw;
+        let sh = vh;
+        if (videoRatio > targetRatio) {
+            sh = vh;
+            sw = vh * targetRatio;
+            sx = (vw - sw) / 2;
+        } else {
+            sw = vw;
+            sh = vw / targetRatio;
+            sy = (vh - sh) / 2;
+        }
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+        canvas.getContext('2d').drawImage(video, sx, sy, sw, sh, 0, 0, outputWidth, outputHeight);
+        return canvas.toDataURL('image/png');
+    }
 
     Camera.prototype.retake = function() {
         $('#userimageset').val(0);
@@ -527,6 +572,7 @@ function($, str, ModalFactory, ModalEvents) {
     };
 
     Camera.prototype.stopcamera = function() {
+        EyeTracking.stop(false);
         if (localMediaStream) {
             localMediaStream.getTracks().forEach(function(track) {
                 track.stop();
@@ -627,6 +673,31 @@ function($, str, ModalFactory, ModalEvents) {
             localStorage.setItem('warningEmailCount', JSON.stringify(0));
             localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
             setupSplitScreenDetection(cmid, attemptid, mainimage);
+            objectDetectionEnabled = Number(enableobjectdetect) === 1;
+            if (objectDetectionEnabled) {
+                getObjectDetectionController().then((controller) => {
+                    if (controller) {
+                        controller.schedulePreload();
+                    }
+                });
+            }
+            EyeTracking.configure({
+                onTiltAlert: function(cmid, attemptid, mainimage, imageData) {
+                    realtimeDetection(cmid, attemptid, mainimage, 'eyesnotopen', imageData);
+                },
+                captureFrame: captureVideoFrameDataUrl,
+                isTerminationInProgress: function() {
+                    return quizTerminationInProgress;
+                },
+                shouldSkipFrame: function() {
+                    return ismobiledevice() && document.visibilityState === 'hidden';
+                },
+            });
+            EyeTracking.initFromQuizSettings(enableeyecheckreal, detectionval);
+            EyeTracking.bindDocumentEvents();
+            if (EyeTracking.isEnabled()) {
+                EyeTracking.schedulePreload();
+            }
             document.addEventListener('keydown', function(event) {
                 if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'v')) {
                     event.preventDefault();
@@ -702,6 +773,10 @@ function($, str, ModalFactory, ModalEvents) {
                 }).appendTo('body');
 
                 if (verifyduringattempt) {
+                    startOnlineProctoringWebcam(
+                        cmid, attemptid, mainimage, requireaudiopermission, enablerecordaudio
+                    );
+
                     document.addEventListener('visibilitychange', function() {
                         if (document.visibilityState === 'visible') {
                             visibilitychange(cmid, attemptid, mainimage);
@@ -716,205 +791,6 @@ function($, str, ModalFactory, ModalEvents) {
                             const data = event.data;
                             if (data.type === 'ready') {
                                 iframeReady = true;
-                                const waitForElements = setInterval(() => {
-                                    const vElement = document.getElementById('video');
-                                    const cElement = document.getElementById('canvas');
-                                    if (vElement && cElement) {
-                                        navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
-                                        .then((stream) => {
-                                            localMediaStream = stream;
-                                            vElement.srcObject = stream;
-                                            vElement.play();
-                                            vElement.muted = true;
-                                            restoreVideoPosition(vElement);
-                                            makeDraggable(vElement);
-                                            let sentCameraDisabled = false;
-                                            let lastDeviceWarningPopupAt = 0;
-                                            const shouldreportrealtime = Boolean(attemptid) && !mainimage;
-                                            const videoTrack = stream.getVideoTracks()[0];
-                                            if (videoTrack) {
-                                                videoTrack.onended = function() {
-                                                    if (quizTerminationInProgress) {
-                                                        return;
-                                                    }
-                                                    const validatekey = requireaudiopermission ?
-                                                        'nocameradetected' : 'nocameradisabled';
-                                                    const popupmessage = requireaudiopermission ?
-                                                        M.util.get_string('nocameradetectedm',
-                                                            'quizaccess_quizproctoring', '') :
-                                                        getNormalizedCameraDisabledMessage();
-                                                    if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                        lastDeviceWarningPopupAt = Date.now();
-                                                        $(document).trigger('popup', popupmessage);
-                                                        if (shouldreportrealtime) {
-                                                            suppressRealtimePopupUntil = Date.now() + 1500;
-                                                        }
-                                                    }
-                                                    if (!sentCameraDisabled && shouldreportrealtime) {
-                                                        sentCameraDisabled = true;
-                                                        $.ajax({
-                                                            url: M.cfg.wwwroot +
-                                                                '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
-                                                            method: 'POST',
-                                                            data: {
-                                                                cmid: cmid,
-                                                                attemptid: attemptid,
-                                                                mainimage: mainimage,
-                                                                validate: validatekey,
-                                                            },
-                                                            success: function(response) {
-                                                                if (response && response.redirect && response.url) {
-                                                                    quizTerminationInProgress = true;
-                                                                    window.onbeforeunload = null;
-                                                                    $(document).trigger('popup', response.msg);
-                                                                    setTimeout(function() {
-                                                                        window.location.href = encodeURI(response.url);
-                                                                    }, 3000);
-                                                                } else if (response && response.errorcode) {
-                                                                    handleRealtimeWarningResponse(response, popupmessage,
-                                                                        cmid, attemptid);
-                                                                } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                                    lastDeviceWarningPopupAt = Date.now();
-                                                                    $(document).trigger('popup', popupmessage);
-                                                                }
-                                                            },
-                                                            error: function(xhr) {
-                                                                handleRealtimeWarningXhrError(xhr, popupmessage,
-                                                                    cmid, attemptid);
-                                                            }
-                                                        });
-                                                    } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                        lastDeviceWarningPopupAt = Date.now();
-                                                        $(document).trigger('popup', popupmessage);
-                                                    }
-                                                };
-                                            }
-                                            if (requireaudiopermission) {
-                                                const audioTrack = stream.getAudioTracks()[0];
-                                                if (audioTrack) {
-                                                    audioTrack.onended = function() {
-                                                        if (quizTerminationInProgress) {
-                                                            return;
-                                                        }
-                                                        const genericmsg = M.util.get_string('nocameradetectedm',
-                                                            'quizaccess_quizproctoring', '');
-                                                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
-                                                            lastDeviceWarningPopupAt = Date.now();
-                                                            $(document).trigger('popup', genericmsg);
-                                                            if (shouldreportrealtime) {
-                                                                suppressRealtimePopupUntil = Date.now() + 1500;
-                                                            }
-                                                        }
-                                                        if (!sentCameraDisabled && shouldreportrealtime) {
-                                                            sentCameraDisabled = true;
-                                                            $.ajax({
-                                                                url: M.cfg.wwwroot +
-                                                                    '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
-                                                                method: 'POST',
-                                                                data: {
-                                                                    cmid: cmid,
-                                                                    attemptid: attemptid,
-                                                                    mainimage: mainimage,
-                                                                    validate: 'nocameradetected',
-                                                                },
-                                                                success: function(response) {
-                                                                    if (response && response.redirect && response.url) {
-                                                                        quizTerminationInProgress = true;
-                                                                        window.onbeforeunload = null;
-                                                                        $(document).trigger('popup', response.msg);
-                                                                        setTimeout(function() {
-                                                                            window.location.href =
-                                                                                encodeURI(response.url);
-                                                                        }, 3000);
-                                                                    } else if (response && response.errorcode) {
-                                                                        handleRealtimeWarningResponse(
-                                                                            response,
-                                                                            genericmsg,
-                                                                            cmid,
-                                                                            attemptid
-                                                                        );
-                                                                    }
-                                                                },
-                                                                error: function(xhr) {
-                                                                    handleRealtimeWarningXhrError(
-                                                                        xhr,
-                                                                        genericmsg,
-                                                                        cmid,
-                                                                        attemptid
-                                                                    );
-                                                                }
-                                                            });
-                                                        }
-                                                    };
-                                                } else {
-                                                    $(document).trigger('popup',
-                                                        M.util.get_string('nocameradetectedm',
-                                                            'quizaccess_quizproctoring', ''));
-                                                }
-                                            }
-                                            if (enablerecordaudio) {
-                                                // eslint-disable-next-line no-undef
-                                                useraudiorecord(stream);
-                                            }
-                                            $(".student-iframe-container").css({display: 'none'});
-                                            return stream;
-                                        })
-                                        .catch((err) => {
-                                            if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-                                                $(".student-iframe-container").css({display: 'none'});
-                                                $.ajax({
-                                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
-                                                method: 'POST',
-                                                data: {
-                                                    cmid: cmid,
-                                                    attemptid: attemptid,
-                                                    mainimage: mainimage,
-                                                },
-                                                success: function(response) {
-                        if (response && response.errorcode) {
-                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                            const leftwarnings = Math.max(warningsl - 1, 0);
-                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
-                            $(document).trigger('popup', response.error);
-                                                    } else if (response.redirect && response.url) {
-                                                        window.onbeforeunload = null;
-                                                        $(document).trigger('popup', response.msg);
-                                                        setTimeout(function() {
-                                                            window.location.href = encodeURI(response.url);
-                                                        }, 3000);
-                                                    }
-                                                }
-                                            });
-                                                throw err;
-                                            }
-                                        });
-                                        clearInterval(waitForElements);
-                                        if (enableeyecheckreal || enableobjectdetect === 1) {
-                                            // eslint-disable-next-line no-undef
-                                            const faceMesh = new FaceMesh({
-                                                locateFile: (file) => {
-                                                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                                                }
-                                            });
-                                            if (typeof setupFaceMesh !== 'undefined') {
-                                                if (enableobjectdetect === 1) {
-                                                    window.objectDetectionCallback = function(result) {
-                                                        realtimeDetection(cmid, attemptid, mainimage,
-                                                            result.status, result.data);
-                                                    };
-                                                }
-                                                // eslint-disable-next-line no-undef
-                                                setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                                    if (result.status) {
-                                                        realtimeDetection(cmid, attemptid, mainimage,
-                                                            result.status, result.data);
-                                                    }
-                                                }, enableobjectdetect, enableeyecheckreal);
-                                            }
-                                        }
-                                    }
-                                }, 500);
                             } else if (data.type === 'proctoring_image') {
                                 responseReceived = true;
                                 if (ismobiledevice() && document.visibilityState === 'hidden') {
@@ -1003,6 +879,7 @@ function($, str, ModalFactory, ModalEvents) {
                                     },
                                 });
                             } else if (data.type === 'disable-eye-tracking') {
+                                EyeTracking.applyRemoteDisable(true);
                                 $.ajax({
                                     url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
                                     method: 'POST',
@@ -1012,9 +889,20 @@ function($, str, ModalFactory, ModalEvents) {
                                         teachersub: 1,
                                         validate: 'eyecheckoff'
                                     },
+                                });
+                            } else if (data.type === 'enable-eye-tracking') {
+                                $.ajax({
+                                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_eyetoggle.php',
+                                    method: 'POST',
+                                    data: {
+                                        cmid: camera.cmid,
+                                        attemptid: attemptid,
+                                        userid: userid,
+                                        action: 'enable',
+                                    },
                                     success: function(response) {
-                                        if (response.status === 'eyecheckoff') {
-                                            $(document).trigger('eye-tracking-disabled');
+                                        if (response && response.success && response.iseyecheck) {
+                                            $(document).trigger('eye-tracking-enabled');
                                         }
                                     },
                                 });
@@ -1097,34 +985,6 @@ function($, str, ModalFactory, ModalEvents) {
                     }, setinterval * 1000);
                 }
             } else {
-                const waitForElements = setInterval(() => {
-                    const vElement = document.getElementById('video');
-                    const cElement = document.getElementById('canvas');
-                    if (vElement && cElement && (enableeyecheckreal || enableobjectdetect === 1)) {
-                        // eslint-disable-next-line no-undef
-                        const faceMesh = new FaceMesh({
-                            locateFile: (file) => {
-                                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
-                            }
-                        });
-                        clearInterval(waitForElements);
-                        if (typeof setupFaceMesh !== 'undefined') {
-                            if (enableobjectdetect === 1) {
-                                window.objectDetectionCallback = function(result) {
-                                    realtimeDetection(cmid, attemptid, mainimage,
-                                        result.status, result.data);
-                                };
-                            }
-                            // eslint-disable-next-line no-undef
-                            setupFaceMesh(vElement, cElement, faceMesh, detectionval, function(result) {
-                                if (result.status) {
-                                    realtimeDetection(cmid, attemptid, mainimage,
-                                            result.status, result.data);
-                                }
-                            }, enableobjectdetect, enableeyecheckreal);
-                        }
-                    }
-                }, 500);
                 setupLocalMedia(cmid, mainimage, verifyduringattempt, attemptid,
                     teacher, enablestudentvideo, enablerecordaudio, setinterval,
                     quizid);
@@ -1207,6 +1067,24 @@ function($, str, ModalFactory, ModalEvents) {
 
                     var camera = new Camera(cmid, mainimage, attemptid, quizid);
                     camera.startcamera();
+                    if (objectDetectionEnabled) {
+                        const videoEl = document.getElementById('video');
+                        const canvasEl = document.getElementById('canvas');
+                        if (videoEl && canvasEl) {
+                            getObjectDetectionController().then((controller) => {
+                                if (controller) {
+                                    controller.start(cmid, attemptid, mainimage, videoEl, canvasEl);
+                                }
+                            });
+                        }
+                    }
+                    if (EyeTracking.isActive()) {
+                        const videoEl = document.getElementById('video');
+                        const canvasEl = document.getElementById('canvas');
+                        if (videoEl && canvasEl) {
+                            EyeTracking.start(cmid, attemptid, mainimage, videoEl, canvasEl);
+                        }
+                    }
 
                     let intervalinms = setinterval * 1000;
                     let randomdelayms = Math.floor(Math.random() * intervalinms) + 1;
@@ -1672,6 +1550,266 @@ function makeDraggable(element) {
 }
 
 /**
+ * Start webcam + realtime object detection for online proctoring (no iframe ready wait).
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {boolean} mainimage main image mode
+ * @param {boolean} requireaudiopermission require microphone permission
+ * @param {boolean} enablerecordaudio enable audio recording
+ * @return {Promise<MediaStream|null>}
+ */
+function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudiopermission, enablerecordaudio) {
+    if (onlineWebcamSetupPromise) {
+        return onlineWebcamSetupPromise;
+    }
+
+    const vElement = document.getElementById('video');
+    const cElement = document.getElementById('canvas');
+    if (!vElement || !cElement) {
+        return Promise.resolve(null);
+    }
+
+    onlineWebcamSetupPromise = navigator.mediaDevices.getUserMedia({video: true, audio: requireaudiopermission})
+        .then((stream) => {
+            localMediaStream = stream;
+            vElement.srcObject = stream;
+            vElement.play();
+            vElement.muted = true;
+            restoreVideoPosition(vElement);
+            makeDraggable(vElement);
+
+            let sentCameraDisabled = false;
+            let lastDeviceWarningPopupAt = 0;
+            const shouldreportrealtime = Boolean(attemptid) && !mainimage;
+            const videoTrack = stream.getVideoTracks()[0];
+
+            if (videoTrack) {
+                videoTrack.onended = function() {
+                    if (quizTerminationInProgress) {
+                        return;
+                    }
+                    const validatekey = requireaudiopermission ? 'nocameradetected' : 'nocameradisabled';
+                    const popupmessage = requireaudiopermission ?
+                        M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', '') :
+                        getNormalizedCameraDisabledMessage();
+                    if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                        lastDeviceWarningPopupAt = Date.now();
+                        $(document).trigger('popup', popupmessage);
+                        if (shouldreportrealtime) {
+                            suppressRealtimePopupUntil = Date.now() + 1500;
+                        }
+                    }
+                    if (!sentCameraDisabled && shouldreportrealtime) {
+                        sentCameraDisabled = true;
+                        $.ajax({
+                            url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                            method: 'POST',
+                            data: {
+                                cmid: cmid,
+                                attemptid: attemptid,
+                                mainimage: mainimage,
+                                validate: validatekey,
+                            },
+                            success: function(response) {
+                                if (response && response.redirect && response.url) {
+                                    quizTerminationInProgress = true;
+                                    window.onbeforeunload = null;
+                                    $(document).trigger('popup', response.msg);
+                                    setTimeout(function() {
+                                        window.location.href = encodeURI(response.url);
+                                    }, 3000);
+                                } else if (response && response.errorcode) {
+                                    handleRealtimeWarningResponse(response, popupmessage, cmid, attemptid);
+                                } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                                    lastDeviceWarningPopupAt = Date.now();
+                                    $(document).trigger('popup', popupmessage);
+                                }
+                            },
+                            error: function(xhr) {
+                                handleRealtimeWarningXhrError(xhr, popupmessage, cmid, attemptid);
+                            }
+                        });
+                    } else if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                        lastDeviceWarningPopupAt = Date.now();
+                        $(document).trigger('popup', popupmessage);
+                    }
+                };
+            }
+
+            if (requireaudiopermission) {
+                const audioTrack = stream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.onended = function() {
+                        if (quizTerminationInProgress) {
+                            return;
+                        }
+                        const genericmsg = M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', '');
+                        if ((Date.now() - lastDeviceWarningPopupAt) > 1200) {
+                            lastDeviceWarningPopupAt = Date.now();
+                            $(document).trigger('popup', genericmsg);
+                            if (shouldreportrealtime) {
+                                suppressRealtimePopupUntil = Date.now() + 1500;
+                            }
+                        }
+                        if (!sentCameraDisabled && shouldreportrealtime) {
+                            sentCameraDisabled = true;
+                            $.ajax({
+                                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
+                                method: 'POST',
+                                data: {
+                                    cmid: cmid,
+                                    attemptid: attemptid,
+                                    mainimage: mainimage,
+                                    validate: 'nocameradetected',
+                                },
+                                success: function(response) {
+                                    if (response && response.redirect && response.url) {
+                                        quizTerminationInProgress = true;
+                                        window.onbeforeunload = null;
+                                        $(document).trigger('popup', response.msg);
+                                        setTimeout(function() {
+                                            window.location.href = encodeURI(response.url);
+                                        }, 3000);
+                                    } else if (response && response.errorcode) {
+                                        handleRealtimeWarningResponse(response, genericmsg, cmid, attemptid);
+                                    }
+                                },
+                                error: function(xhr) {
+                                    handleRealtimeWarningXhrError(xhr, genericmsg, cmid, attemptid);
+                                }
+                            });
+                        }
+                    };
+                } else {
+                    $(document).trigger('popup',
+                        M.util.get_string('nocameradetectedm', 'quizaccess_quizproctoring', ''));
+                }
+            }
+
+            if (enablerecordaudio) {
+                // eslint-disable-next-line no-undef
+                useraudiorecord(stream);
+            }
+            if (objectDetectionEnabled) {
+                getObjectDetectionController().then((controller) => {
+                    if (controller) {
+                        controller.start(cmid, attemptid, mainimage, vElement, cElement);
+                    }
+                });
+            }
+            if (EyeTracking.isActive()) {
+                EyeTracking.start(cmid, attemptid, mainimage, vElement, cElement);
+            }
+            $('.student-iframe-container').css({display: 'none'});
+            return stream;
+        })
+        .catch((err) => {
+            onlineWebcamSetupPromise = null;
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                $('.student-iframe-container').css({display: 'none'});
+                $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax.php',
+                    method: 'POST',
+                    data: {
+                        cmid: cmid,
+                        attemptid: attemptid,
+                        mainimage: mainimage,
+                    },
+                    success: function(response) {
+                        if (response && response.errorcode) {
+                            const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
+                            const leftwarnings = Math.max(warningsl - 1, 0);
+                            localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
+                            trackWarningAndMaybeQueueEmail(cmid, attemptid);
+                            $(document).trigger('popup', response.error);
+                        } else if (response.redirect && response.url) {
+                            window.onbeforeunload = null;
+                            $(document).trigger('popup', response.msg);
+                            setTimeout(function() {
+                                window.location.href = encodeURI(response.url);
+                            }, 3000);
+                        }
+                    }
+                });
+            }
+            throw err;
+        });
+
+    return onlineWebcamSetupPromise;
+}
+
+function loadObjectDetectionLibrary() {
+    if (window.quizproctoringObjectDetection &&
+        typeof window.quizproctoringObjectDetection.create === 'function') {
+        return Promise.resolve(window.quizproctoringObjectDetection);
+    }
+    if (window.__quizproctoringObjectDetectionLoadPromise) {
+        return window.__quizproctoringObjectDetectionLoadPromise;
+    }
+
+    const scriptpath = M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/libraries/js/object_detection.js';
+    window.__quizproctoringObjectDetectionLoadPromise = fetch(scriptpath, {mode: 'same-origin', credentials: 'same-origin'})
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`Failed to fetch script: ${scriptpath}`);
+            }
+            return response.text();
+        })
+        .then((code) => {
+            const previousDefine = window.define;
+            window.define = undefined;
+            try {
+                // eslint-disable-next-line no-eval
+                (0, eval)(code);
+            } finally {
+                window.define = previousDefine;
+            }
+            if (!window.quizproctoringObjectDetection ||
+                typeof window.quizproctoringObjectDetection.create !== 'function') {
+                throw new Error('Object detection library did not initialize correctly');
+            }
+            return window.quizproctoringObjectDetection;
+        })
+        .catch((error) => {
+            window.__quizproctoringObjectDetectionLoadPromise = null;
+            throw error;
+        });
+
+    return window.__quizproctoringObjectDetectionLoadPromise;
+}
+
+function getObjectDetectionController() {
+    if (objectDetectionController) {
+        objectDetectionController.setEnabled(objectDetectionEnabled);
+        return Promise.resolve(objectDetectionController);
+    }
+    if (objectDetectionControllerPromise) {
+        return objectDetectionControllerPromise;
+    }
+
+    objectDetectionControllerPromise = loadObjectDetectionLibrary()
+        .then((library) => {
+            objectDetectionController = library.create({
+                realtimeDetection: realtimeDetection,
+                isMobileDevice: ismobiledevice,
+                isQuizTerminating: function() {
+                    return quizTerminationInProgress;
+                }
+            });
+            objectDetectionController.setEnabled(objectDetectionEnabled);
+            return objectDetectionController;
+        })
+        .catch((error) => {
+            objectDetectionControllerPromise = null;
+            console.error('[QuizProctoring][coco] Failed to initialize object detection helper:', error);
+            return null;
+        });
+
+    return objectDetectionControllerPromise;
+}
+
+/**
  * RealtimeDetectionAjaxCall
  *
  * @param {int} cmid - cmid
@@ -1681,6 +1819,91 @@ function makeDraggable(element) {
  * @param {Longtext} data video
  * @return {void}
  */
+/**
+ * Track eye-focus warnings for auto-disable (5 warnings within 30 seconds).
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {string} face validation type
+ * @param {Object} response AJAX response
+ * @return {void}
+ */
+function maybeRecordEyeFocusWarning(cmid, attemptid, face, response) {
+    if (face !== 'eyesnotopen' || !EyeTracking.isEnabled()) {
+        return;
+    }
+    if (!response || response.status === 'eyecheckoff') {
+        return;
+    }
+    if (response.errorcode || response.status === 'eyecheckon') {
+        EyeTracking.recordFocusWarning(cmid, attemptid);
+    }
+}
+
+/**
+ * Parse AJAX JSON (jQuery may leave string responses unparsed).
+ *
+ * @param {*} response raw AJAX response
+ * @return {Object|null}
+ */
+function parseProctoringAjaxResponse(response) {
+    if (!response) {
+        return null;
+    }
+    if (typeof response === 'object') {
+        return response;
+    }
+    if (typeof response === 'string' && response.length) {
+        try {
+            return JSON.parse(response);
+        } catch (e) {
+            return null;
+        }
+    }
+    return null;
+}
+
+/**
+ * Handle JSON from ajax_realtime.php (violations, redirects, eye state).
+ *
+ * @param {Object|null} response parsed response
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {string} face validate key
+ * @return {void}
+ */
+function handleRealtimeDetectionResponse(response, cmid, attemptid, face) {
+    if (!response) {
+        return;
+    }
+    if (response.status === 'eyecheckoff') {
+        $(document).trigger('eye-tracking-disabled');
+        return;
+    }
+    if (response.status === 'eyecheckon') {
+        if (response.errorcode) {
+            handleRealtimeWarningResponse(response, response.error || '', cmid, attemptid);
+            maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
+        } else {
+            $(document).trigger('eye-tracking-enabled');
+        }
+        return;
+    }
+    if (response.errorcode) {
+        handleRealtimeWarningResponse(response, response.error || '', cmid, attemptid);
+        maybeRecordEyeFocusWarning(cmid, attemptid, face, response);
+        return;
+    }
+    if (response.redirect && response.url) {
+        quizTerminationInProgress = true;
+        window.onbeforeunload = null;
+        $(document).trigger('popup', response.msg);
+        setTimeout(function() {
+            window.location.href = encodeURI(response.url);
+        }, 3000);
+    }
+}
+
 function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     var requestData = {
         cmid: cmid,
@@ -1692,38 +1915,18 @@ function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     $.ajax({
         url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_realtime.php',
         method: 'POST',
+        dataType: 'json',
         data: requestData,
         success: function(response) {
-            if (response && response.status === 'eyecheckoff') {
-                $(document).trigger('eye-tracking-disabled');
-                return;
-            }
-            if (response && response.status === 'eyecheckon') {
-                $(document).trigger('eye-tracking-enabled');
-                if (response.errorcode) {
-                    const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                    const leftwarnings = Math.max(warningsl - 1, 0);
-                    localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                    trackWarningAndMaybeQueueEmail(cmid, attemptid);
-                    $(document).trigger('popup', response.error);
-                }
-                return;
-            }
-            if (response && response.errorcode) {
-                const warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
-                const leftwarnings = Math.max(warningsl - 1, 0);
-                localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
-                trackWarningAndMaybeQueueEmail(cmid, attemptid);
-                $(document).trigger('popup', response.error);
-            } else {
-                if (response.redirect && response.url) {
-                    window.onbeforeunload = null;
-                    $(document).trigger('popup', response.msg);
-                    setTimeout(function() {
-                        window.location.href = encodeURI(response.url);
-                    }, 3000);
-                }
-            }
+            handleRealtimeDetectionResponse(
+                parseProctoringAjaxResponse(response),
+                cmid,
+                attemptid,
+                face
+            );
+        },
+        error: function(xhr) {
+            handleRealtimeWarningXhrError(xhr, '', cmid, attemptid);
         }
     });
 }
@@ -1800,7 +2003,7 @@ function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attempti
         }, 3000);
         return;
     }
-    if (!response || !response.errorcode) {
+    if (!response || (!response.errorcode && !response.error)) {
         if (quizTerminationInProgress) {
             return;
         }
@@ -1814,9 +2017,9 @@ function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attempti
     }
     if (Date.now() < suppressRealtimePopupUntil) {
         suppressRealtimePopupUntil = 0;
-    } else {
-        $(document).trigger('popup', response.error || fallbackmessage);
+        return;
     }
+    $(document).trigger('popup', response.error || fallbackmessage);
     decrementWarningCounter();
     trackWarningAndMaybeQueueEmail(cmid, attemptid);
 }
@@ -1841,7 +2044,7 @@ function handleRealtimeWarningXhrError(xhr, fallbackmessage, cmid, attemptid) {
             payload = null;
         }
     }
-    if (payload && payload.errorcode) {
+    if (payload && (payload.errorcode || payload.error)) {
         handleRealtimeWarningResponse(payload, fallbackmessage, cmid, attemptid);
         return;
     }

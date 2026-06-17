@@ -1,14 +1,6 @@
 <?xml version="1.0"?>
 <libraries>
     <library>
-        <location>libraries/socket.io.js</location>
-        <name>socket.io</name>
-        <version>1.4.5</version>
-        <license>MIT</license>
-        <licenseversion></licenseversion>
-    </library>
-
-    <library>
         <location>libraries/css/lightbox.min.css</location>
         <name>lightbox.min</name>
         <version>2.11.5</version>

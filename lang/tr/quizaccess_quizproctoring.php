@@ -107,7 +107,7 @@ $string['enablerecordaudio'] = 'Ses kaydını etkinleştir';
 $string['enablerecordaudio_help'] = 'Gözetim amaçlı olarak test denemeleri sırasında sistemin ses kaydetmesine izin verin.';
 $string['enablestudentvideo'] = 'Kullanıcı videosunu test sırasında etkinleştir';
 $string['enablestudentvideo_help'] = 'Etkinleştirildiğinde, kullanıcılar test sırasında kendi videolarını görebilir.';
-$string['enableteacherproctor'] = 'Gözetmenin çevrimiçi kullanıcıları görmesine izin ver';
+$string['enableteacherproctor'] = 'Canlı gözetim';
 $string['enableteacherproctor_help'] = 'Etkinleştirildiğinde, gözetmenler testte olan kullanıcı grubunu görüntüleyebilir.';
 $string['enableuploadidentity'] = 'Kimlik yüklemeyi etkinleştir';
 $string['enableuploadidentity_help'] = 'Kimlik belgesi yükleme isteğe bağlıdır. Yüklenen belge yalnızca kimlik doğrulama referansı olarak saklanır. Bu belgeye karşı otomatik bir doğrulama yapılmaz.';
@@ -292,10 +292,10 @@ Detaylar:
 
 Bu mesaj ProctorLink test erişim kuralı tarafından otomatik olarak oluşturulmuştur.';
 $string['warning_email_subject'] = '{$a->quizname} sınavı için gözetim uyarı eşiğine ulaşıldı';
-$string['warning_email_threshold'] = 'Uyarı eşiği aşıldığında öğretmene e-posta gönder';
-$string['warning_email_threshold_help'] = 'Uyarı eşiği Sınırsız olarak ayarlandığında, bir öğrencinin bu test için toplam uyarı sayısı bu değere ulaştığında veya geçtiğinde öğretmenlere e-posta gönderin. E-posta göndermemek için Devre Dışı olarak bırakın.';
-$string['warning_email_trigger_role'] = 'Eşik aşıldığında e-posta gönderilecek rol';
-$string['warning_email_trigger_role_help'] = 'Uyarı e-posta eşiği kullanıldığında, bildirim e-postasını hangi rolün alacağını seçin.';
+$string['warning_email_threshold'] = 'E-posta bildirimi tetikleme eşiği';
+$string['warning_email_threshold_help'] = 'Yalnızca uyarı eşiği Sınırsız olarak ayarlandığında geçerlidir. Bir öğrencinin uyarıları bu sayıya ulaştığında bildirim e-postası gönderir. E-posta bildirimlerini kapatmak için Devre Dışı olarak ayarlayın.';
+$string['warning_email_trigger_role'] = 'Bildirim alıcı rolü';
+$string['warning_email_trigger_role_help'] = 'Uyarı e-posta eşiğine ulaşıldığında bildirim e-postasını alacak ders rolünü seçin.';
 $string['warning_threshold'] = 'Gözetimli testte uyarı eşiği';
 $string['warning_threshold_help'] = 'Bir kullanıcının gözetimli testte diskalifiye edilmeden önce alabileceği maksimum uyarı sayısını ayarlayın.';
 $string['warningaws'] = 'Teste devam etmek için lütfen <a href="{$a}">AWS yapılandırmasını</a> tamamlayın.';
