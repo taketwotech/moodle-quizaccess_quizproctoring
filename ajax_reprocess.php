@@ -32,14 +32,20 @@ require_sesskey();
 
 $cmid = required_param('cmid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
+$userid = optional_param('userid', 0, PARAM_INT);
+$attemptid = optional_param('attemptid', 0, PARAM_INT);
 
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
 \core_php_time_limit::raise(300);
 
-$results = quizaccess_quizproctoring_reprocess_pending_images($quizid);
-$remaining = quizaccess_quizproctoring_count_pending_images($quizid);
+$userfilter = $userid > 0 ? $userid : null;
+$attemptfilter = $attemptid > 0 ? $attemptid : null;
+
+$results = quizaccess_quizproctoring_reprocess_pending_images($quizid, null, $userfilter, $attemptfilter);
+$remaining = quizaccess_quizproctoring_count_pending_images($quizid, $userfilter, $attemptfilter);
+$hasmore = $remaining > 0;
 
 $message = get_string('reprocessresult', 'quizaccess_quizproctoring', (object) [
     'processed' => $results['processed'],
@@ -58,6 +64,8 @@ echo json_encode([
     'pending' => $results['pending'],
     'failed' => $results['failed'],
     'remaining' => $remaining,
+    'hasmore' => $hasmore,
+    'batchsize' => QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE,
     'message' => $message,
 ]);
 die();

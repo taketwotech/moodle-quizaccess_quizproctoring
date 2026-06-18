@@ -1,6 +1,119 @@
 define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', 'core/str', 'core/notification'],
 function($, ModalFactory, ModalEvents, Templates, str, notification) {
+    /**
+     * Reprocess pending images in batches until complete or the API is unavailable.
+     *
+     * @param {object} options Handler options
+     * @return {Promise}
+     */
+    function reprocessPendingImages(options) {
+        var cmid = options.cmid;
+        var quizid = options.quizid;
+        var button = options.button ? $(options.button) : null;
+        var totals = {processed: 0, pending: 0, failed: 0};
+        var apinotavailable = false;
+        var lastdata = null;
+
+        function runBatch() {
+            var requestdata = {
+                cmid: cmid,
+                quizid: quizid,
+                sesskey: M.cfg.sesskey
+            };
+            if (options.userid) {
+                requestdata.userid = options.userid;
+            }
+            if (options.attemptid) {
+                requestdata.attemptid = options.attemptid;
+            }
+
+            return $.ajax({
+                url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_reprocess.php',
+                method: 'POST',
+                dataType: 'json',
+                data: requestdata
+            }).then(function(data) {
+                if (!data || data.success !== true) {
+                    return $.Deferred().reject().promise();
+                }
+
+                lastdata = data;
+                totals.processed += data.processed || 0;
+                totals.pending += data.pending || 0;
+                totals.failed += data.failed || 0;
+
+                if (options.onProgress) {
+                    options.onProgress(data, totals);
+                }
+
+                if (data.processed === 0 && data.remaining > 0) {
+                    apinotavailable = true;
+                    return data;
+                }
+
+                if (data.hasmore && data.remaining > 0) {
+                    return str.get_string('reprocessimages_processing_remaining', 'quizaccess_quizproctoring',
+                        data.remaining).then(function(text) {
+                        if (button) {
+                            button.prop('disabled', true).text(text);
+                        }
+                        return runBatch();
+                    });
+                }
+
+                return data;
+            });
+        }
+
+        var startPromise = str.get_string('reprocessimages_processing', 'quizaccess_quizproctoring');
+        if (button) {
+            button.prop('disabled', true);
+            startPromise = startPromise.then(function(text) {
+                button.text(text);
+            });
+        }
+
+        return startPromise.then(function() {
+            return runBatch();
+        }).then(function() {
+            return str.get_string('reprocessresult', 'quizaccess_quizproctoring', {
+                processed: totals.processed,
+                pending: totals.pending,
+                failed: totals.failed,
+                remaining: lastdata ? lastdata.remaining : 0,
+            });
+        }).then(function(message) {
+            if (apinotavailable) {
+                return str.get_string('reprocessapinotavailable', 'quizaccess_quizproctoring').then(function(extra) {
+                    return message + ' ' + extra;
+                });
+            }
+            return message;
+        }).then(function(message) {
+            return str.get_string('reprocessimages', 'quizaccess_quizproctoring').then(function(title) {
+                return notification.alert(title, message).then(function() {
+                    return message;
+                });
+            });
+        }).then(function(message) {
+            if (options.onComplete) {
+                options.onComplete(message, totals, lastdata);
+            }
+        }).catch(function() {
+            return str.get_string('reprocessimages_error', 'quizaccess_quizproctoring').then(function(message) {
+                return str.get_string('error', 'moodle').then(function(title) {
+                    return notification.alert(title, message);
+                });
+            });
+        }).then(function() {
+            if (button) {
+                button.prop('disabled', false);
+            }
+        });
+    }
+
     return {
+        reprocessPendingImages: reprocessPendingImages,
         init: function() {
             $(document).ready(function() {
                 if (typeof lightbox !== 'undefined') {
@@ -332,6 +445,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 event.preventDefault();
                 var attemptid = $(this).data('attemptid');
                 var quizid = $(this).data('quizid');
+                var cmid = $(this).data('cmid');
                 var userid = $(this).data('userid');
                 var startdate = $(this).data('startdate');
                 var all = false;
@@ -352,23 +466,55 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     $('.imgcheckbox').prop('checked', false);
                     var checkboxContainer = `
                         <div class="checkbox-container" style="display: none;">
-                            <input type="checkbox" class="imgcheckbox">
-                            <label for="checkbox" class="image-checkbox">
+                            <input type="checkbox" class="imgcheckbox" id="imgcheckbox-modal">
+                            <label for="imgcheckbox-modal" class="image-checkbox">
                                 ${checkboxLabel}
                             </label>
+                            <button type="button" class="btn btn-warning btn-sm reprocessimages-modal" style="display: none;"></button>
                         </div>
                     `;
                     modal.getBody().prepend(checkboxContainer);
                     return modal;
                 }).then(function(modal) {
-                    if (storeAllImages === '1') {
-                        modal.getBody().find('.checkbox-container').show();
-                    } else {
-                        modal.getBody().find('.checkbox-container').hide();
+                    /**
+                     * Show or hide modal image controls.
+                     *
+                     * @param {int} pendingcount Pending image count for the quiz
+                     */
+                    function updateImageControls(pendingcount) {
+                        currentPendingCount = pendingcount;
+                        var container = modal.getBody().find('.checkbox-container');
+                        var reprocessButton = container.find('.reprocessimages-modal');
+                        var showCheckbox = storeAllImages === '1';
+                        var showReprocess = pendingcount > 0;
+
+                        if (showCheckbox) {
+                            container.find('.imgcheckbox, .image-checkbox').show();
+                        } else {
+                            container.find('.imgcheckbox, .image-checkbox').hide();
+                        }
+
+                        if (showReprocess) {
+                            reprocessButton
+                                .text(M.util.get_string('reprocessimages', 'quizaccess_quizproctoring') +
+                                    ' (' + pendingcount + ')')
+                                .show();
+                        } else {
+                            reprocessButton.hide();
+                        }
+
+                        if (showCheckbox || showReprocess) {
+                            container.show();
+                        } else {
+                            container.hide();
+                        }
                     }
+
+                    updateImageControls(0);
                     var perpage = 35;
                     var currentPage = 1;
                     var totalPages = 1;
+                    var currentPendingCount = 0;
 
                     /**
                      * Load images via AJAX
@@ -414,6 +560,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         return M.util.get_string(key, 'quizaccess_quizproctoring');
                                     }
                                 };
+
+                                updateImageControls(response.pendingcount || 0);
 
                                 modal.getBody().find('.image-content').html('');
                                 Templates.render('quizaccess_quizproctoring/response_modal', data)
@@ -516,6 +664,28 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                          : M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                         modal.setTitle(modaltitle);
                         loadImages(currentPage);
+                    });
+
+                    modal.getBody().off('click', '.reprocessimages-modal').on('click', '.reprocessimages-modal', function() {
+                        var button = $(this);
+                        reprocessPendingImages({
+                            cmid: cmid,
+                            quizid: quizid,
+                            userid: userid,
+                            attemptid: attemptid,
+                            button: button,
+                            onProgress: function(data) {
+                                updateImageControls(data.remaining || 0);
+                            },
+                            onComplete: function(message, totals, data) {
+                                updateImageControls(data.remaining || 0);
+                                loadImages(currentPage);
+                                if (button.is(':visible') && (data.remaining || 0) > 0) {
+                                    button.text(M.util.get_string('reprocessimages', 'quizaccess_quizproctoring') +
+                                        ' (' + (data.remaining || 0) + ')');
+                                }
+                            }
+                        });
                     });
 
                     modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {

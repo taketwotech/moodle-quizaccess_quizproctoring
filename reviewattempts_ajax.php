@@ -201,6 +201,7 @@ foreach ($records as $record) {
 
     $pimages = '<img class="imageicon proctoringimage"
         data-attemptid="' . $attempt->id . '"
+        data-cmid="' . $cmid . '"
         data-quizid="' . $quizid . '"
         data-userid="' . $user->id . '"
         data-startdate="' . $timestart . '"

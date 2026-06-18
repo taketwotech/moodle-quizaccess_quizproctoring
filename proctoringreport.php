@@ -147,41 +147,23 @@ $PAGE->requires->js_init_code("
 
     $('#reprocessimages').on('click', function() {
         const button = $(this);
-        const originalText = button.text();
-        button.prop('disabled', true).text('" . get_string('reprocessimages_processing', 'quizaccess_quizproctoring') . "');
-        $.ajax({
-            url: " . json_encode($reprocessurl->out(false)) . ",
-            method: 'POST',
-            dataType: 'json',
-            data: {
+        require(['quizaccess_quizproctoring/report'], function(Report) {
+            Report.reprocessPendingImages({
                 cmid: {$cmid},
                 quizid: {$quizid},
-                sesskey: M.cfg.sesskey
-            },
-            success: function(data) {
-                if (!data || data.success !== true) {
-                    alert('" . get_string('reprocessimages_error', 'quizaccess_quizproctoring') . "');
-                    return;
+                button: button,
+                onComplete: function(message, totals, data) {
+                    if (data.remaining > 0) {
+                        $('#reprocessimages').text('" . get_string('reprocessimages', 'quizaccess_quizproctoring') .
+                            " (' + data.remaining + ')');
+                    } else {
+                        $('#reprocessimages').hide();
+                    }
+                    if (proctoringReportTable) {
+                        proctoringReportTable.ajax.reload(null, false);
+                    }
                 }
-                alert(data.message);
-                if (data.remaining > 0) {
-                    $('#reprocessimages').text('" . get_string('reprocessimages', 'quizaccess_quizproctoring') .
-                        " (' + data.remaining + ')');
-                } else {
-                    $('#reprocessimages').hide();
-                }
-                if (proctoringReportTable) {
-                    proctoringReportTable.ajax.reload(null, false);
-                }
-            },
-            error: function() {
-                alert('" . get_string('reprocessimages_error', 'quizaccess_quizproctoring') . "');
-            },
-            complete: function() {
-                if ($('#reprocessimages').is(':visible')) {
-                    button.prop('disabled', false).text(originalText);
-                }
-            }
+            });
         });
     });
 

@@ -179,6 +179,7 @@ $haspending = $DB->record_exists('quizaccess_proctor_data', [
 $response = [
     'images' => $imgarray,
     'haspending' => $haspending,
+    'pendingcount' => quizaccess_quizproctoring_count_pending_images($quizid, $userid, $attemptid),
     'totalRecords' => $totalrecord,
     'totalPages' => $totalpages,
     'currentPage' => $page,

@@ -46,6 +46,7 @@ define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
 define('QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING', 'pendingprocessing');
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE', 100);
 
 /** User preference key for reporting page pagination (records per page). */
 define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
@@ -721,20 +722,25 @@ function quizproctoring_storemainimage(
  * Count images awaiting API reprocessing for a quiz.
  *
  * @param int $quizid Quiz id
+ * @param int|null $userid Optional user id to limit the count
+ * @param int|null $attemptid Optional attempt id to limit the count
  * @return int Number of pending images
  */
-function quizaccess_quizproctoring_count_pending_images($quizid) {
+function quizaccess_quizproctoring_count_pending_images($quizid, $userid = null, $attemptid = null) {
     global $DB;
-    $count = $DB->count_records('quizaccess_proctor_data', [
+    $conditions = [
         'quizid' => $quizid,
         'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
         'deleted' => 0,
-    ]);
-    $count += $DB->count_records('quizaccess_main_proctor', [
-        'quizid' => $quizid,
-        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
-        'deleted' => 0,
-    ]);
+    ];
+    if ($userid !== null) {
+        $conditions['userid'] = $userid;
+    }
+    if ($attemptid !== null) {
+        $conditions['attemptid'] = $attemptid;
+    }
+    $count = $DB->count_records('quizaccess_proctor_data', $conditions);
+    $count += $DB->count_records('quizaccess_main_proctor', $conditions);
     return $count;
 }
 
@@ -821,34 +827,66 @@ function quizaccess_quizproctoring_reprocess_image($record, $tablename = 'quizac
 }
 
 /**
- * Reprocess all pending images for a quiz.
+ * Reprocess pending images for a quiz in batches.
  *
  * @param int $quizid Quiz id
+ * @param int|null $limit Maximum number of images to process in this batch
+ * @param int|null $userid Optional user id to limit reprocessing
+ * @param int|null $attemptid Optional attempt id to limit reprocessing
  * @return array Summary with processed, pending and failed counts
  */
-function quizaccess_quizproctoring_reprocess_pending_images($quizid) {
+function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = null, $userid = null, $attemptid = null) {
     global $DB;
 
-    $results = ['processed' => 0, 'pending' => 0, 'failed' => 0];
+    if ($limit === null) {
+        $limit = QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE;
+    }
+    $limit = max(1, (int) $limit);
 
-    $records = $DB->get_records('quizaccess_proctor_data', [
+    $results = ['processed' => 0, 'pending' => 0, 'failed' => 0];
+    $params = [
         'quizid' => $quizid,
         'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
-        'deleted' => 0,
-    ]);
+    ];
+    $select = 'quizid = :quizid AND status = :status AND deleted = 0';
+    if ($userid !== null) {
+        $select .= ' AND userid = :userid';
+        $params['userid'] = $userid;
+    }
+    if ($attemptid !== null) {
+        $select .= ' AND attemptid = :attemptid';
+        $params['attemptid'] = $attemptid;
+    }
+
+    $records = $DB->get_records_select(
+        'quizaccess_proctor_data',
+        $select,
+        $params,
+        'id ASC',
+        '*',
+        0,
+        $limit
+    );
     foreach ($records as $record) {
         $result = quizaccess_quizproctoring_reprocess_image($record);
         $results[$result['status']]++;
     }
 
-    $mainrecords = $DB->get_records('quizaccess_main_proctor', [
-        'quizid' => $quizid,
-        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
-        'deleted' => 0,
-    ]);
-    foreach ($mainrecords as $record) {
-        $result = quizaccess_quizproctoring_reprocess_image($record, 'quizaccess_main_proctor');
-        $results[$result['status']]++;
+    $remaininglimit = $limit - count($records);
+    if ($remaininglimit > 0) {
+        $mainrecords = $DB->get_records_select(
+            'quizaccess_main_proctor',
+            $select,
+            $params,
+            'id ASC',
+            '*',
+            0,
+            $remaininglimit
+        );
+        foreach ($mainrecords as $record) {
+            $result = quizaccess_quizproctoring_reprocess_image($record, 'quizaccess_main_proctor');
+            $results[$result['status']]++;
+        }
     }
 
     return $results;
