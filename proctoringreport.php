@@ -158,6 +158,7 @@ $PAGE->requires->js_init_code("
                             " (' + data.remaining + ')');
                     } else {
                         $('#reprocessimages').hide();
+                        $('.report-pending-images-note').hide();
                     }
                     if (proctoringReportTable) {
                         proctoringReportTable.ajax.reload(null, false);
@@ -336,12 +337,18 @@ echo '<div class="headtitle">' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 
+echo '<div class="report-export-toolbar">';
 echo '<div class="report-export-buttons">';
 echo '<button id="exportpdf" class="btn btn-secondary">' . get_string('exportpdf', 'quizaccess_quizproctoring') . '</button>';
 echo '<button id="exportcsv" class="btn btn-secondary">' . get_string('exportcsv', 'quizaccess_quizproctoring') . '</button>';
 if ($pendingcount > 0) {
     echo '<button id="reprocessimages" class="btn btn-warning">' .
         get_string('reprocessimages', 'quizaccess_quizproctoring') . ' (' . $pendingcount . ')</button>';
+}
+echo '</div>';
+if ($pendingcount > 0) {
+    echo '<p class="pending-images-note report-pending-images-note">' .
+        get_string('reprocessimages_note', 'quizaccess_quizproctoring') . '</p>';
 }
 echo '</div>';
 

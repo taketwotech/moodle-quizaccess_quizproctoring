@@ -705,11 +705,30 @@ label[for="id_consentcheckbox"] {
     color: #000;
 }
 
+.report-export-toolbar {
+    margin-bottom: 15px;
+}
+
 .report-export-buttons {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 0;
+}
+
+.report-pending-images-note {
+    display: inline-block;
+    text-align: left;
+    max-width: none;
+    margin: 8px 0 0;
+    padding: 1px 3px;
+    white-space: normal;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--bs-warning-color, #000);
+    background-color: var(--bs-warning, #ffc107);
+    border: 1px solid var(--bs-warning-border-color, #ffc107);
+    border-radius: 0.25rem;
 }
 
 /* stylelint-disable declaration-no-important */

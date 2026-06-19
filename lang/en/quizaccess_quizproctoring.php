@@ -221,6 +221,7 @@ $string['reportingpagination_help'] = 'Default number of records per page on Pro
 $string['reprocessapinotavailable'] = 'The face detection server may still be unavailable. Verify the API URL and access tokens, then try again.';
 $string['reprocessimages'] = 'Reprocess images';
 $string['reprocessimages_error'] = 'Unable to reprocess images. Please try again later.';
+$string['reprocessimages_note'] = 'Some images could not be analyzed when they were captured (for example, due to a temporary face detection service outage). Click Reprocess images to run face detection again.';
 $string['reprocessimages_processing'] = 'Reprocessing...';
 $string['reprocessimages_processing_remaining'] = 'Reprocessing... ({$a} remaining)';
 $string['reprocessresult'] = 'Reprocessing complete. {$a->processed} image(s) processed, {$a->pending} still pending, {$a->failed} failed. {$a->remaining} image(s) remain to be reprocessed.';

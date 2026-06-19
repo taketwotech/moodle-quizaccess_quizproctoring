@@ -221,6 +221,7 @@ $string['reportingpagination_help'] = 'ProctorLink rapor sayfalarında (Kullanı
 $string['reprocessapinotavailable'] = 'Yüz algılama sunucusu hâlâ kullanılamıyor olabilir. API URL\'sini ve erişim belirteçlerini doğrulayıp tekrar deneyin.';
 $string['reprocessimages'] = 'Görüntüleri yeniden işle';
 $string['reprocessimages_error'] = 'Görüntüler yeniden işlenemedi. Lütfen daha sonra tekrar deneyin.';
+$string['reprocessimages_note'] = 'Bazı görseller kaydedildikleri anda analiz edilemedi (örneğin geçici bir yüz algılama hizmeti kesintisi nedeniyle). Yüz algılamayı yeniden çalıştırmak için Görüntüleri yeniden işle düğmesine tıklayın.';
 $string['reprocessimages_processing'] = 'Yeniden işleniyor...';
 $string['reprocessimages_processing_remaining'] = 'Yeniden işleniyor... ({$a} kaldı)';
 $string['reprocessresult'] = 'Yeniden işleme tamamlandı. {$a->processed} görüntü işlendi, {$a->pending} hâlâ bekliyor, {$a->failed} başarısız. {$a->remaining} görüntü yeniden işlenmeyi bekliyor.';
