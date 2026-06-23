@@ -220,6 +220,7 @@ $string['reportingpagination'] = 'Pagination des pages de rapport';
 $string['reportingpagination_help'] = 'Nombre par défaut d\'enregistrements par page sur les pages de rapport ProctorLink (Rapport des images utilisateur, Rapport de surveillance, Tentatives d\'examen). Les utilisateurs peuvent modifier la valeur par page via le menu déroulant.';
 $string['reprocessapinotavailable'] = 'Le serveur de détection faciale est peut-être encore indisponible. Vérifiez l\'URL de l\'API et les jetons d\'accès, puis réessayez.';
 $string['reprocessimages'] = 'Retraiter les images';
+$string['reprocessimages_busy'] = 'Un retraitement est déjà en cours. Veuillez attendre la fin du lot actuel.';
 $string['reprocessimages_error'] = 'Impossible de retraiter les images. Veuillez réessayer plus tard.';
 $string['reprocessimages_note'] = 'Certaines images n\'ont pas pu être analysées lors de leur capture (par exemple, en raison d\'une interruption temporaire du service de détection faciale). Cliquez sur Retraiter les images pour relancer la détection faciale.';
 $string['reprocessimages_processing'] = 'Retraitement en cours...';

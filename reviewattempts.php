@@ -140,7 +140,7 @@ if ($proctoringimageshow == 1) {
     $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
     $PAGE->requires->strings_for_js(['noimageswarning', 'proctoringimages',
         'attemptstarted', 'proctoringidentity', 'allimages', 'eyeofferror',
-        'alerts', 'proctoringaudio', 'reprocessimages', 'reprocessimages_processing',
+        'alerts', 'proctoringaudio', 'reprocessimages', 'reprocessimages_busy', 'reprocessimages_processing',
         'reprocessimages_error'], 'quizaccess_quizproctoring');
     $PAGE->requires->css(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/css/lightbox.min.css'));
     $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/quiz/accessrule/quizproctoring/libraries/js/lightbox.min.js'), true);

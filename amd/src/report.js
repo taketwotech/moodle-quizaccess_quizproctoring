@@ -1,12 +1,34 @@
 define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', 'core/str', 'core/notification'],
 function($, ModalFactory, ModalEvents, Templates, str, notification) {
+    var reprocessInProgress = false;
+    var batchDelayMs = 1000;
+
     /**
-     * Reprocess pending images in batches until complete or the API is unavailable.
+     * @param {number} ms Milliseconds to wait
+     * @return {Promise}
+     */
+    function delay(ms) {
+        return new Promise(function(resolve) {
+            window.setTimeout(resolve, ms);
+        });
+    }
+
+    /**
+     * Reprocess pending images in sequential batches (wait for each batch to finish).
      *
      * @param {object} options Handler options
      * @return {Promise}
      */
     function reprocessPendingImages(options) {
+        if (reprocessInProgress) {
+            return str.get_string('reprocessimages_busy', 'quizaccess_quizproctoring').then(function(message) {
+                notification.addNotification({
+                    message: message,
+                    type: 'warning'
+                });
+            });
+        }
+
         var cmid = options.cmid;
         var quizid = options.quizid;
         var button = options.button ? $(options.button) : null;
@@ -14,7 +36,17 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
         var apinotavailable = false;
         var lastdata = null;
 
-        function runBatch() {
+        reprocessInProgress = true;
+
+        /**
+         * Run a single batch and only start the next batch after this request completes.
+         *
+         * @param {number} retrycount Retry attempt for the current batch
+         * @return {Promise}
+         */
+        function runBatch(retrycount) {
+            retrycount = retrycount || 0;
+
             var requestdata = {
                 cmid: cmid,
                 quizid: quizid,
@@ -31,8 +63,15 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_reprocess.php',
                 method: 'POST',
                 dataType: 'json',
+                timeout: 90000,
                 data: requestdata
             }).then(function(data) {
+                if (data && data.locked) {
+                    return delay(2000).then(function() {
+                        return runBatch(retrycount);
+                    });
+                }
+
                 if (!data || data.success !== true) {
                     return $.Deferred().reject().promise();
                 }
@@ -46,22 +85,32 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     options.onProgress(data, totals);
                 }
 
-                if (data.processed === 0 && data.remaining > 0) {
+                if (data.processed === 0 && data.remaining > 0 && !data.timedout) {
                     apinotavailable = true;
                     return data;
                 }
 
-                if (data.hasmore && data.remaining > 0) {
+                if (data.hasmore && data.remaining > 0 && data.batchcomplete) {
                     return str.get_string('reprocessimages_processing_remaining', 'quizaccess_quizproctoring',
                         data.remaining).then(function(text) {
                         if (button) {
                             button.prop('disabled', true).text(text);
                         }
-                        return runBatch();
+                        return delay(batchDelayMs).then(function() {
+                            return runBatch(0);
+                        });
                     });
                 }
 
                 return data;
+            }).catch(function(jqXHR) {
+                var status = jqXHR && jqXHR.status ? jqXHR.status : 0;
+                if (retrycount < 3 && (status === 0 || status === 502 || status === 503 || status === 504)) {
+                    return delay(3000).then(function() {
+                        return runBatch(retrycount + 1);
+                    });
+                }
+                return $.Deferred().reject(jqXHR).promise();
             });
         }
 
@@ -74,7 +123,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
         }
 
         return startPromise.then(function() {
-            return runBatch();
+            return runBatch(0);
         }).then(function() {
             return str.get_string('reprocessresult', 'quizaccess_quizproctoring', {
                 processed: totals.processed,
@@ -105,7 +154,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     return notification.alert(title, message);
                 });
             });
-        }).then(function() {
+        }).always(function() {
+            reprocessInProgress = false;
             if (button) {
                 button.prop('disabled', false);
             }

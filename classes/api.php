@@ -89,9 +89,10 @@ class api {
      * @param int $userid user id
      * @param int $quizid quiz id
      * @param int $attemptid attempt id
-     * @return string
+     * @param int|null $timeout Optional curl timeout in seconds
+     * @return string|false
      */
-    public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid) {
+    public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid, $timeout = null) {
         global $SESSION;
         self::init();
         $curl = new \curl();
@@ -109,9 +110,13 @@ class api {
             'attempt_id: ' . $attemptid,
         ];
 
+        if ($timeout === null) {
+            $timeout = 30;
+        }
+        $timeout = max(1, (int) $timeout);
         $curl->setopt([
-            'CURLOPT_TIMEOUT' => 30,
-            'CURLOPT_CONNECTTIMEOUT' => 10,
+            'CURLOPT_TIMEOUT' => $timeout,
+            'CURLOPT_CONNECTTIMEOUT' => min(10, $timeout),
         ]);
         $curl->setHeader($header);
         $result = $curl->post($url, json_encode($imagedata));

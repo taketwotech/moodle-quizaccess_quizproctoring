@@ -220,6 +220,7 @@ $string['reportingpagination'] = 'Reporting page pagination';
 $string['reportingpagination_help'] = 'Default number of records per page on ProctorLink reporting pages (User Images Report, Proctoring Report, Review Attempts). Users can still change the value per page using the dropdown.';
 $string['reprocessapinotavailable'] = 'The face detection server may still be unavailable. Verify the API URL and access tokens, then try again.';
 $string['reprocessimages'] = 'Reprocess images';
+$string['reprocessimages_busy'] = 'Reprocessing is already in progress. Please wait for the current batch to finish.';
 $string['reprocessimages_error'] = 'Unable to reprocess images. Please try again later.';
 $string['reprocessimages_note'] = 'Some images could not be analyzed when they were captured (for example, due to a temporary face detection service outage). Click Reprocess images to run face detection again.';
 $string['reprocessimages_processing'] = 'Reprocessing...';

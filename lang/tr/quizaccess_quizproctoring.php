@@ -220,6 +220,7 @@ $string['reportingpagination'] = 'Rapor sayfası sayfalandırma';
 $string['reportingpagination_help'] = 'ProctorLink rapor sayfalarında (Kullanıcı Görüntüleri Raporu, Gözetim Raporu, Deneme İncelemeleri) varsayılan sayfa başına kayıt sayısı. Kullanıcılar açılır menü ile sayfa başına değeri değiştirebilir.';
 $string['reprocessapinotavailable'] = 'Yüz algılama sunucusu hâlâ kullanılamıyor olabilir. API URL\'sini ve erişim belirteçlerini doğrulayıp tekrar deneyin.';
 $string['reprocessimages'] = 'Görüntüleri yeniden işle';
+$string['reprocessimages_busy'] = 'Yeniden işleme zaten devam ediyor. Lütfen mevcut grubun bitmesini bekleyin.';
 $string['reprocessimages_error'] = 'Görüntüler yeniden işlenemedi. Lütfen daha sonra tekrar deneyin.';
 $string['reprocessimages_note'] = 'Bazı görseller kaydedildikleri anda analiz edilemedi (örneğin geçici bir yüz algılama hizmeti kesintisi nedeniyle). Yüz algılamayı yeniden çalıştırmak için Görüntüleri yeniden işle düğmesine tıklayın.';
 $string['reprocessimages_processing'] = 'Yeniden işleniyor...';

@@ -38,34 +38,54 @@ $attemptid = optional_param('attemptid', 0, PARAM_INT);
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
 
-\core_php_time_limit::raise(300);
+\core_php_time_limit::raise(QUIZACCESS_QUIZPROCTORING_REPROCESS_TIME_BUDGET + 15);
 
 $userfilter = $userid > 0 ? $userid : null;
 $attemptfilter = $attemptid > 0 ? $attemptid : null;
 
-$results = quizaccess_quizproctoring_reprocess_pending_images($quizid, null, $userfilter, $attemptfilter);
-$remaining = quizaccess_quizproctoring_count_pending_images($quizid, $userfilter, $attemptfilter);
-$hasmore = $remaining > 0;
-
-$message = get_string('reprocessresult', 'quizaccess_quizproctoring', (object) [
-    'processed' => $results['processed'],
-    'pending' => $results['pending'],
-    'failed' => $results['failed'],
-    'remaining' => $remaining,
-]);
-if ($results['processed'] === 0 && $remaining > 0) {
-    $message .= ' ' . get_string('reprocessapinotavailable', 'quizaccess_quizproctoring');
+$lockfactory = \core\lock\lock_config::get_lock_factory('quizaccess_quizproctoring_reprocess');
+$lockkey = $quizid . '_' . ($userfilter ?? 0) . '_' . ($attemptfilter ?? 0);
+$lock = $lockfactory->get_lock($lockkey, 0);
+if (!$lock) {
+    @header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'locked' => true,
+    ]);
+    die();
 }
 
-@header('Content-Type: application/json; charset=utf-8');
-echo json_encode([
-    'success' => true,
-    'processed' => $results['processed'],
-    'pending' => $results['pending'],
-    'failed' => $results['failed'],
-    'remaining' => $remaining,
-    'hasmore' => $hasmore,
-    'batchsize' => QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE,
-    'message' => $message,
-]);
+try {
+    $results = quizaccess_quizproctoring_reprocess_pending_images($quizid, null, $userfilter, $attemptfilter);
+    $remaining = quizaccess_quizproctoring_count_pending_images($quizid, $userfilter, $attemptfilter);
+    $hasmore = $remaining > 0;
+    $batchcount = $results['processed'] + $results['pending'] + $results['failed'];
+
+    $message = get_string('reprocessresult', 'quizaccess_quizproctoring', (object) [
+        'processed' => $results['processed'],
+        'pending' => $results['pending'],
+        'failed' => $results['failed'],
+        'remaining' => $remaining,
+    ]);
+    if ($results['processed'] === 0 && $remaining > 0 && empty($results['timedout'])) {
+        $message .= ' ' . get_string('reprocessapinotavailable', 'quizaccess_quizproctoring');
+    }
+
+    @header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => true,
+        'processed' => $results['processed'],
+        'pending' => $results['pending'],
+        'failed' => $results['failed'],
+        'remaining' => $remaining,
+        'hasmore' => $hasmore,
+        'timedout' => !empty($results['timedout']),
+        'batchcomplete' => true,
+        'batchcount' => $batchcount,
+        'batchsize' => QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE,
+        'message' => $message,
+    ]);
+} finally {
+    $lock->release();
+}
 die();

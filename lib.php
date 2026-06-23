@@ -46,7 +46,10 @@ define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
 define('QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING', 'pendingprocessing');
-define('QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE', 100);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE', 80);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_TIME_BUDGET', 45);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_API_TIMEOUT', 10);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_MIN_REMAINING', 5);
 
 /** User preference key for reporting page pagination (records per page). */
 define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
@@ -792,7 +795,8 @@ function quizaccess_quizproctoring_reprocess_image($record, $tablename = 'quizac
             $apidata,
             $record->userid,
             $record->quizid,
-            $record->attemptid
+            $record->attemptid,
+            QUIZACCESS_QUIZPROCTORING_REPROCESS_API_TIMEOUT
         );
         if ($proctoringdata && $proctoringdata->enableeyecheck == 1) {
             $validate = \quizaccess_quizproctoring\api::validate($response, $data1, $target, true);
@@ -805,7 +809,8 @@ function quizaccess_quizproctoring_reprocess_image($record, $tablename = 'quizac
             $apidata,
             $record->userid,
             $record->quizid,
-            $record->attemptid
+            $record->attemptid,
+            QUIZACCESS_QUIZPROCTORING_REPROCESS_API_TIMEOUT
         );
         $validate = \quizaccess_quizproctoring\api::validate($response, $data1, '', true);
     }
@@ -829,11 +834,13 @@ function quizaccess_quizproctoring_reprocess_image($record, $tablename = 'quizac
 /**
  * Reprocess pending images for a quiz in batches.
  *
+ * Processes up to $limit images per call, stopping early when the time budget is reached.
+ *
  * @param int $quizid Quiz id
  * @param int|null $limit Maximum number of images to process in this batch
  * @param int|null $userid Optional user id to limit reprocessing
  * @param int|null $attemptid Optional attempt id to limit reprocessing
- * @return array Summary with processed, pending and failed counts
+ * @return array Summary with processed, pending, failed and timedout counts
  */
 function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = null, $userid = null, $attemptid = null) {
     global $DB;
@@ -843,7 +850,10 @@ function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = nu
     }
     $limit = max(1, (int) $limit);
 
-    $results = ['processed' => 0, 'pending' => 0, 'failed' => 0];
+    $results = ['processed' => 0, 'pending' => 0, 'failed' => 0, 'timedout' => false];
+    $starttime = microtime(true);
+    $timebudget = QUIZACCESS_QUIZPROCTORING_REPROCESS_TIME_BUDGET;
+
     $params = [
         'quizid' => $quizid,
         'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
@@ -858,6 +868,24 @@ function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = nu
         $params['attemptid'] = $attemptid;
     }
 
+    $processrecords = function(array $records, string $tablename = 'quizaccess_proctor_data')
+            use (&$results, $starttime, $timebudget): bool {
+        foreach ($records as $record) {
+            $remainingtime = $timebudget - (microtime(true) - $starttime);
+            if ($remainingtime < QUIZACCESS_QUIZPROCTORING_REPROCESS_MIN_REMAINING) {
+                $results['timedout'] = true;
+                return false;
+            }
+            $result = quizaccess_quizproctoring_reprocess_image($record, $tablename);
+            $results[$result['status']]++;
+            if ((microtime(true) - $starttime) >= $timebudget) {
+                $results['timedout'] = true;
+                return false;
+            }
+        }
+        return true;
+    };
+
     $records = $DB->get_records_select(
         'quizaccess_proctor_data',
         $select,
@@ -867,13 +895,12 @@ function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = nu
         0,
         $limit
     );
-    foreach ($records as $record) {
-        $result = quizaccess_quizproctoring_reprocess_image($record);
-        $results[$result['status']]++;
+    if (!$processrecords($records)) {
+        return $results;
     }
 
     $remaininglimit = $limit - count($records);
-    if ($remaininglimit > 0) {
+    if ($remaininglimit > 0 && !$results['timedout']) {
         $mainrecords = $DB->get_records_select(
             'quizaccess_main_proctor',
             $select,
@@ -883,10 +910,7 @@ function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = nu
             0,
             $remaininglimit
         );
-        foreach ($mainrecords as $record) {
-            $result = quizaccess_quizproctoring_reprocess_image($record, 'quizaccess_main_proctor');
-            $results[$result['status']]++;
-        }
+        $processrecords($mainrecords, 'quizaccess_main_proctor');
     }
 
     return $results;
