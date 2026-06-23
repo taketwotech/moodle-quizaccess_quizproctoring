@@ -1445,6 +1445,24 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
     }
 
 /**
+ * Apply a dragged/fixed position to the webcam element.
+ * Clears bottom/right anchors so the element does not stretch across the page.
+ *
+ * @param {HTMLElement} element - The video element
+ * @param {number} left - Left offset in pixels
+ * @param {number} top - Top offset in pixels
+ * @return {void}
+ */
+function applyDraggedVideoPosition(element, left, top) {
+    element.style.position = 'fixed';
+    element.style.left = `${left}px`;
+    element.style.top = `${top}px`;
+    element.style.bottom = 'auto';
+    element.style.right = 'auto';
+    element.classList.add('video-drag-positioned');
+}
+
+/**
  * RestoreVideoPosition
  *
  * @param {HTMLElement} element - The video element whose position should be restored.
@@ -1454,8 +1472,7 @@ function restoreVideoPosition(element) {
     const savedPosition = localStorage.getItem('videoPosition');
     if (savedPosition) {
         const {left, top} = JSON.parse(savedPosition);
-        element.style.left = `${left}px`;
-        element.style.top = `${top}px`;
+        applyDraggedVideoPosition(element, left, top);
     }
 }
 
@@ -1525,11 +1542,7 @@ function makeDraggable(element) {
         const maxTop = window.innerHeight - element.offsetHeight;
         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
         newTop = Math.max(0, Math.min(newTop, maxTop));
-        if (element.style.position !== 'fixed') {
-            element.style.position = 'fixed';
-        }
-        element.style.left = `${newLeft}px`;
-        element.style.top = `${newTop}px`;
+        applyDraggedVideoPosition(element, newLeft, newTop);
     }
 
     /**
