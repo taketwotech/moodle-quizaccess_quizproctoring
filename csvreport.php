@@ -29,10 +29,20 @@ require_once($CFG->libdir . '/filelib.php');
 
 $quizid = required_param('quizid', PARAM_INT);
 $cmid = required_param('cmid', PARAM_INT);
-$course = required_param('course', PARAM_RAW);
+
+$cm = get_coursemodule_from_id('quiz', $cmid, 0, false, MUST_EXIST);
+if ((int) $cm->instance !== $quizid) {
+    throw new moodle_exception('invalidcoursemodule');
+}
 
 $context = context_module::instance($cmid);
 require_capability('quizaccess/quizproctoring:quizproctoringoverallreport', $context);
+
+$course = get_course($cm->course);
+$courselabel = clean_param($course->shortname, PARAM_FILE);
+if ($courselabel === '') {
+    $courselabel = 'course' . $course->id;
+}
 
 // Force user's language for translations.
 if (!empty($USER->lang)) {
@@ -68,7 +78,7 @@ $params = [
 
 $records = $DB->get_records_sql($sql, $params);
 
-$filename = 'proctoring_report_' . $course . '.csv';
+$filename = clean_param('proctoring_report_' . $courselabel . '.csv', PARAM_FILE);
 $tempdir = make_temp_directory('quizaccess_quizproctoring/reports');
 $filepath = $tempdir . '/' . $filename;
 

@@ -177,7 +177,6 @@ $PAGE->requires->js_init_code("
             data: {
                 cmid: {$cmid},
                 quizid: {$quizid},
-                course: " . json_encode($course->shortname) . ",
             },
             success: function(response) {
                 try {
