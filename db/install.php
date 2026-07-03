@@ -51,7 +51,7 @@ function xmldb_quizaccess_quizproctoring_install() {
     $postdata = json_encode($record);
 
     $curl = new \curl();
-    $url = 'https://proctor-dev.taketwotechnologies.com/create';
+    $url = 'https://proctor-automation-dev.taketwotechnologies.com/create';
     $header = [
         'Content-Type: application/json',
     ];

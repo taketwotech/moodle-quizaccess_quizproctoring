@@ -1034,6 +1034,42 @@ function quizaccess_quizproctoring_plan_status_note($refreshlink, $iscredit = fa
 }
 
 /**
+ * Map API activePlan label to the current Moodle language string.
+ *
+ * Backend returns English names: Starter, Advanced, Credit-Based, Free.
+ *
+ * @param string|null $activeplan Plan label from API display.activePlan.
+ * @return string Localized plan name.
+ */
+function quizaccess_quizproctoring_localize_active_plan_name($activeplan) {
+    if ($activeplan === null || $activeplan === '') {
+        return '';
+    }
+
+    $normalized = strtolower(preg_replace('/[\s\-_]+/', '', (string)$activeplan));
+    $stringkeys = [
+        'starter' => 'planstarter',
+        'advanced' => 'planadvanced',
+        'standard' => 'planadvanced',
+        'free' => 'planfree',
+        'credit' => 'creditbaseplan',
+        'creditbased' => 'creditbaseplan',
+    ];
+
+    if (isset($stringkeys[$normalized])) {
+        return get_string($stringkeys[$normalized], 'quizaccess_quizproctoring');
+    }
+
+    $basename = strtolower(preg_replace('/[\s\-_]*(india|global)$/i', '', (string)$activeplan));
+    $basename = preg_replace('/[\s\-_]+/', '', $basename);
+    if (isset($stringkeys[$basename])) {
+        return get_string($stringkeys[$basename], 'quizaccess_quizproctoring');
+    }
+
+    return (string)$activeplan;
+}
+
+/**
  * Whether the stored plan is credit-based.
  *
  * @param array $display Stored display data.
@@ -1088,7 +1124,9 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
     if ($planinfo === 1) {
         if (quizaccess_quizproctoring_is_credit_plan($display)) {
             [$plancredits, $plantotalcredits] = quizaccess_quizproctoring_get_plan_credits($display);
-            $activeplan = $display['activePlan'] ?? get_string('creditbaseplan', 'quizaccess_quizproctoring');
+            $activeplan = quizaccess_quizproctoring_localize_active_plan_name(
+                $display['activePlan'] ?? 'Credit-Based'
+            );
             $parts = [
                 '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' . s($activeplan),
                 '<strong>' . get_string('creditsremaining', 'quizaccess_quizproctoring') . '</strong> ' .
@@ -1104,7 +1142,9 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
         }
 
         $parts = [];
-        $activeplan = $display['activePlan'] ?? get_config('quizaccess_quizproctoring', 'getplanname');
+        $activeplan = quizaccess_quizproctoring_localize_active_plan_name(
+            $display['activePlan'] ?? get_config('quizaccess_quizproctoring', 'getplanname')
+        );
         if (!empty($activeplan)) {
             $parts[] = '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' .
                 s($activeplan);
