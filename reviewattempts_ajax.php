@@ -341,7 +341,7 @@ foreach ($records as $record) {
                 continue;
             }
             $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
-            $alerttext = s($alert->alertmessage);
+            $alerttext = $alert->alertmessage;
             $teachername = '';
             if (!empty($alert->teacherid) && isset($teachers[$alert->teacherid])) {
                 $teachername = $teachers[$alert->teacherid];
