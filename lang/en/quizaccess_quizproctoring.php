@@ -243,6 +243,7 @@ $string['splitscreendetected'] = 'Split-screen view is not allowed during this q
 $string['started'] = 'Started';
 $string['started_help'] = 'The date and time when the quiz attempt began.';
 $string['sessionsremaining'] = 'Sessions Remaining:';
+$string['sessionsremainingupdatenote'] = 'Note: Session remaining updates every 12 hours, so your latest usage might reflect with a delay.';
 $string['storeallimages'] = 'Store all images';
 $string['storeallimages_help'] = 'When enabled, all images captured during proctoring sessions are stored, not just those triggering warnings.';
 $string['submitted'] = 'Submitted';

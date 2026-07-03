@@ -1024,11 +1024,17 @@ function quizaccess_quizproctoring_plan_action_link($action) {
  * Build the plan status note shown below the plan summary.
  *
  * @param string $refreshlink Refresh plan HTML link.
- * @param bool $iscredit Whether the active plan is credit-based.
+ * @param array $display Stored plan display data from API.
  * @return string
  */
-function quizaccess_quizproctoring_plan_status_note($refreshlink, $iscredit = false) {
-    $notestring = $iscredit ? 'creditbalanceupdatenote' : 'updatenote';
+function quizaccess_quizproctoring_plan_status_note($refreshlink, array $display = []) {
+    if (quizaccess_quizproctoring_is_credit_plan($display)) {
+        $notestring = 'creditbalanceupdatenote';
+    } else if (!empty($display['showSessionData'])) {
+        $notestring = 'sessionsremainingupdatenote';
+    } else {
+        $notestring = 'updatenote';
+    }
     return '<div class="plan-info-note">' . get_string($notestring, 'quizaccess_quizproctoring') .
         ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' . $refreshlink . '</span></div>';
 }
@@ -1100,6 +1106,52 @@ function quizaccess_quizproctoring_get_plan_credits(array $display) {
 }
 
 /**
+ * Normalize API expiry timestamp to Unix seconds.
+ *
+ * @param int|string|null $timestamp Expiry timestamp.
+ * @return int Unix timestamp or 0 when invalid.
+ */
+function quizaccess_quizproctoring_normalize_plan_timestamp($timestamp) {
+    $timestamp = (int)$timestamp;
+    if ($timestamp <= 0) {
+        return 0;
+    }
+    if ($timestamp > 9999999999) {
+        $timestamp = (int)($timestamp / 1000);
+    }
+    return $timestamp;
+}
+
+/**
+ * Resolve plan expiry timestamp from display data with config fallback.
+ *
+ * @param array $display Stored display data.
+ * @return int Unix timestamp or 0 when unavailable.
+ */
+function quizaccess_quizproctoring_get_plan_expiry_timestamp(array $display) {
+    if (!empty($display['expiryTimestamp'])) {
+        return quizaccess_quizproctoring_normalize_plan_timestamp($display['expiryTimestamp']);
+    }
+    return quizaccess_quizproctoring_normalize_plan_timestamp(
+        get_config('quizaccess_quizproctoring', 'getplanexpiry')
+    );
+}
+
+/**
+ * Format plan expiry date for the current user's language and timezone.
+ *
+ * @param array $display Stored display data.
+ * @return string Localized expiry date or empty string.
+ */
+function quizaccess_quizproctoring_format_plan_expiry_date(array $display) {
+    $timestamp = quizaccess_quizproctoring_get_plan_expiry_timestamp($display);
+    if ($timestamp <= 0) {
+        return '';
+    }
+    return ltrim(userdate($timestamp, '%d %B %Y'), '0');
+}
+
+/**
  * Build plan status HTML for the quiz settings form.
  *
  * @param string $refreshlink Refresh plan HTML link.
@@ -1138,7 +1190,7 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
                 $line .= ' <span class="plan-separator">|</span> ' . $actionlink;
             }
             return '<div class="plan-info-box">' . $line . '</div>' .
-                quizaccess_quizproctoring_plan_status_note($refreshlink, true);
+                quizaccess_quizproctoring_plan_status_note($refreshlink, $display);
         }
 
         $parts = [];
@@ -1157,18 +1209,10 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
                 $remaining . '/' . $total;
         }
 
-        if (!empty($display['expiryDate'])) {
+        $expirydate = quizaccess_quizproctoring_format_plan_expiry_date($display);
+        if ($expirydate !== '') {
             $parts[] = '<strong>' . get_string('expirydate', 'quizaccess_quizproctoring') . '</strong> ' .
-                s($display['expiryDate']);
-        } else {
-            $expiretimestamp = (int)get_config('quizaccess_quizproctoring', 'getplanexpiry');
-            if ($expiretimestamp > 0) {
-                if ($expiretimestamp > 9999999999) {
-                    $expiretimestamp = (int)($expiretimestamp / 1000);
-                }
-                $parts[] = '<strong>' . get_string('expirydate', 'quizaccess_quizproctoring') . '</strong> ' .
-                    ltrim(userdate($expiretimestamp, '%d %B %Y'), '0');
-            }
+                s($expirydate);
         }
 
         $line = implode(' <span class="plan-separator">|</span> ', $parts);
@@ -1178,7 +1222,7 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
         }
 
         return '<div class="plan-info-box">' . $line . '</div>' .
-            quizaccess_quizproctoring_plan_status_note($refreshlink);
+            quizaccess_quizproctoring_plan_status_note($refreshlink, $display);
     }
 
     $box = '<div class="plan-warning-box"><strong>' .
@@ -1194,7 +1238,7 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
         $box .= '<span class="plan-separator">|</span> ' . $link;
     }
     $box .= '</div>';
-    return $box . quizaccess_quizproctoring_plan_status_note($refreshlink);
+    return $box . quizaccess_quizproctoring_plan_status_note($refreshlink, $display);
 }
 
 /**

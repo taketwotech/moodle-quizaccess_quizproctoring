@@ -243,6 +243,7 @@ $string['splitscreendetected'] = 'Bölünmüş ekran görünümü bu sınav sır
 $string['started'] = 'Başlangıç';
 $string['started_help'] = 'Test denemesinin başladığı tarih ve saat.';
 $string['sessionsremaining'] = 'Kalan Oturumlar:';
+$string['sessionsremainingupdatenote'] = 'Not: Kalan oturum sayısı 12 saatte bir güncellenir, bu nedenle son kullanımınız bir gecikmeyle yansıtılabilir.';
 $string['storeallimages'] = 'Tüm görselleri sakla';
 $string['storeallimages_help'] = 'Etkinleştirildiğinde, gözetim oturumu sırasında yalnızca uyarı tetikleyen görseller değil, tüm görseller saklanır.';
 $string['submitted'] = 'Gönderildi';

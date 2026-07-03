@@ -764,6 +764,10 @@ label[for="id_consentcheckbox"] {
     border-radius: 4px;
     color: #0c5460;
     font-size: 14px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
 }
 
 .planstatus .plan-warning-box {
@@ -775,12 +779,17 @@ label[for="id_consentcheckbox"] {
     border-radius: 4px;
     color: #856404;
     font-size: 14px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
 }
 
 .planstatus .plan-separator {
     margin: 0 10px;
     color: #6c757d;
     font-weight: normal;
+    white-space: nowrap;
 }
 
 .planstatus .plan-info-note {

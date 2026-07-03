@@ -243,6 +243,7 @@ $string['splitscreendetected'] = 'L\'affichage en écran partagé n\'est pas aut
 $string['started'] = 'Commencé';
 $string['started_help'] = 'Date et heure de début de la tentative de quiz.';
 $string['sessionsremaining'] = 'Sessions restantes :';
+$string['sessionsremainingupdatenote'] = 'Note : Le nombre de sessions restantes est mis à jour toutes les 12 heures, votre dernière utilisation peut donc être reflétée avec un délai.';
 $string['storeallimages'] = 'Stocker toutes les images';
 $string['storeallimages_help'] = 'Lorsqu\'elle est activée, toutes les images capturées pendant la session de surveillance sont stockées, et pas seulement celles déclenchant des alertes.';
 $string['submitted'] = 'Soumis';
