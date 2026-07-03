@@ -969,6 +969,209 @@ function clean_images_task() {
 }
 
 /**
+ * ProctorLink pricing page URL.
+ */
+define('QUIZACCESS_QUIZPROCTORING_PRICING_URL', 'https://proctorlink.com/#pricing');
+
+/**
+ * Get stored plan display data from plugin config.
+ *
+ * @return array
+ */
+function quizaccess_quizproctoring_get_plan_display() {
+    $raw = get_config('quizaccess_quizproctoring', 'getplandisplay');
+    if (empty($raw)) {
+        return [];
+    }
+    $display = json_decode($raw, true);
+    return is_array($display) ? $display : [];
+}
+
+/**
+ * Build a pricing-page action link from the backend display action key.
+ *
+ * @param string $action Backend action key (upgrade, renew, purchase, buycredit).
+ * @return string HTML link or empty string.
+ */
+function quizaccess_quizproctoring_plan_action_link($action) {
+    $action = strtolower((string)$action);
+    $linktext = '';
+    switch ($action) {
+        case 'upgrade':
+            $linktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
+            break;
+        case 'renew':
+            $linktext = get_string('renewplan', 'quizaccess_quizproctoring');
+            break;
+        case 'purchase':
+            $linktext = get_string('purchaseplan', 'quizaccess_quizproctoring');
+            break;
+        case 'buyCredits':
+            $linktext = get_string('buycredit', 'quizaccess_quizproctoring');
+            break;
+        default:
+            return '';
+    }
+
+    return html_writer::link(
+        QUIZACCESS_QUIZPROCTORING_PRICING_URL,
+        $linktext,
+        ['target' => '_blank', 'rel' => 'noopener noreferrer']
+    );
+}
+
+/**
+ * Build the plan status note shown below the plan summary.
+ *
+ * @param string $refreshlink Refresh plan HTML link.
+ * @param bool $iscredit Whether the active plan is credit-based.
+ * @return string
+ */
+function quizaccess_quizproctoring_plan_status_note($refreshlink, $iscredit = false) {
+    $notestring = $iscredit ? 'creditbalanceupdatenote' : 'updatenote';
+    return '<div class="plan-info-note">' . get_string($notestring, 'quizaccess_quizproctoring') .
+        ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' . $refreshlink . '</span></div>';
+}
+
+/**
+ * Whether the stored plan is credit-based.
+ *
+ * @param array $display Stored display data.
+ * @return bool
+ */
+function quizaccess_quizproctoring_is_credit_plan(array $display) {
+    if (($display['planType'] ?? '') === 'credit') {
+        return true;
+    }
+    $planname = strtolower((string)get_config('quizaccess_quizproctoring', 'getplanname'));
+    return $planname === 'credit' || $planname === 'credit base plan' || $planname === 'credit-based';
+}
+
+/**
+ * Resolve remaining and total credits from display data with config fallback.
+ *
+ * @param array $display Stored display data.
+ * @return array{0:int,1:int} [remaining, total]
+ */
+function quizaccess_quizproctoring_get_plan_credits(array $display) {
+    $remaining = (int)get_config('quizaccess_quizproctoring', 'getplancredits');
+    $total = (int)get_config('quizaccess_quizproctoring', 'getplantotalcredits');
+    if (isset($display['remainingCredits']) || isset($display['totalCredits'])) {
+        $remaining = (int)($display['remainingCredits'] ?? $remaining);
+        $total = (int)($display['totalCredits'] ?? $total);
+    }
+    return [$remaining, $total];
+}
+
+/**
+ * Build plan status HTML for the quiz settings form.
+ *
+ * @param string $refreshlink Refresh plan HTML link.
+ * @return string
+ */
+function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
+    $planresponseempty = (int)get_config('quizaccess_quizproctoring', 'getplanresponseempty');
+    $planinfo = (int)get_config('quizaccess_quizproctoring', 'getplaninfo');
+    $display = quizaccess_quizproctoring_get_plan_display();
+
+    if ($planresponseempty === 1) {
+        $box = '<div class="plan-warning-box"><strong>' .
+            get_string('noplanresponse', 'quizaccess_quizproctoring') . '</strong>';
+        $link = quizaccess_quizproctoring_plan_action_link('purchase');
+        if ($link !== '') {
+            $box .= '<span class="plan-separator">|</span> ' . $link;
+        }
+        $box .= '</div>';
+        return $box . quizaccess_quizproctoring_plan_status_note($refreshlink);
+    }
+
+    if ($planinfo === 1) {
+        if (quizaccess_quizproctoring_is_credit_plan($display)) {
+            [$plancredits, $plantotalcredits] = quizaccess_quizproctoring_get_plan_credits($display);
+            $activeplan = $display['activePlan'] ?? get_string('creditbaseplan', 'quizaccess_quizproctoring');
+            $parts = [
+                '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' . s($activeplan),
+                '<strong>' . get_string('creditsremaining', 'quizaccess_quizproctoring') . '</strong> ' .
+                $plancredits . '/' . $plantotalcredits,
+            ];
+            $line = implode(' <span class="plan-separator">|</span> ', $parts);
+            $actionlink = quizaccess_quizproctoring_plan_action_link($display['action'] ?? 'buycredits');
+            if ($actionlink !== '') {
+                $line .= ' <span class="plan-separator">|</span> ' . $actionlink;
+            }
+            return '<div class="plan-info-box">' . $line . '</div>' .
+                quizaccess_quizproctoring_plan_status_note($refreshlink, true);
+        }
+
+        $parts = [];
+        $activeplan = $display['activePlan'] ?? get_config('quizaccess_quizproctoring', 'getplanname');
+        if (!empty($activeplan)) {
+            $parts[] = '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' .
+                s($activeplan);
+        }
+
+        if (!empty($display['showSessionData'])) {
+            $remaining = (int)($display['remainingSessions'] ?? 0);
+            $total = (int)($display['totalSessions'] ?? 0);
+            $parts[] = '<strong>' . get_string('sessionsremaining', 'quizaccess_quizproctoring') . '</strong> ' .
+                $remaining . '/' . $total;
+        }
+
+        if (!empty($display['expiryDate'])) {
+            $parts[] = '<strong>' . get_string('expirydate', 'quizaccess_quizproctoring') . '</strong> ' .
+                s($display['expiryDate']);
+        } else {
+            $expiretimestamp = (int)get_config('quizaccess_quizproctoring', 'getplanexpiry');
+            if ($expiretimestamp > 0) {
+                if ($expiretimestamp > 9999999999) {
+                    $expiretimestamp = (int)($expiretimestamp / 1000);
+                }
+                $parts[] = '<strong>' . get_string('expirydate', 'quizaccess_quizproctoring') . '</strong> ' .
+                    ltrim(userdate($expiretimestamp, '%d %B %Y'), '0');
+            }
+        }
+
+        $line = implode(' <span class="plan-separator">|</span> ', $parts);
+        $actionlink = quizaccess_quizproctoring_plan_action_link($display['action'] ?? '');
+        if ($actionlink !== '') {
+            $line .= ' <span class="plan-separator">|</span> ' . $actionlink;
+        }
+
+        return '<div class="plan-info-box">' . $line . '</div>' .
+            quizaccess_quizproctoring_plan_status_note($refreshlink);
+    }
+
+    $box = '<div class="plan-warning-box"><strong>' .
+        get_string('noactiveplan', 'quizaccess_quizproctoring') . '</strong>';
+    $action = $display['action'] ?? 'renew';
+    if (($display['planType'] ?? '') === 'free') {
+        $action = 'upgrade';
+    } else if (quizaccess_quizproctoring_is_credit_plan($display)) {
+        $action = $display['action'] ?? 'buycredits';
+    }
+    $link = quizaccess_quizproctoring_plan_action_link($action);
+    if ($link !== '') {
+        $box .= '<span class="plan-separator">|</span> ' . $link;
+    }
+    $box .= '</div>';
+    return $box . quizaccess_quizproctoring_plan_status_note($refreshlink);
+}
+
+/**
+ * Store plan display data returned by the ProctorLink API.
+ *
+ * @param array $data Decoded API response.
+ * @return void
+ */
+function quizaccess_quizproctoring_store_plan_display(array $data) {
+    if (!empty($data['display']) && is_array($data['display'])) {
+        set_config('getplandisplay', json_encode($data['display']), 'quizaccess_quizproctoring');
+        return;
+    }
+    unset_config('getplandisplay', 'quizaccess_quizproctoring');
+}
+
+/**
  * Sync ProctorLink plan details from the remote API into plugin config.
  *
  * @return bool True when plan data was fetched and stored successfully.
@@ -980,6 +1183,7 @@ function quizaccess_quizproctoring_sync_plan_from_api() {
             set_config('getplanresponseempty', 1, 'quizaccess_quizproctoring');
             set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
             set_config('getplanname', '', 'quizaccess_quizproctoring');
+            unset_config('getplandisplay', 'quizaccess_quizproctoring');
             return false;
         }
 
@@ -988,11 +1192,15 @@ function quizaccess_quizproctoring_sync_plan_from_api() {
             return false;
         }
 
+        quizaccess_quizproctoring_store_plan_display($data);
+
         $plantype = isset($data['plan']['planType']) ? $data['plan']['planType'] : '';
+        $planactive = !empty($data['plan']['active']);
         if (!empty($plantype)) {
             set_config('getplanresponseempty', 0, 'quizaccess_quizproctoring');
         } else {
             set_config('getplanresponseempty', 1, 'quizaccess_quizproctoring');
+            unset_config('getplandisplay', 'quizaccess_quizproctoring');
         }
 
         if ($plantype === 'credit') {
@@ -1005,15 +1213,35 @@ function quizaccess_quizproctoring_sync_plan_from_api() {
                     }
                 }
             }
+            if (isset($data['display']['remainingCredits']) || isset($data['display']['totalCredits'])) {
+                $credits = (int)($data['display']['remainingCredits'] ?? $credits);
+                $totalcreditsbought = (int)($data['display']['totalCredits'] ?? $totalcreditsbought);
+            }
+
+            $expiretimestamp = null;
+            if (isset($data['plan']['details']['expireDate'])) {
+                $expiretimestamp = (int)$data['plan']['details']['expireDate'];
+            } else if (isset($data['plan']['details']['expiryDate'])) {
+                $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
+            } else if (isset($data['display']['expiryTimestamp'])) {
+                $expiretimestamp = (int)$data['display']['expiryTimestamp'];
+            }
+            if ($expiretimestamp !== null && $expiretimestamp > 9999999999) {
+                $expiretimestamp = (int)($expiretimestamp / 1000);
+            }
+
             set_config('getplancredits', $credits, 'quizaccess_quizproctoring');
             set_config('getplantotalcredits', $totalcreditsbought, 'quizaccess_quizproctoring');
-            set_config('getplanexpiry', 0, 'quizaccess_quizproctoring');
-            if ($credits >= 0) {
+            set_config('getplanexpiry', $expiretimestamp ?? 0, 'quizaccess_quizproctoring');
+
+            $expired = $expiretimestamp !== null && $expiretimestamp < time();
+            $planname = $data['display']['activePlan'] ?? $data['plan']['planName'] ?? 'credit';
+            if ($credits >= 0 && $planactive && !$expired) {
                 set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
-                set_config('getplanname', 'Credit Base Plan', 'quizaccess_quizproctoring');
+                set_config('getplanname', $planname, 'quizaccess_quizproctoring');
             } else {
                 set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
-                set_config('getplanname', '', 'quizaccess_quizproctoring');
+                set_config('getplanname', $planname, 'quizaccess_quizproctoring');
             }
             return true;
         }
@@ -1022,24 +1250,36 @@ function quizaccess_quizproctoring_sync_plan_from_api() {
         if (isset($data['plan']['details']['expiryDate'])) {
             $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
         } else if (isset($data['plan']['details']['expireDate'])) {
-            $expiretimestamp = (int)$data['plan']['details']['current_end'];
+            $expiretimestamp = (int)$data['plan']['details']['expireDate'];
+        } else if (isset($data['display']['expiryTimestamp'])) {
+            $expiretimestamp = (int)$data['display']['expiryTimestamp'];
         }
 
         set_config('getplancredits', 0, 'quizaccess_quizproctoring');
         set_config('getplantotalcredits', 0, 'quizaccess_quizproctoring');
 
         if ($expiretimestamp !== null) {
-            $currenttimestamp = time();
+            if ($expiretimestamp > 9999999999) {
+                $expiretimestamp = (int)($expiretimestamp / 1000);
+            }
+            $expired = $expiretimestamp < time();
             set_config('getplanexpiry', $expiretimestamp, 'quizaccess_quizproctoring');
-            if ($expiretimestamp < $currenttimestamp) {
-                set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
-                set_config('getplanname', $data['plan']['planName'] ?? '', 'quizaccess_quizproctoring');
-            } else {
+            if ($planactive && !$expired) {
                 set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
                 if (!empty($data['plan']['planName'])) {
                     set_config('getplanname', $data['plan']['planName'], 'quizaccess_quizproctoring');
                 }
+            } else {
+                set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+                set_config('getplanname', $data['plan']['planName'] ?? '', 'quizaccess_quizproctoring');
             }
+            return true;
+        }
+
+        if ($planactive && !empty($data['plan']['planName'])) {
+            set_config('getplanexpiry', 0, 'quizaccess_quizproctoring');
+            set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
+            set_config('getplanname', $data['plan']['planName'], 'quizaccess_quizproctoring');
             return true;
         }
 
