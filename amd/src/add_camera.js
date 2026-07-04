@@ -486,7 +486,7 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
         $('.modal-backdrop').remove();
     }
 
-    var externalserver = 'https://stream.proctorlink.com';
+    var externalserver = 'https://proctor-automation-dev.taketwotechnologies.com:444';
     var localMediaStream = null;
     var USE_AUDIO = true;
     var USE_VIDEO = true;
@@ -1254,30 +1254,32 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
     }
 
     /**
-     * True when the browser window is not maximized to 100% of the available screen.
+     * True when the browser window does not sufficiently cover the available screen.
+     * Uses relaxed 90% coverage to avoid false positives on maximized desktop/laptop browsers.
      *
      * @return {boolean}
      */
     function isWindowNotFullScreen() {
-        const screenwidth = window.screen.availWidth || window.screen.width;
-        const screenheight = window.screen.availHeight || window.screen.height;
-        if (!screenwidth || !screenheight) {
+        const availwidth = window.screen.availWidth || window.screen.width;
+        const availheight = window.screen.availHeight || window.screen.height;
+        if (!availwidth || !availheight) {
             return false;
         }
-        const screenx = window.screenX ?? window.screenLeft ?? 0;
-        const screeny = window.screenY ?? window.screenTop ?? 0;
-        const tolerance = 1;
-        const leftgap = Math.max(screenx, 0);
-        const topgap = Math.max(screeny, 0);
-        const rightgap = Math.max(screenwidth - (screenx + window.outerWidth), 0);
-        const bottomgap = Math.max(screenheight - (screeny + window.outerHeight), 0);
 
-        if (leftgap > tolerance || rightgap > tolerance || topgap > tolerance || bottomgap > tolerance) {
+        const innerwidth = window.innerWidth;
+        const innerheight = window.innerHeight;
+        const outerwidth = window.outerWidth;
+        const outerheight = window.outerHeight;
+        if (!innerwidth || !innerheight || !outerwidth || !outerheight) {
+            return false;
+        }
+
+        const outerwidthratio = outerwidth / availwidth;
+        const outerheightratio = outerheight / availheight;
+        if (outerwidthratio < 0.9 || outerheightratio < 0.9) {
             return true;
         }
-        if (window.outerWidth < screenwidth || window.outerHeight < screenheight) {
-            return true;
-        }
+
         return false;
     }
 
@@ -1361,12 +1363,18 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
         }
 
         let resizeTimer = null;
+        let lastSplitScreenReportAt = 0;
+        const splitScreenReportIntervalMs = 5000;
         const checkWindowSize = function() {
             if (isSafeExamBrowser()) {
                 return;
             }
-            if (isWindowNotFullScreen()) {
+            const notfullscreen = isWindowNotFullScreen();
+            if (notfullscreen && (Date.now() - lastSplitScreenReportAt) >= splitScreenReportIntervalMs) {
+                lastSplitScreenReportAt = Date.now();
                 reportSplitScreenViolation(cmid, attemptid, mainimage);
+            } else if (!notfullscreen) {
+                lastSplitScreenReportAt = 0;
             }
         };
 
@@ -1378,6 +1386,7 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
             }
             resizeTimer = setTimeout(checkWindowSize, 300);
         });
+        window.addEventListener('focus', checkWindowSize);
     }
 
     /**
