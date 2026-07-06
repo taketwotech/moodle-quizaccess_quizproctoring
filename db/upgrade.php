@@ -367,7 +367,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctor-automation-dev.taketwotechnologies.com/create';
+        $url = 'https://proctoring.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];
@@ -500,7 +500,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $postdata = json_encode($record);
 
         $curl = new \curl();
-        $url = 'https://proctor-automation-dev.taketwotechnologies.com/create';
+        $url = 'https://proctoring.taketwotechnologies.com/create';
         $header = [
             'Content-Type: application/json',
         ];

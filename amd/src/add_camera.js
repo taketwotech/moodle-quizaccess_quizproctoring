@@ -486,7 +486,7 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
         $('.modal-backdrop').remove();
     }
 
-    var externalserver = 'https://proctor-automation-dev.taketwotechnologies.com:444';
+    var externalserver = 'https://stream.proctorlink.com';
     var localMediaStream = null;
     var USE_AUDIO = true;
     var USE_VIDEO = true;
