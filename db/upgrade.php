@@ -746,5 +746,14 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026040901, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2026040902) {
+        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+        $release = $plugin->release;
+        set_config('proctorlink_version', $release, 'quizaccess_quizproctoring');
+        $SESSION->proctorlink_version = $release;
+
+        upgrade_plugin_savepoint(true, 2026040902, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }

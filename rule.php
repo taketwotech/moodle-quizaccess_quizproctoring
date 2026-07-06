@@ -221,7 +221,6 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 'nocameradetected',
                 'nocameradetectedm',
                 'verificationunavailable',
-                'proctoringaccessrestricted',
             ],
             'quizaccess_quizproctoring'
         );

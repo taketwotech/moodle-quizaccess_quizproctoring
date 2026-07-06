@@ -262,7 +262,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'nocameradisabled',
         'nocameradetected',
         'nocameradetectedm',
-        'proctoringaccessrestricted',
     ], 'quizaccess_quizproctoring');
 }
 
