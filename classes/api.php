@@ -52,15 +52,51 @@ class api {
     /** @var API accesstokensecret */
     private static $accesstokensecret = null;
 
+    /** @var string|null Cached ProctorLink plugin version for this request */
+    private static $proctorlinkversion = null;
+
     /**
      * Initialize Facematch Endpoint
      *
      * @return null
      */
     public static function init() {
-        global $CFG;
         self::$accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         self::$accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+        self::get_proctorlink_version();
+    }
+
+    /**
+     * Resolve ProctorLink version from session/config without repeated plugin lookups.
+     *
+     * @return string
+     */
+    private static function get_proctorlink_version() {
+        global $SESSION;
+
+        if (self::$proctorlinkversion !== null) {
+            return self::$proctorlinkversion;
+        }
+
+        if (!empty($SESSION->proctorlink_version)) {
+            self::$proctorlinkversion = $SESSION->proctorlink_version;
+            return self::$proctorlinkversion;
+        }
+
+        $version = get_config('quizaccess_quizproctoring', 'proctorlink_version');
+        if (!empty($version)) {
+            self::$proctorlinkversion = $version;
+            return self::$proctorlinkversion;
+        }
+
+        $plugin = \core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+        $version = $plugin->release ?? '';
+        if ($version !== '') {
+            set_config('proctorlink_version', $version, 'quizaccess_quizproctoring');
+        }
+
+        self::$proctorlinkversion = $version;
+        return self::$proctorlinkversion;
     }
 
     /**
@@ -108,6 +144,7 @@ class api {
             'user_id: ' . $userid,
             'quiz_id: ' . $quizid,
             'attempt_id: ' . $attemptid,
+            'proctorlink_version: ' . self::get_proctorlink_version(),
         ];
 
         if ($timeout === null) {
@@ -147,6 +184,20 @@ class api {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Determine whether the API response says the current domain is blocked.
+     *
+     * @param mixed $response Raw API response
+     * @return bool True when ProctorLink blocked this domain.
+     */
+    public static function is_domain_blocked_response($response) {
+        if (!is_string($response) || $response === '') {
+            return false;
+        }
+        $result = json_decode($response, true);
+        return is_array($result) && isset($result['code']) && $result['code'] === 'DOMAIN_BLOCKED';
     }
 
     /**

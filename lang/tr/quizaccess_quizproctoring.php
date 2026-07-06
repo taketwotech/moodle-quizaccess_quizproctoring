@@ -206,6 +206,7 @@ $string['proctoringimages_help'] = 'Kullanıcı etkinliğini izlemek için göze
 $string['proctoringlink'] = 'Gözetim video bağlantısı';
 $string['proctoringlink_help'] = 'Test gözetimi sürecini gösteren bir tanıtım videosu bağlantısı ekleyin.';
 $string['proctoringnotice'] = 'Bu test, kullanıcı denemeleri için gözetim erişimi gerektirecek şekilde yapılandırılmıştır.';
+$string['proctoringaccessrestricted'] = 'Bu sitede gözetim erişimi kısıtlanmıştır. Yardım için ProctorLink desteğiyle iletişime geçin.';
 $string['proctoringreport'] = 'Gözetim Kullanıcı Raporu';
 $string['proctoringtimeinterval'] = 'Zaman Aralığı';
 $string['proctoringtimeinterval_help'] = 'Gözetim kontrollerinin test sırasında ne sıklıkla yapılacağını belirlemek için zaman aralığını ayarlayın.';

@@ -362,6 +362,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $record->previously_installed_v = '(Build: ' . $oldversion . ')';
         $record->proctorlink_version = $release;
         $SESSION->proctorlink_version = $release;
+        set_config('proctorlink_version', $release, 'quizaccess_quizproctoring');
 
         $postdata = json_encode($record);
 
@@ -494,6 +495,7 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $record->previously_installed_v = '(Build: ' . $oldversion . ')';
         $record->proctorlink_version = $release;
         $SESSION->proctorlink_version = $release;
+        set_config('proctorlink_version', $release, 'quizaccess_quizproctoring');
 
         $postdata = json_encode($record);
 

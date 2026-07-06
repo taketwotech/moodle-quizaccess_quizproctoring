@@ -146,6 +146,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
     $SESSION->proctorlink_version = $plugin->release;
+    set_config('proctorlink_version', $plugin->release, 'quizaccess_quizproctoring');
 
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $COURSE->id]);
     $usergroup = '';
@@ -261,6 +262,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'nocameradisabled',
         'nocameradetected',
         'nocameradetectedm',
+        'proctoringaccessrestricted',
     ], 'quizaccess_quizproctoring');
 }
 

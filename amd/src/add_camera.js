@@ -268,7 +268,7 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
             success: function(response) {
                 if (response && response.errorcode) {
                     $('#userimageset').val(0);
-                    $(document).trigger('popup', response.error);
+                    showPluginErrorPopup(response);
                     revertPreflightCapture(cameraInstance);
                 } else if (response && (response.status === true || response.status === 'true')) {
                     $('#userimageset').val(1);
@@ -841,6 +841,10 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
                                         },
                                         success: function(response) {
                                             if (response && response.errorcode) {
+                                                if (response.errorcode === 'domainblocked') {
+                                                    showPluginErrorPopup(response);
+                                                    return;
+                                                }
                                                 var warningsl = JSON.parse(localStorage.getItem('warningThreshold')) || 0;
                                                 var leftwarnings = Math.max(warningsl - 1, 0);
                                                 localStorage.setItem('warningThreshold', JSON.stringify(leftwarnings));
@@ -2007,6 +2011,37 @@ function closeCustomModal() {
 }
 
 /**
+ * Resolve the domain-blocked message from loaded JS strings or server payload.
+ *
+ * @param {string} [servermessage] - optional message from AJAX response
+ * @return {string}
+ */
+function getDomainBlockedMessage(servermessage) {
+    const message = M.util.get_string('proctoringaccessrestricted', 'quizaccess_quizproctoring');
+    if (message && message.indexOf('[[') !== 0) {
+        return message;
+    }
+    if (servermessage && String(servermessage).indexOf('[[') !== 0) {
+        return servermessage;
+    }
+    return 'Proctoring access on this site is restricted. For help, contact ProctorLink support.';
+}
+
+/**
+ * Show plugin error popup, resolving known unresolved string placeholders.
+ *
+ * @param {Object} response - AJAX response object
+ * @return {void}
+ */
+function showPluginErrorPopup(response) {
+    let message = response.error;
+    if (response.errorcode === 'domainblocked') {
+        message = getDomainBlockedMessage(message);
+    }
+    $(document).trigger('popup', message);
+}
+
+/**
  * Handle realtime warning JSON response and keep warning counter in sync.
  *
  * @param {Object} response - AJAX response object
@@ -2039,6 +2074,10 @@ function handleRealtimeWarningResponse(response, fallbackmessage, cmid, attempti
     }
     if (Date.now() < suppressRealtimePopupUntil) {
         suppressRealtimePopupUntil = 0;
+        return;
+    }
+    if (response.errorcode === 'domainblocked') {
+        $(document).trigger('popup', getDomainBlockedMessage(response.error));
         return;
     }
     $(document).trigger('popup', response.error || fallbackmessage);

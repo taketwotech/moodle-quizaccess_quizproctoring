@@ -40,6 +40,14 @@ $cheatstatusmap = [
     'splitscreen' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
 ];
 
+$domainblockedresponse = function() {
+    echo json_encode([
+        'errorcode' => 'domainblocked',
+        'error' => get_string('proctoringaccessrestricted', 'quizaccess_quizproctoring'),
+    ]);
+    die();
+};
+
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
@@ -166,6 +174,9 @@ if (!$mainentry->isautosubmit) {
             $cm->instance,
             $attemptid
         );
+        if (\quizaccess_quizproctoring\api::is_domain_blocked_response($response)) {
+            $domainblockedresponse();
+        }
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
@@ -185,6 +196,9 @@ if (!$mainentry->isautosubmit) {
             $cm->instance,
             $attemptid
         );
+        if (\quizaccess_quizproctoring\api::is_domain_blocked_response($response)) {
+            $domainblockedresponse();
+        }
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
@@ -200,6 +214,9 @@ if (!$mainentry->isautosubmit) {
                         $cm->instance,
                         $attemptid
                     );
+                    if (\quizaccess_quizproctoring\api::is_domain_blocked_response($matchprofile)) {
+                        $domainblockedresponse();
+                    }
                     $response = $matchprofile;
                     $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, false);
                     if ($profileresp == QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {

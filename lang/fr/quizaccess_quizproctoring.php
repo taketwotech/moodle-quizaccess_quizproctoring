@@ -206,6 +206,7 @@ $string['proctoringimages_help'] = 'Images capturées pendant la session de surv
 $string['proctoringlink'] = 'Lien vidéo de surveillance';
 $string['proctoringlink_help'] = 'Fournissez un lien vers une vidéo de démonstration présentant le processus de surveillance du quiz.';
 $string['proctoringnotice'] = 'Ce quiz nécessite un accès surveillé pour les tentatives utilisateur.';
+$string['proctoringaccessrestricted'] = 'L\'accès à la surveillance sur ce site est restreint. Pour obtenir de l\'aide, contactez le support ProctorLink.';
 $string['proctoringreport'] = 'Rapport utilisateur de surveillance';
 $string['proctoringtimeinterval'] = 'Intervalle de temps';
 $string['proctoringtimeinterval_help'] = 'Définissez l\'intervalle de temps pour déterminer la fréquence des vérifications de surveillance pendant le quiz.';

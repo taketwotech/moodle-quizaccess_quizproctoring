@@ -206,6 +206,7 @@ $string['proctoringimages_help'] = 'Images captured during the proctoring sessio
 $string['proctoringlink'] = 'Proctoring video link';
 $string['proctoringlink_help'] = "Provide a demo video link showcasing the quiz proctoring process.";
 $string['proctoringnotice'] = 'This quiz is configured to require proctored access for user attempts.';
+$string['proctoringaccessrestricted'] = 'Proctoring access on this site is restricted. For help, contact ProctorLink support.';
 $string['proctoringreport'] = 'Proctoring User Report';
 $string['proctoringtimeinterval'] = 'Time interval';
 $string['proctoringtimeinterval_help'] = 'Set the time interval to define how frequently proctoring checks are performed during the quiz.';
