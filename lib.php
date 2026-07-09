@@ -1304,7 +1304,9 @@ function quizaccess_quizproctoring_sync_plan_from_api() {
             }
 
             $expiretimestamp = null;
-            if (isset($data['plan']['details']['expireDate'])) {
+            if (isset($data['plan']['details']['current_end'])) {
+                $expiretimestamp = (int)$data['plan']['details']['current_end'];
+            } else if (isset($data['plan']['details']['expireDate'])) {
                 $expiretimestamp = (int)$data['plan']['details']['expireDate'];
             } else if (isset($data['plan']['details']['expiryDate'])) {
                 $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
@@ -1332,7 +1334,9 @@ function quizaccess_quizproctoring_sync_plan_from_api() {
         }
 
         $expiretimestamp = null;
-        if (isset($data['plan']['details']['expiryDate'])) {
+        if (isset($data['plan']['details']['current_end'])) {
+            $expiretimestamp = (int)$data['plan']['details']['current_end'];
+        } else if (isset($data['plan']['details']['expiryDate'])) {
             $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
         } else if (isset($data['plan']['details']['expireDate'])) {
             $expiretimestamp = (int)$data['plan']['details']['expireDate'];
