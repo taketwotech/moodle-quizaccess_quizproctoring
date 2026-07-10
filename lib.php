@@ -1007,7 +1007,7 @@ function quizaccess_quizproctoring_plan_action_link($action) {
         case 'purchase':
             $linktext = get_string('purchaseplan', 'quizaccess_quizproctoring');
             break;
-        case 'buyCredits':
+        case 'buycredits':
             $linktext = get_string('buycredit', 'quizaccess_quizproctoring');
             break;
         default:
