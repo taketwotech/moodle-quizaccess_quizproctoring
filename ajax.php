@@ -40,7 +40,43 @@ $cheatstatusmap = [
     'splitscreen' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
 ];
 
-$domainblockedresponse = function() {
+$domainblockedresponse = function() use ($mainimage, $attemptid, $img, $cmid) {
+    global $DB;
+
+    // During a running exam attempt, do not surface the restricted-access alert.
+    if (!$mainimage && !empty($attemptid)) {
+        $attemptstate = $DB->get_field('quiz_attempts', 'state', ['id' => $attemptid]);
+        if ($attemptstate === 'inprogress') {
+            // Still store the capture quietly when "Store all images" is enabled.
+            if (!empty($img)) {
+                $cm = get_coursemodule_from_id('quiz', $cmid);
+                if (
+                    $cm &&
+                    $DB->record_exists(
+                        'quizaccess_quizproctoring',
+                        [
+                            'quizid' => $cm->instance,
+                            'storeallimages' => 1,
+                        ]
+                    )
+                ) {
+                    quizproctoring_storeimage(
+                        $img,
+                        $cmid,
+                        $attemptid,
+                        $cm->instance,
+                        $mainimage,
+                        '',
+                        '',
+                        true
+                    );
+                }
+            }
+            echo json_encode(['success' => 1]);
+            die();
+        }
+    }
+
     echo json_encode([
         'errorcode' => 'domainblocked',
         'error' => get_string('proctoringaccessrestricted', 'quizaccess_quizproctoring'),
