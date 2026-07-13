@@ -463,15 +463,20 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
     };
 
     /**
-     * Revert all preflight capture state when main image server validation fails.
+     * Re-enable the quiz start button after a failed preflight check.
      *
-     * @param {Camera} cameraInstance Camera instance
      * @return {void}
      */
     function enableQuizStartButton() {
         $('.quizstartbuttondiv [type=submit]').prop('disabled', false);
     }
 
+    /**
+     * Revert all preflight capture state when main image server validation fails.
+     *
+     * @param {Camera} cameraInstance Camera instance
+     * @return {void}
+     */
     function revertPreflightCapture(cameraInstance) {
         if (cameraInstance && typeof cameraInstance.resetcamera === 'function') {
             cameraInstance.resetcamera();
@@ -481,6 +486,11 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
         $('#id_submitbutton').prop('disabled', true);
     }
 
+    /**
+     * Remove leftover Bootstrap modal backdrop after closing dialogs.
+     *
+     * @return {void}
+     */
     function cleanupModalBackdrop() {
         $('body').removeClass('modal-open');
         $('.modal-backdrop').remove();
@@ -674,11 +684,7 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
             localStorage.setItem('warningEmailThreshold', JSON.stringify(warningEmailThreshold));
             objectDetectionEnabled = Number(enableobjectdetect) === 1;
             if (objectDetectionEnabled) {
-                getObjectDetectionController().then((controller) => {
-                    if (controller) {
-                        controller.schedulePreload();
-                    }
-                });
+                scheduleObjectDetectionPreload();
             }
             EyeTracking.configure({
                 onTiltAlert: function(cmid, attemptid, mainimage, imageData) {
@@ -1073,13 +1079,7 @@ function($, str, ModalFactory, EyeTracking, ModalEvents) {
                     if (objectDetectionEnabled) {
                         const videoEl = document.getElementById('video');
                         const canvasEl = document.getElementById('canvas');
-                        if (videoEl && canvasEl) {
-                            getObjectDetectionController().then((controller) => {
-                                if (controller) {
-                                    controller.start(cmid, attemptid, mainimage, videoEl, canvasEl);
-                                }
-                            });
-                        }
+                        startObjectDetectionOnElements(cmid, attemptid, mainimage, videoEl, canvasEl);
                     }
                     if (EyeTracking.isActive()) {
                         const videoEl = document.getElementById('video');
@@ -1580,17 +1580,13 @@ function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudioper
                 // eslint-disable-next-line no-undef
                 useraudiorecord(stream);
             }
-            if (objectDetectionEnabled) {
-                getObjectDetectionController().then((controller) => {
-                    if (controller) {
-                        controller.start(cmid, attemptid, mainimage, vElement, cElement);
-                    }
-                });
-            }
             if (EyeTracking.isActive()) {
                 EyeTracking.start(cmid, attemptid, mainimage, vElement, cElement);
             }
             $('.student-iframe-container').css({display: 'none'});
+            if (objectDetectionEnabled) {
+                startObjectDetectionOnElements(cmid, attemptid, mainimage, vElement, cElement);
+            }
             return stream;
         })
         .catch((err) => {
@@ -1628,6 +1624,11 @@ function startOnlineProctoringWebcam(cmid, attemptid, mainimage, requireaudioper
     return onlineWebcamSetupPromise;
 }
 
+/**
+ * Load the object detection helper script once.
+ *
+ * @return {Promise<Object>} Object detection library namespace
+ */
 function loadObjectDetectionLibrary() {
     if (window.quizproctoringObjectDetection &&
         typeof window.quizproctoringObjectDetection.create === 'function') {
@@ -1648,11 +1649,17 @@ function loadObjectDetectionLibrary() {
         .then((code) => {
             const previousDefine = window.define;
             window.define = undefined;
+            let evalError = null;
             try {
                 // eslint-disable-next-line no-eval
                 (0, eval)(code);
+            } catch (error) {
+                evalError = error;
             } finally {
                 window.define = previousDefine;
+            }
+            if (evalError) {
+                throw evalError;
             }
             if (!window.quizproctoringObjectDetection ||
                 typeof window.quizproctoringObjectDetection.create !== 'function') {
@@ -1668,6 +1675,11 @@ function loadObjectDetectionLibrary() {
     return window.__quizproctoringObjectDetectionLoadPromise;
 }
 
+/**
+ * Get or create the shared object detection controller.
+ *
+ * @return {Promise<Object|null>} Controller instance or null on failure
+ */
 function getObjectDetectionController() {
     if (objectDetectionController) {
         objectDetectionController.setEnabled(objectDetectionEnabled);
@@ -1689,9 +1701,8 @@ function getObjectDetectionController() {
             objectDetectionController.setEnabled(objectDetectionEnabled);
             return objectDetectionController;
         })
-        .catch((error) => {
+        .catch(() => {
             objectDetectionControllerPromise = null;
-            console.error('[QuizProctoring][coco] Failed to initialize object detection helper:', error);
             return null;
         });
 
@@ -1699,15 +1710,41 @@ function getObjectDetectionController() {
 }
 
 /**
- * RealtimeDetectionAjaxCall
+ * Preload object detection assets when enabled.
  *
- * @param {int} cmid - cmid
- * @param {int} attemptid - Attempt Id
- * @param {boolean} mainimage - boolean value
- * @param {string} face string value
- * @param {Longtext} data video
- * @return {void}
+ * @return {Promise<Object|null>}
  */
+function scheduleObjectDetectionPreload() {
+    return getObjectDetectionController().then((controller) => {
+        if (controller) {
+            controller.schedulePreload();
+        }
+        return controller;
+    }).catch(() => null);
+}
+
+/**
+ * Start object detection against the provided video/canvas elements.
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {boolean} mainimage main image mode
+ * @param {HTMLVideoElement|null} videoEl video element
+ * @param {HTMLCanvasElement|null} canvasEl canvas element
+ * @return {Promise<Object|null>}
+ */
+function startObjectDetectionOnElements(cmid, attemptid, mainimage, videoEl, canvasEl) {
+    if (!videoEl || !canvasEl) {
+        return Promise.resolve(null);
+    }
+    return getObjectDetectionController().then((controller) => {
+        if (controller) {
+            controller.start(cmid, attemptid, mainimage, videoEl, canvasEl);
+        }
+        return controller;
+    }).catch(() => null);
+}
+
 /**
  * Track eye-focus warnings for auto-disable (5 warnings within 30 seconds).
  *
@@ -1793,6 +1830,16 @@ function handleRealtimeDetectionResponse(response, cmid, attemptid, face) {
     }
 }
 
+/**
+ * Send a realtime proctoring detection payload to the server.
+ *
+ * @param {number} cmid course module id
+ * @param {number} attemptid attempt id
+ * @param {boolean} mainimage main image mode
+ * @param {string} face validation type
+ * @param {string} data image data URL
+ * @return {void}
+ */
 function realtimeDetection(cmid, attemptid, mainimage, face, data) {
     var requestData = {
         cmid: cmid,

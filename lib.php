@@ -226,7 +226,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             $detectionval = $globaldetectionval;
         }
     }
-    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');    
+    $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.min.js', true);
     $warningemailthreshold = isset($quizaproctoring->warning_email_threshold) ? (int)$quizaproctoring->warning_email_threshold : 0;
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
@@ -1031,8 +1031,6 @@ function quizaccess_quizproctoring_plan_action_link($action) {
 function quizaccess_quizproctoring_plan_status_note($refreshlink, array $display = []) {
     if (quizaccess_quizproctoring_is_credit_plan($display)) {
         $notestring = 'creditbalanceupdatenote';
-    } else if (!empty($display['showSessionData'])) {
-        $notestring = 'sessionsremainingupdatenote';
     } else {
         $notestring = 'updatenote';
     }
@@ -1201,13 +1199,6 @@ function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
         if (!empty($activeplan)) {
             $parts[] = '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' .
                 s($activeplan);
-        }
-
-        if (!empty($display['showSessionData'])) {
-            $remaining = (int)($display['remainingSessions'] ?? 0);
-            $total = (int)($display['totalSessions'] ?? 0);
-            $parts[] = '<strong>' . get_string('sessionsremaining', 'quizaccess_quizproctoring') . '</strong> ' .
-                $remaining . '/' . $total;
         }
 
         $expirydate = quizaccess_quizproctoring_format_plan_expiry_date($display);

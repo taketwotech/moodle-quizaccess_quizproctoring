@@ -123,6 +123,12 @@ define(['jquery'], function($) {
         resetTiltState();
     }
 
+    /**
+     * Disable eye tracking locally and notify the UI.
+     *
+     * @param {boolean} markautodisable Whether to block restart until teacher re-enables
+     * @return {void}
+     */
     function deactivateEyeTrackingLocally(markautodisable) {
         active = false;
         if (markautodisable) {
@@ -383,24 +389,26 @@ define(['jquery'], function($) {
         const modelUrl = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/' +
             'face_landmarker.task';
 
+        let FaceLandmarkerClass = null;
         modelPromise = loadMediapipeModule(moduleUrl)
             .then(function(mediapipe) {
                 const FilesetResolver = mediapipe.FilesetResolver;
-                const FaceLandmarker = mediapipe.FaceLandmarker;
-                if (!FilesetResolver || !FaceLandmarker) {
+                FaceLandmarkerClass = mediapipe.FaceLandmarker;
+                if (!FilesetResolver || !FaceLandmarkerClass) {
                     throw new Error('MediaPipe Face Landmarker library missing');
                 }
-                return FilesetResolver.forVisionTasks(wasmBase).then(function(vision) {
-                    return FaceLandmarker.createFromOptions(vision, {
-                        baseOptions: {
-                            modelAssetPath: modelUrl,
-                            delegate: 'GPU',
-                        },
-                        runningMode: 'VIDEO',
-                        numFaces: 1,
-                        outputFaceBlendshapes: false,
-                        outputFacialTransformationMatrixes: false,
-                    });
+                return FilesetResolver.forVisionTasks(wasmBase);
+            })
+            .then(function(vision) {
+                return FaceLandmarkerClass.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: modelUrl,
+                        delegate: 'GPU',
+                    },
+                    runningMode: 'VIDEO',
+                    numFaces: 1,
+                    outputFaceBlendshapes: false,
+                    outputFacialTransformationMatrixes: false,
                 });
             })
             .then(function(instance) {
@@ -492,11 +500,12 @@ define(['jquery'], function($) {
          * Bind eye-tracking disabled/enabled document events.
          */
         bindDocumentEvents: function() {
+            const api = this;
             $(document).off('eye-tracking-disabled.quizproctoring')
                 .on('eye-tracking-disabled.quizproctoring', function() {
                     active = false;
                     stopTrackingLoop(true);
-                }.bind(this));
+                });
             $(document).off('eye-tracking-enabled.quizproctoring')
                 .on('eye-tracking-enabled.quizproctoring', function() {
                     if (!enabled) {
@@ -506,9 +515,9 @@ define(['jquery'], function($) {
                     active = true;
                     const ctx = runtime;
                     if (ctx) {
-                        this.start(ctx.cmid, ctx.attemptid, ctx.mainimage, ctx.videoEl, ctx.canvasEl);
+                        api.start(ctx.cmid, ctx.attemptid, ctx.mainimage, ctx.videoEl, ctx.canvasEl);
                     }
-                }.bind(this));
+                });
         },
 
         /**
@@ -551,13 +560,16 @@ define(['jquery'], function($) {
                     processFrame(runtime, now);
                 }
                 rafId = requestAnimationFrame(tick);
-            }.bind(this);
+            };
 
             preloadModel().then(function(instance) {
                 if (instance && runtime) {
                     rafId = requestAnimationFrame(tick);
                     startTeacherStatePoll();
                 }
+                return instance;
+            }).catch(function() {
+                return null;
             });
         },
 
