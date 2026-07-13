@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Adhoc task to send warning threshold emails to course teachers.
+ * Adhoc task to send warning threshold notification emails to configured role recipients.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring

@@ -33,7 +33,56 @@ $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $tab = optional_param('tab', false, PARAM_BOOL);
+$cheattype = optional_param('cheattype', '', PARAM_ALPHA);
 $deviceinfo = optional_param('deviceinfo', '', PARAM_TEXT);
+
+$cheatstatusmap = [
+    'splitscreen' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
+];
+
+$domainblockedresponse = function() use ($mainimage, $attemptid, $img, $cmid) {
+    global $DB;
+
+    // During a running exam attempt, do not surface the restricted-access alert.
+    if (!$mainimage && !empty($attemptid)) {
+        $attemptstate = $DB->get_field('quiz_attempts', 'state', ['id' => $attemptid]);
+        if ($attemptstate === 'inprogress') {
+            // Still store the capture quietly when "Store all images" is enabled.
+            if (!empty($img)) {
+                $cm = get_coursemodule_from_id('quiz', $cmid);
+                if (
+                    $cm &&
+                    $DB->record_exists(
+                        'quizaccess_quizproctoring',
+                        [
+                            'quizid' => $cm->instance,
+                            'storeallimages' => 1,
+                        ]
+                    )
+                ) {
+                    quizproctoring_storeimage(
+                        $img,
+                        $cmid,
+                        $attemptid,
+                        $cm->instance,
+                        $mainimage,
+                        '',
+                        '',
+                        true
+                    );
+                }
+            }
+            echo json_encode(['success' => 1]);
+            die();
+        }
+    }
+
+    echo json_encode([
+        'errorcode' => 'domainblocked',
+        'error' => get_string('proctoringaccessrestricted', 'quizaccess_quizproctoring'),
+    ]);
+    die();
+};
 
 if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
@@ -48,7 +97,7 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
     'image_status' => 'M',
     'attemptid' => $attemptid]);
 if (!$mainentry->isautosubmit) {
-    if (!$img && !$tab) {
+    if (!$img && !$tab && $cheattype === '') {
         quizproctoring_storeimage(
             $img,
             $cmid,
@@ -68,6 +117,18 @@ if (!$mainentry->isautosubmit) {
             $cm->instance,
             $mainimage,
             QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
+            ''
+        );
+    }
+
+    if (!$img && $cheattype !== '' && isset($cheatstatusmap[$cheattype])) {
+        quizproctoring_storeimage(
+            $img,
+            $cmid,
+            $attemptid,
+            $cm->instance,
+            $mainimage,
+            $cheatstatusmap[$cheattype],
             ''
         );
     }
@@ -149,6 +210,9 @@ if (!$mainentry->isautosubmit) {
             $cm->instance,
             $attemptid
         );
+        if (\quizaccess_quizproctoring\api::is_domain_blocked_response($response)) {
+            $domainblockedresponse();
+        }
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
@@ -168,6 +232,9 @@ if (!$mainentry->isautosubmit) {
             $cm->instance,
             $attemptid
         );
+        if (\quizaccess_quizproctoring\api::is_domain_blocked_response($response)) {
+            $domainblockedresponse();
+        }
         if ($response == 'Unauthorized') {
             throw new moodle_exception('tokenerror', 'quizaccess_quizproctoring');
             die();
@@ -183,9 +250,14 @@ if (!$mainentry->isautosubmit) {
                         $cm->instance,
                         $attemptid
                     );
+                    if (\quizaccess_quizproctoring\api::is_domain_blocked_response($matchprofile)) {
+                        $domainblockedresponse();
+                    }
                     $response = $matchprofile;
                     $profileresp = \quizaccess_quizproctoring\api::validate($matchprofile, $data1, $imagecontent, false);
-                    if (
+                    if ($profileresp == QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
+                        $validate = QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING;
+                    } else if (
                         $profileresp == QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED ||
                         $profileresp == QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED ||
@@ -202,7 +274,24 @@ if (!$mainentry->isautosubmit) {
         }
     }
 
+    $mainimagefailed = false;
     switch ($validate) {
+        case QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING:
+            if ($mainimage) {
+                // Preflight main image requires a successful server response.
+                $mainimagefailed = true;
+            } else {
+                quizproctoring_storeimage(
+                    $img,
+                    $cmid,
+                    $attemptid,
+                    $cm->instance,
+                    $mainimage,
+                    QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+                    $response
+                );
+            }
+            break;
         case QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED:
             if (!$mainimage) {
                 quizproctoring_storeimage(
@@ -327,7 +416,7 @@ if (!$mainentry->isautosubmit) {
                 'quizid' => $cm->instance,
                 'storeallimages' => 1,
             ]
-        )) && !$mainimage
+        )) && !$mainimage && $validate === ''
     ) {
         quizproctoring_storeimage(
             $img,
@@ -340,6 +429,13 @@ if (!$mainentry->isautosubmit) {
             true
         );
     }
-    echo json_encode(['status' => 'true']);
+    if ($mainimagefailed) {
+        echo json_encode([
+            'status' => false,
+            'message' => get_string('verificationunavailable', 'quizaccess_quizproctoring'),
+        ]);
+    } else {
+        echo json_encode(['status' => 'true']);
+    }
     die();
 }

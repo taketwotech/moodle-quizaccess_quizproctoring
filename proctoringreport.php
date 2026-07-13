@@ -71,9 +71,12 @@ $storerecord = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid
 $enableaudio = !empty($storerecord->enablerecordaudio);
 $proctoringimageshow = 1;
 $reportingpagination = quizaccess_quizproctoring_get_reporting_pagination();
+$pendingcount = quizaccess_quizproctoring_count_pending_images($quizid);
+$reprocessurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/ajax_reprocess.php');
 $PAGE->requires->js_init_code("
+    var proctoringReportTable = null;
     $(document).ready(function() {
-        const table = $('#proctoringreporttable').DataTable({
+        proctoringReportTable = $('#proctoringreporttable').DataTable({
             serverSide: true,
             processing: true,
             pageLength: {$reportingpagination},
@@ -142,6 +145,29 @@ $PAGE->requires->js_init_code("
         });
     });
 
+    $('#reprocessimages').on('click', function() {
+        const button = $(this);
+        require(['quizaccess_quizproctoring/report'], function(Report) {
+            Report.reprocessPendingImages({
+                cmid: {$cmid},
+                quizid: {$quizid},
+                button: button,
+                onComplete: function(message, totals, data) {
+                    if (data.remaining > 0) {
+                        $('#reprocessimages').text('" . get_string('reprocessimages', 'quizaccess_quizproctoring') .
+                            " (' + data.remaining + ')');
+                    } else {
+                        $('#reprocessimages').hide();
+                        $('.report-pending-images-note').hide();
+                    }
+                    if (proctoringReportTable) {
+                        proctoringReportTable.ajax.reload(null, false);
+                    }
+                }
+            });
+        });
+    });
+
     $('#exportcsv').on('click', function() {
         const button = $(this);
         button.prop('disabled', true).text('" . get_string('exportcsv_generating', 'quizaccess_quizproctoring') . "');
@@ -151,7 +177,6 @@ $PAGE->requires->js_init_code("
             data: {
                 cmid: {$cmid},
                 quizid: {$quizid},
-                course: " . json_encode($course->shortname) . ",
             },
             success: function(response) {
                 try {
@@ -311,8 +336,20 @@ echo '<div class="headtitle">' .
      '<div>' . $btn . '</div>' .
      '</div><br/>';
 
+echo '<div class="report-export-toolbar">';
+echo '<div class="report-export-buttons">';
 echo '<button id="exportpdf" class="btn btn-secondary">' . get_string('exportpdf', 'quizaccess_quizproctoring') . '</button>';
 echo '<button id="exportcsv" class="btn btn-secondary">' . get_string('exportcsv', 'quizaccess_quizproctoring') . '</button>';
+if ($pendingcount > 0) {
+    echo '<button id="reprocessimages" class="btn btn-warning">' .
+        get_string('reprocessimages', 'quizaccess_quizproctoring') . ' (' . $pendingcount . ')</button>';
+}
+echo '</div>';
+if ($pendingcount > 0) {
+    echo '<p class="pending-images-note report-pending-images-note">' .
+        get_string('reprocessimages_note', 'quizaccess_quizproctoring') . '</p>';
+}
+echo '</div>';
 
 echo '<table id="proctoringreporttable" class="generaltable display" style="width:100%">
         <thead>

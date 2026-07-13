@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * AJAX call to save image file in real time and make it part of moodle file
+ * AJAX call to save image file in real time and make it part of moodle file.
  *
  * @package    quizaccess_quizproctoring
  * @subpackage quizproctoring
@@ -72,6 +72,15 @@ $mainentry = $DB->get_record('quizaccess_main_proctor', [
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
 
+if ($validate === 'eyecheckstatus') {
+    $iseyecheck = ($mainentry && $mainentry->iseyecheck) ? 1 : 0;
+    echo json_encode([
+        'status' => $iseyecheck ? 'eyecheckon' : 'eyecheckoff',
+        'iseyecheck' => $iseyecheck,
+    ]);
+    exit;
+}
+
 if ($mainentry && !$mainentry->iseyecheck && ($validate === 'eyesnotopen')) {
     echo json_encode(['status' => 'eyecheckoff']);
     exit;
@@ -83,19 +92,36 @@ if ($mainentry && $mainentry->iseyecheck == 1 && $validate === 'eyesnotopen') {
     $eyecheckon = true;
 }
 
-if (!$mainentry->isautosubmit) {
+// Emit JSON for a realtime store attempt (handles moodle_exception as alert payload).
+$emitrealtimeviolation = function(string $status, bool $useeyecheckon = false) use (
+    $img,
+    $cmid,
+    $attemptid,
+    $cm,
+    $mainimage,
+    $eyecheckon
+): void {
+    $json = quizproctoring_storeimage_realtime_response(
+        $img,
+        $cmid,
+        $attemptid,
+        $cm->instance,
+        $mainimage,
+        $status,
+        '',
+        $useeyecheckon ? $eyecheckon : false
+    );
+    if ($json !== null) {
+        echo json_encode($json);
+        die();
+    }
+};
+
+if ($mainentry && !$mainentry->isautosubmit) {
     switch ($validate) {
         case 'noface':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED);
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
@@ -107,15 +133,7 @@ if (!$mainentry->isautosubmit) {
             break;
         case 'multiface':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED);
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
@@ -127,18 +145,13 @@ if (!$mainentry->isautosubmit) {
             break;
         case 'eyesnotopen':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED, true);
                 if ($eyecheckon) {
-                    echo json_encode(['status' => 'eyecheckon', 'errorcode' => 1,
-                        'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', '')]);
+                    echo json_encode([
+                        'status' => 'eyecheckon',
+                        'errorcode' => 1,
+                        'error' => get_string('eyesnotopened', 'quizaccess_quizproctoring', ''),
+                    ]);
                     die();
                 }
             } else {
@@ -152,15 +165,7 @@ if (!$mainentry->isautosubmit) {
             break;
         case 'objectsdetected':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED);
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
@@ -172,15 +177,7 @@ if (!$mainentry->isautosubmit) {
             break;
         case 'nocameradetected':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED);
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
@@ -192,15 +189,7 @@ if (!$mainentry->isautosubmit) {
             break;
         case 'nocameradisabled':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED);
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
@@ -212,15 +201,7 @@ if (!$mainentry->isautosubmit) {
             break;
         case 'nomicrophonedisabled':
             if (!$mainimage) {
-                quizproctoring_storeimage(
-                    $img,
-                    $cmid,
-                    $attemptid,
-                    $cm->instance,
-                    $mainimage,
-                    QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
-                    ''
-                );
+                $emitrealtimeviolation(QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED);
             } else {
                 throw new moodle_exception(
                     QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,

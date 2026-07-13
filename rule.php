@@ -220,6 +220,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 'nocameradisabled',
                 'nocameradetected',
                 'nocameradetectedm',
+                'verificationunavailable',
             ],
             'quizaccess_quizproctoring'
         );
@@ -432,122 +433,58 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
     }
 
     /**
+     * Build a refresh-plan link for the quiz settings form.
+     *
+     * @param mod_quiz_mod_form $quizform Quiz settings form.
+     * @return string HTML link.
+     */
+    private static function refresh_plan_link(mod_quiz_mod_form $quizform) {
+        global $PAGE;
+
+        $course = $quizform->get_course();
+        if ($PAGE->url->compare(new moodle_url('/course/modedit.php'), URL_MATCH_BASE)) {
+            $returnurl = $PAGE->url;
+        } else {
+            $section = optional_param('section', 0, PARAM_INT);
+            $returnurl = new moodle_url('/course/modedit.php', [
+                'course' => $course->id,
+                'add' => 'quiz',
+                'section' => $section,
+            ]);
+            $instance = $quizform->get_instance();
+            if (!empty($instance->id)) {
+                $cm = get_coursemodule_from_instance('quiz', $instance->id, $course->id, false, IGNORE_MISSING);
+                if ($cm) {
+                    $returnurl = new moodle_url('/course/modedit.php', ['update' => $cm->id]);
+                }
+            }
+        }
+
+        $refreshurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/refreshplan.php', [
+            'sesskey' => sesskey(),
+            'courseid' => $course->id,
+            'returnurl' => $returnurl->out_as_local_url(false),
+        ]);
+        return html_writer::link($refreshurl, get_string('refreshplan', 'quizaccess_quizproctoring'));
+    }
+
+    /**
      * Add settings form fields
      *
      * @param mod_quiz_mod_form $quizform quizform
      * @param MoodleQuickForm $mform moodle quicl form
      */
     public static function add_settings_form_fields(mod_quiz_mod_form $quizform, MoodleQuickForm $mform) {
-        global $CFG;
-
         // Allow to enable the access rule only if the Mobile services are enabled.
         $mform->addElement('selectyesno', 'enableproctoring', get_string('enableproctoring', 'quizaccess_quizproctoring'));
         $mform->addHelpButton('enableproctoring', 'enableproctoring', 'quizaccess_quizproctoring');
         $mform->setDefault('enableproctoring', 0);
 
-        // Display plan details and active plan status.
-        $planresponseempty = get_config('quizaccess_quizproctoring', 'getplanresponseempty');
-        $planinfo = get_config('quizaccess_quizproctoring', 'getplaninfo');
-        $planname = get_config('quizaccess_quizproctoring', 'getplanname');
-        $plancredits = get_config('quizaccess_quizproctoring', 'getplancredits');
-        $plantotalcredits = get_config('quizaccess_quizproctoring', 'getplantotalcredits');
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 
-        // Check if plan response is empty.
-        if ($planresponseempty == 1) {
-            $linktext = get_string('purchaseplan', 'quizaccess_quizproctoring');
-            $planstatus = '<div class="plan-warning-box"><strong>' .
-            get_string('noplanresponse', 'quizaccess_quizproctoring') .
-            '</strong><span class="plan-separator">|</span>
-            <a href="https://proctorlink.com/#pricing"target="_blank" rel="noopener noreferrer">' .
-                    $linktext . '</a></div>';
-            $planstatus .= '<div class="plan-info-note">' .
-            get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
-        } else if ($planinfo == 1) {
-            // Check if it's a credit-based plan.
-            if ($planname === 'Credit Base Plan') {
-                // Display credit-based plan information.
-                $planstatus = '<div class="plan-info-box">';
-                $planstatus .= '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') .
-                '</strong> ' . get_string('creditbaseplan', 'quizaccess_quizproctoring');
-                $planstatus .= ' <span class="plan-separator">|</span> <strong>' .
-                get_string('credits', 'quizaccess_quizproctoring') .
-                '</strong> ' . (int)$plancredits;
-                    $planstatus .= '/' . (int)$plantotalcredits;
-                // Add renew link for credit plans on the same line.
-                $planstatus .= ' <span class="plan-separator">|</span> '
-                . '<a href="https://proctorlink.com/#pricing" target="_blank" rel="noopener noreferrer">'
-                . get_string('buycredit', 'quizaccess_quizproctoring')
-                . '</a>';
-                $planstatus .= '</div>';
-                $planstatus .= '<div class="plan-info-note">' .
-                    get_string('creditbalanceupdatenote', 'quizaccess_quizproctoring') . '</div>';
-            } else {
-                // Remove -india or -global suffix to show only base plan name.
-                $displayplanname = preg_replace('/-(india|global)$/i', '', $planname);
-                if ($displayplanname == 'starter') {
-                    $displayplanname = get_string('planstarter', 'quizaccess_quizproctoring');
-                } else if ($displayplanname == 'standard') {
-                    $displayplanname = get_string('planadvanced', 'quizaccess_quizproctoring');
-                } else if ($displayplanname == 'Free') {
-                    $displayplanname = get_string('planfree', 'quizaccess_quizproctoring');
-                }
-                // Get expiry date from config.
-                $expiredate = '';
-                $expiretimestamp = get_config('quizaccess_quizproctoring', 'getplanexpiry');
-                if (!empty($expiretimestamp)) {
-                    // Handle both milliseconds (13 digits) and seconds (10 digits) timestamp formats.
-                    $expiretimestamp = (int)$expiretimestamp;
-                    // If timestamp is in milliseconds (more than 10 digits), convert to seconds.
-                    if ($expiretimestamp > 9999999999) {
-                        $expiretimestamp = (int)($expiretimestamp / 1000);
-                    }
-                    // Format: "3 November 2025" (day without leading zero, full month name, year).
-                    $expiredate = ltrim(userdate($expiretimestamp, '%d %B %Y'), '0');
-                }
-
-                // Display plan, expiry date, and upgrade/renew link in a single line.
-                $planstatus = '<div class="plan-info-box">';
-                $planstatus .= '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') .
-                '</strong> ' . htmlspecialchars($displayplanname);
-                if (!empty($expiredate)) {
-                    $planstatus .= ' <span class="plan-separator">|</span> <strong>' .
-                    get_string('expirydate', 'quizaccess_quizproctoring') .
-                    '</strong> ' . $expiredate;
-                }
-
-                // Add upgrade/renew link after expiry date on the same line.
-                $originalplannameforlink = preg_replace('/-(india|global)$/i', '', $planname);
-                if (
-                    strtolower($originalplannameforlink) == 'free' ||
-                    strtolower($originalplannameforlink) == 'starter'
-                ) {
-                    // Free plan -> show "Upgrade Plan" link.
-                    $planlinktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
-                    $planstatus .= ' <span class="plan-separator">|</span> '
-                    . '<a href="https://proctorlink.com/#pricing" target="_blank" rel="noopener noreferrer">'
-                    . $planlinktext
-                    . '</a>';
-                }
-                $planstatus .= '</div>';
-                $planstatus .= '<div class="plan-info-note">' .
-                    get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
-            }
-        } else {
-            $displayplanname = preg_replace('/-(india|global)$/i', '', $planname);
-            if ($displayplanname == 'Free') {
-                $planlinktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
-            } else {
-                $planlinktext = get_string('renewplan', 'quizaccess_quizproctoring');
-            }
-            $planstatus = '<div class="plan-warning-box"><strong>'
-            . get_string('noactiveplan', 'quizaccess_quizproctoring')
-            . '</strong><span class="plan-separator">|</span> '
-            . '<a href="https://proctorlink.com/#pricing" target="_blank" rel="noopener noreferrer">'
-            . $planlinktext
-            . '</a></div>';
-            $planstatus .= '<div class="plan-info-note">' .
-                get_string('updatenote', 'quizaccess_quizproctoring') . '</div>';
-        }
+        $refreshlink = self::refresh_plan_link($quizform);
+        $planstatus = quizaccess_quizproctoring_build_plan_status_html($refreshlink);
         $element = $mform->addElement('static', 'planstatus', '', $planstatus);
         $element->setAttributes(['class' => 'planstatus']);
 
@@ -600,22 +537,9 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('enablestudentvideo', 1);
         $mform->hideIf('enablestudentvideo', 'enableproctoring', 'eq', '0');
 
-        // Allow admin or teacher to setup student video.
-        $mform->addElement(
-            'selectyesno',
-            'enableeyecheckreal',
-            get_string('enableeyecheckreal', 'quizaccess_quizproctoring')
-        );
-        $mform->addHelpButton('enableeyecheckreal', 'enableeyecheckreal', 'quizaccess_quizproctoring');
-        $mform->setDefault('enableeyecheckreal', 0);
-        $mform->hideIf('enableeyecheckreal', 'enableproctoring', 'eq', '0');
-
-        // Add a message that appears only when both options are yes.
-        $mform->addElement('textarea', 'eyecheckrealnote', '');
-        $mform->setDefault('eyecheckrealnote', get_string('eyecheckrealnote', 'quizaccess_quizproctoring'));
-        $mform->freeze('eyecheckrealnote');
-        $mform->hideIf('eyecheckrealnote', 'enableproctoring', 'eq', 0);
-        $mform->hideIf('eyecheckrealnote', 'enableeyecheckreal', 'eq', 0);
+        // Eye tracking / object detection: kept in DB + runtime code, but off in quiz settings UI.
+        $mform->addElement('hidden', 'enableeyecheckreal', 0);
+        $mform->setType('enableeyecheckreal', PARAM_INT);
 
         // Allow admin or teacher to store student audio.
         $mform->addElement(
@@ -627,15 +551,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $mform->setDefault('enablerecordaudio', 0);
         $mform->hideIf('enablerecordaudio', 'enableproctoring', 'eq', '0');
 
-        // Allow admin or teacher record object detection.
-        $mform->addElement(
-            'selectyesno',
-            'enableobjectdetect',
-            get_string('enableobjectdetect', 'quizaccess_quizproctoring')
-        );
-        $mform->addHelpButton('enableobjectdetect', 'enableobjectdetect', 'quizaccess_quizproctoring');
-        $mform->setDefault('enableobjectdetect', 0);
-        $mform->hideIf('enableobjectdetect', 'enableproctoring', 'eq', '0');
+        $mform->addElement('hidden', 'enableobjectdetect', 0);
+        $mform->setType('enableobjectdetect', PARAM_INT);
 
         // Allow admin or teacher to setup student video.
         $mform->addElement('hidden', 'enableeyecheck', 0);
@@ -748,7 +665,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enableprofilematch = 0;
             $record->enableuploadidentity = 0;
             $record->enablestudentvideo = 1;
-            $record->enableeyecheckreal = 1;
+            $record->enableeyecheckreal = 0;
             $record->enableeyecheck = 0;
             $record->enablerecordaudio = 0;
             $record->enableobjectdetect = 0;
@@ -770,10 +687,10 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
             $record->enableprofilematch = $quiz->enableprofilematch;
             $record->enableuploadidentity = $quiz->enableuploadidentity;
             $record->enablestudentvideo = $quiz->enablestudentvideo;
-            $record->enableeyecheckreal = $quiz->enableeyecheckreal;
-            $record->enableeyecheck = $quiz->enableeyecheck;
+            $record->enableeyecheckreal = 0;
+            $record->enableeyecheck = 0;
             $record->enablerecordaudio = isset($quiz->enablerecordaudio) ? $quiz->enablerecordaudio : 0;
-            $record->enableobjectdetect = isset($quiz->enableobjectdetect) ? $quiz->enableobjectdetect : 0;
+            $record->enableobjectdetect = 0;
             $record->storeallimages = $quiz->storeallimages;
             $record->time_interval = $quiz->time_interval;
             $record->warning_threshold = isset($quiz->warning_threshold) ? $quiz->warning_threshold : 0;

@@ -39,13 +39,29 @@
     {{^images}}
         <p>{{#str}} noimageswarning, quizaccess_quizproctoring {{/str}}</p>
     {{/images}}
-    {{#images.length}}
     <div class="image-list-container">
-    <ul class="imagelist">
-        <li class="mainimage"> - {{#str}} yesmainimage_label, quizaccess_quizproctoring {{/str}}</li>
-        <li class="warningimage"> - {{#str}} yeswarningimage_label, quizaccess_quizproctoring {{/str}}</li>
-        <li class="approveimage"> - {{#str}} yesapproveimage_label, quizaccess_quizproctoring {{/str}}</li>
-    </ul>
+        <ul class="imagelist">
+            <li class="legend-item">
+                <span class="legend-swatch legend-main" aria-hidden="true"></span>
+                {{#str}} yesmainimage_label, quizaccess_quizproctoring {{/str}}
+            </li>
+            <li class="legend-item">
+                <span class="legend-swatch legend-warning" aria-hidden="true"></span>
+                {{#str}} yeswarningimage_label, quizaccess_quizproctoring {{/str}}
+            </li>
+            <li class="legend-item">
+                <span class="legend-swatch legend-approved" aria-hidden="true"></span>
+                {{#str}} yesapproveimage_label, quizaccess_quizproctoring {{/str}}
+            </li>
+            {{#haspending}}
+            <li class="legend-item">
+                <span class="legend-swatch legend-pending" aria-hidden="true"></span>
+                {{#str}} yespendingimage_label, quizaccess_quizproctoring {{/str}}
+            </li>
+            {{/haspending}}
+        </ul>
+        {{#haspending}}
+        <p class="pending-images-note">{{#str}} yespendingimage_note, quizaccess_quizproctoring {{/str}}</p>
+        {{/haspending}}
     </div>
-    {{/images.length}}
 </div>

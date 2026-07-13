@@ -206,6 +206,10 @@ label[for="id_consentcheckbox"] {
     border: 2px solid red;
 }
 
+.pending-image img {
+    border: 2px solid orange;
+}
+
 .green-image img {
     border: 2px solid green;
 }
@@ -216,37 +220,28 @@ label[for="id_consentcheckbox"] {
     font-size: 14px;
 }
 
-.mainimage::before {
-    content: '';
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    background-color: blue;
-    margin-left: 5px;
-    vertical-align: middle;
-}
-
-.warningimage::before {
-    content: '';
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    background-color: red;
-    margin-left: 5px;
-    vertical-align: middle;
-}
-
-.approveimage::before {
-    content: '';
-    display: inline-block;
-    width: 15px;
-    height: 15px;
-    background-color: green;
-    margin-left: 5px;
-    vertical-align: middle;
-}
-
 #storeallimages {
+    vertical-align: middle;
+}
+
+.checkbox-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.checkbox-container .image-checkbox {
+    margin-bottom: 0;
+    font-size: 14px;
+}
+
+.checkbox-container .reprocessimages-modal {
+    margin-left: 8px;
+    font-size: 14px;
+    padding: 2px 10px;
+    line-height: 1.4;
     vertical-align: middle;
 }
 
@@ -303,16 +298,64 @@ label[for="id_consentcheckbox"] {
 }
 
 .image-list-container {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
-    margin-left: 190px;
-    margin-bottom: 10px;
+    margin: 10px 0;
+    overflow-x: auto;
+}
+
+.pending-images-note {
+    max-width: 600px;
+    margin: 10px 0 0;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+    white-space: normal;
 }
 
 .imagelist {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 20px;
     list-style-type: none;
     padding: 0;
     margin: 0;
+    white-space: nowrap;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 6px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.legend-main {
+    background-color: blue;
+}
+
+.legend-warning {
+    background-color: red;
+}
+
+.legend-approved {
+    background-color: green;
+}
+
+.legend-pending {
+    background-color: orange;
 }
 
 .lb-data .lb-num {
@@ -662,13 +705,30 @@ label[for="id_consentcheckbox"] {
     color: #000;
 }
 
-#exportpdf {
+.report-export-toolbar {
     margin-bottom: 15px;
 }
 
-#exportcsv {
-    margin-bottom: 15px;
-    margin-left: 10px;
+.report-export-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+}
+
+.report-pending-images-note {
+    display: inline-block;
+    text-align: left;
+    max-width: none;
+    margin: 8px 0 0;
+    padding: 1px 3px;
+    white-space: normal;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--bs-warning-color, #000);
+    background-color: var(--bs-warning, #ffc107);
+    border: 1px solid var(--bs-warning-border-color, #ffc107);
+    border-radius: 0.25rem;
 }
 
 /* stylelint-disable declaration-no-important */
@@ -704,6 +764,10 @@ label[for="id_consentcheckbox"] {
     border-radius: 4px;
     color: #0c5460;
     font-size: 14px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
 }
 
 .planstatus .plan-warning-box {
@@ -715,12 +779,17 @@ label[for="id_consentcheckbox"] {
     border-radius: 4px;
     color: #856404;
     font-size: 14px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
 }
 
 .planstatus .plan-separator {
     margin: 0 10px;
     color: #6c757d;
     font-weight: normal;
+    white-space: nowrap;
 }
 
 .planstatus .plan-info-note {
@@ -736,6 +805,16 @@ label[for="id_consentcheckbox"] {
     line-height: 1.4;
     max-width: 100%;
     box-sizing: border-box;
+}
+
+.planstatus .plan-info-note .plan-refresh-link {
+    font-style: normal;
+    white-space: nowrap;
+    font-size: inherit;
+}
+
+.planstatus .plan-info-note .plan-refresh-link a {
+    font-size: inherit;
 }
 
 /* Upgrade plan button styles. */

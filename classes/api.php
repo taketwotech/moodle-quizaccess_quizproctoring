@@ -52,15 +52,51 @@ class api {
     /** @var API accesstokensecret */
     private static $accesstokensecret = null;
 
+    /** @var string|null Cached ProctorLink plugin version for this request */
+    private static $proctorlinkversion = null;
+
     /**
      * Initialize Facematch Endpoint
      *
      * @return null
      */
     public static function init() {
-        global $CFG;
         self::$accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
         self::$accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+        self::get_proctorlink_version();
+    }
+
+    /**
+     * Resolve ProctorLink version from session/config without repeated plugin lookups.
+     *
+     * @return string
+     */
+    private static function get_proctorlink_version() {
+        global $SESSION;
+
+        if (self::$proctorlinkversion !== null) {
+            return self::$proctorlinkversion;
+        }
+
+        if (!empty($SESSION->proctorlink_version)) {
+            self::$proctorlinkversion = $SESSION->proctorlink_version;
+            return self::$proctorlinkversion;
+        }
+
+        $version = get_config('quizaccess_quizproctoring', 'proctorlink_version');
+        if (!empty($version)) {
+            self::$proctorlinkversion = $version;
+            return self::$proctorlinkversion;
+        }
+
+        $plugin = \core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+        $version = $plugin->release ?? '';
+        if ($version !== '') {
+            set_config('proctorlink_version', $version, 'quizaccess_quizproctoring');
+        }
+
+        self::$proctorlinkversion = $version;
+        return self::$proctorlinkversion;
     }
 
     /**
@@ -89,9 +125,10 @@ class api {
      * @param int $userid user id
      * @param int $quizid quiz id
      * @param int $attemptid attempt id
-     * @return string
+     * @param int|null $timeout Optional curl timeout in seconds
+     * @return string|false
      */
-    public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid) {
+    public static function proctor_image_api($imagedata, $userid, $quizid, $attemptid, $timeout = null) {
         global $SESSION;
         self::init();
         $curl = new \curl();
@@ -107,11 +144,60 @@ class api {
             'user_id: ' . $userid,
             'quiz_id: ' . $quizid,
             'attempt_id: ' . $attemptid,
+            'proctorlink_version: ' . self::get_proctorlink_version(),
         ];
 
+        if ($timeout === null) {
+            $timeout = 30;
+        }
+        $timeout = max(1, (int) $timeout);
+        $curl->setopt([
+            'CURLOPT_TIMEOUT' => $timeout,
+            'CURLOPT_CONNECTTIMEOUT' => min(10, $timeout),
+        ]);
         $curl->setHeader($header);
         $result = $curl->post($url, json_encode($imagedata));
+        if ($result === false) {
+            return false;
+        }
         return $result;
+    }
+
+    /**
+     * Determine whether an API response indicates a transport or server failure.
+     *
+     * @param mixed $response Raw API response
+     * @return bool True when the response should be treated as an API failure
+     */
+    public static function is_api_failure($response) {
+        if ($response === false || $response === '' || $response === null) {
+            return true;
+        }
+        if (!is_string($response)) {
+            return true;
+        }
+        $result = json_decode($response, true);
+        if ($result === null && json_last_error() !== JSON_ERROR_NONE) {
+            return true;
+        }
+        if (is_array($result) && (isset($result['error']) || isset($result['Error']))) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determine whether the API response says the current domain is blocked.
+     *
+     * @param mixed $response Raw API response
+     * @return bool True when ProctorLink blocked this domain.
+     */
+    public static function is_domain_blocked_response($response) {
+        if (!is_string($response) || $response === '') {
+            return false;
+        }
+        $result = json_decode($response, true);
+        return is_array($result) && isset($result['code']) && $result['code'] === 'DOMAIN_BLOCKED';
     }
 
     /**
@@ -192,12 +278,15 @@ class api {
     public static function validate($response, $source, $target = '', $eyecheck = false) {
         global $CFG;
         self::init();
+        if (self::is_api_failure($response)) {
+            return QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING;
+        }
         $result = json_decode($response, true);
-        if (isset($result["FaceDetails"]) && count($result["FaceDetails"]) > 0) {
-            $count = count($result["FaceDetails"]);
+        if (isset($result['FaceDetails'])) {
+            $count = count($result['FaceDetails']);
             if ($count > 1) {
                 return QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED;
-            } else if ($count == 1) {
+            } else if ($count === 1) {
                 $eyesopen = $result['FaceDetails'][0]['EyesOpen']['Value'];
                 if ($eyesopen === false && $eyecheck === true) {
                     return QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED;
@@ -208,11 +297,17 @@ class api {
                     }
                 }
             } else {
-                return null;
+                return QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED;
+            }
+        } else if ($target !== '' && isset($result['FaceMatches'])) {
+            $compareresult = self::compare_faces($response);
+            if (!$compareresult || $compareresult < QUIZACCESS_QUIZPROCTORING_FACEMATCHTHRESHOLDT) {
+                return QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED;
             }
         } else {
-            return QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED;
+            return QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING;
         }
+        return '';
     }
 
     /**

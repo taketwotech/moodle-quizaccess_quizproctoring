@@ -26,6 +26,7 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 require_login();
 
 $userid = required_param('userid', PARAM_INT);
@@ -101,7 +102,9 @@ if ($sqlm && !empty($sqlm->userimg)) {
 foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
-        if ($img->status === 'minimizedetected') {
+        if ($img->status === 'splitscreendetected') {
+            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/splitscreen.png';
+        } else if ($img->status === 'minimizedetected') {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
         } else {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
@@ -142,6 +145,8 @@ foreach ($getimages as $img) {
     $formattedtime = userdate($img->timecreated, '%H:%M');
     if ($img->image_status == 'M') {
         $imagestatusstr = 'main image';
+    } else if ($img->status === QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
+        $imagestatusstr = 'pending';
     } else if ($img->status != '') {
         $imagestatusstr = 'warning';
     } else {
@@ -157,8 +162,24 @@ foreach ($getimages as $img) {
         'total' => $totalrecord,
     ]);
 }
+$haspending = $DB->record_exists('quizaccess_proctor_data', [
+    'userid' => $userid,
+    'quizid' => $quizid,
+    'attemptid' => $attemptid,
+    'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+    'deleted' => 0,
+]) || $DB->record_exists('quizaccess_main_proctor', [
+    'userid' => $userid,
+    'quizid' => $quizid,
+    'attemptid' => $attemptid,
+    'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+    'deleted' => 0,
+]);
+
 $response = [
     'images' => $imgarray,
+    'haspending' => $haspending,
+    'pendingcount' => quizaccess_quizproctoring_count_pending_images($quizid, $userid, $attemptid),
     'totalRecords' => $totalrecord,
     'totalPages' => $totalpages,
     'currentPage' => $page,

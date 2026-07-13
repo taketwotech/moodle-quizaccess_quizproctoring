@@ -1,6 +1,185 @@
 define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', 'core/str', 'core/notification'],
 function($, ModalFactory, ModalEvents, Templates, str, notification) {
+    var reprocessInProgress = false;
+    var batchDelayMs = 1000;
+
+    /**
+     * @param {number} ms Milliseconds to wait
+     * @return {Promise}
+     */
+    function delay(ms) {
+        return new Promise(function(resolve) {
+            window.setTimeout(resolve, ms);
+        });
+    }
+
+    /**
+     * Reprocess pending images in sequential batches (wait for each batch to finish).
+     *
+     * @param {object} options Handler options
+     * @return {Promise}
+     */
+    async function reprocessPendingImages(options) {
+        if (reprocessInProgress) {
+            const message = await str.get_string('reprocessimages_busy', 'quizaccess_quizproctoring');
+            notification.addNotification({
+                message: message,
+                type: 'warning'
+            });
+            return message;
+        }
+
+        var cmid = options.cmid;
+        var quizid = options.quizid;
+        var button = options.button ? $(options.button) : null;
+        var totals = {processed: 0, pending: 0, failed: 0};
+        var apinotavailable = false;
+        var lastdata = null;
+
+        reprocessInProgress = true;
+
+        /**
+         * Build POST data for one reprocess batch.
+         *
+         * @return {object}
+         */
+        function buildBatchRequestData() {
+            var requestdata = {
+                cmid: cmid,
+                quizid: quizid,
+                sesskey: M.cfg.sesskey
+            };
+            if (options.userid) {
+                requestdata.userid = options.userid;
+            }
+            if (options.attemptid) {
+                requestdata.attemptid = options.attemptid;
+            }
+            return requestdata;
+        }
+
+        /**
+         * Apply a successful batch response and decide whether another batch is needed.
+         *
+         * @param {object} data Batch response
+         * @return {Promise<object|null>} Next batch result, or null when finished
+         */
+        async function handleBatchSuccess(data) {
+            lastdata = data;
+            totals.processed += data.processed || 0;
+            totals.pending += data.pending || 0;
+            totals.failed += data.failed || 0;
+
+            if (options.onProgress) {
+                options.onProgress(data, totals);
+            }
+
+            if (data.processed === 0 && data.remaining > 0 && !data.timedout) {
+                apinotavailable = true;
+                return null;
+            }
+
+            if (data.hasmore && data.remaining > 0 && data.batchcomplete) {
+                const text = await str.get_string(
+                    'reprocessimages_processing_remaining',
+                    'quizaccess_quizproctoring',
+                    data.remaining
+                );
+                if (button) {
+                    button.prop('disabled', true).text(text);
+                }
+                await delay(batchDelayMs);
+                return runBatch(0);
+            }
+
+            return null;
+        }
+
+        /**
+         * Run a single batch request.
+         *
+         * @param {number} retrycount Retry attempt for the current batch
+         * @return {Promise<object>}
+         */
+        async function runBatch(retrycount) {
+            retrycount = retrycount || 0;
+
+            var data;
+            try {
+                data = await $.ajax({
+                    url: M.cfg.wwwroot + '/mod/quiz/accessrule/quizproctoring/ajax_reprocess.php',
+                    method: 'POST',
+                    dataType: 'json',
+                    timeout: 90000,
+                    data: buildBatchRequestData()
+                });
+            } catch (jqXHR) {
+                var status = jqXHR && jqXHR.status ? jqXHR.status : 0;
+                if (retrycount < 3 && (status === 0 || status === 502 || status === 503 || status === 504)) {
+                    await delay(3000);
+                    return runBatch(retrycount + 1);
+                }
+                throw jqXHR;
+            }
+
+            if (data && data.locked) {
+                await delay(2000);
+                return runBatch(retrycount);
+            }
+
+            if (!data || data.success !== true) {
+                throw new Error('reprocess_failed');
+            }
+
+            const next = await handleBatchSuccess(data);
+            return next || data;
+        }
+
+        try {
+            if (button) {
+                button.prop('disabled', true);
+                const text = await str.get_string('reprocessimages_processing', 'quizaccess_quizproctoring');
+                button.text(text);
+            } else {
+                await str.get_string('reprocessimages_processing', 'quizaccess_quizproctoring');
+            }
+
+            await runBatch(0);
+
+            var message = await str.get_string('reprocessresult', 'quizaccess_quizproctoring', {
+                processed: totals.processed,
+                pending: totals.pending,
+                failed: totals.failed,
+                remaining: lastdata ? lastdata.remaining : 0,
+            });
+
+            if (apinotavailable) {
+                const extra = await str.get_string('reprocessapinotavailable', 'quizaccess_quizproctoring');
+                message = message + ' ' + extra;
+            }
+
+            const title = await str.get_string('reprocessimages', 'quizaccess_quizproctoring');
+            await notification.alert(title, message);
+
+            if (options.onComplete) {
+                options.onComplete(message, totals, lastdata);
+            }
+            return message;
+        } catch (error) {
+            const message = await str.get_string('reprocessimages_error', 'quizaccess_quizproctoring');
+            const title = await str.get_string('error', 'moodle');
+            await notification.alert(title, message);
+            return null;
+        } finally {
+            reprocessInProgress = false;
+            if (button) {
+                button.prop('disabled', false);
+            }
+        }
+    }
+
     return {
+        reprocessPendingImages: reprocessPendingImages,
         init: function() {
             $(document).ready(function() {
                 if (typeof lightbox !== 'undefined') {
@@ -332,6 +511,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                 event.preventDefault();
                 var attemptid = $(this).data('attemptid');
                 var quizid = $(this).data('quizid');
+                var cmid = $(this).data('cmid');
                 var userid = $(this).data('userid');
                 var startdate = $(this).data('startdate');
                 var all = false;
@@ -352,20 +532,51 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                     $('.imgcheckbox').prop('checked', false);
                     var checkboxContainer = `
                         <div class="checkbox-container" style="display: none;">
-                            <input type="checkbox" class="imgcheckbox">
-                            <label for="checkbox" class="image-checkbox">
+                            <input type="checkbox" class="imgcheckbox" id="imgcheckbox-modal">
+                            <label for="imgcheckbox-modal" class="image-checkbox">
                                 ${checkboxLabel}
                             </label>
+                            <button type="button" class="btn btn-warning btn-sm reprocessimages-modal"
+                                style="display: none;"></button>
                         </div>
                     `;
                     modal.getBody().prepend(checkboxContainer);
                     return modal;
                 }).then(function(modal) {
-                    if (storeAllImages === '1') {
-                        modal.getBody().find('.checkbox-container').show();
-                    } else {
-                        modal.getBody().find('.checkbox-container').hide();
+                    /**
+                     * Show or hide modal image controls.
+                     *
+                     * @param {int} pendingcount Pending image count for the quiz
+                     */
+                    function updateImageControls(pendingcount) {
+                        var container = modal.getBody().find('.checkbox-container');
+                        var reprocessButton = container.find('.reprocessimages-modal');
+                        var showCheckbox = storeAllImages === '1';
+                        var showReprocess = pendingcount > 0;
+
+                        if (showCheckbox) {
+                            container.find('.imgcheckbox, .image-checkbox').show();
+                        } else {
+                            container.find('.imgcheckbox, .image-checkbox').hide();
+                        }
+
+                        if (showReprocess) {
+                            reprocessButton
+                                .text(M.util.get_string('reprocessimages', 'quizaccess_quizproctoring') +
+                                    ' (' + pendingcount + ')')
+                                .show();
+                        } else {
+                            reprocessButton.hide();
+                        }
+
+                        if (showCheckbox || showReprocess) {
+                            container.show();
+                        } else {
+                            container.hide();
+                        }
                     }
+
+                    updateImageControls(0);
                     var perpage = 35;
                     var currentPage = 1;
                     var totalPages = 1;
@@ -388,6 +599,10 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                             },
                             dataType: 'json',
                             success: function(response) {
+                                var haspending = !!response.haspending || response.images.some(function(image) {
+                                    return image.imagestatus &&
+                                        image.imagestatus.toLowerCase() === 'pending';
+                                });
                                 var images = response.images.map(function(image) {
                                     return {
                                         url: image.img,
@@ -401,6 +616,7 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 var data = {
                                     attemptdate: startdate,
                                     images: images,
+                                    haspending: haspending,
                                     currentPage: response.currentPage,
                                     totalPages: response.totalPages,
                                     isFirstPage: response.currentPage === 1,
@@ -409,6 +625,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                         return M.util.get_string(key, 'quizaccess_quizproctoring');
                                     }
                                 };
+
+                                updateImageControls(response.pendingcount || 0);
 
                                 modal.getBody().find('.image-content').html('');
                                 Templates.render('quizaccess_quizproctoring/response_modal', data)
@@ -478,6 +696,8 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                 return 'main-image';
                             case 'warning':
                                 return 'warning-image';
+                            case 'pending':
+                                return 'pending-image';
                             default:
                                 return 'green-image';
                         }
@@ -509,6 +729,28 @@ function($, ModalFactory, ModalEvents, Templates, str, notification) {
                                          : M.util.get_string('proctoringimages', 'quizaccess_quizproctoring');
                         modal.setTitle(modaltitle);
                         loadImages(currentPage);
+                    });
+
+                    modal.getBody().off('click', '.reprocessimages-modal').on('click', '.reprocessimages-modal', function() {
+                        var button = $(this);
+                        reprocessPendingImages({
+                            cmid: cmid,
+                            quizid: quizid,
+                            userid: userid,
+                            attemptid: attemptid,
+                            button: button,
+                            onProgress: function(data) {
+                                updateImageControls(data.remaining || 0);
+                            },
+                            onComplete: function(message, totals, data) {
+                                updateImageControls(data.remaining || 0);
+                                loadImages(currentPage);
+                                if (button.is(':visible') && (data.remaining || 0) > 0) {
+                                    button.text(M.util.get_string('reprocessimages', 'quizaccess_quizproctoring') +
+                                        ' (' + (data.remaining || 0) + ')');
+                                }
+                            }
+                        });
                     });
 
                     modal.getBody().off('click', '.prev-page').on('click', '.prev-page', function() {

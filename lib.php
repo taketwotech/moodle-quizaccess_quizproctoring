@@ -41,9 +41,15 @@ define('QUIZACCESS_QUIZPROCTORING_FACEMASKTHRESHOLD', 80);
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_PASSED', 'completionpassed');
 define('QUIZACCESS_QUIZPROCTORING_COMPLETION_FAILED', 'completionfailed');
 define('QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED', 'minimizedetected');
+define('QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED', 'splitscreendetected');
 define('QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED', 'leftmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED', 'rightmovedetected');
 define('QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED', 'objectdetected');
+define('QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING', 'pendingprocessing');
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE', 80);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_TIME_BUDGET', 45);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_API_TIMEOUT', 10);
+define('QUIZACCESS_QUIZPROCTORING_REPROCESS_MIN_REMAINING', 5);
 
 /** User preference key for reporting page pagination (records per page). */
 define('QUIZACCESS_QUIZPROCTORING_PREF_REPORTING_PAGINATION', 'quizaccess_quizproctoring_reporting_pagination');
@@ -140,6 +146,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
     $quizaproctoring = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
     $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
     $SESSION->proctorlink_version = $plugin->release;
+    set_config('proctorlink_version', $plugin->release, 'quizaccess_quizproctoring');
 
     $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $COURSE->id]);
     $usergroup = '';
@@ -180,6 +187,7 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
                 'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
                 'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
                 'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
+                'param13' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
                 'userid' => $user->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -187,7 +195,8 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,
+            :param11,:param12,:param13)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
             $warningsleft = $quizaproctoring->warning_threshold - count($errorrecords);
         }
@@ -218,11 +227,6 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         }
     }
     $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/socket.io.js', true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.1/camera_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.1/control_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.1/drawing_utils.js'), true);
-    $PAGE->requires->js(new moodle_url('https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js'), true);
     $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.min.js', true);
     $warningemailthreshold = isset($quizaproctoring->warning_email_threshold) ? (int)$quizaproctoring->warning_email_threshold : 0;
     $PAGE->requires->js_init_call('M.util.js_pending', [true], true);
@@ -250,12 +254,15 @@ function quizproctoring_camera_task($cmid, $attemptid, $quizid) {
         'tabwarning',
         'tabwarningoneleft',
         'tabwarningmultiple',
+        'splitscreendetected',
+        'warningsleft',
+        'warning',
+        'warnings',
         'nomicrophonedisabled',
         'nocameradisabled',
         'nocameradetected',
         'nocameradetectedm',
     ], 'quizaccess_quizproctoring');
-    $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/eyesdetection.min.js', true);
 }
 
 /**
@@ -436,7 +443,7 @@ function quizproctoring_storeimage(
         file_put_contents($tmpdir . $imagename, $compresseddata);
     }
 
-    if (!$mainimage && $status != '') {
+    if (!$mainimage && $status != '' && $status !== QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
         $errorstring = '';
         if (isset($quizaccessquizproctoring->warning_threshold) && $quizaccessquizproctoring->warning_threshold != 0) {
             $inparams = [
@@ -452,6 +459,7 @@ function quizproctoring_storeimage(
                 'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
                 'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
                 'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
+                'param13' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
                 'userid' => $USER->id,
                 'quizid' => $quizid,
                 'attemptid' => $attemptid,
@@ -459,7 +467,8 @@ function quizproctoring_storeimage(
             ];
             $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
             quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
-            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12)";
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,
+            :param11,:param12,:param13)";
             $errorrecords = $DB->get_records_sql($sql, $inparams);
 
             if (count($errorrecords) >= $quizaccessquizproctoring->warning_threshold) {
@@ -510,6 +519,47 @@ function quizproctoring_storeimage(
             die();
         }
     }
+}
+
+/**
+ * Store a realtime violation and return a JSON payload instead of throwing to the client.
+ *
+ * quizproctoring_storeimage() throws moodle_exception for warnings; realtime AJAX must
+ * receive errorcode/error JSON so the attempt page can show alert popups.
+ *
+ * @param string $data image data URL or empty
+ * @param int $cmid course module id
+ * @param int $attemptid attempt id
+ * @param int $quizid quiz id
+ * @param bool $mainimage main image flag
+ * @param string $status violation status constant
+ * @param string $response API response text
+ * @param bool $eyecheckon whether eye check is active (eyesnotopen only)
+ * @return array|null response array to json_encode, or null if store finished without alert
+ */
+function quizproctoring_storeimage_realtime_response(
+    $data,
+    $cmid,
+    $attemptid,
+    $quizid,
+    $mainimage,
+    $status,
+    $response = '',
+    $eyecheckon = false
+) {
+    try {
+        quizproctoring_storeimage($data, $cmid, $attemptid, $quizid, $mainimage, $status, $response);
+    } catch (moodle_exception $e) {
+        $payload = [
+            'errorcode' => 1,
+            'error' => $e->getMessage(),
+        ];
+        if ($eyecheckon && $status === QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED) {
+            $payload['status'] = 'eyecheckon';
+        }
+        return $payload;
+    }
+    return null;
 }
 
 /**
@@ -673,6 +723,201 @@ function quizproctoring_storemainimage(
 }
 
 /**
+ * Count images awaiting API reprocessing for a quiz.
+ *
+ * @param int $quizid Quiz id
+ * @param int|null $userid Optional user id to limit the count
+ * @param int|null $attemptid Optional attempt id to limit the count
+ * @return int Number of pending images
+ */
+function quizaccess_quizproctoring_count_pending_images($quizid, $userid = null, $attemptid = null) {
+    global $DB;
+    $conditions = [
+        'quizid' => $quizid,
+        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+        'deleted' => 0,
+    ];
+    if ($userid !== null) {
+        $conditions['userid'] = $userid;
+    }
+    if ($attemptid !== null) {
+        $conditions['attemptid'] = $attemptid;
+    }
+    $count = $DB->count_records('quizaccess_proctor_data', $conditions);
+    $count += $DB->count_records('quizaccess_main_proctor', $conditions);
+    return $count;
+}
+
+/**
+ * Reprocess a single pending image record through the face detection API.
+ *
+ * @param stdClass $record Image record from quizaccess_proctor_data or quizaccess_main_proctor
+ * @param string $tablename Database table name for the record
+ * @return array Result with keys status (processed|pending|failed) and recordid
+ */
+function quizaccess_quizproctoring_reprocess_image($record, $tablename = 'quizaccess_proctor_data') {
+    global $DB, $CFG;
+
+    if (empty($record->userimg)) {
+        return ['status' => 'failed', 'recordid' => $record->id];
+    }
+
+    $tmpdir = $CFG->dataroot . '/proctorlink/';
+    $imagepath = $tmpdir . $record->userimg;
+    if (!file_exists($imagepath)) {
+        return ['status' => 'failed', 'recordid' => $record->id];
+    }
+
+    $imagedata = file_get_contents($imagepath);
+    if ($imagedata === false) {
+        return ['status' => 'failed', 'recordid' => $record->id];
+    }
+
+    $data1 = base64_encode($imagedata);
+    $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $record->quizid]);
+    $target = '';
+    $mainentry = $DB->get_record('quizaccess_main_proctor', [
+        'userid' => $record->userid,
+        'quizid' => $record->quizid,
+        'image_status' => 'M',
+        'attemptid' => $record->attemptid,
+        'deleted' => 0,
+    ]);
+    if ($mainentry && !empty($mainentry->userimg) && $mainentry->id != $record->id) {
+        $mainpath = $tmpdir . $mainentry->userimg;
+        if (file_exists($mainpath)) {
+            $target = base64_encode(file_get_contents($mainpath));
+        }
+    }
+
+    if ($target !== '') {
+        $apidata = ['primary' => $target, 'target' => $data1, 'type' => 'eyes_detection'];
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(
+            $apidata,
+            $record->userid,
+            $record->quizid,
+            $record->attemptid,
+            QUIZACCESS_QUIZPROCTORING_REPROCESS_API_TIMEOUT
+        );
+        if ($proctoringdata && $proctoringdata->enableeyecheck == 1) {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data1, $target, true);
+        } else {
+            $validate = \quizaccess_quizproctoring\api::validate($response, $data1, $target);
+        }
+    } else {
+        $apidata = ['primary' => $data1];
+        $response = \quizaccess_quizproctoring\api::proctor_image_api(
+            $apidata,
+            $record->userid,
+            $record->quizid,
+            $record->attemptid,
+            QUIZACCESS_QUIZPROCTORING_REPROCESS_API_TIMEOUT
+        );
+        $validate = \quizaccess_quizproctoring\api::validate($response, $data1, '', true);
+    }
+
+    if ($response === 'Unauthorized') {
+        return ['status' => 'failed', 'recordid' => $record->id, 'reason' => 'unauthorized'];
+    }
+
+    if ($validate === QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING) {
+        return ['status' => 'pending', 'recordid' => $record->id];
+    }
+
+    $record->status = $validate;
+    $record->response = $response;
+    $record->timemodified = time();
+    $DB->update_record($tablename, $record);
+
+    return ['status' => 'processed', 'recordid' => $record->id, 'result' => $validate];
+}
+
+/**
+ * Reprocess pending images for a quiz in batches.
+ *
+ * Processes up to $limit images per call, stopping early when the time budget is reached.
+ *
+ * @param int $quizid Quiz id
+ * @param int|null $limit Maximum number of images to process in this batch
+ * @param int|null $userid Optional user id to limit reprocessing
+ * @param int|null $attemptid Optional attempt id to limit reprocessing
+ * @return array Summary with processed, pending, failed and timedout counts
+ */
+function quizaccess_quizproctoring_reprocess_pending_images($quizid, $limit = null, $userid = null, $attemptid = null) {
+    global $DB;
+
+    if ($limit === null) {
+        $limit = QUIZACCESS_QUIZPROCTORING_REPROCESS_BATCH_SIZE;
+    }
+    $limit = max(1, (int) $limit);
+
+    $results = ['processed' => 0, 'pending' => 0, 'failed' => 0, 'timedout' => false];
+    $starttime = microtime(true);
+    $timebudget = QUIZACCESS_QUIZPROCTORING_REPROCESS_TIME_BUDGET;
+
+    $params = [
+        'quizid' => $quizid,
+        'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
+    ];
+    $select = 'quizid = :quizid AND status = :status AND deleted = 0';
+    if ($userid !== null) {
+        $select .= ' AND userid = :userid';
+        $params['userid'] = $userid;
+    }
+    if ($attemptid !== null) {
+        $select .= ' AND attemptid = :attemptid';
+        $params['attemptid'] = $attemptid;
+    }
+
+    $processrecords = function(array $records, string $tablename = 'quizaccess_proctor_data')
+            use (&$results, $starttime, $timebudget): bool {
+        foreach ($records as $record) {
+            $remainingtime = $timebudget - (microtime(true) - $starttime);
+            if ($remainingtime < QUIZACCESS_QUIZPROCTORING_REPROCESS_MIN_REMAINING) {
+                $results['timedout'] = true;
+                return false;
+            }
+            $result = quizaccess_quizproctoring_reprocess_image($record, $tablename);
+            $results[$result['status']]++;
+            if ((microtime(true) - $starttime) >= $timebudget) {
+                $results['timedout'] = true;
+                return false;
+            }
+        }
+        return true;
+    };
+
+    $records = $DB->get_records_select(
+        'quizaccess_proctor_data',
+        $select,
+        $params,
+        'id ASC',
+        '*',
+        0,
+        $limit
+    );
+    if (!$processrecords($records)) {
+        return $results;
+    }
+
+    $remaininglimit = $limit - count($records);
+    if ($remaininglimit > 0 && !$results['timedout']) {
+        $mainrecords = $DB->get_records_select(
+            'quizaccess_main_proctor',
+            $select,
+            $params,
+            'id ASC',
+            '*',
+            0,
+            $remaininglimit
+        );
+        $processrecords($mainrecords, 'quizaccess_main_proctor');
+    }
+
+    return $results;
+}
+
+/**
  * Clean Stored Images task.
  *
  * @package    quizaccess_quizproctoring
@@ -721,5 +966,408 @@ function clean_images_task() {
             $DB->delete_records('quizaccess_proctor_data', ['id' => $record->id]);
             mtrace('Deleting quizaccess proctor data for Id (Id :- ' . $record->id . ')');
         }
+    }
+}
+
+/**
+ * ProctorLink pricing page URL.
+ */
+define('QUIZACCESS_QUIZPROCTORING_PRICING_URL', 'https://proctorlink.com/#pricing');
+
+/**
+ * Get stored plan display data from plugin config.
+ *
+ * @return array
+ */
+function quizaccess_quizproctoring_get_plan_display() {
+    $raw = get_config('quizaccess_quizproctoring', 'getplandisplay');
+    if (empty($raw)) {
+        return [];
+    }
+    $display = json_decode($raw, true);
+    return is_array($display) ? $display : [];
+}
+
+/**
+ * Build a pricing-page action link from the backend display action key.
+ *
+ * @param string $action Backend action key (upgrade, renew, purchase, buycredit).
+ * @return string HTML link or empty string.
+ */
+function quizaccess_quizproctoring_plan_action_link($action) {
+    $action = strtolower((string)$action);
+    $linktext = '';
+    switch ($action) {
+        case 'upgrade':
+            $linktext = get_string('upgradeplan', 'quizaccess_quizproctoring');
+            break;
+        case 'renew':
+            $linktext = get_string('renewplan', 'quizaccess_quizproctoring');
+            break;
+        case 'purchase':
+            $linktext = get_string('purchaseplan', 'quizaccess_quizproctoring');
+            break;
+        case 'buycredits':
+            $linktext = get_string('buycredit', 'quizaccess_quizproctoring');
+            break;
+        default:
+            return '';
+    }
+
+    return html_writer::link(
+        QUIZACCESS_QUIZPROCTORING_PRICING_URL,
+        $linktext,
+        ['target' => '_blank', 'rel' => 'noopener noreferrer']
+    );
+}
+
+/**
+ * Build the plan status note shown below the plan summary.
+ *
+ * @param string $refreshlink Refresh plan HTML link.
+ * @param array $display Stored plan display data from API.
+ * @return string
+ */
+function quizaccess_quizproctoring_plan_status_note($refreshlink, array $display = []) {
+    if (quizaccess_quizproctoring_is_credit_plan($display)) {
+        $notestring = 'creditbalanceupdatenote';
+    } else {
+        $notestring = 'updatenote';
+    }
+    return '<div class="plan-info-note">' . get_string($notestring, 'quizaccess_quizproctoring') .
+        ' <span class="plan-separator">|</span> <span class="plan-refresh-link">' . $refreshlink . '</span></div>';
+}
+
+/**
+ * Map API activePlan label to the current Moodle language string.
+ *
+ * Backend returns English names: Starter, Advanced, Credit-Based, Free.
+ *
+ * @param string|null $activeplan Plan label from API display.activePlan.
+ * @return string Localized plan name.
+ */
+function quizaccess_quizproctoring_localize_active_plan_name($activeplan) {
+    if ($activeplan === null || $activeplan === '') {
+        return '';
+    }
+
+    $normalized = strtolower(preg_replace('/[\s\-_]+/', '', (string)$activeplan));
+    $stringkeys = [
+        'starter' => 'planstarter',
+        'advanced' => 'planadvanced',
+        'standard' => 'planadvanced',
+        'free' => 'planfree',
+        'credit' => 'creditbaseplan',
+        'creditbased' => 'creditbaseplan',
+    ];
+
+    if (isset($stringkeys[$normalized])) {
+        return get_string($stringkeys[$normalized], 'quizaccess_quizproctoring');
+    }
+
+    $basename = strtolower(preg_replace('/[\s\-_]*(india|global)$/i', '', (string)$activeplan));
+    $basename = preg_replace('/[\s\-_]+/', '', $basename);
+    if (isset($stringkeys[$basename])) {
+        return get_string($stringkeys[$basename], 'quizaccess_quizproctoring');
+    }
+
+    return (string)$activeplan;
+}
+
+/**
+ * Whether the stored plan is credit-based.
+ *
+ * @param array $display Stored display data.
+ * @return bool
+ */
+function quizaccess_quizproctoring_is_credit_plan(array $display) {
+    if (($display['planType'] ?? '') === 'credit') {
+        return true;
+    }
+    $planname = strtolower((string)get_config('quizaccess_quizproctoring', 'getplanname'));
+    return $planname === 'credit' || $planname === 'credit base plan' || $planname === 'credit-based';
+}
+
+/**
+ * Resolve remaining and total credits from display data with config fallback.
+ *
+ * @param array $display Stored display data.
+ * @return array{0:int,1:int} [remaining, total]
+ */
+function quizaccess_quizproctoring_get_plan_credits(array $display) {
+    $remaining = (int)get_config('quizaccess_quizproctoring', 'getplancredits');
+    $total = (int)get_config('quizaccess_quizproctoring', 'getplantotalcredits');
+    if (isset($display['remainingCredits']) || isset($display['totalCredits'])) {
+        $remaining = (int)($display['remainingCredits'] ?? $remaining);
+        $total = (int)($display['totalCredits'] ?? $total);
+    }
+    return [$remaining, $total];
+}
+
+/**
+ * Normalize API expiry timestamp to Unix seconds.
+ *
+ * @param int|string|null $timestamp Expiry timestamp.
+ * @return int Unix timestamp or 0 when invalid.
+ */
+function quizaccess_quizproctoring_normalize_plan_timestamp($timestamp) {
+    $timestamp = (int)$timestamp;
+    if ($timestamp <= 0) {
+        return 0;
+    }
+    if ($timestamp > 9999999999) {
+        $timestamp = (int)($timestamp / 1000);
+    }
+    return $timestamp;
+}
+
+/**
+ * Resolve plan expiry timestamp from display data with config fallback.
+ *
+ * @param array $display Stored display data.
+ * @return int Unix timestamp or 0 when unavailable.
+ */
+function quizaccess_quizproctoring_get_plan_expiry_timestamp(array $display) {
+    if (!empty($display['expiryTimestamp'])) {
+        return quizaccess_quizproctoring_normalize_plan_timestamp($display['expiryTimestamp']);
+    }
+    return quizaccess_quizproctoring_normalize_plan_timestamp(
+        get_config('quizaccess_quizproctoring', 'getplanexpiry')
+    );
+}
+
+/**
+ * Format plan expiry date for the current user's language and timezone.
+ *
+ * @param array $display Stored display data.
+ * @return string Localized expiry date or empty string.
+ */
+function quizaccess_quizproctoring_format_plan_expiry_date(array $display) {
+    $timestamp = quizaccess_quizproctoring_get_plan_expiry_timestamp($display);
+    if ($timestamp <= 0) {
+        return '';
+    }
+    return ltrim(userdate($timestamp, '%d %B %Y'), '0');
+}
+
+/**
+ * Build plan status HTML for the quiz settings form.
+ *
+ * @param string $refreshlink Refresh plan HTML link.
+ * @return string
+ */
+function quizaccess_quizproctoring_build_plan_status_html($refreshlink) {
+    $planresponseempty = (int)get_config('quizaccess_quizproctoring', 'getplanresponseempty');
+    $planinfo = (int)get_config('quizaccess_quizproctoring', 'getplaninfo');
+    $display = quizaccess_quizproctoring_get_plan_display();
+
+    if ($planresponseempty === 1) {
+        $box = '<div class="plan-warning-box"><strong>' .
+            get_string('noplanresponse', 'quizaccess_quizproctoring') . '</strong>';
+        $link = quizaccess_quizproctoring_plan_action_link('purchase');
+        if ($link !== '') {
+            $box .= '<span class="plan-separator">|</span> ' . $link;
+        }
+        $box .= '</div>';
+        return $box . quizaccess_quizproctoring_plan_status_note($refreshlink);
+    }
+
+    if ($planinfo === 1) {
+        if (quizaccess_quizproctoring_is_credit_plan($display)) {
+            [$plancredits, $plantotalcredits] = quizaccess_quizproctoring_get_plan_credits($display);
+            $activeplan = quizaccess_quizproctoring_localize_active_plan_name(
+                $display['activePlan'] ?? 'Credit-Based'
+            );
+            $parts = [
+                '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' . s($activeplan),
+                '<strong>' . get_string('creditsremaining', 'quizaccess_quizproctoring') . '</strong> ' .
+                $plancredits . '/' . $plantotalcredits,
+            ];
+            $line = implode(' <span class="plan-separator">|</span> ', $parts);
+            $actionlink = quizaccess_quizproctoring_plan_action_link($display['action'] ?? 'buycredits');
+            if ($actionlink !== '') {
+                $line .= ' <span class="plan-separator">|</span> ' . $actionlink;
+            }
+            return '<div class="plan-info-box">' . $line . '</div>' .
+                quizaccess_quizproctoring_plan_status_note($refreshlink, $display);
+        }
+
+        $parts = [];
+        $activeplan = quizaccess_quizproctoring_localize_active_plan_name(
+            $display['activePlan'] ?? get_config('quizaccess_quizproctoring', 'getplanname')
+        );
+        if (!empty($activeplan)) {
+            $parts[] = '<strong>' . get_string('activeplan', 'quizaccess_quizproctoring') . '</strong> ' .
+                s($activeplan);
+        }
+
+        $expirydate = quizaccess_quizproctoring_format_plan_expiry_date($display);
+        if ($expirydate !== '') {
+            $parts[] = '<strong>' . get_string('expirydate', 'quizaccess_quizproctoring') . '</strong> ' .
+                s($expirydate);
+        }
+
+        $line = implode(' <span class="plan-separator">|</span> ', $parts);
+        $actionlink = quizaccess_quizproctoring_plan_action_link($display['action'] ?? '');
+        if ($actionlink !== '') {
+            $line .= ' <span class="plan-separator">|</span> ' . $actionlink;
+        }
+
+        return '<div class="plan-info-box">' . $line . '</div>' .
+            quizaccess_quizproctoring_plan_status_note($refreshlink, $display);
+    }
+
+    $box = '<div class="plan-warning-box"><strong>' .
+        get_string('noactiveplan', 'quizaccess_quizproctoring') . '</strong>';
+    $action = $display['action'] ?? 'renew';
+    if (($display['planType'] ?? '') === 'free') {
+        $action = 'upgrade';
+    } else if (quizaccess_quizproctoring_is_credit_plan($display)) {
+        $action = $display['action'] ?? 'buycredits';
+    }
+    $link = quizaccess_quizproctoring_plan_action_link($action);
+    if ($link !== '') {
+        $box .= '<span class="plan-separator">|</span> ' . $link;
+    }
+    $box .= '</div>';
+    return $box . quizaccess_quizproctoring_plan_status_note($refreshlink, $display);
+}
+
+/**
+ * Store plan display data returned by the ProctorLink API.
+ *
+ * @param array $data Decoded API response.
+ * @return void
+ */
+function quizaccess_quizproctoring_store_plan_display(array $data) {
+    if (!empty($data['display']) && is_array($data['display'])) {
+        set_config('getplandisplay', json_encode($data['display']), 'quizaccess_quizproctoring');
+        return;
+    }
+    unset_config('getplandisplay', 'quizaccess_quizproctoring');
+}
+
+/**
+ * Sync ProctorLink plan details from the remote API into plugin config.
+ *
+ * @return bool True when plan data was fetched and stored successfully.
+ */
+function quizaccess_quizproctoring_sync_plan_from_api() {
+    try {
+        $planresponse = \quizaccess_quizproctoring\api::getplaninfo();
+        if (empty($planresponse)) {
+            set_config('getplanresponseempty', 1, 'quizaccess_quizproctoring');
+            set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+            set_config('getplanname', '', 'quizaccess_quizproctoring');
+            unset_config('getplandisplay', 'quizaccess_quizproctoring');
+            return false;
+        }
+
+        $data = json_decode($planresponse, true);
+        if (!is_array($data)) {
+            return false;
+        }
+
+        quizaccess_quizproctoring_store_plan_display($data);
+
+        $plantype = isset($data['plan']['planType']) ? $data['plan']['planType'] : '';
+        $planactive = !empty($data['plan']['active']);
+        if (!empty($plantype)) {
+            set_config('getplanresponseempty', 0, 'quizaccess_quizproctoring');
+        } else {
+            set_config('getplanresponseempty', 1, 'quizaccess_quizproctoring');
+            unset_config('getplandisplay', 'quizaccess_quizproctoring');
+        }
+
+        if ($plantype === 'credit') {
+            $credits = isset($data['plan']['details']['credits']) ? (int)$data['plan']['details']['credits'] : 0;
+            $totalcreditsbought = 0;
+            if (isset($data['plan']['details']['creditHistory']) && is_array($data['plan']['details']['creditHistory'])) {
+                foreach ($data['plan']['details']['creditHistory'] as $history) {
+                    if (isset($history['creditsBought'])) {
+                        $totalcreditsbought += (int)$history['creditsBought'];
+                    }
+                }
+            }
+            if (isset($data['display']['remainingCredits']) || isset($data['display']['totalCredits'])) {
+                $credits = (int)($data['display']['remainingCredits'] ?? $credits);
+                $totalcreditsbought = (int)($data['display']['totalCredits'] ?? $totalcreditsbought);
+            }
+
+            $expiretimestamp = null;
+            if (isset($data['plan']['details']['current_end'])) {
+                $expiretimestamp = (int)$data['plan']['details']['current_end'];
+            } else if (isset($data['plan']['details']['expireDate'])) {
+                $expiretimestamp = (int)$data['plan']['details']['expireDate'];
+            } else if (isset($data['plan']['details']['expiryDate'])) {
+                $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
+            } else if (isset($data['display']['expiryTimestamp'])) {
+                $expiretimestamp = (int)$data['display']['expiryTimestamp'];
+            }
+            if ($expiretimestamp !== null && $expiretimestamp > 9999999999) {
+                $expiretimestamp = (int)($expiretimestamp / 1000);
+            }
+
+            set_config('getplancredits', $credits, 'quizaccess_quizproctoring');
+            set_config('getplantotalcredits', $totalcreditsbought, 'quizaccess_quizproctoring');
+            set_config('getplanexpiry', $expiretimestamp ?? 0, 'quizaccess_quizproctoring');
+
+            $expired = $expiretimestamp !== null && $expiretimestamp < time();
+            $planname = $data['display']['activePlan'] ?? $data['plan']['planName'] ?? 'credit';
+            if ($credits >= 0 && $planactive && !$expired) {
+                set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
+                set_config('getplanname', $planname, 'quizaccess_quizproctoring');
+            } else {
+                set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+                set_config('getplanname', $planname, 'quizaccess_quizproctoring');
+            }
+            return true;
+        }
+
+        $expiretimestamp = null;
+        if (isset($data['plan']['details']['current_end'])) {
+            $expiretimestamp = (int)$data['plan']['details']['current_end'];
+        } else if (isset($data['plan']['details']['expiryDate'])) {
+            $expiretimestamp = (int)$data['plan']['details']['expiryDate'];
+        } else if (isset($data['plan']['details']['expireDate'])) {
+            $expiretimestamp = (int)$data['plan']['details']['expireDate'];
+        } else if (isset($data['display']['expiryTimestamp'])) {
+            $expiretimestamp = (int)$data['display']['expiryTimestamp'];
+        }
+
+        set_config('getplancredits', 0, 'quizaccess_quizproctoring');
+        set_config('getplantotalcredits', 0, 'quizaccess_quizproctoring');
+
+        if ($expiretimestamp !== null) {
+            if ($expiretimestamp > 9999999999) {
+                $expiretimestamp = (int)($expiretimestamp / 1000);
+            }
+            $expired = $expiretimestamp < time();
+            set_config('getplanexpiry', $expiretimestamp, 'quizaccess_quizproctoring');
+            if ($planactive && !$expired) {
+                set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
+                if (!empty($data['plan']['planName'])) {
+                    set_config('getplanname', $data['plan']['planName'], 'quizaccess_quizproctoring');
+                }
+            } else {
+                set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+                set_config('getplanname', $data['plan']['planName'] ?? '', 'quizaccess_quizproctoring');
+            }
+            return true;
+        }
+
+        if ($planactive && !empty($data['plan']['planName'])) {
+            set_config('getplanexpiry', 0, 'quizaccess_quizproctoring');
+            set_config('getplaninfo', 1, 'quizaccess_quizproctoring');
+            set_config('getplanname', $data['plan']['planName'], 'quizaccess_quizproctoring');
+            return true;
+        }
+
+        set_config('getplanexpiry', 0, 'quizaccess_quizproctoring');
+        set_config('getplaninfo', 0, 'quizaccess_quizproctoring');
+        set_config('getplanname', '', 'quizaccess_quizproctoring');
+        return false;
+    } catch (Exception $e) {
+        return false;
     }
 }

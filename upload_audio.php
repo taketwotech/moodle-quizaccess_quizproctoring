@@ -23,45 +23,68 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('AJAX_SCRIPT', true);
+
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_login();
 global $USER, $DB;
 
-$dest = $CFG->dataroot . '/quizproctoring/audio/';
-if (!file_exists($dest)) {
-    mkdir($dest, 0777, true);
-}
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
-$timestamps = isset($_POST['timestamps']) ? json_decode($_POST['timestamps'], true) : [];
+
+$DB->get_record('quiz_attempts', [
+    'id' => $attemptid,
+    'userid' => $USER->id,
+    'quiz' => $quizid,
+], '*', MUST_EXIST);
+
+$dest = $CFG->dataroot . '/quizproctoring/audio/';
+check_dir_exists($dest, true, true);
+
+$timestampsraw = optional_param('timestamps', '[]', PARAM_RAW);
+$timestamps = json_decode($timestampsraw, true);
+if (!is_array($timestamps)) {
+    $timestamps = [];
+}
+
 $savedfiles = [];
 
 foreach ($_FILES as $key => $file) {
-    if (!empty($file['tmp_name']) && is_uploaded_file($file['tmp_name'])) {
-        preg_match('/audio(\d+)/', $key, $matches);
-        $index = isset($matches[1]) ? intval($matches[1]) : null;
-        $capturetime = ($index !== null && isset($timestamps[$index])) ? intval($timestamps[$index]) : time();
+    if (!preg_match('/^audio\d+$/', $key)) {
+        continue;
+    }
+    if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+        continue;
+    }
 
-        $filename = 'audio_' . $USER->id . '_' . $capturetime . '_' . $key . '.webm';
-        $filepath = $dest . $filename;
+    preg_match('/^audio(\d+)$/', $key, $matches);
+    $index = (int) $matches[1];
+    $capturetime = isset($timestamps[$index]) ? (int) $timestamps[$index] : time();
 
-        if (move_uploaded_file($file['tmp_name'], $filepath)) {
-            $record = new stdClass();
-            $record->quizid = $quizid;
-            $record->userid = $USER->id;
-            $record->attemptid = $attemptid;
-            $record->audioname = $filename;
-            $record->timecreated = $capturetime;
-            $DB->insert_record('quizaccess_proctor_audio', $record);
-            $savedfiles[] = $filename;
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => "Failed to move file for key $key",
-            ]);
-            exit;
-        }
+    $filename = 'audio_' . $USER->id . '_' . $attemptid . '_' . $index . '_' . $capturetime . '.webm';
+    $filename = clean_param($filename, PARAM_FILE);
+    if ($filename === '') {
+        continue;
+    }
+
+    $filepath = $dest . $filename;
+
+    if (move_uploaded_file($file['tmp_name'], $filepath)) {
+        $record = new stdClass();
+        $record->quizid = $quizid;
+        $record->userid = $USER->id;
+        $record->attemptid = $attemptid;
+        $record->audioname = $filename;
+        $record->timecreated = $capturetime;
+        $DB->insert_record('quizaccess_proctor_audio', $record);
+        $savedfiles[] = $filename;
+    } else {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Failed to save audio file',
+        ]);
+        exit;
     }
 }
 
