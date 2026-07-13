@@ -755,5 +755,13 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026040902, 'quizaccess', 'quizproctoring');
     }
 
+    if ($oldversion < 2026071200) {
+        // Force eye tracking and object detection off for all existing quizzes.
+        $DB->set_field('quizaccess_quizproctoring', 'enableeyecheckreal', 0);
+        $DB->set_field('quizaccess_quizproctoring', 'enableobjectdetect', 0);
+
+        upgrade_plugin_savepoint(true, 2026071200, 'quizaccess', 'quizproctoring');
+    }
+
     return true;
 }
