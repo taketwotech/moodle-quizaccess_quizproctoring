@@ -15,24 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Task definition for quizaccess_quizproctoring
+ * Map quiz classes that moved into namespaces in Moodle 4.2.
+ *
+ * Moodle 4.0 and 4.1 define quiz_attempt in mod/quiz/attemptlib.php.
+ * Moodle 4.2+ autoloads mod_quiz\quiz_attempt.
  *
  * @package    quizaccess_quizproctoring
- * @subpackage quizproctoring
- * @copyright  2024 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
+ * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
-$tasks = [
-    [
-        'classname' => 'quizaccess_quizproctoring\task\checkGetUserInfo',
-        'blocking' => 0,
-        'minute' => '0',
-        'hour' => '0,12',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
-    ],
-];
+if (!class_exists('mod_quiz\\quiz_attempt')) {
+    if (!class_exists('quiz_attempt', false)) {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
+    }
+    if (class_exists('quiz_attempt', false) && !class_exists('mod_quiz\\quiz_attempt', false)) {
+        class_alias('quiz_attempt', 'mod_quiz\\quiz_attempt');
+    }
+}

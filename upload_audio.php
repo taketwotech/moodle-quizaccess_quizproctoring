@@ -27,20 +27,85 @@ define('AJAX_SCRIPT', true);
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once(__DIR__ . '/compat.php');
 require_login();
 global $USER, $DB;
 
 $attemptid = required_param('attemptid', PARAM_INT);
 $quizid = required_param('quizid', PARAM_INT);
 
-$DB->get_record('quiz_attempts', [
+$proctorsettings = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $quizid]);
+if (empty($proctorsettings) || empty($proctorsettings->enablerecordaudio)) {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Audio recording is not enabled',
+    ]);
+    exit;
+}
+
+$attempt = $DB->get_record('quiz_attempts', [
     'id' => $attemptid,
     'userid' => $USER->id,
     'quiz' => $quizid,
 ], '*', MUST_EXIST);
 
+$allowedstates = [\mod_quiz\quiz_attempt::IN_PROGRESS, \mod_quiz\quiz_attempt::FINISHED];
+if (!in_array($attempt->state, $allowedstates, true)) {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Attempt is not open for uploads',
+    ]);
+    exit;
+}
+if ($attempt->state === \mod_quiz\quiz_attempt::FINISHED) {
+    $grace = 5 * MINSECS;
+    $finishedat = max((int) $attempt->timefinish, (int) $attempt->timemodified);
+    if ($finishedat > 0 && (time() - $finishedat) > $grace) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Attempt upload window has closed',
+        ]);
+        exit;
+    }
+}
+
 $dest = $CFG->dataroot . '/quizproctoring/audio/';
 check_dir_exists($dest, true, true);
+
+/**
+ * True when the file is a complete WebM, Ogg, or MP4/M4A container.
+ *
+ * @param string $pathname Temp upload path
+ * @return bool
+ */
+function quizproctoring_upload_audio_is_playable($pathname) {
+    if (!is_readable($pathname)) {
+        return false;
+    }
+    $size = filesize($pathname);
+    if ($size === false || $size < 1024) {
+        return false;
+    }
+    $handle = fopen($pathname, 'rb');
+    if (!$handle) {
+        return false;
+    }
+    $header = fread($handle, 8);
+    fclose($handle);
+    if ($header === false || strlen($header) < 4) {
+        return false;
+    }
+    // WebM / EBML.
+    if (substr($header, 0, 4) === "\x1A\x45\xDF\xA3") {
+        return true;
+    }
+    // Ogg.
+    if (substr($header, 0, 4) === 'OggS') {
+        return true;
+    }
+    // MP4 / M4A ftyp box.
+    return strlen($header) >= 8 && substr($header, 4, 4) === 'ftyp';
+}
 
 $timestampsraw = optional_param('timestamps', '[]', PARAM_RAW);
 $timestamps = json_decode($timestampsraw, true);
@@ -57,12 +122,17 @@ foreach ($_FILES as $key => $file) {
     if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
         continue;
     }
+    if (!quizproctoring_upload_audio_is_playable($file['tmp_name'])) {
+        continue;
+    }
 
     preg_match('/^audio(\d+)$/', $key, $matches);
     $index = (int) $matches[1];
     $capturetime = isset($timestamps[$index]) ? (int) $timestamps[$index] : time();
 
-    $filename = 'audio_' . $USER->id . '_' . $attemptid . '_' . $index . '_' . $capturetime . '.webm';
+    $clientname = isset($file['name']) ? strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) : '';
+    $safeext = in_array($clientname, ['webm', 'm4a', 'ogg', 'mp4', 'aac'], true) ? $clientname : 'webm';
+    $filename = 'audio_' . $USER->id . '_' . $attemptid . '_' . $index . '_' . $capturetime . '.' . $safeext;
     $filename = clean_param($filename, PARAM_FILE);
     if ($filename === '') {
         continue;

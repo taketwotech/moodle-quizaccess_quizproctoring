@@ -114,24 +114,34 @@ if (!empty($searchval)) {
 }
 
 $total = $DB->count_records_sql("
-    SELECT COUNT(*)
+    SELECT COUNT(1)
     FROM {quizaccess_main_proctor} qmp
     JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
-    JOIN {quiz} q ON q.id = qa.quiz
-    JOIN {user} u ON u.id = qmp.userid
     $wheresql
 ", $params);
 
-$sql = "SELECT qmp.*, qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades,
-        q.grade AS maxgrade, q.sumgrades AS maxsumgrades, q.decimalpoints, u.email, u.username,
-        (SELECT COUNT(*) FROM {quizaccess_proctor_alert} qpa
-         WHERE qpa.attemptid = qa.id
-         AND qpa.alertmessage IS NOT NULL
-         AND qpa.alertmessage != '') AS alertcount
+$alertjoin = '';
+$alertselect = '';
+if ($enableteacherproctor == 1) {
+    $alertselect = ", COALESCE(alc.alertcount, 0) AS alertcount";
+    $alertjoin = " LEFT JOIN (
+            SELECT attemptid, COUNT(1) AS alertcount
+            FROM {quizaccess_proctor_alert}
+            WHERE quizid = :quizidalert AND userid = :useridalert
+              AND alertmessage IS NOT NULL AND alertmessage <> ''
+            GROUP BY attemptid
+        ) alc ON alc.attemptid = qa.id ";
+    $params['quizidalert'] = $quizid;
+    $params['useridalert'] = $userid;
+}
+
+$sql = "SELECT qmp.id, qmp.attemptid, qmp.user_identity, qmp.deviceinfo,
+        qmp.isautosubmit, qmp.issubmitbyteacher, qmp.iseyecheck, qmp.iseyedisabledbyteacher,
+        qa.timestart, qa.timefinish, qa.attempt, qa.sumgrades
+        $alertselect
         FROM {quizaccess_main_proctor} qmp
         JOIN {quiz_attempts} qa ON qa.id = qmp.attemptid
-        JOIN {quiz} q ON q.id = qa.quiz
-        JOIN {user} u ON u.id = qmp.userid
+        $alertjoin
         $wheresql
         ORDER BY $ordercol $orderdir";
 
@@ -139,9 +149,61 @@ $records = $DB->get_records_sql($sql, $params, $start, $length);
 
 $data = [];
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
-// Get quiz object once for grade formatting functions.
 $quiz = $DB->get_record('quiz', ['id' => $quizid], '*', MUST_EXIST);
 require_once($CFG->dirroot . '/mod/quiz/lib.php');
+
+$attemptids = [];
+foreach ($records as $record) {
+    $attemptids[] = $record->attemptid;
+}
+
+$audiobyattempt = [];
+if ($enableaudio && !empty($attemptids)) {
+    [$ainsql, $ainparams] = $DB->get_in_or_equal($attemptids, SQL_PARAMS_NAMED, 'aaid');
+    $audiobyattempt = $DB->get_records_sql(
+        "SELECT DISTINCT attemptid
+         FROM {quizaccess_proctor_audio}
+         WHERE deleted = 0 AND attemptid $ainsql",
+        $ainparams
+    );
+}
+
+$alertsbyattempt = [];
+$teachers = [];
+if ($enableteacherproctor == 1 && !empty($attemptids)) {
+    [$alinsql, $alinparams] = $DB->get_in_or_equal($attemptids, SQL_PARAMS_NAMED, 'alid');
+    $alertparams = array_merge([
+        'quizid' => $quizid,
+        'userid' => $userid,
+    ], $alinparams);
+    $allalerts = $DB->get_records_sql(
+        "SELECT id, attemptid, alertmessage, teacherid, timecreated
+         FROM {quizaccess_proctor_alert}
+         WHERE quizid = :quizid AND userid = :userid AND attemptid $alinsql
+         ORDER BY timecreated ASC",
+        $alertparams
+    );
+    $teacherids = [];
+    foreach ($allalerts as $alert) {
+        if (empty($alert->alertmessage)) {
+            continue;
+        }
+        $alertsbyattempt[$alert->attemptid][] = $alert;
+        if (!empty($alert->teacherid)) {
+            $teacherids[$alert->teacherid] = $alert->teacherid;
+        }
+    }
+    if (!empty($teacherids)) {
+        [$tinsql, $tinparams] = $DB->get_in_or_equal(array_values($teacherids), SQL_PARAMS_NAMED, 'tid');
+        $teacherrecords = $DB->get_records_sql(
+            "SELECT id, firstname, lastname FROM {user} WHERE id $tinsql",
+            $tinparams
+        );
+        foreach ($teacherrecords as $teacher) {
+            $teachers[$teacher->id] = fullname($teacher);
+        }
+    }
+}
 
 foreach ($records as $record) {
     $attempt = (object)[
@@ -216,16 +278,24 @@ foreach ($records as $record) {
 
     $paudio = '';
     if ($enableaudio) {
-        $sql = "SELECT * FROM {quizaccess_proctor_audio}
-                WHERE attemptid = :attemptid AND deleted = 0 ORDER BY id ASC LIMIT 1";
-        $params = ['attemptid' => $attempt->id];
-        $proctoringaudiorecord = $DB->get_record_sql($sql, $params);
-        if ($proctoringaudiorecord) {
-            $paudio = '<a href="#" class="proctoringaudio"
-                data-attemptid="' . $attempt->id . '"
-                data-startdate="' . $timestart . '">' .
-                get_string("viewaudio", "quizaccess_quizproctoring") .
-                '</a>';
+        if (!empty($audiobyattempt[$attempt->id])) {
+            $viewaudiotitle = get_string('viewaudio', 'quizaccess_quizproctoring');
+            $paudio = html_writer::link(
+                '#',
+                $OUTPUT->pix_icon(
+                    'microphone',
+                    $viewaudiotitle,
+                    'quizaccess_quizproctoring',
+                    ['class' => 'icon']
+                ),
+                [
+                    'class' => 'proctoringaudio',
+                    'data-attemptid' => $attempt->id,
+                    'data-startdate' => $timestart,
+                    'title' => $viewaudiotitle,
+                    'aria-label' => $viewaudiotitle,
+                ]
+            );
         } else {
             $paudio = get_string("noaudio", "quizaccess_quizproctoring");
         }
@@ -246,7 +316,7 @@ foreach ($records as $record) {
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
                 data-userid="' . $user->id . '"
-                data-useremail="' . s($record->email) . '"
+                data-useremail="' . s($user->email) . '"
                 data-action="disable"
                 title="' . get_string('eyeoff', 'quizaccess_quizproctoring') . '">
                 <input type="checkbox" checked>
@@ -257,7 +327,7 @@ foreach ($records as $record) {
                 data-cmid="' . $cmid . '"
                 data-attemptid="' . $attempt->id . '"
                 data-userid="' . $user->id . '"
-                data-useremail="' . s($record->email) . '"
+                data-useremail="' . s($user->email) . '"
                 data-action="enable"
                 title="' . get_string('eyeon', 'quizaccess_quizproctoring') . '">
                 <input type="checkbox">
@@ -283,8 +353,8 @@ foreach ($records as $record) {
     $gradesdisplay = '-';
     if (isset($record->sumgrades) && $record->sumgrades !== null && $attempt->timefinish) {
         $rawgrade = (float)$record->sumgrades;
-        $maxsumgrades = (float)($record->maxsumgrades ?? 0);
-        $maxgrade = (float)($record->maxgrade ?? 0);
+        $maxsumgrades = (float)($quiz->sumgrades ?? 0);
+        $maxgrade = (float)($quiz->grade ?? 0);
 
         // Calculate scaled grade (same as quiz_rescale_grade).
         if ($maxsumgrades > 0) {
@@ -312,49 +382,24 @@ foreach ($records as $record) {
         }
     }
 
-    $alerts = $DB->get_records('quizaccess_proctor_alert', [
-        'attemptid' => $attempt->id,
-        'userid' => $userid,
-        'quizid' => $quizid,
-    ], 'timecreated ASC');
-
     $alertsdisplay = '-';
+    $alerts = $alertsbyattempt[$attempt->id] ?? [];
     if (!empty($alerts)) {
         $alertdata = [];
-        // Get unique teacher IDs from alerts.
-        $teacherids = array_filter(array_unique(array_column($alerts, 'teacherid')));
-        $teachers = [];
-        if (!empty($teacherids)) {
-            [$insql, $inparams] = $DB->get_in_or_equal($teacherids);
-            $teacherrecords = $DB->get_records_sql(
-                "SELECT id, firstname, lastname FROM {user} WHERE id $insql",
-                $inparams
-            );
-            foreach ($teacherrecords as $teacher) {
-                $teachers[$teacher->id] = fullname($teacher);
-            }
-        }
-
         foreach ($alerts as $alert) {
-            // Skip alerts with null or empty alertmessage.
-            if (empty($alert->alertmessage)) {
-                continue;
-            }
             $alerttime = userdate($alert->timecreated, get_string('strftimerecent', 'langconfig'));
-            $alerttext = $alert->alertmessage;
             $teachername = '';
             if (!empty($alert->teacherid) && isset($teachers[$alert->teacherid])) {
                 $teachername = $teachers[$alert->teacherid];
             }
             $alertdata[] = [
-                'message' => $alerttext,
+                'message' => $alert->alertmessage,
                 'time' => $alerttime,
                 'timestamp' => $alert->timecreated,
                 'teacher' => $teachername,
             ];
         }
 
-        // Only show alert icon if there are valid alerts.
         if (!empty($alertdata)) {
             $alertcount = count($alertdata);
             // Encode alert data for JavaScript.

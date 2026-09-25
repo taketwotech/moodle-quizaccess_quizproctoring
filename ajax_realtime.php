@@ -63,12 +63,19 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-$mainentry = $DB->get_record('quizaccess_main_proctor', [
-    'userid' => $USER->id,
-    'quizid' => $cm->instance,
-    'image_status' => 'M',
-    'attemptid' => $attemptid,
-]);
+if (!$mainimage) {
+    $attemptstate = $DB->get_field('quiz_attempts', 'state', [
+        'id' => $attemptid,
+        'userid' => $USER->id,
+        'quiz' => $cm->instance,
+    ]);
+    if ($attemptstate !== 'inprogress') {
+        echo json_encode(['success' => 1]);
+        exit;
+    }
+}
+
+$mainentry = quizaccess_quizproctoring_get_main_proctor($USER->id, $cm->instance, $attemptid);
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
 

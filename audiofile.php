@@ -35,7 +35,16 @@ if (!file_exists($filepath)) {
     echo "File not found.";
     exit;
 }
-$mime = mime_content_type($filepath);
+
+$ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+$mimes = [
+    'webm' => 'audio/webm',
+    'm4a' => 'audio/mp4',
+    'mp4' => 'audio/mp4',
+    'aac' => 'audio/aac',
+    'ogg' => 'audio/ogg',
+];
+$mime = isset($mimes[$ext]) ? $mimes[$ext] : (mime_content_type($filepath) ?: 'application/octet-stream');
 header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($filepath));
 header('Accept-Ranges: bytes');

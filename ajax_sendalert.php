@@ -27,6 +27,7 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once(__DIR__ . '/compat.php');
 require_login();
 global $DB, $USER;
 use mod_quiz\quiz_attempt;

@@ -26,6 +26,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__ . '/lib.php');
+
 if (class_exists('\mod_quiz\local\access_rule_base')) {
     class_alias('\mod_quiz\local\access_rule_base', '\quizaccess_quizproctoring_rule_base');
     class_alias('\mod_quiz\form\preflight_check_form', '\quizaccess_quizproctoring_preflight_form');
@@ -68,8 +70,6 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
     public function prevent_access() {
         global $USER;
         $isadmin = is_siteadmin($USER);
-        $url = new moodle_url('/admin/settings.php', ['section' => 'modsettingsquizcatproctoring']);
-        $url = $url->out();
         $attemptid = optional_param('attempt', 0, PARAM_INT);
 
         $isactive = get_config('quizaccess_quizproctoring', 'getuserinfo');
@@ -80,15 +80,15 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 return false;
             } else {
                 if (empty($attemptid)) {
-                    return get_string('warningstudent', 'quizaccess_quizproctoring');
+                    return $this->student_configuration_required_message();
                 }
             }
         }
         if (empty($accesstoken) || empty($accesstokensecret)) {
             if ($isadmin) {
-                return get_string('warningopensourse', 'quizaccess_quizproctoring', $url);
+                return $this->token_configuration_required_message();
             } else {
-                return get_string('warningstudent', 'quizaccess_quizproctoring');
+                return $this->student_configuration_required_message();
             }
         }
 
@@ -97,6 +97,30 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Non-dismissible notice shown while ProctorLink tokens are missing.
+     *
+     * @return string
+     */
+    protected function token_configuration_required_message() {
+        return html_writer::span(
+            get_string('tokenconfigrequired_desc', 'quizaccess_quizproctoring'),
+            'quizproctoring-token-alert text-primary'
+        );
+    }
+
+    /**
+     * Student notice when the site is not configured for proctoring.
+     *
+     * @return string
+     */
+    protected function student_configuration_required_message() {
+        return html_writer::span(
+            get_string('warningstudent', 'quizaccess_quizproctoring'),
+            'quizproctoring-student-config-notice text-primary'
+        );
     }
 
     /**
@@ -145,6 +169,14 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         if ($isactive === '0' && $isadmin) {
             $notice = '<span class="delete-icon">' . get_string('warningexpire', 'quizaccess_quizproctoring') . '</span>';
         }
+        $accesstoken = get_config('quizaccess_quizproctoring', 'accesstoken');
+        $accesstokensecret = get_config('quizaccess_quizproctoring', 'accesstokensecret');
+        $tokensmissing = empty($accesstoken) || empty($accesstokensecret);
+        if ($isadmin && $tokensmissing) {
+            $notice .= $this->token_configuration_required_message();
+        } else if (!$isadmin && ($tokensmissing || $isactive === '0')) {
+            $notice .= $this->student_configuration_required_message();
+        }
         return get_string('proctoringnotice', 'quizaccess_quizproctoring') . '<br>' . $notice . $button;
     }
 
@@ -156,8 +188,21 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
      *
      */
     public function is_preflight_check_required($attemptid) {
-        global $SESSION, $DB, $USER;
+        global $SESSION, $DB, $USER, $SCRIPT;
         $attemptid = $attemptid ? $attemptid : 0;
+
+        // Only skip a second identity form inside the browser-security popup.
+        // With security "none", startattempt.php must still run validate_preflight_check
+        // so image_status is promoted from I to M as before.
+        if (!empty($SESSION->proctoringcheckedquizzes[$this->quiz->id])
+                && !empty($this->quiz->browsersecurity)
+                && $this->quiz->browsersecurity === 'securewindow') {
+            $onstartattempt = is_string($SCRIPT) && strpos($SCRIPT, 'startattempt.php') !== false;
+            if ($onstartattempt || $attemptid) {
+                return false;
+            }
+        }
+
         if (
             $DB->record_exists('quizaccess_main_proctor', [
                 'quizid' => $this->quiz->id,
@@ -191,10 +236,67 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         MoodleQuickForm $mform,
         $attemptid
     ) {
-        global $PAGE, $DB, $USER;
+        global $PAGE, $DB, $USER, $COURSE;
 
         $securewindow = $DB->get_record('quiz', ['id' => $this->quiz->id]);
         $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $this->quiz->id]);
+        $studenthexstring = get_config('quizaccess_quizproctoring', 'quizproctoringhexstring');
+        $fullname = $USER->id . '-' . $USER->firstname . ' ' . $USER->lastname;
+        $warningsleft = isset($proctoringdata->warning_threshold) ? (int)$proctoringdata->warning_threshold : 0;
+        // When continuing an in-progress attempt, subtract warnings already stored for it.
+        if (!empty($attemptid) && $warningsleft > 0) {
+            $inparams = [
+                'param1' => QUIZACCESS_QUIZPROCTORING_NOFACEDETECTED,
+                'param2' => QUIZACCESS_QUIZPROCTORING_MULTIFACESDETECTED,
+                'param3' => QUIZACCESS_QUIZPROCTORING_FACESNOTMATCHED,
+                'param4' => QUIZACCESS_QUIZPROCTORING_FACEMASKDETECTED,
+                'param5' => QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
+                'param6' => QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                'param7' => QUIZACCESS_QUIZPROCTORING_EYESNOTOPENED,
+                'param8' => QUIZACCESS_QUIZPROCTORING_LEFTMOVEDETECTED,
+                'param9' => QUIZACCESS_QUIZPROCTORING_RIGHTMOVEDETECTED,
+                'param10' => QUIZACCESS_QUIZPROCTORING_OBJECTDETECTED,
+                'param11' => QUIZACCESS_QUIZPROCTORING_NOCAMERADISABLED,
+                'param12' => QUIZACCESS_QUIZPROCTORING_NOMICROPHONEDISABLED,
+                'userid' => $USER->id,
+                'quizid' => $this->quiz->id,
+                'attemptid' => $attemptid,
+                'image_status' => 'A',
+            ];
+            $sql = "SELECT * from {quizaccess_proctor_data} where userid = :userid AND
+            quizid = :quizid AND attemptid = :attemptid AND image_status = :image_status
+            AND status IN (:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,
+            :param11,:param12)";
+            $errorrecords = $DB->get_records_sql($sql, $inparams);
+            $warningsleft = max(0, $warningsleft - count($errorrecords));
+        }
+        $warningemailthreshold = isset($proctoringdata->warning_email_threshold)
+            ? (int)$proctoringdata->warning_email_threshold : 0;
+        $usergroup = '';
+        $courseid = !empty($COURSE->id) ? $COURSE->id : $this->quiz->course;
+        $proctoringgrouping = $DB->get_record('groupings', ['name' => 'proctoring', 'courseid' => $courseid]);
+        if ($proctoringgrouping) {
+            $sql = "SELECT g.name
+                    FROM {groups} g
+                    JOIN {groupings_groups} gg ON g.id = gg.groupid
+                    JOIN {groups_members} gm ON g.id = gm.groupid
+                    WHERE gg.groupingid = :groupingid
+                    AND gm.userid = :userid";
+            $usergroup = $DB->get_field_sql($sql, [
+                'groupingid' => $proctoringgrouping->id,
+                'userid' => $USER->id,
+            ]);
+            if ($usergroup === false) {
+                $usergroup = '';
+            }
+        }
+        $detectionval = get_user_preferences('eye_detection', null, $USER->id);
+        if ($detectionval === null) {
+            $detectionval = get_user_preferences('eye_detection_global', null, $USER->id);
+        }
+        if (!empty($proctoringdata->enablerecordaudio)) {
+            $PAGE->requires->js('/mod/quiz/accessrule/quizproctoring/libraries/js/audiorecord.js', true);
+        }
         $PAGE->requires->js_call_amd(
             'quizaccess_quizproctoring/add_camera',
             'init',
@@ -206,12 +308,20 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 false,
                 $this->quiz->id,
                 $proctoringdata->enableeyecheckreal,
-                null,
+                $studenthexstring,
                 $proctoringdata->enableteacherproctor,
                 $securewindow->browsersecurity,
-                null,
-                1,
+                $fullname,
+                $proctoringdata->enablestudentvideo,
                 $proctoringdata->enablerecordaudio,
+                $proctoringdata->enableobjectdetect,
+                $proctoringdata->time_interval,
+                $warningsleft,
+                $USER->id,
+                $usergroup,
+                $detectionval,
+                $warningemailthreshold,
+                (int) $proctoringdata->storeallimages,
             ]
         );
         $PAGE->requires->strings_for_js(
@@ -221,6 +331,12 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
                 'nocameradetected',
                 'nocameradetectedm',
                 'verificationunavailable',
+                'tabwarning',
+                'tabwarningoneleft',
+                'tabwarningmultiple',
+                'warningsleft',
+                'warning',
+                'warnings',
             ],
             'quizaccess_quizproctoring'
         );
@@ -234,25 +350,8 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
 
         if ($proctoringdata->enableprofilematch == 1) {
             $datauri = null;
-            $context = context_user::instance($USER->id);
-            $sql = "SELECT * FROM {files} WHERE contextid =
-            :contextid AND component = 'user' AND
-            filearea = 'icon' AND itemid = 0 AND
-            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
-            ORDER BY timemodified, filename DESC LIMIT 1";
-            $params = ['contextid' => $context->id];
-            $filerecord = $DB->get_record_sql($sql, $params);
-            if ($filerecord) {
-                $fs = get_file_storage();
-                $file = $fs->get_file(
-                    $filerecord->contextid,
-                    $filerecord->component,
-                    $filerecord->filearea,
-                    $filerecord->itemid,
-                    $filerecord->filepath,
-                    $filerecord->filename
-                );
-                $profileimage = $file->get_content();
+            $profileimage = quizaccess_quizproctoring_get_user_profile_image_content($USER->id);
+            if ($profileimage !== '') {
                 $base64image = base64_encode($profileimage);
                 $datauri = 'data:image/jpeg;base64,' . $base64image;
             }
@@ -316,7 +415,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $button = html_writer::tag(
             'button',
             get_string('takepicture', 'quizaccess_quizproctoring'),
-            ['class' => 'btn btn-primary', 'id' => 'takepicture']
+            ['class' => 'btn btn-primary', 'id' => 'takepicture', 'type' => 'button']
         );
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');
@@ -327,7 +426,7 @@ class quizaccess_quizproctoring extends quizaccess_quizproctoring_rule_base {
         $button = html_writer::tag(
             'button',
             get_string('retake', 'quizaccess_quizproctoring'),
-            ['class' => 'btn btn-primary hidden', 'id' => 'retake']
+            ['class' => 'btn btn-primary hidden', 'id' => 'retake', 'type' => 'button']
         );
         $html .= html_writer::div($button, 'col-md-9');
         $html .= html_writer::end_tag('div');

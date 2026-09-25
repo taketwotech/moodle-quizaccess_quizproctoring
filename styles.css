@@ -1,10 +1,226 @@
-#page-mod-quiz-attempt .quizaccess_quizproctoring-video {
-    position: absolute;
+#page-mod-quiz-attempt .quizaccess_quizproctoring-video,
+body.proctorlink-attempt-shell video.quizaccess_quizproctoring-video {
+    position: fixed;
     bottom: 0;
     right: 0;
+    left: auto;
     z-index: 9999999;
-    width: 240px;
-    cursor: move;
+    /* stylelint-disable declaration-no-important */
+    width: 180px !important;
+    height: 135px !important;
+    max-width: 180px !important;
+    max-height: 135px !important;
+    /* stylelint-enable declaration-no-important */
+    object-fit: cover;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-user-drag: none;
+    transition: none;
+}
+
+/* Wrapper receives hover/drag so Safari never paints a pause control on the <video>. */
+.proctorlink-video-wrap {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    z-index: 9999999;
+    /* stylelint-disable declaration-no-important */
+    width: 180px !important;
+    height: 135px !important;
+    max-width: 180px !important;
+    max-height: 135px !important;
+    /* stylelint-enable declaration-no-important */
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-user-drag: none;
+    overflow: hidden;
+}
+
+.proctorlink-video-wrap.video-dragging {
+    cursor: grabbing;
+    /* stylelint-disable-next-line declaration-no-important */
+    will-change: transform;
+}
+
+.proctorlink-video-wrap.video-drag-positioned {
+    bottom: auto;
+    right: auto;
+}
+
+.proctorlink-video-wrap.quizproctoring-video-offscreen {
+    /* Keep a real box in the viewport so mobile browsers still decode frames.
+       Sit above the quiz iframe: iOS Safari drops frames when that iframe covers
+       the video, so interval images and covered-camera alerts never run.
+       Opacity hides it from the student. Do not use display:none. */
+    /* stylelint-disable declaration-no-important */
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 240px !important;
+    height: 180px !important;
+    max-width: 240px !important;
+    max-height: 180px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 0.01 !important;
+    pointer-events: none !important;
+    z-index: 1001 !important;
+    overflow: hidden !important;
+    /* stylelint-enable declaration-no-important */
+}
+
+.proctorlink-video-wrap video.quizaccess_quizproctoring-video,
+.proctorlink-video-wrap #video,
+#page-mod-quiz-attempt .proctorlink-video-wrap video.quizaccess_quizproctoring-video,
+#page-mod-quiz-attempt .proctorlink-video-wrap #video,
+body.proctorlink-attempt-shell .proctorlink-video-wrap video.quizaccess_quizproctoring-video,
+body.proctorlink-attempt-shell .proctorlink-video-wrap #video {
+    /* stylelint-disable declaration-no-important */
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    right: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    pointer-events: none !important;
+    /* stylelint-enable declaration-no-important */
+    object-fit: cover;
+    cursor: inherit;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-user-drag: none;
+}
+
+video.quizaccess_quizproctoring-video:fullscreen,
+video.quizaccess_quizproctoring-video:-moz-full-screen,
+video.quizaccess_quizproctoring-video:-webkit-full-screen,
+.proctorlink-video-wrap:fullscreen,
+.proctorlink-video-wrap:-moz-full-screen,
+.proctorlink-video-wrap:-webkit-full-screen,
+#video:fullscreen,
+#video:-moz-full-screen {
+    /* stylelint-disable declaration-no-important */
+    width: 180px !important;
+    height: 135px !important;
+    max-width: 180px !important;
+    max-height: 135px !important;
+    /* stylelint-enable declaration-no-important */
+}
+
+/* Safari draws native play/pause chrome on hover even without controls. */
+.quizaccess_quizproctoring-video::-webkit-media-controls,
+.quizaccess_quizproctoring-video::-webkit-media-controls-enclosure,
+.quizaccess_quizproctoring-video::-webkit-media-controls-overlay-enclosure,
+.quizaccess_quizproctoring-video::-webkit-media-controls-panel,
+.quizaccess_quizproctoring-video::-webkit-media-controls-start-playback-button,
+.quizaccess_quizproctoring-video::-webkit-media-controls-overlay-play-button,
+.quizaccess_quizproctoring-video::-webkit-media-controls-play-button,
+.quizaccess_quizproctoring-video::-webkit-media-controls-pause-button,
+.quizaccess_quizproctoring-video::-webkit-media-controls-mute-button,
+.quizaccess_quizproctoring-video::-webkit-media-controls-fullscreen-button,
+.quizaccess_quizproctoring-video::-webkit-media-controls-toggle-closed-captions-button,
+#video::-webkit-media-controls,
+#video::-webkit-media-controls-enclosure,
+#video::-webkit-media-controls-overlay-enclosure,
+#video::-webkit-media-controls-panel,
+#video::-webkit-media-controls-start-playback-button,
+#video::-webkit-media-controls-overlay-play-button,
+#video::-webkit-media-controls-play-button,
+#video::-webkit-media-controls-pause-button,
+#video::-webkit-media-controls-mute-button,
+#video::-webkit-media-controls-fullscreen-button,
+#video::-webkit-media-controls-toggle-closed-captions-button {
+    /* stylelint-disable declaration-no-important */
+    display: none !important;
+    /* stylelint-enable declaration-no-important */
+    -webkit-appearance: none;
+    appearance: none;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    width: 0;
+    height: 0;
+}
+
+/* Stopped webcam otherwise paints a black rectangle after Cancel. */
+.moodle-dialogue.yui3-widget-hidden #video,
+.moodle-dialogue-hidden #video,
+.mod_quiz_preflight_popup.yui3-widget-hidden #video {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+}
+
+.moodle-dialogue-base .moodle-dialogue.mod_quiz_preflight_popup #video,
+.mod_quiz_preflight_popup #video,
+.videohtml #video {
+    /* stylelint-disable declaration-no-important */
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 320px !important;
+    height: 240px !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    pointer-events: none !important;
+    /* stylelint-enable declaration-no-important */
+    object-fit: cover;
+}
+
+.moodle-dialogue-base .mod_quiz_preflight_popup .proctorlink-video-wrap,
+.mod_quiz_preflight_popup .proctorlink-video-wrap,
+.videohtml .proctorlink-video-wrap {
+    /* stylelint-disable declaration-no-important */
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    bottom: auto !important;
+    right: auto !important;
+    left: auto !important;
+    top: auto !important;
+    overflow: visible !important;
+    /* stylelint-enable declaration-no-important */
+}
+
+#page-mod-quiz-attempt .quizaccess_quizproctoring-video.video-dragging,
+body.proctorlink-attempt-shell video.quizaccess_quizproctoring-video.video-dragging {
+    cursor: grabbing;
+    transition: none;
+    /* stylelint-disable-next-line declaration-no-important */
+    will-change: transform;
+}
+
+/* Secure-window / quiz iframe otherwise swallows mouseup and the preview stays stuck. */
+body.proctorlink-video-is-dragging {
+    cursor: grabbing;
+    /* stylelint-disable declaration-no-important */
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    /* stylelint-enable declaration-no-important */
+}
+
+body.proctorlink-video-is-dragging iframe {
+    /* stylelint-disable-next-line declaration-no-important */
+    pointer-events: none !important;
+}
+
+#page-mod-quiz-attempt .quizaccess_quizproctoring-video.video-drag-positioned,
+body.proctorlink-attempt-shell video.quizaccess_quizproctoring-video.video-drag-positioned {
+    bottom: auto;
+    right: auto;
 }
 .videos-container {
     display: flex;
@@ -122,6 +338,32 @@ label[for="id_consentcheckbox"] {
 
 .proctoridentity {
     cursor: pointer;
+}
+
+.proctoringaudio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.proctoringaudio:hover,
+.proctoringaudio:focus {
+    text-decoration: none;
+    opacity: 0.85;
+}
+
+.proctoringaudio .icon,
+.proctoringaudio img.icon,
+.proctoringaudio svg.icon {
+    margin: 0;
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+    vertical-align: middle;
 }
 
 .device-info-icon {
@@ -666,6 +908,301 @@ label[for="id_consentcheckbox"] {
     bottom: 0;
 }
 
+#page-mod-quiz-attempt .student-iframe-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    width: 230px;
+    height: 173px;
+}
+
+/* Parent shell may remain on quiz view.php while attempt runs in iframe.
+   ProctorLink student iframe stays hidden (teacher stream only). */
+body.proctorlink-attempt-shell .student-iframe-container {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10050;
+    width: 230px;
+    height: 173px;
+}
+
+body.proctorlink-attempt-shell .student-iframe-container.quizproctoring-video-offscreen,
+.student-iframe-container.quizproctoring-video-offscreen {
+    /* Keep the live iframe painting so WebRTC can publish. Hidden from the student. */
+    /* stylelint-disable declaration-no-important */
+    display: block !important;
+    visibility: visible !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 240px !important;
+    height: 180px !important;
+    opacity: 0.01 !important;
+    pointer-events: none !important;
+    /* Above the quiz iframe (z-index 1000). Firefox drops the teacher stream
+       when that iframe covers the publisher. */
+    z-index: 1002 !important;
+    overflow: hidden !important;
+    /* stylelint-enable declaration-no-important */
+}
+
+body.proctorlink-attempt-shell .student-iframe-container.quizproctoring-video-offscreen iframe,
+.student-iframe-container.quizproctoring-video-offscreen iframe {
+    /* stylelint-disable declaration-no-important */
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    /* stylelint-enable declaration-no-important */
+    border: none;
+}
+
+body.proctorlink-attempt-shell .student-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 3px;
+}
+
+body.proctorlink-attempt-shell video.quizaccess_quizproctoring-video {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    z-index: 9999999;
+    /* stylelint-disable declaration-no-important */
+    width: 180px !important;
+    height: 135px !important;
+    max-width: 180px !important;
+    max-height: 135px !important;
+    /* stylelint-enable declaration-no-important */
+    object-fit: cover;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-user-drag: none;
+    transition: none;
+}
+
+body.proctorlink-attempt-shell .proctorlink-video-wrap {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    z-index: 9999999;
+    /* stylelint-disable declaration-no-important */
+    width: 180px !important;
+    height: 135px !important;
+    max-width: 180px !important;
+    max-height: 135px !important;
+    /* stylelint-enable declaration-no-important */
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-user-drag: none;
+    overflow: hidden;
+}
+
+body.proctorlink-attempt-shell .proctorlink-video-wrap video.quizaccess_quizproctoring-video,
+body.proctorlink-attempt-shell .proctorlink-video-wrap #video {
+    /* stylelint-disable declaration-no-important */
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    pointer-events: none !important;
+    /* stylelint-enable declaration-no-important */
+}
+
+#page-mod-quiz-attempt .student-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 3px;
+}
+
+/* Attempt-in-iframe shell: parent keeps ProctorLink alive across question nav. */
+body.proctorlink-attempt-shell #page,
+body.proctorlink-attempt-shell #page-header,
+body.proctorlink-attempt-shell #page-navbar,
+body.proctorlink-attempt-shell #nav-drawer,
+body.proctorlink-attempt-shell #page-footer,
+body.proctorlink-attempt-shell .navbar,
+body.proctorlink-attempt-shell .fixed-top.navbar,
+body.proctorlink-attempt-shell .toast-wrapper,
+body.proctorlink-attempt-shell .mod_quiz_preflight_popup,
+body.proctorlink-attempt-shell .drawer,
+body.proctorlink-attempt-shell .drawer-toggler,
+body.proctorlink-attempt-shell #theme_boost-drawers-blocks,
+body.proctorlink-attempt-shell #theme_boost-drawers-courseindex,
+body.proctorlink-attempt-shell #theme_boost-drawers-primary {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+}
+
+html.proctorlink-quiz-iframe {
+    scrollbar-gutter: stable;
+}
+
+html.proctorlink-quiz-iframe body {
+    scrollbar-gutter: stable;
+}
+
+/* Drag/order questions inside the attempt iframe (iOS touch + HTML5 DnD). */
+html.proctorlink-quiz-iframe .que [draggable="true"],
+html.proctorlink-quiz-iframe .que .draghome,
+html.proctorlink-quiz-iframe .que .dropzone,
+html.proctorlink-quiz-iframe .que .droparea,
+html.proctorlink-quiz-iframe .qtype_ordering,
+html.proctorlink-quiz-iframe .qtype_ordering li {
+    touch-action: auto;
+    /* stylelint-disable-next-line property-no-vendor-prefix */
+    -webkit-user-drag: auto;
+}
+
+/* Keep scrollbar space reserved so attempt↔summary / shell swaps do not shift left. */
+body#page-mod-quiz-attempt,
+body#page-mod-quiz-summary,
+html:has(body#page-mod-quiz-attempt),
+html:has(body#page-mod-quiz-summary),
+html:has(body.proctorlink-attempt-shell),
+html:has(body.proctorlink-shell-preparing),
+html.proctorlink-quiz-iframe {
+    scrollbar-gutter: stable;
+}
+
+/* Boost animates #page.drawers margin — disable so drawer preference cannot slide content. */
+body#page-mod-quiz-attempt #page.drawers,
+body#page-mod-quiz-summary #page.drawers,
+body.proctorlink-shell-preparing #page.drawers,
+html.proctorlink-quiz-iframe #page.drawers {
+    /* stylelint-disable-next-line declaration-no-important */
+    transition: none !important;
+}
+
+body.proctorlink-attempt-shell {
+    overflow: hidden;
+    /* Keep width stable when overflow hides the scrollbar. */
+    scrollbar-gutter: stable;
+}
+
+/* Keep parent attempt visible while iframe loads — avoids blank flash on enter/back.
+   Do NOT set overflow:hidden here: removing the scrollbar shifts quiz content left. */
+body.proctorlink-shell-preparing iframe.proctorlink-quiz-attempt-iframe,
+body.proctorlink-shell-preparing #proctorlink-quiz-in-if {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+    border: 0;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    /* Theme body surface — works for Boost, Classic, RemUI light/dark. */
+    background-color: var(--bs-body-bg, #fff);
+}
+
+body.proctorlink-attempt-shell iframe.proctorlink-quiz-attempt-iframe,
+body.proctorlink-attempt-shell #proctorlink-quiz-in-if {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Prefer inset over width:100% so scrollbar-gutter cannot shrink the iframe. */
+    width: auto;
+    height: auto;
+    border: 0;
+    z-index: 1000;
+    background-color: var(--bs-body-bg, #fff);
+}
+
+/* Full-page overlay: layout only. Spinner comes from core/loading (theme-overridable). */
+.proctorlink-quiz-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    /* Match Moodle overlay-icon-container, but use theme body colour for dark themes. */
+    background-color: color-mix(in srgb, var(--bs-body-bg, #fff) 92%, transparent);
+    pointer-events: all;
+}
+
+@supports not (background-color: color-mix(in srgb, #fff 92%, transparent)) {
+    .proctorlink-quiz-loading {
+        background-color: rgba(255, 255, 255, 0.92);
+    }
+
+    [data-bs-theme="dark"] .proctorlink-quiz-loading {
+        background-color: rgba(33, 37, 41, 0.92);
+    }
+}
+
+.proctorlink-quiz-loading.is-visible {
+    display: flex;
+}
+
+.proctorlink-quiz-loading.is-leaving {
+    background-color: var(--bs-body-bg, #fff);
+}
+
+.proctorlink-quiz-loading-inner {
+    min-height: 3rem;
+}
+
+/* Match core .overlay-icon-container .loading-icon sizing so theme loaders scale well. */
+.proctorlink-quiz-loading .loading-icon .icon {
+    width: 2rem;
+    height: 2rem;
+    font-size: 2rem;
+    max-width: 2rem;
+    max-height: 2rem;
+}
+
+.proctorlink-quiz-loading .spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+body.proctorlink-attempt-shell.proctorlink-on-summary video.quizaccess_quizproctoring-video,
+body.proctorlink-attempt-shell.proctorlink-on-view video.quizaccess_quizproctoring-video,
+body.proctorlink-on-view video.quizaccess_quizproctoring-video,
+body.proctorlink-attempt-shell.proctorlink-on-summary .proctorlink-video-wrap,
+body.proctorlink-attempt-shell.proctorlink-on-view .proctorlink-video-wrap,
+body.proctorlink-on-view .proctorlink-video-wrap {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+}
+
+body.proctorlink-on-view .student-iframe-container {
+    /* stylelint-disable-next-line declaration-no-important */
+    display: none !important;
+}
+
+body.proctorlink-attempt-shell .student-iframe-container,
+body.proctorlink-attempt-shell video.quizaccess_quizproctoring-video,
+body.proctorlink-attempt-shell .custom-modal,
+body.proctorlink-attempt-shell .moodle-dialogue-base {
+    z-index: 9999999;
+}
+
 /* stylelint-disable declaration-no-important */
 #page-mod-quiz-accessrule-quizproctoring-room .block,
 #page-mod-quiz-accessrule-quizproctoring-room .columnleft,
@@ -843,12 +1380,21 @@ label[for="id_consentcheckbox"] {
     text-decoration: none;
 }
 
-/* Hide video on mobile devices */
+/* Hide the student preview on mobile. Capture video stays in the DOM via
+   .quizproctoring-video-offscreen (display:none stops frame decode). */
 @media only screen and (max-width: 767px) {
     /* stylelint-disable declaration-no-important */
-    #page-mod-quiz-attempt .quizaccess_quizproctoring-video,
-    .student-iframe-container {
+    .student-iframe-container:not(.quizproctoring-video-offscreen) {
         display: none !important;
+    }
+
+    .proctorlink-video-wrap.quizproctoring-video-offscreen,
+    .proctorlink-video-wrap.quizproctoring-video-offscreen video.quizaccess_quizproctoring-video,
+    body.quizproctoring-phone .proctorlink-video-wrap.quizproctoring-video-offscreen,
+    body.quizproctoring-phone .proctorlink-video-wrap.quizproctoring-video-offscreen video {
+        display: block !important;
+        visibility: visible !important;
+        pointer-events: none !important;
     }
     /* stylelint-enable declaration-no-important */
 
@@ -867,10 +1413,12 @@ label[for="id_consentcheckbox"] {
     /* stylelint-enable declaration-no-important */
 }
 
-/* Show video on larger screens */
+/* Show video on larger screens. */
 @media only screen and (min-width: 768px) {
-    #page-mod-quiz-attempt .quizaccess_quizproctoring-video {
-        display: block; /* Or use display: inline; or display: inline-block; as per your layout */
+    #page-mod-quiz-attempt .quizaccess_quizproctoring-video,
+    body.proctorlink-attempt-shell:not(.quizproctoring-phone):not(.proctorlink-on-view):not(.proctorlink-on-summary)
+    video.quizaccess_quizproctoring-video {
+        display: block;
     }
 }
 
@@ -965,4 +1513,27 @@ label[for="id_consentcheckbox"] {
 .audio-inline audio {
     flex-grow: 1;
     max-width: 100%;
+}
+
+.quizproctoring-token-alert,
+.quizproctoring-student-config-notice {
+    text-align: left;
+    margin: 12px 0;
+}
+
+.quizproctoring-token-alert,
+.quizproctoring-token-alert a,
+.quizproctoring-student-config-notice {
+    /* stylelint-disable-next-line declaration-no-important */
+    color: #0f6cbf !important;
+}
+
+.quizproctoring-token-alert a {
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+#page-mod-quiz-view .quizattempt .quizproctoring-token-alert,
+#page-mod-quiz-view .quizattempt .quizproctoring-student-config-notice {
+    display: none;
 }

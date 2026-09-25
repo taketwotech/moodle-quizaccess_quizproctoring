@@ -32,6 +32,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $courseid = required_param('courseid', PARAM_INT);
 $proctoringimageshow = optional_param('proctoringimageshow', 1, PARAM_INT);
 $enableaudio = optional_param('enableaudio', 0, PARAM_INT);
+$groupid = optional_param('groupid', 0, PARAM_INT);
 
 require_login();
 $context = context_module::instance($cmid);
@@ -58,6 +59,7 @@ if (isset($_POST['search']['value'])) {
 $columns = ['fullname', 'username', 'email', 'lastattempt', 'totalimages', 'warnings', 'review', 'actions'];
 $ordercolumn = 'u.firstname';
 $orderdir = 'ASC';
+$needfullcounts = false;
 
 if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
     $colindex = (int) $_POST['order'][0]['column'];
@@ -75,16 +77,15 @@ if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
                 $ordercolumn = 'u.email';
                 break;
             case 'lastattempt':
-                $ordercolumn = 'MAX(mp.timecreated)';
+                $ordercolumn = 'lastattempt';
                 break;
             case 'totalimages':
-                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
-                WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0)';
+                $ordercolumn = 'imagetotal';
+                $needfullcounts = true;
                 break;
             case 'warnings':
-                $ordercolumn = '(SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
-                WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
-                AND pd.status != \'\' AND pd.status != \'pendingprocessing\')';
+                $ordercolumn = 'warnings';
+                $needfullcounts = true;
                 break;
             default:
                 $ordercolumn = 'u.firstname';
@@ -92,11 +93,20 @@ if (!empty($_POST['order'][0]['column']) && isset($_POST['order'][0]['dir'])) {
     }
 }
 
-$where = "mp.quizid = :quizid AND mp.deleted = 0";
+$searchsql = '';
 $params = ['quizid' => $quizid];
+$groupjoin = '';
+
+if ($groupid > 0) {
+    $group = $DB->get_record('groups', ['id' => $groupid, 'courseid' => $courseid]);
+    if ($group) {
+        $groupjoin = " JOIN {groups_members} gm ON gm.userid = u.id AND gm.groupid = :groupid ";
+        $params['groupid'] = $groupid;
+    }
+}
 
 if (!empty($searchvalue)) {
-    $where .= " AND (
+    $searchsql = " AND (
         u.username LIKE :searchusername OR
         u.firstname LIKE :searchfirstname OR
         u.lastname LIKE :searchlastname OR
@@ -111,41 +121,115 @@ if (!empty($searchvalue)) {
 $totalsql = "SELECT COUNT(DISTINCT u.id)
              FROM {user} u
              JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
-             WHERE $where";
+             $groupjoin
+             WHERE mp.quizid = :quizid AND mp.deleted = 0 $searchsql";
 $recordstotal = $DB->count_records_sql($totalsql, $params);
 
-$sql = "
-    SELECT
-        u.id,
-        u.username,
-        u.firstname,
-        u.lastname,
-        u.email,
-        mp.quizid,
-        MAX(mp.timecreated) AS lastattempt,
-        (
-            SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
-            WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
-            AND pd.userimg IS NOT NULL AND pd.userimg != '' AND pd.image_status != 'M'
-        ) AS totalimages,
-        (
-            SELECT COUNT(*) FROM {quizaccess_main_proctor} pd
-            WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
-            AND pd.userimg IS NOT NULL AND pd.userimg != ''
-        ) AS totalmimages,
-        (
-            SELECT COUNT(*) FROM {quizaccess_proctor_data} pd
-            WHERE pd.userid = u.id AND pd.quizid = mp.quizid AND pd.deleted = 0
-            AND pd.status != '' AND pd.status != 'pendingprocessing'
-        ) AS warnings
-    FROM {user} u
-    JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
-    WHERE $where
-    GROUP BY u.id, u.username, u.firstname, u.lastname, u.email, mp.quizid
-    ORDER BY $ordercolumn $orderdir
-";
+if ($needfullcounts) {
+    $sql = "
+        SELECT
+            u.id,
+            u.username,
+            u.firstname,
+            u.lastname,
+            u.email,
+            mp.lastattempt,
+            COALESCE(img.totalimages, 0) AS totalimages,
+            COALESCE(mimg.totalmimages, 0) AS totalmimages,
+            COALESCE(img.warnings, 0) AS warnings,
+            (COALESCE(img.totalimages, 0) + COALESCE(mimg.totalmimages, 0)) AS imagetotal
+        FROM {user} u
+        JOIN (
+            SELECT userid, MAX(timecreated) AS lastattempt
+            FROM {quizaccess_main_proctor}
+            WHERE quizid = :quizid AND deleted = 0
+            GROUP BY userid
+        ) mp ON mp.userid = u.id
+        LEFT JOIN (
+            SELECT userid,
+                SUM(CASE WHEN userimg IS NOT NULL AND userimg <> '' AND image_status <> 'M'
+                    THEN 1 ELSE 0 END) AS totalimages,
+                SUM(CASE WHEN status <> '' AND status <> 'pendingprocessing'
+                    THEN 1 ELSE 0 END) AS warnings
+            FROM {quizaccess_proctor_data}
+            WHERE quizid = :quizidimg AND deleted = 0
+            GROUP BY userid
+        ) img ON img.userid = u.id
+        LEFT JOIN (
+            SELECT userid, COUNT(1) AS totalmimages
+            FROM {quizaccess_main_proctor}
+            WHERE quizid = :quizidmimg AND deleted = 0
+              AND userimg IS NOT NULL AND userimg <> ''
+            GROUP BY userid
+        ) mimg ON mimg.userid = u.id
+        $groupjoin
+        WHERE 1 = 1 $searchsql
+        ORDER BY $ordercolumn $orderdir
+    ";
+    $params['quizidimg'] = $quizid;
+    $params['quizidmimg'] = $quizid;
+    $records = $DB->get_records_sql($sql, $params, $start, $length);
+} else {
+    $sql = "
+        SELECT
+            u.id,
+            u.username,
+            u.firstname,
+            u.lastname,
+            u.email,
+            MAX(mp.timecreated) AS lastattempt
+        FROM {user} u
+        JOIN {quizaccess_main_proctor} mp ON mp.userid = u.id
+        $groupjoin
+        WHERE mp.quizid = :quizid AND mp.deleted = 0 $searchsql
+        GROUP BY u.id, u.username, u.firstname, u.lastname, u.email
+        ORDER BY $ordercolumn $orderdir
+    ";
+    $records = $DB->get_records_sql($sql, $params, $start, $length);
 
-$records = $DB->get_records_sql($sql, $params, $start, $length);
+    if (!empty($records)) {
+        $userids = array_keys($records);
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'uid');
+        $countparams = array_merge(['quizid' => $quizid], $inparams);
+
+        $imgcounts = $DB->get_records_sql("
+            SELECT userid,
+                SUM(CASE WHEN userimg IS NOT NULL AND userimg <> '' AND image_status <> 'M'
+                    THEN 1 ELSE 0 END) AS totalimages,
+                SUM(CASE WHEN status <> '' AND status <> 'pendingprocessing'
+                    THEN 1 ELSE 0 END) AS warnings
+            FROM {quizaccess_proctor_data}
+            WHERE quizid = :quizid AND deleted = 0 AND userid $insql
+            GROUP BY userid
+        ", $countparams);
+
+        $mimgcounts = $DB->get_records_sql("
+            SELECT userid, COUNT(1) AS totalmimages
+            FROM {quizaccess_main_proctor}
+            WHERE quizid = :quizid AND deleted = 0
+              AND userimg IS NOT NULL AND userimg <> ''
+              AND userid $insql
+            GROUP BY userid
+        ", $countparams);
+
+        foreach ($records as $userid => $record) {
+            $record->totalimages = isset($imgcounts[$userid]) ? (int) $imgcounts[$userid]->totalimages : 0;
+            $record->warnings = isset($imgcounts[$userid]) ? (int) $imgcounts[$userid]->warnings : 0;
+            $record->totalmimages = isset($mimgcounts[$userid]) ? (int) $mimgcounts[$userid]->totalmimages : 0;
+        }
+    }
+}
+
+$hasaudio = [];
+if ($enableaudio && !empty($records)) {
+    $userids = array_keys($records);
+    [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'auid');
+    $hasaudio = $DB->get_records_sql("
+        SELECT DISTINCT userid
+        FROM {quizaccess_proctor_audio}
+        WHERE quizid = :quizid AND deleted = 0 AND userid $insql
+    ", array_merge(['quizid' => $quizid], $inparams));
+}
 
 $data = [];
 foreach ($records as $r) {
@@ -179,8 +263,8 @@ foreach ($records as $r) {
         'username' => s($r->username),
         'email' => $r->email,
         'lastattempt' => $lastattempt,
-        'totalimages' => $r->totalimages + $r->totalmimages,
-        'warnings' => $r->warnings,
+        'totalimages' => (int) $r->totalimages + (int) $r->totalmimages,
+        'warnings' => (int) $r->warnings,
     ];
 
     if ($proctoringimageshow == 1) {
@@ -189,11 +273,7 @@ foreach ($records as $r) {
     $rowdata['actions'] = $deleteicon;
 
     if ($enableaudio) {
-        $sql = "SELECT COUNT(*) as count FROM {quizaccess_proctor_audio}
-                WHERE userid = ? AND quizid = ? and deleted = 0";
-        $totalrecords = $DB->get_field_sql($sql, [$r->id, $quizid]);
-
-        if ($totalrecords > 0) {
+        if (!empty($hasaudio[$r->id])) {
             $deleteaicon = html_writer::tag('a', '<i class="icon fa fa-trash"></i>', [
                 'href' => '#',
                 'class' => 'delete-aicon',

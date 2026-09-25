@@ -178,9 +178,7 @@ if (!file_exists($tempdir)) {
 foreach ($combinedimages as $img) {
     $processedpath = null;
     if (empty($img->userimg)) {
-        if ($img->status === 'splitscreendetected') {
-            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/splitscreen.png';
-        } else if ($img->status === 'minimizedetected') {
+        if ($img->status === 'minimizedetected') {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
         } else {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
