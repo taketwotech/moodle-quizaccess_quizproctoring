@@ -44,7 +44,7 @@ class mainImagesTask extends \core\task\adhoc_task {
 
         mtrace("Running adhoc task Started");
 
-        $sql = "SELECT * FROM {quizaccess_proctor_data}
+        $sql = "SELECT * FROM {quizaccess_quizproctoring_da}
                 WHERE deleted = 0 AND image_status = 'M'
                 ORDER BY id ASC";
         $records = $DB->get_records_sql($sql);
@@ -63,7 +63,7 @@ class mainImagesTask extends \core\task\adhoc_task {
             $newrecord->status = $record->status;
             $newrecord->isautosubmit = $record->isautosubmit;
             $newrecord->response = $record->response;
-            $DB->insert_record('quizaccess_main_proctor', $newrecord);
+            $DB->insert_record('quizaccess_quizproctoring_ma', $newrecord);
         }
         mtrace("Adhoc task completed successfully.");
     }

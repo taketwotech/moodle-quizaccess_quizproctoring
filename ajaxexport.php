@@ -32,6 +32,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $course = required_param('course', PARAM_RAW);
 $quizname = required_param('quizname', PARAM_RAW);
 $quizopen = required_param('quizopen', PARAM_INT);
+$groupid = optional_param('groupid', 0, PARAM_INT);
 
 $debug = optional_param('debug', 0, PARAM_INT);
 $context = context_module::instance($cmid);
@@ -46,31 +47,43 @@ if (!empty($USER->lang)) {
     }
 }
 
+$groupjoin = '';
+$params = [
+    'quizid1' => $quizid,
+    'quizid2' => $quizid,
+];
+
+if ($groupid > 0) {
+    $cm = get_coursemodule_from_id('quiz', $cmid, 0, false, MUST_EXIST);
+    $group = $DB->get_record('groups', ['id' => $groupid, 'courseid' => $cm->course]);
+    if ($group) {
+        $groupjoin = " JOIN {groups_members} gm ON gm.userid = u.id AND gm.groupid = :groupid ";
+        $params['groupid'] = $groupid;
+    }
+}
+
 $sql = "SELECT
     mp.attemptid AS pid, u.id, u.firstname, u.lastname, u.username, mp.deviceinfo,
-    COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS
-noface_count, COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END)
-AS minimize_count, COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END)
-AS multifacesdetected, COUNT(CASE WHEN p.status IN ('nocameradetected', 'nocameradisabled') THEN 1 END)
-AS nocameradetected,
-COUNT(CASE WHEN p.status = 'eyesnotopened' THEN 1 END)
-AS eyesnotopened,
-COUNT(CASE WHEN p.status IN
-('minimizedetected', 'multifacesdetected', 'nofacedetected', 'nocameradetected', 'nocameradisabled', 'eyesnotopened')
-    THEN 1 END) AS totalwarnings
+    COUNT(CASE WHEN p.status = 'nofacedetected' THEN 1 END) AS noface_count,
+    COUNT(CASE WHEN p.status = 'minimizedetected' THEN 1 END) AS minimize_count,
+    COUNT(CASE WHEN p.status = 'multifacesdetected' THEN 1 END) AS multifacesdetected,
+    COUNT(CASE WHEN p.status = 'facesnotmatched' THEN 1 END) AS facesnotmatched,
+    COUNT(CASE WHEN p.status IN ('nocameradetected', 'nocameradisabled') THEN 1 END) AS nocameradetected,
+    COUNT(CASE WHEN p.status = 'eyesnotopened' THEN 1 END) AS eyesnotopened,
+    COUNT(CASE WHEN p.status IN (
+        'minimizedetected', 'multifacesdetected', 'nofacedetected',
+        'nocameradetected', 'nocameradisabled', 'eyesnotopened', 'facesnotmatched'
+    ) THEN 1 END) AS totalwarnings
 FROM {user} u
-JOIN {quizaccess_main_proctor} mp
+JOIN {quizaccess_quizproctoring_ma} mp
     ON mp.userid = u.id AND mp.quizid = :quizid1 AND mp.deleted = 0
-LEFT JOIN {quizaccess_proctor_data} p
+$groupjoin
+LEFT JOIN {quizaccess_quizproctoring_da} p
     ON p.userid = u.id AND p.quizid = :quizid2 AND p.deleted = 0
      AND mp.attemptid= p.attemptid
 WHERE mp.userimg IS NOT NULL AND mp.userimg != '' AND p.image_status != 'M'
 GROUP BY mp.attemptid, u.id, u.firstname, u.lastname, u.username, mp.deviceinfo
 ORDER BY totalwarnings DESC";
-$params = [
-    'quizid1' => $quizid,
-    'quizid2' => $quizid,
-];
 $records = $DB->get_records_sql($sql, $params);
 if ($debug) {
     header('Content-Type: application/json');
@@ -126,16 +139,17 @@ if (empty($records)) {
     $pdf->Write(0, get_string('norecordsfound', 'quizaccess_quizproctoring'));
 } else {
     $pdf->SetFont('freeserif', 'B', 6.5);
-    $pdf->Cell(32, 7, get_string('pdf_student', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(20, 7, get_string('pdf_tabswitch', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(18, 7, get_string('pdf_nocamera', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(16, 7, get_string('pdf_noface', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(14, 7, get_string('pdf_noeye', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(18, 7, get_string('pdf_multiface', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(16, 7, get_string('pdf_total', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(16, 7, get_string('deviceinfo', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(20, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
-    $pdf->Cell(16, 7, get_string('pdf_photos', 'quizaccess_quizproctoring'), 1, 1, 'C');
+    $pdf->Cell(28, 7, get_string('pdf_student', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(16, 7, get_string('pdf_tabswitch', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('pdf_nocamera', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('pdf_noface', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(12, 7, get_string('pdf_noeye', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('pdf_multiface', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(18, 7, get_string('pdf_facemismatch', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('pdf_total', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('deviceinfo', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(18, 7, get_string('pdf_time', 'quizaccess_quizproctoring'), 1, 0, 'C');
+    $pdf->Cell(14, 7, get_string('pdf_photos', 'quizaccess_quizproctoring'), 1, 1, 'C');
 
     $pdf->SetFont('freeserif', '', 6.5);
     foreach ($records as $r) {
@@ -155,16 +169,17 @@ if (empty($records)) {
         $linkurl = $imagessurl->out();
         $fullname = $r->firstname . ' ' . $r->lastname . ' (' . $r->username . ')';
 
-        $wstudent = 32;
-        $wtabswitch = 20;
-        $wcamera = 18;
-        $wnoface = 16;
-        $wnoeye = 14;
-        $wmultiface = 18;
-        $wfacemismatch = 16;
-        $wdevice = 16;
-        $wtime = 20;
-        $wphotos = 16;
+        $wstudent = 28;
+        $wtabswitch = 16;
+        $wcamera = 14;
+        $wnoface = 14;
+        $wnoeye = 12;
+        $wmultiface = 14;
+        $wfacemismatch = 18;
+        $wtotal = 14;
+        $wdevice = 14;
+        $wtime = 18;
+        $wphotos = 14;
 
         $hstudent = $pdf->getStringHeight($wstudent, $fullname);
         $htabswitch = $pdf->getStringHeight($wtabswitch, $r->minimize_count);
@@ -172,7 +187,8 @@ if (empty($records)) {
         $hnoface = $pdf->getStringHeight($wnoface, $r->noface_count);
         $hnoeye = $pdf->getStringHeight($wnoeye, $r->eyesnotopened);
         $hmultiface = $pdf->getStringHeight($wmultiface, $r->multifacesdetected);
-        $hfacemismatch = $pdf->getStringHeight($wfacemismatch, $r->totalwarnings);
+        $hfacemismatch = $pdf->getStringHeight($wfacemismatch, $r->facesnotmatched);
+        $htotal = $pdf->getStringHeight($wtotal, $r->totalwarnings);
         $hdevice = $pdf->getStringHeight($wdevice, $r->deviceinfo);
         $htime = $pdf->getStringHeight($wtime, $timestart);
         $hphotos = $pdf->getStringHeight($wphotos, $linktext);
@@ -185,6 +201,7 @@ if (empty($records)) {
             $hnoeye,
             $hmultiface,
             $hfacemismatch,
+            $htotal,
             $hdevice,
             $htime,
             $hphotos
@@ -212,13 +229,23 @@ if (empty($records)) {
         $pdf->MultiCell($wmultiface, $maxheight, $r->multifacesdetected, 1, 'C', false, 0);
 
         $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface, $y);
-        $pdf->MultiCell($wfacemismatch, $maxheight, $r->totalwarnings, 1, 'C', false, 0);
+        $pdf->MultiCell($wfacemismatch, $maxheight, $r->facesnotmatched, 1, 'C', false, 0);
 
-        $pdf->SetXY($x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface + $wfacemismatch, $y);
+        $pdf->SetXY(
+            $x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface + $wfacemismatch,
+            $y
+        );
+        $pdf->MultiCell($wtotal, $maxheight, $r->totalwarnings, 1, 'C', false, 0);
+
+        $pdf->SetXY(
+            $x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface + $wfacemismatch + $wtotal,
+            $y
+        );
         $pdf->MultiCell($wdevice, $maxheight, $r->deviceinfo, 1, 'C', false, 0);
 
         $pdf->SetXY(
-            $x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye + $wmultiface + $wfacemismatch + $wdevice,
+            $x + $wstudent + $wtabswitch + $wcamera + $wnoface + $wnoeye +
+            $wmultiface + $wfacemismatch + $wtotal + $wdevice,
             $y
         );
         $pdf->MultiCell($wtime, $maxheight, $timestart, 1, 'C', false, 0);

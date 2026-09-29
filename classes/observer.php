@@ -61,10 +61,10 @@ class observer {
      */
     public static function quizproctoring_image_delete($event) {
         global $DB, $CFG;
-        $proctoringdata = $DB->execute("update {quizaccess_proctor_data} set deleted = 1 where
+        $proctoringdata = $DB->execute("update {quizaccess_quizproctoring_da} set deleted = 1 where
          attemptid=?", [$event->objectid]);
 
-        $proctoringmaindata = $DB->execute("update {quizaccess_main_proctor} set deleted = 1 where
+        $proctoringmaindata = $DB->execute("update {quizaccess_quizproctoring_ma} set deleted = 1 where
          attemptid=?", [$event->objectid]);
     }
 }

@@ -92,7 +92,7 @@ $basesql = "SELECT
     q.name AS quizname,
     (
         SELECT COUNT(mp.userimg)
-        FROM {quizaccess_main_proctor} mp
+        FROM {quizaccess_quizproctoring_ma} mp
         WHERE mp.quizid = q.id
           AND mp.deleted = 0
           AND mp.userimg IS NOT NULL
@@ -100,7 +100,7 @@ $basesql = "SELECT
     ) AS main_proctor_images,
     (
         SELECT COUNT(pd.userimg)
-        FROM {quizaccess_proctor_data} pd
+        FROM {quizaccess_quizproctoring_da} pd
         WHERE pd.quizid = q.id
           AND pd.deleted = 0
           AND pd.userimg IS NOT NULL
@@ -110,7 +110,7 @@ $basesql = "SELECT
     (
         (
             SELECT COUNT(mp.userimg)
-            FROM {quizaccess_main_proctor} mp
+            FROM {quizaccess_quizproctoring_ma} mp
             WHERE mp.quizid = q.id
               AND mp.deleted = 0
               AND mp.userimg IS NOT NULL
@@ -118,7 +118,7 @@ $basesql = "SELECT
         ) +
         (
             SELECT COUNT(pd.userimg)
-            FROM {quizaccess_proctor_data} pd
+            FROM {quizaccess_quizproctoring_da} pd
             WHERE pd.quizid = q.id
               AND pd.deleted = 0
               AND pd.userimg IS NOT NULL
@@ -128,12 +128,12 @@ $basesql = "SELECT
     ) AS total_images,
     (
         SELECT COUNT(DISTINCT userid)
-        FROM {quizaccess_main_proctor}
+        FROM {quizaccess_quizproctoring_ma}
         WHERE quizid = q.id AND deleted = 0
     ) AS total_users,
     (
         SELECT COUNT(*)
-        FROM {quizaccess_proctor_audio}
+        FROM {quizaccess_quizproctoring_au}
         WHERE quizid = q.id AND deleted = 0
     ) AS total_audios
 FROM {quiz} q

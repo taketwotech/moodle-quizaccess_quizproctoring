@@ -27,18 +27,6 @@ defined('MOODLE_INTERNAL') || die;
 
 $tasks = [
     [
-        'classname' => 'quizaccess_quizproctoring\task\deleteStoredImagesTask',
-        'blocking' => 0,
-        'minute' => '0',
-        'hour' => '0',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
-    ],
-];
-
-$tasks = [
-    [
         'classname' => 'quizaccess_quizproctoring\task\checkGetUserInfo',
         'blocking' => 0,
         'minute' => '0',

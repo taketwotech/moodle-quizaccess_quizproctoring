@@ -51,15 +51,59 @@ function xmldb_quizaccess_quizproctoring_install() {
 
     $postdata = json_encode($record);
 
+    if ($postdata === false) {
+        mtrace('Unable to encode ProctorLink create API request.');
+        return;
+    }
+
+    // Get signing key from secure configuration.
+    $key = quizaccess_quizproctoring_get_signing_key();
+
+    if (empty($key)) {
+        mtrace('ProctorLink signing key is not configured.');
+        return;
+    }
+
+    // Generate HMAC signature.
+    $bodyhash = hash('sha256', $postdata);
+
+    $canonical = $timestamp
+        . "\nPOST\n/create\n"
+        . $bodyhash;
+
+    $signature = hash_hmac(
+        'sha256',
+        $canonical,
+        $key
+    );
+
     $curl = new \curl();
-    $url = 'https://proctoring.taketwotechnologies.com/create';
-    $header = [
+
+    $url = 'https://api.proctorlink.com/create';
+
+    $headers = [
         'Content-Type: application/json',
+        'x-proctorlink-timestamp: ' . $timestamp,
+        'x-proctorlink-signature: ' . $signature,
     ];
-    $curl->setHeader($header);
-    $result = $curl->post($url, $postdata);
+
+    $curl->setHeader($headers);
 
     try {
+        $result = $curl->post($url, $postdata);
+
+        if ($result === false) {
+            mtrace('ProctorLink create API request failed.');
+        } else {
+            $response = json_decode($result, true);
+
+            if (is_array($response)) {
+                quizaccess_quizproctoring_store_create_tokens($response);
+            } else {
+                mtrace('Invalid JSON response from ProctorLink create API.');
+            }
+        }
+
         quizaccess_quizproctoring_sync_plan_from_api();
     } catch (Exception $exception) {
         mtrace('Error in API during install: ' . $exception->getMessage());

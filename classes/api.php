@@ -208,7 +208,7 @@ class api {
     public static function getuserinfo() {
         self::init();
         $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/getuserinfo';
+        $url = 'https://api.proctorlink.com/getuserinfo';
         $accesstoken = self::$accesstoken;
         $accesstokensecret = self::$accesstokensecret;
         $header = [
@@ -234,23 +234,42 @@ class api {
         global $CFG;
 
         self::init();
-        $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/plan-details';
-        $domain = $CFG->wwwroot;
         $admin = get_admin();
-        $email = $admin->email;
         $postdata = json_encode([
-            'email' => $email,
-            'domain' => $domain,
+            'email' => $admin->email,
+            'domain' => $CFG->wwwroot,
         ]);
-        $header = [
+        if ($postdata === false) {
+            return null;
+        }
+
+        $key = quizaccess_quizproctoring_get_signing_key();
+        if (empty($key)) {
+            return null;
+        }
+
+        $timestamp = time();
+        $bodyhash = hash('sha256', $postdata);
+        $canonical = $timestamp
+            . "\nPOST\n/plan-details\n"
+            . $bodyhash;
+        $signature = hash_hmac(
+            'sha256',
+            $canonical,
+            $key
+        );
+
+        $curl = new \curl();
+        $url = 'https://api.proctorlink.com/plan-details';
+        $headers = [
             'Content-Type: application/json',
+            'x-proctorlink-timestamp: ' . $timestamp,
+            'x-proctorlink-signature: ' . $signature,
         ];
-        $curl->setHeader($header);
+        $curl->setHeader($headers);
         $response = $curl->post($url, $postdata);
 
         if ($response === false) {
-            echo 'Curl error: ' . $curl->error();
             return null;
         }
         return $response;
