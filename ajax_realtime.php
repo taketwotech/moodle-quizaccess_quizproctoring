@@ -41,7 +41,7 @@ if ($validate === 'eyecheckoff') {
     set_user_preference('eye_detection', 0, $USER->id);
     if ($teachersub) {
         $DB->execute(
-            "UPDATE {quizaccess_main_proctor}
+            "UPDATE {quizaccess_quizproctoring_ma}
                       SET iseyecheck = 0,
                           iseyedisabledbyteacher = 1
                       WHERE attemptid = ?",
@@ -49,7 +49,7 @@ if ($validate === 'eyecheckoff') {
         );
     } else {
         $DB->execute(
-            "UPDATE {quizaccess_main_proctor}
+            "UPDATE {quizaccess_quizproctoring_ma}
                       SET iseyecheck = 0
                       WHERE attemptid = ?",
             [$attemptid]
@@ -63,12 +63,19 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
     throw new moodle_exception('invalidcoursemodule');
 }
 
-$mainentry = $DB->get_record('quizaccess_main_proctor', [
-    'userid' => $USER->id,
-    'quizid' => $cm->instance,
-    'image_status' => 'M',
-    'attemptid' => $attemptid,
-]);
+if (!$mainimage) {
+    $attemptstate = $DB->get_field('quiz_attempts', 'state', [
+        'id' => $attemptid,
+        'userid' => $USER->id,
+        'quiz' => $cm->instance,
+    ]);
+    if ($attemptstate !== 'inprogress') {
+        echo json_encode(['success' => 1]);
+        exit;
+    }
+}
+
+$mainentry = quizaccess_quizproctoring_get_main_proctor($USER->id, $cm->instance, $attemptid);
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
 
@@ -93,7 +100,10 @@ if ($mainentry && $mainentry->iseyecheck == 1 && $validate === 'eyesnotopen') {
 }
 
 // Emit JSON for a realtime store attempt (handles moodle_exception as alert payload).
-$emitrealtimeviolation = function(string $status, bool $useeyecheckon = false) use (
+$emitrealtimeviolation = function (
+    string $status,
+    bool $useeyecheckon = false
+) use (
     $img,
     $cmid,
     $attemptid,

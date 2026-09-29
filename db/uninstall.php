@@ -29,18 +29,50 @@
 function xmldb_quizaccess_quizproctoring_uninstall() {
     global $DB, $USER, $CFG;
 
+    require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
+
     $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+    $timestamp = time();
 
     $record = new stdClass();
     $record->email = $user->email;
     $record->domain = $CFG->wwwroot;
     $postdata = json_encode($record);
 
+    if ($postdata === false) {
+        mtrace('Unable to encode ProctorLink uninstall API request.');
+        return;
+    }
+
+    $key = quizaccess_quizproctoring_get_signing_key();
+
+    if (empty($key)) {
+        mtrace('ProctorLink signing key is not configured.');
+        return;
+    }
+
+    $bodyhash = hash('sha256', $postdata);
+    $canonical = $timestamp
+        . "\nPOST\n/uninstall\n"
+        . $bodyhash;
+    $signature = hash_hmac('sha256', $canonical, $key);
+
     $curl = new \curl();
-    $url = 'https://proctoring.taketwotechnologies.com/uninstall';
-    $header = [
+    $url = 'https://api.proctorlink.com/uninstall';
+    $headers = [
         'Content-Type: application/json',
+        'x-proctorlink-timestamp: ' . $timestamp,
+        'x-proctorlink-signature: ' . $signature,
     ];
-    $curl->setHeader($header);
-    $result = $curl->post($url, $postdata);
+    $curl->setHeader($headers);
+
+    try {
+        $result = $curl->post($url, $postdata);
+
+        if ($result === false) {
+            mtrace('ProctorLink uninstall API request failed.');
+        }
+    } catch (Exception $exception) {
+        mtrace('Error in API during uninstall: ' . $exception->getMessage());
+    }
 }

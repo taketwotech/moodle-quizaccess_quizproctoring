@@ -27,20 +27,16 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
 require_login();
+global $SESSION, $USER, $DB, $CFG, $PAGE;
 
 $img = optional_param('imgBase64', '', PARAM_RAW);
 $cmid = required_param('cmid', PARAM_INT);
 $attemptid = required_param('attemptid', PARAM_INT);
 $mainimage = optional_param('mainimage', false, PARAM_BOOL);
 $tab = optional_param('tab', false, PARAM_BOOL);
-$cheattype = optional_param('cheattype', '', PARAM_ALPHA);
 $deviceinfo = optional_param('deviceinfo', '', PARAM_TEXT);
 
-$cheatstatusmap = [
-    'splitscreen' => QUIZACCESS_QUIZPROCTORING_SPLITSCREENDETECTED,
-];
-
-$domainblockedresponse = function() use ($mainimage, $attemptid, $img, $cmid) {
+$domainblockedresponse = function () use ($mainimage, $attemptid, $img, $cmid) {
     global $DB;
 
     // During a running exam attempt, do not surface the restricted-access alert.
@@ -90,47 +86,59 @@ if (!$cm = get_coursemodule_from_id('quiz', $cmid)) {
 $context = context_module::instance($cm->id);
 $PAGE->set_context($context);
 
+// Attempt-time captures only while the quiz is in progress (working mode).
+if (!$mainimage) {
+    $attemptstate = $DB->get_field('quiz_attempts', 'state', [
+        'id' => $attemptid,
+        'userid' => $USER->id,
+        'quiz' => $cm->instance,
+    ]);
+    if ($attemptstate !== 'inprogress') {
+        echo json_encode(['success' => 1]);
+        die();
+    }
+}
+
 $tmpdir = $CFG->dataroot . '/proctorlink';
-$mainentry = $DB->get_record('quizaccess_main_proctor', [
-    'userid' => $USER->id,
-    'quizid' => $cm->instance,
-    'image_status' => 'M',
-    'attemptid' => $attemptid]);
-if (!$mainentry->isautosubmit) {
-    if (!$img && !$tab && $cheattype === '') {
-        quizproctoring_storeimage(
-            $img,
-            $cmid,
-            $attemptid,
-            $cm->instance,
-            $mainimage,
-            QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
-            ''
-        );
+$mainentry = quizaccess_quizproctoring_get_main_proctor($USER->id, $cm->instance, $attemptid);
+if (!$mainentry || empty($mainentry->isautosubmit)) {
+    if (!$img && !$tab) {
+        try {
+            quizproctoring_storeimage(
+                $img,
+                $cmid,
+                $attemptid,
+                $cm->instance,
+                $mainimage,
+                QUIZACCESS_QUIZPROCTORING_NOCAMERADETECTED,
+                ''
+            );
+            echo json_encode(['success' => 1]);
+        } catch (moodle_exception $e) {
+            echo json_encode([
+                'errorcode' => 1,
+                'error' => $e->getMessage(),
+            ]);
+        }
+        die();
     }
 
     if (!$img && $tab) {
-        quizproctoring_storeimage(
-            $img,
-            $cmid,
-            $attemptid,
-            $cm->instance,
-            $mainimage,
-            QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
-            ''
-        );
-    }
-
-    if (!$img && $cheattype !== '' && isset($cheatstatusmap[$cheattype])) {
-        quizproctoring_storeimage(
-            $img,
-            $cmid,
-            $attemptid,
-            $cm->instance,
-            $mainimage,
-            $cheatstatusmap[$cheattype],
-            ''
-        );
+        try {
+            quizproctoring_storeimage(
+                $img,
+                $cmid,
+                $attemptid,
+                $cm->instance,
+                $mainimage,
+                QUIZACCESS_QUIZPROCTORING_MINIMIZEDETECTED,
+                ''
+            );
+            echo json_encode(['success' => 1]);
+        } catch (moodle_exception $e) {
+            echo json_encode(['success' => 1]);
+        }
+        die();
     }
 
     $proctoringdata = $DB->get_record('quizaccess_quizproctoring', ['quizid' => $cm->instance]);
@@ -139,7 +147,7 @@ if (!$mainentry->isautosubmit) {
     $profileimage = '';
     if (!$mainimage) {
         // If it is not main image, get the main image data and compare.
-        if ($mainentry) {
+        if ($mainentry && !empty($mainentry->userimg)) {
             $context = context_module::instance($cmid);
             $fs = get_file_storage();
             $f1 = $fs->get_file(
@@ -174,29 +182,10 @@ if (!$mainentry->isautosubmit) {
                 $target = $f1->get_content();
             }
         }
-    } else {
-        if ($proctoringdata->enableprofilematch == 1) {
-            $context = context_user::instance($USER->id);
-            $sql = "SELECT * FROM {files} WHERE contextid =
-            :contextid AND component = 'user' AND
-            filearea = 'icon' AND itemid = 0 AND
-            filepath = '/' AND filename REGEXP 'f[0-9]+\\.(jpg|jpeg|png|gif)$'
-            ORDER BY timemodified, filename DESC LIMIT 1";
-            $params = ['contextid' => $context->id];
-            $filerecord = $DB->get_record_sql($sql, $params);
-            if ($filerecord) {
-                $fs = get_file_storage();
-                $file = $fs->get_file(
-                    $filerecord->contextid,
-                    $filerecord->component,
-                    $filerecord->filearea,
-                    $filerecord->itemid,
-                    $filerecord->filepath,
-                    $filerecord->filename
-                );
-                $profileimage = $file->get_content();
-            }
-        }
+    }
+
+    if ($target === '' && !empty($proctoringdata->enableprofilematch)) {
+        $profileimage = quizaccess_quizproctoring_get_user_profile_image_content($USER->id);
     }
 
     // Validate image.
@@ -267,6 +256,13 @@ if (!$mainentry->isautosubmit) {
                         die();
                     }
                 } else {
+                    if (!$mainimage && !empty($attemptid)) {
+                        $attemptstate = $DB->get_field('quiz_attempts', 'state', ['id' => $attemptid]);
+                        if ($attemptstate === 'inprogress') {
+                            echo json_encode(['success' => 1]);
+                            die();
+                        }
+                    }
                     throw new moodle_exception('profilemandatory', 'quizaccess_quizproctoring');
                     die();
                 }
@@ -278,7 +274,6 @@ if (!$mainentry->isautosubmit) {
     switch ($validate) {
         case QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING:
             if ($mainimage) {
-                // Preflight main image requires a successful server response.
                 $mainimagefailed = true;
             } else {
                 quizproctoring_storeimage(
@@ -435,6 +430,12 @@ if (!$mainentry->isautosubmit) {
             'message' => get_string('verificationunavailable', 'quizaccess_quizproctoring'),
         ]);
     } else {
+        if ($mainimage) {
+            if (empty($SESSION->proctoringcheckedquizzes) || !is_array($SESSION->proctoringcheckedquizzes)) {
+                $SESSION->proctoringcheckedquizzes = [];
+            }
+            $SESSION->proctoringcheckedquizzes[$cm->instance] = true;
+        }
         echo json_encode(['status' => 'true']);
     }
     die();

@@ -348,35 +348,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025042904, 'quizaccess', 'quizproctoring');
     }
 
-    if ($oldversion < 2025052801) {
-        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
-        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
-        $release = $plugin->release;
-
-        $record = new stdClass();
-        $record->firstname = $user->firstname;
-        $record->lastname  = $user->lastname;
-        $record->email     = $user->email;
-        $record->domain    = $CFG->wwwroot;
-        $record->moodle_v  = get_config('moodle', 'release');
-        $record->previously_installed_v = '(Build: ' . $oldversion . ')';
-        $record->proctorlink_version = $release;
-        $SESSION->proctorlink_version = $release;
-        set_config('proctorlink_version', $release, 'quizaccess_quizproctoring');
-
-        $postdata = json_encode($record);
-
-        $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/create';
-        $header = [
-            'Content-Type: application/json',
-        ];
-        $curl->setHeader($header);
-        $result = $curl->post($url, $postdata);
-
-        upgrade_plugin_savepoint(true, 2025052801, 'quizaccess', 'quizproctoring');
-    }
-
     if ($oldversion < 2025061300) {
         $task = new \quizaccess_quizproctoring\task\images_adhoc_task();
         $task->set_component('quizaccess_quizproctoring');
@@ -479,35 +450,6 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
 
         // Quizproctoring savepoint reached.
         upgrade_plugin_savepoint(true, 2025070600, 'quizaccess', 'quizproctoring');
-    }
-
-    if ($oldversion < 2025120101) {
-        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
-        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
-        $release = $plugin->release;
-
-        $record = new stdClass();
-        $record->firstname = $user->firstname;
-        $record->lastname  = $user->lastname;
-        $record->email     = $user->email;
-        $record->domain    = $CFG->wwwroot;
-        $record->moodle_v  = get_config('moodle', 'release');
-        $record->previously_installed_v = '(Build: ' . $oldversion . ')';
-        $record->proctorlink_version = $release;
-        $SESSION->proctorlink_version = $release;
-        set_config('proctorlink_version', $release, 'quizaccess_quizproctoring');
-
-        $postdata = json_encode($record);
-
-        $curl = new \curl();
-        $url = 'https://proctoring.taketwotechnologies.com/create';
-        $header = [
-            'Content-Type: application/json',
-        ];
-        $curl->setHeader($header);
-        $result = $curl->post($url, $postdata);
-
-        upgrade_plugin_savepoint(true, 2025120101, 'quizaccess', 'quizproctoring');
     }
 
     if ($oldversion < 2025120102) {
@@ -761,6 +703,258 @@ function xmldb_quizaccess_quizproctoring_upgrade($oldversion) {
         $DB->set_field('quizaccess_quizproctoring', 'enableobjectdetect', 0);
 
         upgrade_plugin_savepoint(true, 2026071200, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072905) {
+        upgrade_plugin_savepoint(true, 2026072905, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072906) {
+        upgrade_plugin_savepoint(true, 2026072906, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072907) {
+        upgrade_plugin_savepoint(true, 2026072907, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072908) {
+        upgrade_plugin_savepoint(true, 2026072908, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072909) {
+        upgrade_plugin_savepoint(true, 2026072909, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072910) {
+        upgrade_plugin_savepoint(true, 2026072910, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072911) {
+        upgrade_plugin_savepoint(true, 2026072911, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072912) {
+        upgrade_plugin_savepoint(true, 2026072912, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072913) {
+        upgrade_plugin_savepoint(true, 2026072913, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072914) {
+        upgrade_plugin_savepoint(true, 2026072914, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072915) {
+        upgrade_plugin_savepoint(true, 2026072915, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026072916) {
+        upgrade_plugin_savepoint(true, 2026072916, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073000) {
+        upgrade_plugin_savepoint(true, 2026073000, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073001) {
+        upgrade_plugin_savepoint(true, 2026073001, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073002) {
+        upgrade_plugin_savepoint(true, 2026073002, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073003) {
+        upgrade_plugin_savepoint(true, 2026073003, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073004) {
+        upgrade_plugin_savepoint(true, 2026073004, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073005) {
+        upgrade_plugin_savepoint(true, 2026073005, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073006) {
+        // Return-to-attempt must not bounce back to summary (shell iframe teardown).
+        upgrade_plugin_savepoint(true, 2026073006, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073007) {
+        // Avoid about:blank iframe bounce (RequireJS jquery scripterror).
+        upgrade_plugin_savepoint(true, 2026073007, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073008) {
+        // Return-to-attempt POST leaves bare attempt.php URL — do not send to /my/.
+        upgrade_plugin_savepoint(true, 2026073008, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073009) {
+        // Prevent stuck loading when leaving secure-window / SEB attempts.
+        upgrade_plugin_savepoint(true, 2026073009, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073010) {
+        // Recover shell spinner after SEB exit / bfcache restore.
+        upgrade_plugin_savepoint(true, 2026073010, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026073011) {
+        // Record audio on mobile during live proctoring (mic-only path).
+        upgrade_plugin_savepoint(true, 2026073011, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026080500) {
+        // Remove unused clear_images config and scheduled deleteStoredImagesTask.
+        unset_config('clear_images', 'quizaccess_quizproctoring');
+        $DB->delete_records('task_scheduled', [
+            'classname' => 'quizaccess_quizproctoring\\task\\deleteStoredImagesTask',
+        ]);
+        upgrade_plugin_savepoint(true, 2026080500, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026090302) {
+        require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
+
+        $user = $DB->get_record('user', ['id' => $USER->id], '*', MUST_EXIST);
+        $plugin = core_plugin_manager::instance()->get_plugin_info('quizaccess_quizproctoring');
+        $release = $plugin->release;
+        $timestamp = time();
+
+        $record = new stdClass();
+        $record->firstname = $user->firstname;
+        $record->lastname  = $user->lastname;
+        $record->email     = $user->email;
+        $record->domain    = $CFG->wwwroot;
+        $record->moodle_v  = get_config('moodle', 'release');
+        $record->previously_installed_v = '(Build: ' . $oldversion . ')';
+        $record->proctorlink_version = $release;
+        $SESSION->proctorlink_version = $release;
+        set_config('proctorlink_version', $release, 'quizaccess_quizproctoring');
+
+        $postdata = json_encode($record);
+        $key = quizaccess_quizproctoring_get_signing_key();
+
+        try {
+            if ($postdata === false) {
+                mtrace('Unable to encode ProctorLink create API request.');
+            } else if (empty($key)) {
+                mtrace('ProctorLink signing key is not configured.');
+            } else {
+                $bodyhash = hash('sha256', $postdata);
+                $canonical = $timestamp . "\nPOST\n/create\n" . $bodyhash;
+                $signature = hash_hmac('sha256', $canonical, $key);
+
+                $curl = new \curl();
+                $url = 'https://api.proctorlink.com/create';
+                $headers = [
+                    'Content-Type: application/json',
+                    'x-proctorlink-timestamp: ' . $timestamp,
+                    'x-proctorlink-signature: ' . $signature,
+                ];
+                $curl->setHeader($headers);
+                $result = $curl->post($url, $postdata);
+
+                if ($result === false) {
+                    mtrace('ProctorLink create API request failed.');
+                } else {
+                    $response = json_decode($result, true);
+                    if (is_array($response)) {
+                        quizaccess_quizproctoring_store_create_tokens($response);
+                    } else {
+                        mtrace('Invalid JSON response from ProctorLink create API.');
+                    }
+                }
+            }
+
+            quizaccess_quizproctoring_sync_plan_from_api();
+        } catch (Exception $exception) {
+            mtrace('Error in API during upgrade: ' . $exception->getMessage());
+        }
+
+        upgrade_plugin_savepoint(true, 2026090302, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026090501) {
+        // Add report indexes for already-installed sites (fresh installs get these from install.xml).
+        $reportindexes = [
+            'quizaccess_proctor_data' => [
+                ['quizid-userid-deleted', ['quizid', 'userid', 'deleted']],
+            ],
+            'quizaccess_main_proctor' => [
+                ['quizid-userid-deleted', ['quizid', 'userid', 'deleted']],
+            ],
+            'quizaccess_proctor_audio' => [
+                ['userid-quizid-deleted', ['userid', 'quizid', 'deleted']],
+                ['attemptid-deleted', ['attemptid', 'deleted']],
+            ],
+            'quizaccess_proctor_alert' => [
+                ['quizid-userid-attemptid', ['quizid', 'userid', 'attemptid']],
+            ],
+        ];
+
+        foreach ($reportindexes as $tablename => $indexes) {
+            $table = new xmldb_table($tablename);
+            if (!$dbman->table_exists($table)) {
+                continue;
+            }
+            foreach ($indexes as $indexdef) {
+                $index = new xmldb_index($indexdef[0], XMLDB_INDEX_NOTUNIQUE, $indexdef[1]);
+                if (!$dbman->index_exists($table, $index)) {
+                    $dbman->add_index($table, $index);
+                }
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026090501, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026092505) {
+        // Rename tables so they use the quizaccess_quizproctoring prefix required by Moodle.
+        // Names stay within the 28 character limit.
+        $tablerenames = [
+            'quizaccess_proctor_data' => 'quizaccess_quizproctoring_da',
+            'quizaccess_main_proctor' => 'quizaccess_quizproctoring_ma',
+            'quizaccess_proctor_audio' => 'quizaccess_quizproctoring_au',
+            'quizaccess_proctor_alert' => 'quizaccess_quizproctoring_al',
+        ];
+
+        foreach ($tablerenames as $oldname => $newname) {
+            $oldtable = new xmldb_table($oldname);
+            $newtable = new xmldb_table($newname);
+            if ($dbman->table_exists($oldtable) && !$dbman->table_exists($newtable)) {
+                $dbman->rename_table($oldtable, $newname);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026092505, 'quizaccess', 'quizproctoring');
+    }
+
+    if ($oldversion < 2026092700) {
+        // Sites that already ran 2026092505 have the longer names. Shorten those too.
+        $tablerenames = [
+            'quizaccess_proctor_data' => 'quizaccess_quizproctoring_da',
+            'quizaccess_quizproctoring_data' => 'quizaccess_quizproctoring_da',
+            'quizaccess_main_proctor' => 'quizaccess_quizproctoring_ma',
+            'quizaccess_quizproctoring_main' => 'quizaccess_quizproctoring_ma',
+            'quizaccess_proctor_audio' => 'quizaccess_quizproctoring_au',
+            'quizaccess_quizproctoring_audio' => 'quizaccess_quizproctoring_au',
+            'quizaccess_proctor_alert' => 'quizaccess_quizproctoring_al',
+            'quizaccess_quizproctoring_alert' => 'quizaccess_quizproctoring_al',
+        ];
+
+        foreach ($tablerenames as $oldname => $newname) {
+            $oldtable = new xmldb_table($oldname);
+            $newtable = new xmldb_table($newname);
+            if ($dbman->table_exists($oldtable) && !$dbman->table_exists($newtable)) {
+                $dbman->rename_table($oldtable, $newname);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026092700, 'quizaccess', 'quizproctoring');
     }
 
     return true;

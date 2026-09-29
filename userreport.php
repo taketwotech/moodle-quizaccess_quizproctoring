@@ -98,13 +98,13 @@ function preprocessimage($sourcepath, $tempdir) {
     return $temppath;
 }
 
-$sqlm = "SELECT * FROM {quizaccess_main_proctor}
+$sqlm = "SELECT * FROM {quizaccess_quizproctoring_ma}
         WHERE userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND deleted = 0
         ORDER BY id ASC";
 $params = ['userid' => $userid, 'quizid' => $quizid, 'attemptid' => $attemptid];
 $getmimages = $DB->get_records_sql($sqlm, $params);
 
-$sql = "SELECT * FROM {quizaccess_proctor_data}
+$sql = "SELECT * FROM {quizaccess_quizproctoring_da}
         WHERE userid = :userid AND quizid = :quizid AND attemptid = :attemptid AND deleted = 0
          AND image_status != 'M' ORDER BY id ASC";
 $params = ['userid' => $userid, 'quizid' => $quizid, 'attemptid' => $attemptid];
@@ -178,9 +178,7 @@ if (!file_exists($tempdir)) {
 foreach ($combinedimages as $img) {
     $processedpath = null;
     if (empty($img->userimg)) {
-        if ($img->status === 'splitscreendetected') {
-            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/splitscreen.png';
-        } else if ($img->status === 'minimizedetected') {
+        if ($img->status === 'minimizedetected') {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
         } else {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';

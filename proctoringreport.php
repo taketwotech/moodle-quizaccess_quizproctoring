@@ -32,6 +32,7 @@ $quizid = optional_param('quizid', '', PARAM_INT);
 $deleteuserid = optional_param('delete', '', PARAM_INT);
 $deleteaudio = optional_param('deleteaudio', '', PARAM_INT);
 $all = optional_param('all', false, PARAM_BOOL);
+$groupid = optional_param('groupid', 0, PARAM_INT);
 
 $context = context_module::instance($cmid, MUST_EXIST);
 if (class_exists('\mod_quiz\quiz_settings')) {
@@ -62,8 +63,6 @@ $PAGE->navbar->add(
     get_string('quizaccess_quizproctoring', 'quizaccess_quizproctoring'),
     '/mod/quiz/accessrule/quizproctoring/proctoringreport.php'
 );
-$PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), true);
-$PAGE->requires->js(new moodle_url('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'), true);
 $PAGE->requires->css(new moodle_url('https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css'));
 $PAGE->requires->js(new moodle_url('https://code.jquery.com/jquery-3.7.0.min.js'), true);
 $PAGE->requires->js(new moodle_url('https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js'), true);
@@ -73,6 +72,13 @@ $proctoringimageshow = 1;
 $reportingpagination = quizaccess_quizproctoring_get_reporting_pagination();
 $pendingcount = quizaccess_quizproctoring_count_pending_images($quizid);
 $reprocessurl = new moodle_url('/mod/quiz/accessrule/quizproctoring/ajax_reprocess.php');
+
+// Course groups for filter (0 = all participants).
+$allowedgroups = groups_get_all_groups($course->id);
+if ($groupid && empty($allowedgroups[$groupid])) {
+    $groupid = 0;
+}
+
 $PAGE->requires->js_init_code("
     var proctoringReportTable = null;
     $(document).ready(function() {
@@ -91,6 +97,7 @@ $PAGE->requires->js_init_code("
                     d.courseid = {$course->id};
                     d.proctoringimageshow = {$proctoringimageshow};
                     d.enableaudio = " . ($enableaudio ? 1 : 0) . ";
+                    d.groupid = $('#groupid').length ? $('#groupid').val() : 0;
                 }
             },
             columns: [
@@ -109,7 +116,15 @@ $PAGE->requires->js_init_code("
             order: [[0, 'asc']],
             responsive: true
         });
+
+        $('#groupid').on('change', function() {
+            proctoringReportTable.ajax.reload();
+        });
     });
+
+    function getSelectedGroupId() {
+        return $('#groupid').length ? $('#groupid').val() : 0;
+    }
 
     $('#exportpdf').on('click', function() {
         const button = $(this);
@@ -123,6 +138,7 @@ $PAGE->requires->js_init_code("
                 course: " . json_encode($course->shortname) . ",
                 quizname: " . json_encode($quiz->name) . ",
                 quizopen: {$quiz->timeopen},
+                groupid: getSelectedGroupId()
             },
             success: function(response) {
                 try {
@@ -177,6 +193,7 @@ $PAGE->requires->js_init_code("
             data: {
                 cmid: {$cmid},
                 quizid: {$quizid},
+                groupid: getSelectedGroupId()
             },
             success: function(response) {
                 try {
@@ -205,7 +222,7 @@ $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 
 if ($deleteuserid) {
     $tmpdir = $CFG->dataroot . '/proctorlink';
-    $sqlm = "SELECT * FROM {quizaccess_main_proctor} WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
+    $sqlm = "SELECT * FROM {quizaccess_quizproctoring_ma} WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
     $params = ['userid' => $deleteuserid, 'quizid' => $quizid];
     $usersmrecords = $DB->get_records_sql($sqlm, $params);
     if ($all) {
@@ -215,40 +232,15 @@ if ($deleteuserid) {
                 unlink($tempfilepath);
             }
         }
-        $DB->set_field('quizaccess_main_proctor', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
+        $DB->set_field('quizaccess_quizproctoring_ma', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
     }
 
-    $sql = "SELECT * FROM {quizaccess_proctor_data} WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
+    $sql = "SELECT * FROM {quizaccess_quizproctoring_da} WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
     $params = ['userid' => $deleteuserid, 'quizid' => $quizid];
     $usersrecords = $DB->get_records_sql($sql, $params);
     if ($all) {
         foreach ($usersrecords as $usersrecord) {
-            if (class_exists('\mod_quiz\quiz_settings')) {
-                $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
-            } else {
-                $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
-            }
-            $context = $quizobj->get_context();
-            $fs = get_file_storage();
-            $fileinfo = [
-                'contextid' => $context->id,
-                'component' => 'quizaccess_quizproctoring',
-                'filearea' => 'cameraimages',
-                'itemid' => $usersrecord->id,
-                'filepath' => '/',
-                'filename' => $usersrecord->userimg,
-            ];
-            $file = $fs->get_file(
-                $fileinfo['contextid'],
-                $fileinfo['component'],
-                $fileinfo['filearea'],
-                $fileinfo['itemid'],
-                $fileinfo['filepath'],
-                $fileinfo['filename']
-            );
-            if ($file) {
-                $file->delete();
-            }
+            quizaccess_quizproctoring_delete_camera_image($usersrecord);
 
             $tmpdir = $CFG->dataroot . '/proctorlink/';
             $tempfilepath = $tmpdir . $usersrecord->userimg;
@@ -256,7 +248,7 @@ if ($deleteuserid) {
                 unlink($tempfilepath);
             }
         }
-        $DB->set_field('quizaccess_proctor_data', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
+        $DB->set_field('quizaccess_quizproctoring_da', 'deleted', 1, ['userid' => $deleteuserid, 'quizid' => $quizid]);
         $notification = new \core\output\notification(
             get_string('imagesdeleted', 'quizaccess_quizproctoring'),
             \core\output\notification::NOTIFY_SUCCESS
@@ -272,7 +264,7 @@ if ($deleteuserid) {
 
 if ($deleteaudio) {
     $dest = $CFG->dataroot . '/quizproctoring/audio/';
-    $sqlm = "SELECT * FROM {quizaccess_proctor_audio}
+    $sqlm = "SELECT * FROM {quizaccess_quizproctoring_au}
              WHERE userid = :userid AND quizid = :quizid AND deleted = 0";
     $params = ['userid' => $deleteaudio, 'quizid' => $quizid];
     $usersmrecords = $DB->get_records_sql($sqlm, $params);
@@ -284,7 +276,7 @@ if ($deleteaudio) {
             }
         }
         $DB->set_field(
-            'quizaccess_proctor_audio',
+            'quizaccess_quizproctoring_au',
             'deleted',
             1,
             ['userid' => $deleteaudio, 'quizid' => $quizid]
@@ -345,6 +337,19 @@ if ($pendingcount > 0) {
         get_string('reprocessimages', 'quizaccess_quizproctoring') . ' (' . $pendingcount . ')</button>';
 }
 echo '</div>';
+if (!empty($allowedgroups)) {
+    echo '<div class="mb-2">';
+    echo html_writer::label(get_string('filterbygroup', 'quizaccess_quizproctoring'), 'groupid', false, ['class' => 'mr-2']);
+    $groupoptions = [0 => get_string('allparticipants')];
+    foreach ($allowedgroups as $group) {
+        $groupoptions[$group->id] = format_string($group->name);
+    }
+    echo html_writer::select($groupoptions, 'groupid', $groupid, false, [
+        'id' => 'groupid',
+        'class' => 'custom-select',
+    ]);
+    echo '</div>';
+}
 if ($pendingcount > 0) {
     echo '<p class="pending-images-note report-pending-images-note">' .
         get_string('reprocessimages_note', 'quizaccess_quizproctoring') . '</p>';

@@ -27,6 +27,7 @@ define('AJAX_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+require_once(__DIR__ . '/compat.php');
 require_login();
 global $DB, $USER;
 use mod_quiz\quiz_attempt;
@@ -35,7 +36,7 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $eyeoff = optional_param('eyeoff', false, PARAM_BOOL);
 
 if ($eyeoff) {
-    $eyeoffdata = $DB->get_record('quizaccess_main_proctor', [
+    $eyeoffdata = $DB->get_record('quizaccess_quizproctoring_ma', [
         'attemptid' => $attemptid,
     ]);
     $response = [
@@ -63,14 +64,14 @@ $PAGE->set_context($context);
 if ($quizsubmit) {
     $attemptobj = quiz_attempt::create($attemptid);
     $attemptobj->process_finish(time(), false);
-    $autosubmitdata = $DB->get_record('quizaccess_main_proctor', [
+    $autosubmitdata = $DB->get_record('quizaccess_quizproctoring_ma', [
         'userid' => $userid,
         'quizid' => $quizid,
         'attemptid' => $attemptid,
         'image_status' => 'M',
     ]);
     $autosubmitdata->issubmitbyteacher = 1;
-    $DB->update_record('quizaccess_main_proctor', $autosubmitdata);
+    $DB->update_record('quizaccess_quizproctoring_ma', $autosubmitdata);
     echo json_encode(['success' => 'true', 'redirect' => 'true',
         'msg' => get_string('autosubmitbyteacher', 'quizaccess_quizproctoring'), 'url' => $attemptobj->review_url()->out()]);
     die();
@@ -83,7 +84,7 @@ if ($quizsubmit) {
     $record->teacherid = $teacherid;
     $record->timecreated = time();
 
-    $DB->insert_record('quizaccess_proctor_alert', $record);
+    $DB->insert_record('quizaccess_quizproctoring_al', $record);
 
     $response = [
         'success' => true,

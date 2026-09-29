@@ -15,19 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Implementaton of the quizaccess_quizproctoring plugin.
+ * Map quiz classes that moved into namespaces in Moodle 4.2.
+ *
+ * Moodle 4.0 and 4.1 define quiz_attempt in mod/quiz/attemptlib.php.
+ * Moodle 4.2+ autoloads mod_quiz\quiz_attempt.
  *
  * @package    quizaccess_quizproctoring
- * @subpackage quizproctoring
  * @copyright  2020 Mahendra Soni <ms@taketwotechnologies.com> {@link https://taketwotechnologies.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026092701;
-$plugin->requires = 2022041900;
-$plugin->release = 'v5.3.3';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'quizaccess_quizproctoring';
-$plugin->supported = [400, 502];
+if (!class_exists('mod_quiz\\quiz_attempt')) {
+    if (!class_exists('quiz_attempt', false)) {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/quiz/attemptlib.php');
+    }
+    if (class_exists('quiz_attempt', false) && !class_exists('mod_quiz\\quiz_attempt', false)) {
+        class_alias('quiz_attempt', 'mod_quiz\\quiz_attempt');
+    }
+}

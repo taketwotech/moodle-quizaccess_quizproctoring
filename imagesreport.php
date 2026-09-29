@@ -23,10 +23,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use mod_quiz\output\renderer;
-use mod_quiz\output\view_page;
-use mod_quiz\quiz_settings;
-
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 require_once($CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/lib.php');
@@ -103,7 +99,7 @@ $PAGE->requires->js_call_amd('quizaccess_quizproctoring/report', 'init');
 $mainrecords = [];
 if ($deletequizid || $delcourse) {
     if ($deletequizid) {
-        $sql = "SELECT * FROM {quizaccess_main_proctor} WHERE quizid = :quizid AND deleted = 0";
+        $sql = "SELECT * FROM {quizaccess_quizproctoring_ma} WHERE quizid = :quizid AND deleted = 0";
         $params = ['quizid' => $deletequizid];
         $usersrecords = $DB->get_records_sql($sql, $params);
         $deletequiz = $deletequizid;
@@ -122,10 +118,10 @@ if ($deletequizid || $delcourse) {
         }, $quizrecords);
         if (!empty($quizids)) {
             [$insql, $inparams] = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
-            $sql = "SELECT * FROM {quizaccess_proctor_data} WHERE quizid $insql AND deleted = 0";
+            $sql = "SELECT * FROM {quizaccess_quizproctoring_da} WHERE quizid $insql AND deleted = 0";
             $usersrecords = $DB->get_records_sql($sql, $inparams);
 
-            $sqlm = "SELECT * FROM {quizaccess_main_proctor} WHERE quizid $insql AND deleted = 0";
+            $sqlm = "SELECT * FROM {quizaccess_quizproctoring_ma} WHERE quizid $insql AND deleted = 0";
             $mainrecords = $DB->get_records_sql($sqlm, $inparams);
 
             $deletequiz = $quizids;
@@ -138,32 +134,7 @@ if ($deletequizid || $delcourse) {
     if ($all) {
         $tmpdir = $CFG->dataroot . '/proctorlink/';
         foreach ($usersrecords as $usersrecord) {
-            if (class_exists('\mod_quiz\quiz_settings')) {
-                $quizobj = \mod_quiz\quiz_settings::create($usersrecord->quizid, $usersrecord->userid);
-            } else {
-                $quizobj = \quiz::create($usersrecord->quizid, $usersrecord->userid);
-            }
-            $context = $quizobj->get_context();
-            $fs = get_file_storage();
-            $fileinfo = [
-                'contextid' => $context->id,
-                'component' => 'quizaccess_quizproctoring',
-                'filearea' => 'cameraimages',
-                'itemid' => $usersrecord->id,
-                'filepath' => '/',
-                'filename' => $usersrecord->userimg,
-            ];
-            $file = $fs->get_file(
-                $fileinfo['contextid'],
-                $fileinfo['component'],
-                $fileinfo['filearea'],
-                $fileinfo['itemid'],
-                $fileinfo['filepath'],
-                $fileinfo['filename']
-            );
-            if ($file) {
-                $file->delete();
-            }
+            quizaccess_quizproctoring_delete_camera_image($usersrecord);
 
             // Delete file from the temp directory.
             $tempfilepath = $tmpdir . $usersrecord->userimg;
@@ -180,17 +151,17 @@ if ($deletequizid || $delcourse) {
         if (!empty($deletequiz)) {
             if (is_array($deletequiz)) {
                 [$insql, $inparams] = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
-                $sql = "UPDATE {quizaccess_proctor_data}
+                $sql = "UPDATE {quizaccess_quizproctoring_da}
                         SET deleted = 1 WHERE quizid $insql";
                 $DB->execute($sql, $inparams);
-                $sql = "UPDATE {quizaccess_main_proctor}
+                $sql = "UPDATE {quizaccess_quizproctoring_ma}
                         SET deleted = 1 WHERE quizid $insql";
                 $DB->execute($sql, $inparams);
             } else {
-                $sql = "UPDATE {quizaccess_proctor_data}
+                $sql = "UPDATE {quizaccess_quizproctoring_da}
                         SET deleted = 1 WHERE quizid = :quizid";
                 $DB->execute($sql, ['quizid' => $deletequiz]);
-                $sql = "UPDATE {quizaccess_main_proctor}
+                $sql = "UPDATE {quizaccess_quizproctoring_ma}
                         SET deleted = 1 WHERE quizid = :quizid";
                 $DB->execute($sql, ['quizid' => $deletequiz]);
             }
@@ -210,7 +181,7 @@ if ($deletequizid || $delcourse) {
 
 if ($deleteaudioquiz || $deleteaudiocourse) {
     if ($deleteaudioquiz) {
-        $sql = "SELECT * FROM {quizaccess_proctor_audio} WHERE quizid = :quizid AND deleted = 0";
+        $sql = "SELECT * FROM {quizaccess_quizproctoring_au} WHERE quizid = :quizid AND deleted = 0";
         $params = ['quizid' => $deleteaudioquiz];
         $audiorecords = $DB->get_records_sql($sql, $params);
         $deletequiz = $deleteaudioquiz;
@@ -229,7 +200,7 @@ if ($deleteaudioquiz || $deleteaudiocourse) {
         }, $quizrecords);
         if (!empty($quizids)) {
             [$insql, $inparams] = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
-            $sql = "SELECT * FROM {quizaccess_proctor_audio} WHERE quizid $insql AND deleted = 0";
+            $sql = "SELECT * FROM {quizaccess_quizproctoring_au} WHERE quizid $insql AND deleted = 0";
             $audiorecords = $DB->get_records_sql($sql, $inparams);
             $deletequiz = $quizids;
         } else {
@@ -248,11 +219,11 @@ if ($deleteaudioquiz || $deleteaudiocourse) {
         if (!empty($deletequiz)) {
             if (is_array($deletequiz)) {
                 [$insql, $inparams] = $DB->get_in_or_equal($deletequiz, SQL_PARAMS_NAMED);
-                $sql = "UPDATE {quizaccess_proctor_audio}
+                $sql = "UPDATE {quizaccess_quizproctoring_au}
                         SET deleted = 1 WHERE quizid $insql";
                 $DB->execute($sql, $inparams);
             } else {
-                $sql = "UPDATE {quizaccess_proctor_audio} SET deleted = 1 WHERE quizid = :quizid";
+                $sql = "UPDATE {quizaccess_quizproctoring_au} SET deleted = 1 WHERE quizid = :quizid";
                 $DB->execute($sql, ['quizid' => $deletequiz]);
             }
         }
@@ -289,7 +260,7 @@ if (has_capability('quizaccess/quizproctoring:quizproctoringreport', $context)) 
 }
 
 $sqlcount = "SELECT COUNT(DISTINCT p.quizid) AS totalcount
-             FROM {quizaccess_main_proctor} p
+             FROM {quizaccess_quizproctoring_ma} p
              JOIN {quiz} q ON p.quizid = q.id
              WHERE p.userimg IS NOT NULL AND p.deleted=0
              AND p.userimg !='' AND q.course = :courseid";

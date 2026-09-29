@@ -30,7 +30,7 @@ $attemptid = required_param('attemptid', PARAM_INT);
 $page = optional_param('page', 1, PARAM_INT);
 $perpage = optional_param('perpage', 20, PARAM_INT);
 
-$sql = "SELECT * FROM {quizaccess_proctor_audio}
+$sql = "SELECT * FROM {quizaccess_quizproctoring_au}
         WHERE attemptid = :attemptid AND deleted = 0
         ORDER BY id ASC";
 $params = ['attemptid' => $attemptid];

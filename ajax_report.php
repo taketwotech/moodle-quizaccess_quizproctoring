@@ -41,7 +41,7 @@ $addsql = '';
 if (!$all) {
     $addsql = " (status != '') AND ";
 }
-$sql = "SELECT * FROM {quizaccess_proctor_data}
+$sql = "SELECT * FROM {quizaccess_quizproctoring_da}
         WHERE " . $addsql . "userid = " . $userid . "
         AND quizid = " . $quizid . "
         AND attemptid = " . $attemptid . "
@@ -50,7 +50,7 @@ $sql = "SELECT * FROM {quizaccess_proctor_data}
         LIMIT " . $perpage . " OFFSET " . $offset;
 
 $getimages = $DB->get_records_sql($sql);
-$sqlt = "SELECT * FROM {quizaccess_proctor_data}
+$sqlt = "SELECT * FROM {quizaccess_quizproctoring_da}
         WHERE " . $addsql . "userid = " . $userid . "
         AND quizid = " . $quizid . "
         AND attemptid = " . $attemptid . "
@@ -78,7 +78,7 @@ $getimagemimetype = function ($imagepath) {
     return $mimetype ?: 'image/png';
 };
 
-$sqlm = $DB->get_record('quizaccess_main_proctor', ['userid' => $userid,
+$sqlm = $DB->get_record('quizaccess_quizproctoring_ma', ['userid' => $userid,
             'quizid' => $quizid, 'attemptid' => $attemptid, 'image_status' => 'M', 'deleted' => 0 ]);
 $targetm = '';
 if ($sqlm && !empty($sqlm->userimg)) {
@@ -102,9 +102,7 @@ if ($sqlm && !empty($sqlm->userimg)) {
 foreach ($getimages as $img) {
     $target = '';
     if ($img->userimg == '' && $img->image_status != 'M') {
-        if ($img->status === 'splitscreendetected') {
-            $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/splitscreen.png';
-        } else if ($img->status === 'minimizedetected') {
+        if ($img->status === 'minimizedetected') {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/tabswitch.png';
         } else {
             $imagepath = $CFG->dirroot . '/mod/quiz/accessrule/quizproctoring/pix/nocamera.png';
@@ -162,13 +160,13 @@ foreach ($getimages as $img) {
         'total' => $totalrecord,
     ]);
 }
-$haspending = $DB->record_exists('quizaccess_proctor_data', [
+$haspending = $DB->record_exists('quizaccess_quizproctoring_da', [
     'userid' => $userid,
     'quizid' => $quizid,
     'attemptid' => $attemptid,
     'status' => QUIZACCESS_QUIZPROCTORING_PENDINGPROCESSING,
     'deleted' => 0,
-]) || $DB->record_exists('quizaccess_main_proctor', [
+]) || $DB->record_exists('quizaccess_quizproctoring_ma', [
     'userid' => $userid,
     'quizid' => $quizid,
     'attemptid' => $attemptid,

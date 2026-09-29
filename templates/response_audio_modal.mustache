@@ -32,8 +32,7 @@
         <div class="audio-item">
             <div class="audio-inline">
                 <div class="audio-time">{{time}}</div>
-                <audio controls preload="none">
-                    <source src="{{url}}" type="audio/webm">
+                <audio controls preload="none" src="{{url}}">
                     {{#str}} audionotsupported, quizaccess_quizproctoring {{/str}}
                 </audio>
             </div>

@@ -33,7 +33,7 @@ $quizid = required_param('quizid', PARAM_INT);
 $url = '';
 if (
     $proctoringimage = $DB->get_record(
-        'quizaccess_main_proctor',
+        'quizaccess_quizproctoring_ma',
         [
             'attemptid' => $attemptid,
             'userid' => $userid,

@@ -54,7 +54,7 @@ if ($attempt->userid != $targetuserid) {
     exit;
 }
 
-$proctorrecord = $DB->get_record('quizaccess_main_proctor', [
+$proctorrecord = $DB->get_record('quizaccess_quizproctoring_ma', [
     'attemptid' => $attemptid,
     'userid' => $targetuserid,
 ], '*', MUST_EXIST);
@@ -63,7 +63,7 @@ $newstate = ($action === 'enable') ? 1 : 0;
 
 $proctorrecord->iseyecheck = $newstate;
 $proctorrecord->iseyedisabledbyteacher = ($action === 'disable') ? 1 : 0;
-$DB->update_record('quizaccess_main_proctor', $proctorrecord);
+$DB->update_record('quizaccess_quizproctoring_ma', $proctorrecord);
 
 set_user_preference('eye_detection', $newstate, $targetuserid);
 

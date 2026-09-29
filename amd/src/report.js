@@ -1,5 +1,6 @@
-define(['jquery', 'core/modal_factory', 'core/modal_events', 'core/templates', 'core/str', 'core/notification'],
-function($, ModalFactory, ModalEvents, Templates, str, notification) {
+define(['jquery', 'quizaccess_quizproctoring/modal', 'core/templates', 'core/str', 'core/notification'],
+function($, ModalFactory, Templates, str, notification) {
+    var ModalEvents = ModalFactory.events;
     var reprocessInProgress = false;
     var batchDelayMs = 1000;
 
