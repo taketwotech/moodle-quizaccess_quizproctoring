@@ -9,7 +9,7 @@ jobs:
       PHP_DEPRECATED_WARNINGS: 0
     services:
       postgres:
-        image: postgres:14
+        image: postgres:${{ matrix.moodle.postgres }}
         env:
           POSTGRES_USER: 'postgres'
           POSTGRES_HOST_AUTH_METHOD: 'trust'
@@ -17,7 +17,7 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
       mariadb:
-        image: mariadb:10
+        image: mariadb:${{ matrix.moodle.mariadb }}
         env:
           MYSQL_USER: 'root'
           MYSQL_ALLOW_EMPTY_PASSWORD: "true"
@@ -32,11 +32,13 @@ jobs:
       fail-fast: false
       matrix:
         # Moodle 4.4 requires PHP 8.1. Moodle 5.0 runs on PHP 8.3.
+        # Moodle 5.3 requires PHP 8.3, PostgreSQL 17, and MariaDB 11.4.
         moodle:
-          - { php: '8.0', branch: 'MOODLE_402_STABLE' }
-          - { php: '8.0', branch: 'MOODLE_403_STABLE' }
-          - { php: '8.1', branch: 'MOODLE_404_STABLE' }
-          - { php: '8.3', branch: 'MOODLE_500_STABLE' }
+          - { php: '8.0', branch: 'MOODLE_402_STABLE', postgres: '14', mariadb: '10' }
+          - { php: '8.0', branch: 'MOODLE_403_STABLE', postgres: '14', mariadb: '10' }
+          - { php: '8.1', branch: 'MOODLE_404_STABLE', postgres: '14', mariadb: '10' }
+          - { php: '8.3', branch: 'MOODLE_500_STABLE', postgres: '14', mariadb: '10' }
+          - { php: '8.3', branch: 'MOODLE_503_STABLE', postgres: '17', mariadb: '11.4' }
         database: [pgsql, mariadb]
 
     steps:
