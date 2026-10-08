@@ -30,4 +30,4 @@ $plugin->requires = 2022041900;
 $plugin->release = 'v5.3.3';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'quizaccess_quizproctoring';
-$plugin->supported = [400, 502];
+$plugin->supported = [400, 503];
