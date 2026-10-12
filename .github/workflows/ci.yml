@@ -26,7 +26,8 @@ jobs:
 
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+        # MariaDB 11.4 removed mysqladmin. Older images still use mysqladmin ping.
+        options: --health-cmd="${{ matrix.moodle.mariadb_health }}" --health-interval 10s --health-timeout 5s --health-retries 5
 
     strategy:
       fail-fast: false
@@ -34,11 +35,11 @@ jobs:
         # Moodle 4.4 requires PHP 8.1. Moodle 5.0 runs on PHP 8.3.
         # Moodle 5.3 requires PHP 8.3, PostgreSQL 17, and MariaDB 11.4.
         moodle:
-          - { php: '8.0', branch: 'MOODLE_402_STABLE', postgres: '14', mariadb: '10' }
-          - { php: '8.0', branch: 'MOODLE_403_STABLE', postgres: '14', mariadb: '10' }
-          - { php: '8.1', branch: 'MOODLE_404_STABLE', postgres: '14', mariadb: '10' }
-          - { php: '8.3', branch: 'MOODLE_500_STABLE', postgres: '14', mariadb: '10' }
-          - { php: '8.3', branch: 'MOODLE_503_STABLE', postgres: '17', mariadb: '11.4' }
+          - { php: '8.0', branch: 'MOODLE_402_STABLE', postgres: '14', mariadb: '10', mariadb_health: 'mysqladmin ping' }
+          - { php: '8.0', branch: 'MOODLE_403_STABLE', postgres: '14', mariadb: '10', mariadb_health: 'mysqladmin ping' }
+          - { php: '8.1', branch: 'MOODLE_404_STABLE', postgres: '14', mariadb: '10', mariadb_health: 'mysqladmin ping' }
+          - { php: '8.3', branch: 'MOODLE_500_STABLE', postgres: '14', mariadb: '10', mariadb_health: 'mysqladmin ping' }
+          - { php: '8.3', branch: 'MOODLE_503_STABLE', postgres: '17', mariadb: '11.4', mariadb_health: 'healthcheck.sh --connect --innodb_initialized' }
         database: [pgsql, mariadb]
 
     steps:
